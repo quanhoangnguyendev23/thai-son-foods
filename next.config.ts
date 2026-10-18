@@ -17,6 +17,11 @@ const cspReportOnly = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  env: {
+    JWT_SECRET: process.env.JWT_SECRET || '0e31a96ec44403acc9a885db4602f5099a1744ba5cbe2e37996d96c5a96d265f8b5ff265b2f19e0b9f3d67c86eec19fb',
+    ADMIN_REGISTER_KEY: process.env.ADMIN_REGISTER_KEY || 'tsf@admin2026',
+    CRON_SECRET: process.env.CRON_SECRET || 'staging_test_cron_secret_1234567890',
+  },
   // Allow internal LAN IP access without cross-origin blocking
   allowedDevOrigins: [
     '137.107.16.94:3000',
