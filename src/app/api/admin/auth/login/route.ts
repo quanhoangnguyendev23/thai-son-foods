@@ -194,8 +194,15 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error: any) {
     console.error('Error in admin login API:', error);
+    const msg = error?.message || '';
+    let errorMessage = 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
+    if (msg.includes('ECONNREFUSED') || msg.includes('connect') || msg.includes('timeout') || msg.includes('ENOTFOUND')) {
+      errorMessage = 'Không thể kết nối đến cơ sở dữ liệu PostgreSQL. Vui lòng kiểm tra biến môi trường DATABASE_URL trên Vercel.';
+    } else if (msg.includes('JWT_SECRET')) {
+      errorMessage = 'Chưa cấu hình biến môi trường JWT_SECRET hợp lệ (tối thiểu 32 ký tự) trên Vercel.';
+    }
     return NextResponse.json(
-      { success: false, error: 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

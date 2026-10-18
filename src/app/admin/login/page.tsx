@@ -43,6 +43,12 @@ function AdminLoginForm() {
           router.replace('/admin');
           return;
         }
+        if (!res.ok && data?.error) {
+          const errStr = String(data.error);
+          if (errStr.includes('ECONNREFUSED') || errStr.includes('connect') || errStr.includes('timeout') || errStr.includes('ENOTFOUND')) {
+            setErrorMsg('Chưa kết nối được cơ sở dữ liệu PostgreSQL. Vui lòng cấu hình biến môi trường DATABASE_URL trên Vercel.');
+          }
+        }
         setHasAdmins(data.hasAdmins);
       } catch (err) {
         console.error('Failed to check auth status:', err);
