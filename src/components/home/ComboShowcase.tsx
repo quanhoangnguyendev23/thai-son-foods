@@ -139,26 +139,26 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                       }
                     >
                       {/* Khung ảnh Combo tỉ lệ 4:3 */}
-                      <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-[#FAF8F5]">
+                      <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-ivory">
                         <Image
                           src={combo.image}
                           alt={comboName}
                           fill
                           className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
                           loading="lazy"
                         />
 
                         {/* Huy hiệu giảm giá (Góc trên phải) */}
                         <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
-                          <span className="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-bold bg-sale text-white rounded shadow-xs">
+                          <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-sale text-white rounded shadow-xs">
                             -{combo.discount}%
                           </span>
                         </div>
 
                         {/* Huy hiệu số lượng chai (Góc dưới trái) */}
                         <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 z-10 pointer-events-none">
-                          <span className="px-1.5 py-0.5 text-[8px] sm:text-[9px] font-semibold bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
+                          <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
                             {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                           </span>
                         </div>
@@ -169,7 +169,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                         <div>
                           <h3
                             title={comboName}
-                            className="text-xs sm:text-[13px] font-bold text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors line-clamp-2"
+                            className="text-sm sm:text-[15px] text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors line-clamp-2"
                           >
                             {shortComboName}
                           </h3>
@@ -186,10 +186,10 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                     {/* Hàng giá bán & Nút hành động */}
                     <div className="px-2 pb-2 sm:px-2.5 sm:pb-2.5 md:px-3 md:pb-3 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center justify-between gap-1">
                       <div className="flex flex-col sm:flex-row sm:items-baseline">
-                        <span className="text-xs sm:text-[13px] font-bold text-green-primary">
+                        <span className="text-sm sm:text-[15px] text-green-primary">
                           {formatPrice(combo.salePrice)}đ
                         </span>
-                        <span className="text-[9px] sm:text-[10px] text-gray-400 line-through sm:ml-1">
+                        <span className="text-[11px] lg:text-[10px] text-gray-400 line-through sm:ml-1">
                           {formatPrice(combo.originalPrice)}đ
                         </span>
                       </div>

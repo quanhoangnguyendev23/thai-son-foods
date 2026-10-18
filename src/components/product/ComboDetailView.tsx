@@ -11,24 +11,21 @@ import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import {
   ShoppingBag,
-  Sparkles,
   ChevronRight,
   ChevronLeft,
-  ShieldCheck,
   Truck,
   RotateCcw,
   Phone,
   Plus,
   Minus,
   Check,
-  Flame,
-  Award,
   ZoomIn,
   X,
   Copy,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranchStore } from '@/store/branch';
+import MobileBuyBar from '@/components/product/MobileBuyBar';
 import ProductSidebarSponsoredCard from '@/components/product/ProductSidebarSponsoredCard';
 import { MapPin, AlertCircle, Info } from 'lucide-react';
 
@@ -62,6 +59,9 @@ export default function ComboDetailView({
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  // Thanh mua hàng cố định (mobile/tablet): chỉ hiện khi khối nút mua đã cuộn khỏi màn hình
+  const buyButtonsRef = useRef<HTMLDivElement>(null);
+  const [showMobileBuyBar, setShowMobileBuyBar] = useState(false);
 
   // Chi nhánh & Tồn kho
   const { selectedBranch, openBranchModal } = useBranchStore();
@@ -142,6 +142,17 @@ export default function ComboDetailView({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const el = buyButtonsRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => setShowMobileBuyBar(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isCustomizable]);
 
   // Danh sách hình ảnh mô tả combo (ảnh chính combo + ảnh các chai thành phần + Bảng Icon tiêu chuẩn)
   const galleryImages = useMemo(() => {
@@ -294,7 +305,7 @@ export default function ComboDetailView({
   return (
     <div className="w-full">
       {/* ─── Breadcrumb ─── */}
-      <div className="border-b border-gray-100 bg-[#F7F8F8] py-2.5 text-xs">
+      <div className="border-b border-gray-100 bg-ink-50 py-2.5 text-xs">
         <div className="section-container">
           <nav aria-label="Breadcrumb">
             <ol className="flex items-center gap-1.5 text-gray-500 flex-wrap">
@@ -310,7 +321,7 @@ export default function ComboDetailView({
                 </Link>
               </li>
               <li><ChevronRight className="w-3.5 h-3.5 text-gray-400 inline" /></li>
-              <li className="text-gray-900 font-semibold break-words">
+              <li className="text-gray-900 break-words text-[1.125em]">
                 {comboTitle}
               </li>
             </ol>
@@ -335,9 +346,9 @@ export default function ComboDetailView({
                       key={image.id || index}
                       onClick={() => setActiveIndex(index)}
                       className={cn(
-                        'relative w-full aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all shrink-0 bg-[#FAF8F5] p-0.5 flex items-center justify-center cursor-pointer',
+                        'relative w-full aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all shrink-0 bg-ivory p-0.5 flex items-center justify-center cursor-pointer',
                         activeIndex === index
-                          ? 'border-[#1B5E3B] shadow-[0_0_0_1px_#1B5E3B]'
+                          ? 'border-forest-700 shadow-[0_0_0_1px_var(--color-forest-700)]'
                           : 'border-gray-200 hover:border-gray-400 opacity-70 hover:opacity-100'
                       )}
                       aria-label={`Xem ảnh ${index + 1}`}
@@ -361,7 +372,7 @@ export default function ComboDetailView({
               <div className="flex-1 min-w-0 flex flex-col">
                 <div
                   ref={imageContainerRef}
-                  className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-[#FAF8F5] border border-gray-200/80 shadow-sm group"
+                  className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-ivory border border-gray-200/80 shadow-sm group"
                 >
                   {/* Floating Prev Button (<) */}
                   {galleryImages.length > 1 && (
@@ -392,7 +403,7 @@ export default function ComboDetailView({
                   )}
 
                   {/* Bottom-Right Counter Badge */}
-                  <div className="absolute bottom-3.5 right-3.5 z-20 bg-black/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full font-medium tracking-wider pointer-events-none">
+                  <div className="absolute bottom-3.5 right-3.5 z-20 bg-ink-950/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full font-medium tracking-wider pointer-events-none">
                     {activeIndex + 1}/{galleryImages.length}
                   </div>
 
@@ -419,8 +430,7 @@ export default function ComboDetailView({
 
                   {/* Huy hiệu loại combo (góc trên trái) */}
                   <div className="absolute top-3 left-3 z-10 pointer-events-none">
-                    <span className="px-2.5 py-1 text-xs font-bold bg-[#0F2A1F]/90 backdrop-blur-xs text-corn rounded-lg shadow-sm flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5 text-corn" />
+                    <span className="px-2.5 py-1 text-sm bg-forest-950/90 backdrop-blur-xs text-corn rounded-lg shadow-sm flex items-center gap-1">
                       {isCustomizable
                         ? (language === 'en' ? 'Customizable Combo' : 'Combo tự chọn vị')
                         : (language === 'en' ? 'Pre-packed Combo' : 'Combo đóng gói sẵn')}
@@ -429,14 +439,14 @@ export default function ComboDetailView({
 
                   {/* Huy hiệu giảm giá góc trên phải */}
                   <div className="absolute top-3 right-3 z-10 pointer-events-none">
-                    <span className="px-2.5 py-1 text-xs font-extrabold bg-sale text-white rounded-lg shadow-sm">
+                    <span className="px-2.5 py-1 text-sm bg-sale text-white rounded-lg shadow-sm">
                       -{combo.discount}%
                     </span>
                   </div>
 
                   {/* Huy hiệu số lượng chai góc dưới trái */}
                   <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
-                    <span className="px-3 py-1.5 text-xs font-bold bg-emerald-800/95 backdrop-blur-xs text-white rounded-lg shadow-sm">
+                    <span className="px-3 py-1.5 text-sm bg-emerald-800/95 backdrop-blur-xs text-white rounded-lg shadow-sm">
                       {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                     </span>
                   </div>
@@ -450,9 +460,9 @@ export default function ComboDetailView({
                         key={image.id || index}
                         onClick={() => setActiveIndex(index)}
                         className={cn(
-                          'relative w-16 aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all shrink-0 bg-[#FAF8F5] p-0.5 flex items-center justify-center cursor-pointer',
+                          'relative w-16 aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all shrink-0 bg-ivory p-0.5 flex items-center justify-center cursor-pointer',
                           activeIndex === index
-                            ? 'border-[#1B5E3B] shadow-[0_0_0_1px_#1B5E3B]'
+                            ? 'border-forest-700 shadow-[0_0_0_1px_var(--color-forest-700)]'
                             : 'border-gray-200 hover:border-gray-400 opacity-70 hover:opacity-100'
                         )}
                         aria-label={`Xem ảnh ${index + 1}`}
@@ -477,7 +487,7 @@ export default function ComboDetailView({
             <div className="w-full pt-1.5 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 px-1">
               <button
                 onClick={() => setIsZoomOpen(true)}
-                className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#1B5E3B] font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-forest-700 font-medium transition-colors cursor-pointer"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
                 <span>{language === 'en' ? 'Click image to zoom' : 'Nhấp vào ảnh để phóng to'}</span>
@@ -509,7 +519,7 @@ export default function ComboDetailView({
                     const url = typeof window !== 'undefined' ? window.location.href : '';
                     window.open(`https://sp.zalo.me/plugins/share?url=${encodeURIComponent(url)}&title=${encodeURIComponent(comboTitle)}`, '_blank', 'noopener,noreferrer,width=620,height=580');
                   }}
-                  className="w-7 h-7 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0068FF] flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-2xs font-extrabold text-[10px]"
+                  className="w-7 h-7 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0068FF] flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-2xs text-[11px]"
                   title="Share to Zalo"
                   aria-label="Share to Zalo"
                 >
@@ -527,7 +537,7 @@ export default function ComboDetailView({
                     } catch {}
                   }}
                   className={cn(
-                    "h-7 px-2.5 rounded-full border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-2xs",
+                    "h-7 px-2.5 rounded-full border text-sm flex items-center gap-1 transition-all cursor-pointer shadow-2xs",
                     copied
                       ? "bg-emerald-600 border-emerald-600 text-white"
                       : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300"
@@ -552,8 +562,7 @@ export default function ComboDetailView({
             {/* DANH SÁCH CHI TIẾT TỪNG CHAI TRONG COMBO */}
             <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200/80 shadow-xs">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base flex items-center gap-2">
-                  <Award className="w-4 h-4 text-green-primary" />
+                <h3 className="text-gray-900 text-base sm:text-lg flex items-center gap-2">
                   <span>
                     {language === 'en'
                       ? `Items in this Combo (${combo.totalItems} bottles)`
@@ -578,7 +587,7 @@ export default function ComboDetailView({
                   return (
                     <div
                       key={`${item.productId}-${idx}`}
-                      className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-[#FAF8F5] border border-gray-100/90 hover:border-emerald-600/30 transition-colors"
+                      className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-ivory border border-gray-100/90 hover:border-emerald-600/30 transition-colors"
                       title={pFullName}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -596,10 +605,10 @@ export default function ComboDetailView({
                         {/* Thông tin chai: Tên ngắn × số chai, rê chuột xem tên đầy đủ */}
                         <div className="min-w-0" title={`Tên đầy đủ: ${pFullName}`}>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-xs sm:text-sm font-bold text-text-dark leading-snug">
+                            <h4 className="text-sm sm:text-base text-text-dark leading-snug">
                               {pShortName}
                             </h4>
-                            <span className="px-2 py-0.5 text-xs font-bold bg-emerald-800 text-white rounded-md shrink-0">
+                            <span className="px-2 py-0.5 text-sm bg-emerald-800 text-white rounded-md shrink-0">
                               × {item.quantity} {language === 'en' ? 'bottles' : 'chai'}
                             </span>
                           </div>
@@ -613,7 +622,7 @@ export default function ComboDetailView({
                       {item.product && (
                         <Link
                           href={`/san-pham/${item.product.slug}`}
-                          className="shrink-0 text-xs font-semibold text-green-primary hover:text-green-dark hover:underline flex items-center gap-0.5 ml-2"
+                          className="shrink-0 text-sm text-green-primary hover:text-green-dark hover:underline flex items-center gap-0.5 ml-2"
                           title={language === 'en' ? `View ${pFullName}` : `Xem chi tiết ${item.product.name}`}
                         >
                           <span className="hidden sm:inline">
@@ -633,7 +642,7 @@ export default function ComboDetailView({
           <div className="lg:col-span-4 xl:col-span-4 space-y-6">
             <div>
               {/* Thương hiệu */}
-              <div className="flex items-center gap-2 text-xs font-semibold text-green-primary uppercase tracking-wider mb-2">
+              <div className="flex items-center gap-2 text-sm text-green-primary uppercase tracking-wider mb-2">
                 <span className="w-2 h-2 rounded-full bg-green-primary inline-block" />
                 <span>
                   {language === 'en'
@@ -643,7 +652,7 @@ export default function ComboDetailView({
               </div>
 
               {/* Tên combo */}
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-snug">
+              <h1 className="text-2xl sm:text-2xl lg:text-3xl text-gray-900 leading-snug">
                 {comboTitle}
               </h1>
 
@@ -651,16 +660,16 @@ export default function ComboDetailView({
               <div className="flex items-center gap-3 mt-2.5 text-xs text-text-muted flex-wrap">
                 <div className="flex items-center text-amber-500">
                   {'★'.repeat(5)}
-                  <span className="ml-1 text-gray-700 font-semibold">(5.0)</span>
+                  <span className="ml-1 text-gray-700 text-[1.125em]">(5.0)</span>
                 </div>
                 <span>•</span>
                 <div className="flex items-center gap-1 bg-emerald-50/80 px-2 py-0.5 rounded text-emerald-900">
                   <MapPin className="w-3 h-3 text-emerald-700 shrink-0" />
-                  <span>Kho: <strong>{selectedBranch?.name || 'Chi nhánh'}</strong></span>
+                  <span>Kho: <strong className="text-[1.125em]">{selectedBranch?.name || 'Chi nhánh'}</strong></span>
                   <button
                     type="button"
                     onClick={openBranchModal}
-                    className="text-emerald-800 underline font-bold ml-1 hover:text-emerald-950 cursor-pointer py-2 -my-2 inline-block"
+                    className="text-emerald-800 underline ml-1 hover:text-emerald-950 cursor-pointer py-2 -my-2 inline-block text-[1.125em]"
                   >
                     Đổi
                   </button>
@@ -672,12 +681,12 @@ export default function ComboDetailView({
                     <span>{language === 'en' ? 'Checking stock...' : 'Đang kiểm kho...'}</span>
                   </span>
                 ) : !isAvailable || availableStock === 0 ? (
-                  <span className="inline-flex items-center gap-1.5 text-red-700 font-bold bg-red-50 border border-red-200/80 px-2.5 py-0.5 rounded-full text-xs">
+                  <span className="inline-flex items-center gap-1.5 text-red-700 bg-red-50 border border-red-200/80 px-2.5 py-0.5 rounded-full text-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
                     <span>{language === 'en' ? 'Out of stock' : 'Hết hàng'}</span>
                   </span>
                 ) : availableStock !== null && availableStock <= 10 ? (
-                  <span className="inline-flex items-center gap-1.5 text-amber-800 font-bold bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full text-xs shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full text-sm shadow-2xs">
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                     <span>
                       {language === 'en'
@@ -686,7 +695,7 @@ export default function ComboDetailView({
                     </span>
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full text-sm shadow-2xs">
                     <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
                     <span>{language === 'en' ? 'In stock' : 'Còn hàng'}</span>
                   </span>
@@ -697,15 +706,15 @@ export default function ComboDetailView({
             </div>
 
             {/* KHỐI GIÁ BÁN NỔI BẬT */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF8F5] border border-gray-200/80">
+            <div className="p-4 sm:p-5 rounded-2xl bg-ivory border border-gray-200/80">
               <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-2xl sm:text-3xl font-extrabold text-green-primary">
+                <span className="text-2xl sm:text-3xl text-green-primary">
                   {formatPrice(combo.salePrice)}đ
                 </span>
                 <span className="text-sm sm:text-base text-gray-400 line-through">
                   {formatPrice(combo.originalPrice)}đ
                 </span>
-                <span className="px-2 py-0.5 text-xs font-bold text-sale bg-red-100/90 rounded-md">
+                <span className="px-2 py-0.5 text-sm text-sale bg-red-100/90 rounded-md">
                   {language === 'en'
                     ? `Save ${formatPrice(savingsAmount)}đ (-${combo.discount}%)`
                     : `Tiết kiệm ${formatPrice(savingsAmount)}đ (-${combo.discount}%)`}
@@ -715,15 +724,15 @@ export default function ComboDetailView({
               <div className="mt-2.5 pt-2.5 border-t border-gray-200/70 text-xs sm:text-sm text-text-muted flex items-center justify-between flex-wrap gap-2">
                 <span>
                   {language === 'en'
-                    ? <>Packaging: <strong>{combo.totalItems} bottles / carton</strong></>
-                    : <>Quy cách: <strong>{combo.totalItems} chai / thùng</strong></>}
+                    ? <>Packaging: <strong className="text-[1.125em]">{combo.totalItems} bottles / carton</strong></>
+                    : <>Quy cách: <strong className="text-[1.125em]">{combo.totalItems} chai / thùng</strong></>}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <span className="text-gray-500 font-medium">
                     {language === 'en' ? 'Stock:' : 'Tồn kho:'}
                   </span>
                   <span className={cn(
-                    "font-extrabold px-2.5 py-0.5 rounded-full text-xs inline-flex items-center gap-1 shadow-2xs",
+                    "px-2.5 py-0.5 rounded-full text-sm inline-flex items-center gap-1 shadow-2xs",
                     availableStock === null
                       ? "text-emerald-800 bg-emerald-100/90 border border-emerald-200"
                       : !isAvailable || availableStock === 0
@@ -754,9 +763,8 @@ export default function ComboDetailView({
             <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                 <div className="p-3 rounded-xl bg-white border border-gray-200/80 flex items-start gap-2.5">
-                  <Flame className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                   <div className="text-xs">
-                    <p className="font-bold text-gray-900">
+                    <p className="text-gray-900 text-[1.125em]">
                       {language === 'en' ? 'Cooling & Nutritious' : 'Thanh mát bổ dưỡng'}
                     </p>
                     <p className="text-gray-500">
@@ -768,9 +776,8 @@ export default function ComboDetailView({
                 </div>
 
                 <div className="p-3 rounded-xl bg-white border border-gray-200/80 flex items-start gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <div className="text-xs">
-                    <p className="font-bold text-gray-900">
+                    <p className="text-gray-900 text-[1.125em]">
                       {language === 'en' ? '100% Fresh Ingredients' : '100% Nguyên liệu tươi'}
                     </p>
                     <p className="text-gray-500">
@@ -787,7 +794,7 @@ export default function ComboDetailView({
             {isCustomizable ? (
               <div className="space-y-3 pt-3 border-t border-gray-100">
                 <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/70 text-sm text-emerald-900">
-                  <p className="font-bold mb-1">
+                  <p className="mb-1 text-[1.125em]">
                     {language === 'en'
                       ? 'This combo supports flexible flavor customization!'
                       : 'Combo này hỗ trợ tự chọn vị linh hoạt theo sở thích!'}
@@ -801,9 +808,8 @@ export default function ComboDetailView({
 
                 <Link
                   href={customizeLink}
-                  className="w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-corn hover:bg-yellow-400 text-text-dark shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  className="w-full py-3.5 px-6 rounded-xl text-base sm:text-lg bg-corn hover:bg-yellow-400 text-text-dark shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                 >
-                  <Sparkles className="w-4 h-4 text-text-dark" />
                   <span>
                     {language === 'en'
                       ? 'Customize flavors for this Combo'
@@ -816,7 +822,7 @@ export default function ComboDetailView({
               <div className="space-y-4 pt-4 border-t border-gray-100">
                 {/* Chọn số lượng combo */}
                 <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-                  <span className="text-sm font-bold text-gray-900">
+                  <span className="text-base text-gray-900">
                     {language === 'en' ? 'Quantity:' : 'Số lượng:'}
                   </span>
                   <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden bg-white shadow-xs">
@@ -829,7 +835,7 @@ export default function ComboDetailView({
                     >
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="px-4 py-1.5 font-bold text-sm sm:text-base text-gray-900 min-w-[40px] text-center">
+                    <span className="px-4 py-1.5 text-base sm:text-lg text-gray-900 min-w-[40px] text-center">
                       {quantity}
                     </span>
                     <button
@@ -856,10 +862,10 @@ export default function ComboDetailView({
                   </div>
                   <span className="text-xs text-text-muted">
                     {language === 'en' ? 'Total: ' : 'Tổng cộng: '}
-                    <strong>{formatPrice(combo.salePrice * quantity)}đ</strong>
+                    <strong className="text-[1.125em]">{formatPrice(combo.salePrice * quantity)}đ</strong>
                   </span>
                   <span className={cn(
-                    "text-xs font-semibold px-2.5 py-1 rounded-lg border shadow-2xs",
+                    "text-sm px-2.5 py-1 rounded-lg border shadow-2xs",
                     !isAvailable || availableStock === 0
                       ? "text-red-800 bg-red-50 border-red-200"
                       : availableStock !== null && availableStock <= 10
@@ -876,7 +882,7 @@ export default function ComboDetailView({
 
                 {/* Cảnh báo khi người dùng chạm trần số lượng */}
                 {availableStock !== null && quantity >= availableStock && availableStock > 0 && (
-                  <p className="text-xs text-amber-800 font-semibold bg-amber-50 px-3 py-2 rounded-xl border border-amber-200 flex items-center gap-1.5">
+                  <p className="text-sm text-amber-800 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200 flex items-center gap-1.5">
                     <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Đã đạt số lượng tối đa của cửa hàng này</span>
                   </p>
@@ -885,7 +891,7 @@ export default function ComboDetailView({
                 {/* Hết hàng tại chi nhánh đã chọn: gợi ý cửa hàng khác còn hàng */}
                 {(!isAvailable || availableStock === 0) && (
                   <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 space-y-2.5">
-                    <div className="flex items-center gap-2 font-bold text-red-900">
+                    <div className="flex items-center gap-2 text-red-900 text-[1.125em]">
                       <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
                       <span>{selectedBranch?.name || 'Chi nhánh hiện tại'} hiện đã hết hàng cho Combo này</span>
                     </div>
@@ -897,7 +903,7 @@ export default function ComboDetailView({
                         </p>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-white rounded-lg border border-red-100 shadow-2xs">
                           <div>
-                            <p className="font-bold text-gray-900 text-xs">
+                            <p className="text-gray-900 text-sm">
                               {alternativeStores[0].name}
                             </p>
                             <p className="text-[11px] text-gray-500">
@@ -910,7 +916,7 @@ export default function ComboDetailView({
                             onClick={() => {
                               useBranchStore.getState().setSelectedBranch(alternativeStores[0]);
                             }}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shrink-0 cursor-pointer transition-colors shadow-xs"
+                            className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm shrink-0 cursor-pointer transition-colors shadow-xs"
                           >
                             Chuyển sang cửa hàng này
                           </button>
@@ -920,7 +926,7 @@ export default function ComboDetailView({
                       <button
                         type="button"
                         onClick={openBranchModal}
-                        className="text-xs font-bold text-emerald-800 underline cursor-pointer hover:text-emerald-950 block text-left pt-1"
+                        className="text-sm text-emerald-800 underline cursor-pointer hover:text-emerald-950 block text-left pt-1"
                       >
                         Chọn chi nhánh khác còn hàng
                       </button>
@@ -929,13 +935,13 @@ export default function ComboDetailView({
                 )}
 
                 {/* Hai nút hành động chính */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div ref={buyButtonsRef} className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
                     disabled={!isAvailable}
                     onClick={(e) => isAvailable && handleAddToCart(e)}
                     className={cn(
-                      "w-full py-3.5 px-5 rounded-xl font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2",
+                      "w-full py-3.5 px-5 rounded-xl text-base sm:text-lg shadow-md transition-all flex items-center justify-center gap-2",
                       isAvailable
                         ? "bg-green-primary hover:bg-green-dark text-white hover:shadow-lg active:scale-[0.98] cursor-pointer"
                         : "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300 shadow-none"
@@ -959,7 +965,7 @@ export default function ComboDetailView({
                     disabled={!isAvailable}
                     onClick={() => isAvailable && handleBuyNow()}
                     className={cn(
-                      "w-full py-3.5 px-5 rounded-xl font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2",
+                      "w-full py-3.5 px-5 rounded-xl text-base sm:text-lg shadow-md transition-all flex items-center justify-center gap-2",
                       isAvailable
                         ? "bg-corn hover:bg-yellow-400 text-text-dark hover:shadow-lg active:scale-[0.98] cursor-pointer"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 shadow-none"
@@ -974,7 +980,7 @@ export default function ComboDetailView({
 
             {/* Hotline & Cam kết chất lượng */}
             <div className="pt-4 border-t border-gray-100 space-y-3">
-              <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#FAF8F5] border border-gray-200/80 text-xs sm:text-sm">
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-ivory border border-gray-200/80 text-xs sm:text-sm">
                 <div className="flex items-center gap-2 text-gray-800 font-medium">
                   <Phone className="w-4 h-4 text-green-primary" />
                   <span>
@@ -985,7 +991,7 @@ export default function ComboDetailView({
                 </div>
                 <a
                   href="tel:02862915024"
-                  className="font-bold text-green-primary hover:underline"
+                  className="text-green-primary hover:underline text-[1.125em]"
                 >
                   Hotline: 028 6291 5024
                 </a>
@@ -997,7 +1003,6 @@ export default function ComboDetailView({
                   <span>{language === 'en' ? 'Fast 2h delivery' : 'Giao nhanh 2h'}</span>
                 </div>
                 <div className="p-2 rounded-lg bg-gray-50 flex flex-col items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-emerald-700" />
                   <span>{language === 'en' ? 'Cold store 0-4°C' : 'Bảo quản lạnh 0-4°C'}</span>
                 </div>
                 <div className="p-2 rounded-lg bg-gray-50 flex flex-col items-center gap-1">
@@ -1021,11 +1026,25 @@ export default function ComboDetailView({
         </div>
       </div>
 
+      {!isCustomizable && (
+        <MobileBuyBar
+          visible={showMobileBuyBar}
+          price={combo.salePrice * quantity}
+          packLabel={`${combo.totalItems} ${language === 'en' ? 'bottles' : 'chai'}${quantity > 1 ? ` × ${quantity}` : ''}`}
+          canAdd={isAvailable && availableStock !== 0}
+          isOutOfStock={!isAvailable || availableStock === 0}
+          onAddToCart={(e) => handleAddToCart(e)}
+          onBuyNow={handleBuyNow}
+          onChangeBranch={openBranchModal}
+          language={language}
+        />
+      )}
+
       {/* Lightbox Zoom Modal via Portal */}
       {isZoomOpen && mounted && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => setIsZoomOpen(false)}
-          className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none"
+          className="fixed inset-0 z-[99999] bg-ink-950/90 backdrop-blur-md flex items-center justify-center p-4 select-none"
         >
           {/* Close button */}
           <button
@@ -1084,7 +1103,7 @@ export default function ComboDetailView({
             onClick={(e) => e.stopPropagation()}
             className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur-md px-5 py-2 rounded-full text-white text-sm font-medium border border-white/10 flex items-center gap-2"
           >
-            <span className="text-orange-400 font-bold">{activeIndex + 1}</span>
+            <span className="text-orange-400 text-[1.125em]">{activeIndex + 1}</span>
             <span className="text-white/60">/</span>
             <span>{galleryImages.length}</span>
             <span className="text-white/40">•</span>

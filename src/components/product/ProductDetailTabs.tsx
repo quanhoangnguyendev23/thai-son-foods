@@ -66,7 +66,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
 
   return (
     <section className="max-w-[1456px] mx-auto px-4 sm:px-6 py-8 md:py-10" aria-labelledby={`${baseId}-title`}>
-      <h2 id={`${baseId}-title`} className="text-xl md:text-2xl font-bold text-[#0F1111] mb-4">
+      <h2 id={`${baseId}-title`} className="text-2xl md:text-2xl text-ink-950 mb-4">
         {isEn ? 'Product information' : 'Thông tin sản phẩm'}
       </h2>
 
@@ -92,8 +92,8 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                   className={cn(
                     'shrink-0 px-3.5 py-2.5 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors cursor-pointer',
                     isActive
-                      ? 'border-green-primary text-green-primary font-semibold'
-                      : 'border-transparent text-gray-600 hover:text-[#0F1111]'
+                      ? 'border-green-primary text-green-primary'
+                      : 'border-transparent text-gray-600 hover:text-ink-950'
                   )}
                 >
                   {tab.label}
@@ -129,7 +129,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                   { k: isEn ? 'Production & expiry date' : 'Ngày sản xuất & hạn sử dụng', v: expiry },
                 ].map((row) => (
                   <div key={row.k} className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-1 sm:gap-4 py-3">
-                    <dt className="font-semibold text-gray-700 text-sm">{row.k}</dt>
+                    <dt className="text-gray-700 text-base">{row.k}</dt>
                     <dd className="text-sm">{row.v}</dd>
                   </div>
                 ))}
@@ -140,7 +140,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
               <div className="max-w-md">
                 {content.nutrition ? (
                   <div className="border border-gray-300 rounded-lg overflow-hidden">
-                    <div className="bg-gray-50 px-4 py-2.5 text-sm font-semibold text-[#0F1111] border-b border-gray-300">
+                    <div className="bg-gray-50 px-4 py-2.5 text-base text-ink-950 border-b border-gray-300">
                       {content.nutrition.basis}
                     </div>
                     <table className="w-full text-sm">
@@ -148,7 +148,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                         {content.nutrition.rows.map((row) => (
                           <tr key={row.label} className="border-b border-gray-100 last:border-0">
                             <th scope="row" className="text-left font-normal text-gray-700 px-4 py-2">{row.label}</th>
-                            <td className="text-right font-semibold text-[#0F1111] px-4 py-2">{row.value}</td>
+                            <td className="text-right text-ink-950 px-4 py-2 text-[1.125em]">{row.value}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -167,26 +167,26 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                   {bottleVolume && (
                     <li>
                       • {isEn ? 'Standard bottle volume: ' : 'Dung tích đóng chai tiêu chuẩn: '}
-                      <strong>{bottleVolume}</strong>
+                      <strong className="text-[1.125em]">{bottleVolume}</strong>
                     </li>
                   )}
                   <li>
                     • {isEn ? 'Packaging material: ' : 'Chất liệu bao bì: '}
-                    <strong>{content.packagingMaterial || DEFAULT_PRODUCT_DETAIL.packagingMaterial}</strong>
+                    <strong className="text-[1.125em]">{content.packagingMaterial || DEFAULT_PRODUCT_DETAIL.packagingMaterial}</strong>
                   </li>
                 </ul>
                 {variants.length > 0 && (
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[420px] text-sm border border-gray-200">
-                      <caption className="text-left text-sm font-semibold text-[#0F1111] pb-2">
+                      <caption className="text-left text-base text-ink-950 pb-2">
                         {isEn ? 'Price list by pack size' : 'Bảng giá theo quy cách'}
                       </caption>
                       <thead className="bg-gray-50">
                         <tr>
-                          <th scope="col" className="text-left font-semibold text-gray-700 px-3 py-2">{isEn ? 'Pack' : 'Quy cách'}</th>
-                          <th scope="col" className="text-left font-semibold text-gray-700 px-3 py-2">{isEn ? 'Contents' : 'Quy đổi'}</th>
-                          <th scope="col" className="text-right font-semibold text-gray-700 px-3 py-2">{isEn ? 'Price' : 'Giá'}</th>
-                          <th scope="col" className="text-right font-semibold text-gray-700 px-3 py-2">{isEn ? 'Per bottle' : 'Đơn giá/chai'}</th>
+                          <th scope="col" className="text-left text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Pack' : 'Quy cách'}</th>
+                          <th scope="col" className="text-left text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Contents' : 'Quy đổi'}</th>
+                          <th scope="col" className="text-right text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Price' : 'Giá'}</th>
+                          <th scope="col" className="text-right text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Per bottle' : 'Đơn giá/chai'}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -194,7 +194,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                           <tr key={v.id} className="border-t border-gray-100">
                             <td className="px-3 py-2">{getVariantLabel(v, language)}</td>
                             <td className="px-3 py-2 text-gray-600">{v.volume || `${v.quantity} chai`}</td>
-                            <td className="px-3 py-2 text-right font-semibold">{formatPrice(v.price)}đ</td>
+                            <td className="px-3 py-2 text-right text-[1.125em]">{formatPrice(v.price)}đ</td>
                             <td className="px-3 py-2 text-right text-gray-600">{formatPrice(getUnitPrice(v))}đ</td>
                           </tr>
                         ))}
@@ -211,10 +211,10 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                   <tbody>
                     {specs.map((row) => (
                       <tr key={row.label} className="border-b border-gray-100 last:border-0 align-top">
-                        <th scope="row" className="text-left font-semibold text-gray-700 bg-gray-50 px-4 py-2.5 w-[38%] sm:w-[220px]">
+                        <th scope="row" className="text-left text-gray-700 bg-gray-50 px-4 py-2.5 w-[38%] sm:w-[220px] text-[1.125em]">
                           {row.label}
                         </th>
-                        <td className="px-4 py-2.5 text-[#0F1111]">{row.value}</td>
+                        <td className="px-4 py-2.5 text-ink-950">{row.value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -256,7 +256,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
           aria-modal="true"
           aria-label={isEn ? 'Product label' : 'Nhãn sản phẩm'}
           onClick={() => setLabelOpen(false)}
-          className="fixed inset-0 z-[9999] bg-black/85 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] bg-ink-950/85 flex items-center justify-center p-4"
         >
           <button
             type="button"

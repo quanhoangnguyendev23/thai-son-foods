@@ -33,9 +33,9 @@ export default function PackSizeSelector({
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm text-[#0F1111] mb-2">
+      <legend className="text-sm text-ink-950 mb-2">
         {language === 'en' ? 'Pack size: ' : 'Quy cách: '}
-        <strong className="font-semibold">
+        <strong className="text-[1.125em]">
           {getVariantLabel(active, language)}
           {bottleVolume ? ` × ${bottleVolume}` : ''}
         </strong>
@@ -63,10 +63,10 @@ export default function PackSizeSelector({
                 isUnavailable && !isSelected && 'border-dashed opacity-60'
               )}
             >
-              <span className="block text-[13px] font-semibold text-[#0F1111] leading-tight">
+              <span className="block text-[15px] text-ink-950 leading-tight">
                 {getVariantLabel(v, language)}
               </span>
-              <span className="block text-[15px] font-bold text-[#0F1111] mt-1 leading-none">
+              <span className="block text-[17px] text-ink-950 mt-1 leading-none">
                 {formatPrice(v.price)}đ
               </span>
               <span className="block text-[11px] text-gray-500 mt-1">

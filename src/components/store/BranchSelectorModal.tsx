@@ -11,7 +11,6 @@ import {
   Phone,
   AlertCircle,
   Clock,
-  Sparkles,
   Loader2,
 } from 'lucide-react';
 import { useBranchStore, StoreBranch } from '@/store/branch';
@@ -44,10 +43,10 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
 
   // Tải danh sách cửa hàng khi mở modal
   useEffect(() => {
-    if (isBranchModalOpen && branches.length === 0) {
+    if (isBranchModalOpen) {
       fetchBranches();
     }
-  }, [isBranchModalOpen, branches.length, fetchBranches]);
+  }, [isBranchModalOpen, fetchBranches]);
 
   // Nếu có productId, truy vấn tình trạng kho của sản phẩm tại các chi nhánh
   useEffect(() => {
@@ -194,20 +193,20 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
   if (!isBranchModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-ink-950/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
       >
         {/* Header Modal */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#F4FBF7]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-              <MapPin className="w-5 h-5 text-[#1B5E3B]" />
+            <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
+              <MapPin className="w-5 h-5 text-forest-700" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 font-heading">
+              <h2 className="text-xl text-gray-900 font-heading">
                 Chọn Chi nhánh Phục vụ
               </h2>
               <p className="text-xs text-text-muted">
@@ -235,7 +234,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                 'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-xs cursor-pointer',
                 userCoords
                   ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                  : 'bg-[#1B5E3B] hover:bg-[#164e31] text-white'
+                  : 'bg-forest-700 hover:bg-forest-800 text-white'
               )}
             >
               {gpsLoading ? (
@@ -264,7 +263,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 placeholder="Tìm theo tên chi nhánh, đường, quận..."
-                className="w-full pl-9 pr-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:border-[#1B5E3B]"
+                className="w-full pl-9 pr-3 py-2 text-base sm:text-sm border border-gray-200 rounded-xl focus:outline-hidden focus:border-forest-700"
               />
             </div>
           </div>
@@ -280,7 +279,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
           {/* Bộ lọc Tỉnh & Quận */}
           <div className="grid grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-[12px] text-gray-500 uppercase tracking-wider mb-1">
                 Tỉnh / Thành phố
               </label>
               <select
@@ -289,7 +288,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                   setSelectedProvince(e.target.value);
                   setSelectedDistrict('ALL');
                 }}
-                className="w-full px-3 py-2 text-base sm:text-xs md:text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-hidden focus:border-[#1B5E3B]"
+                className="w-full px-3 py-2 text-base sm:text-xs md:text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-hidden focus:border-forest-700"
               >
                 <option value="ALL">Tất cả Tỉnh/Thành</option>
                 {provinces.map((p) => (
@@ -301,13 +300,13 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-[12px] text-gray-500 uppercase tracking-wider mb-1">
                 Quận / Huyện
               </label>
               <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
-                className="w-full px-3 py-2 text-base sm:text-xs md:text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-hidden focus:border-[#1B5E3B]"
+                className="w-full px-3 py-2 text-base sm:text-xs md:text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-hidden focus:border-forest-700"
               >
                 <option value="ALL">Tất cả Quận/Huyện</option>
                 {districts.map((d) => (
@@ -324,7 +323,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 divide-y divide-gray-100">
           {isStoreLoading ? (
             <div className="py-12 flex flex-col items-center justify-center text-text-muted gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-[#1B5E3B]" />
+              <Loader2 className="w-6 h-6 animate-spin text-forest-700" />
               <span className="text-sm">Đang tải danh sách chi nhánh...</span>
             </div>
           ) : processedBranches.length === 0 ? (
@@ -336,7 +335,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                   setSelectedDistrict('ALL');
                   setSearchKeyword('');
                 }}
-                className="mt-2 text-xs text-[#1B5E3B] font-semibold underline cursor-pointer"
+                className="mt-2 text-sm text-forest-700 underline cursor-pointer"
               >
                 Xem tất cả chi nhánh
               </button>
@@ -357,14 +356,13 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-gray-900 text-sm md:text-[15px]">
+                      <span className="text-gray-900 text-base md:text-[17px]">
                         {branch.name}
                       </span>
 
                       {/* Huy hiệu Gần nhất */}
                       {isNearest && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold">
-                          <Sparkles className="w-3 h-3 text-amber-600" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[12px]">
                           Gần nhất ({branch.distanceKm} km)
                         </span>
                       )}
@@ -380,7 +378,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                       {stockStatus && (
                         <span
                           className={cn(
-                            'text-[11px] px-2 py-0.5 rounded-full font-bold',
+                            'text-[12px] px-2 py-0.5 rounded-full',
                             stockStatus === 'in_stock' && 'bg-emerald-100 text-emerald-800',
                             stockStatus === 'low_stock' && 'bg-amber-100 text-amber-800',
                             stockStatus === 'out_of_stock' && 'bg-red-100 text-red-800'
@@ -410,14 +408,14 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
 
                   <div className="shrink-0 flex items-center justify-end">
                     {isSelected ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold shadow-xs">
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm shadow-xs">
                         <Check className="w-3.5 h-3.5" />
                         Đang chọn
                       </span>
                     ) : (
                       <button
                         onClick={() => handleSelect(branch)}
-                        className="px-3.5 py-1.5 rounded-lg border border-[#1B5E3B] text-[#1B5E3B] hover:bg-[#1B5E3B] hover:text-white transition-all text-xs font-bold cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-lg border border-forest-700 text-forest-700 hover:bg-forest-700 hover:text-white transition-all text-sm cursor-pointer"
                       >
                         Chọn chi nhánh này
                       </button>

@@ -7,7 +7,6 @@ import {
   Users,
   CheckCircle2,
   ArrowRight,
-  ShieldCheck,
   Building,
   CreditCard,
   Phone,
@@ -17,8 +16,7 @@ import {
   KeyRound,
   AlertCircle,
   Clock,
-  Sparkles,
-  ArrowLeft
+  ArrowLeft,
 } from 'lucide-react';
 
 export default function DangKyDoiTacPage() {
@@ -201,7 +199,7 @@ export default function DangKyDoiTacPage() {
               <Users className="w-7 h-7" />
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
+          <h1 className="text-2xl sm:text-3xl text-slate-900">
             Đăng Ký Đối Tác Thái Sơn Foods
           </h1>
           <p className="mt-1.5 text-xs sm:text-sm text-slate-600">
@@ -210,21 +208,21 @@ export default function DangKyDoiTacPage() {
 
           {/* Stepper Indicator */}
           <div className="flex items-center justify-center gap-3 mt-6">
-            <div className={`flex items-center gap-1.5 text-xs font-semibold ${step >= 1 ? 'text-emerald-700' : 'text-slate-400'}`}>
+            <div className={`flex items-center gap-1.5 text-sm ${step >= 1 ? 'text-emerald-700' : 'text-slate-400'}`}>
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
                 1
               </span>
               <span>Đăng ký cơ bản</span>
             </div>
             <span className="w-8 h-[2px] bg-slate-200" />
-            <div className={`flex items-center gap-1.5 text-xs font-semibold ${step >= 2 ? 'text-emerald-700' : 'text-slate-400'}`}>
+            <div className={`flex items-center gap-1.5 text-sm ${step >= 2 ? 'text-emerald-700' : 'text-slate-400'}`}>
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
                 2
               </span>
               <span>Định danh & Ngân hàng</span>
             </div>
             <span className="w-8 h-[2px] bg-slate-200" />
-            <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
+            <div className={`flex items-center gap-1.5 text-sm ${step === 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step === 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
                 3
               </span>
@@ -252,7 +250,7 @@ export default function DangKyDoiTacPage() {
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm">
             <form onSubmit={handleSubmitStep1} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm text-slate-700 mb-1">
                   Họ và tên của bạn <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -269,7 +267,7 @@ export default function DangKyDoiTacPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm text-slate-700 mb-1">
                   Số điện thoại đăng ký <span className="text-rose-500">*</span>
                 </label>
                 <div className="flex gap-2">
@@ -288,7 +286,7 @@ export default function DangKyDoiTacPage() {
                     type="button"
                     disabled={loading || otpCountdown > 0}
                     onClick={handleSendOtp}
-                    className="px-4 py-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs border border-emerald-200 whitespace-nowrap disabled:opacity-50 transition-all"
+                    className="px-4 py-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm border border-emerald-200 whitespace-nowrap disabled:opacity-50 transition-all"
                   >
                     {otpCountdown > 0 ? `Gửi lại (${otpCountdown}s)` : 'Gửi mã OTP'}
                   </button>
@@ -298,7 +296,7 @@ export default function DangKyDoiTacPage() {
               {otpSent && (
                 <div className="bg-amber-50/60 border border-amber-200/80 rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-amber-900 flex items-center gap-1.5">
+                    <span className="text-amber-900 flex items-center gap-1.5 text-[1.125em]">
                       <KeyRound className="w-4 h-4 text-amber-600" /> Nhập mã xác thực OTP 6 số:
                     </span>
                     {debugOtp && (
@@ -323,7 +321,7 @@ export default function DangKyDoiTacPage() {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm text-slate-700 mb-1">
                   Địa chỉ Email (tùy chọn)
                 </label>
                 <div className="relative">
@@ -339,7 +337,7 @@ export default function DangKyDoiTacPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm text-slate-700 mb-1">
                   Mật khẩu đăng nhập
                 </label>
                 <div className="relative">
@@ -364,7 +362,7 @@ export default function DangKyDoiTacPage() {
                   />
                   <span>
                     Tôi đồng ý với{' '}
-                    <span className="text-emerald-700 font-semibold underline">
+                    <span className="text-emerald-700 underline text-[1.125em]">
                       Chính sách đối tác & Quy chế phân phối
                     </span>{' '}
                     của Thái Sơn Foods.
@@ -375,7 +373,7 @@ export default function DangKyDoiTacPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full mt-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-base shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {loading ? 'Đang kích hoạt...' : 'Hoàn Tất Đăng Ký & Nhận Mã CTV'}
                 <ArrowRight className="w-4 h-4" />
@@ -384,7 +382,7 @@ export default function DangKyDoiTacPage() {
 
             <div className="mt-6 pt-5 border-t border-slate-100 text-center text-xs text-slate-500">
               Đã có tài khoản đối tác?{' '}
-              <Link href="/doi-tac" className="text-emerald-700 font-semibold hover:underline">
+              <Link href="/doi-tac" className="text-emerald-700 hover:underline text-[1.125em]">
                 Đăng nhập Cổng đối tác
               </Link>
             </div>
@@ -395,7 +393,7 @@ export default function DangKyDoiTacPage() {
         {step === 2 && (
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+              <div className="flex items-center gap-2 text-emerald-800 text-base">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 Chúc mừng! Bạn đã nhận mã CTV: {createdPartner?.partnerCode}
               </div>
@@ -406,14 +404,14 @@ export default function DangKyDoiTacPage() {
 
             <form onSubmit={handleSubmitStep2} className="space-y-4">
               <div className="border-b border-slate-100 pb-2">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <h3 className="text-base text-slate-800 flex items-center gap-1.5">
                   <CreditCard className="w-4 h-4 text-emerald-600" /> 1. Tài Khoản Ngân Hàng Nhận Tiền
                 </h3>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-sm text-slate-700 mb-1">
                     Ngân hàng <span className="text-rose-500">*</span>
                   </label>
                   <select
@@ -433,7 +431,7 @@ export default function DangKyDoiTacPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-sm text-slate-700 mb-1">
                     Số tài khoản <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -449,7 +447,7 @@ export default function DangKyDoiTacPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-sm text-slate-700 mb-1">
                     Tên chủ tài khoản <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -462,7 +460,7 @@ export default function DangKyDoiTacPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-sm text-slate-700 mb-1">
                     Chi nhánh (tùy chọn)
                   </label>
                   <input
@@ -476,14 +474,14 @@ export default function DangKyDoiTacPage() {
               </div>
 
               <div className="border-b border-slate-100 pt-3 pb-2">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> 2. Định Danh Cá Nhân (CCCD/CMND)
+                <h3 className="text-base text-slate-800 flex items-center gap-1.5">
+                  2. Định Danh Cá Nhân (CCCD/CMND)
                 </h3>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-sm text-slate-700 mb-1">
                     Số CCCD/CMND <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -496,7 +494,7 @@ export default function DangKyDoiTacPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-sm text-slate-700 mb-1">
                     Mã số thuế cá nhân (nếu có)
                   </label>
                   <input
@@ -513,7 +511,7 @@ export default function DangKyDoiTacPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-base shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {loading ? 'Đang lưu...' : 'Gửi Hồ Sơ Xác Minh'}
                   <ArrowRight className="w-4 h-4" />
@@ -537,7 +535,7 @@ export default function DangKyDoiTacPage() {
             <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h2 className="text-2xl font-black text-slate-900">Hồ Sơ Đã Được Ghi Nhận!</h2>
+            <h2 className="text-2xl text-slate-900">Hồ Sơ Đã Được Ghi Nhận!</h2>
             <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
               Hồ sơ định danh và thông tin ngân hàng của bạn đã được chuyển tới ban quản trị kiểm tra. Bạn có thể bắt đầu lấy link giới thiệu và theo dõi thu nhập ngay bây giờ.
             </p>
@@ -545,7 +543,7 @@ export default function DangKyDoiTacPage() {
             <div className="pt-2">
               <button
                 onClick={() => router.push('/doi-tac')}
-                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all"
+                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-base shadow-md transition-all"
               >
                 Vào Cổng Quản Lý Đối Tác Ngay
               </button>

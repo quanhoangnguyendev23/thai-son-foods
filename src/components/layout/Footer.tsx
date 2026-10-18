@@ -59,27 +59,27 @@ export default function Footer() {
             {/* Company Info */}
             <div>
               <h3
-                className="text-base font-bold uppercase tracking-wider text-[#F4C542] font-sans mb-4"
-                style={{ color: '#F4C542' }}
+                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
+                style={{ color: 'var(--color-amber-500)' }}
               >
                 {language === 'en' ? 'Company' : 'Công ty'}
               </h3>
               <div className="space-y-3.5 text-[15px] sm:text-base text-white/90">
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-[#F4C542]" />
+                  <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-amber-500" />
                   <p className="leading-snug">{language === 'en' ? '2C Pho Quang, Tan Son Hoa Ward, Ho Chi Minh City' : '2C Phổ Quang, Phường Tân Sơn Hòa, TP. Hồ Chí Minh'}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 shrink-0 text-[#F4C542]" />
-                  <a href="tel:02862915024" className="hover:text-[#F4C542] transition-colors font-medium py-2 -my-2 inline-block">
+                  <Phone className="w-5 h-5 shrink-0 text-amber-500" />
+                  <a href="tel:02862915024" className="hover:text-amber-500 transition-colors font-medium py-2 -my-2 inline-block">
                     Hotline: 028 6291 5024
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 shrink-0 text-[#F4C542]" />
+                  <Mail className="w-5 h-5 shrink-0 text-amber-500" />
                   <a
                     href="mailto:sbnts.htkd@tsf.com.vn"
-                    className="hover:text-[#F4C542] transition-colors break-all py-2 -my-2 inline-block"
+                    className="hover:text-amber-500 transition-colors break-all py-2 -my-2 inline-block"
                   >
                     sbnts.htkd@tsf.com.vn
                   </a>
@@ -90,24 +90,24 @@ export default function Footer() {
             {/* Products */}
             <div>
               <h3
-                className="text-base font-bold uppercase tracking-wider text-[#F4C542] font-sans mb-4"
-                style={{ color: '#F4C542' }}
+                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
+                style={{ color: 'var(--color-amber-500)' }}
               >
                 {language === 'en' ? 'Products' : 'Sản phẩm'}
               </h3>
               <ul className="space-y-1 text-[15px] sm:text-base text-white/90">
                 <li>
-                  <Link href="/#san-pham" className="hover:text-[#F4C542] transition-colors font-medium hover:underline py-2 -my-1 inline-block">
+                  <Link href="/#san-pham" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
                     {language === 'en' ? 'Nut Milk' : 'Sữa hạt'}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#san-pham" className="hover:text-[#F4C542] transition-colors font-medium hover:underline py-2 -my-1 inline-block">
+                  <Link href="/#san-pham" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
                     {language === 'en' ? 'Refreshments' : 'Nước giải khát'}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#san-pham" className="hover:text-[#F4C542] transition-colors font-medium hover:underline py-2 -my-1 inline-block">
+                  <Link href="/#san-pham" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
                     {language === 'en' ? 'Milk Tea' : 'Trà sữa'}
                   </Link>
                 </li>
@@ -117,19 +117,19 @@ export default function Footer() {
             {/* Support + Social */}
             <div>
               <h3
-                className="text-base font-bold uppercase tracking-wider text-[#F4C542] font-sans mb-4"
-                style={{ color: '#F4C542' }}
+                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
+                style={{ color: 'var(--color-amber-500)' }}
               >
                 {language === 'en' ? 'Support' : 'Hỗ trợ'}
               </h3>
               <ul className="space-y-1 text-[15px] sm:text-base text-white/90 mb-6">
                 <li>
-                  <Link href="/#" className="hover:text-[#F4C542] transition-colors font-medium hover:underline py-2 -my-1 inline-block">
+                  <Link href="/#" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
                     {language === 'en' ? 'Shipping Policy' : 'Chính sách giao hàng'}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#" className="hover:text-[#F4C542] transition-colors font-medium hover:underline py-2 -my-1 inline-block">
+                  <Link href="/#" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
                     {language === 'en' ? 'Contact' : 'Liên hệ'}
                   </Link>
                 </li>
@@ -137,8 +137,8 @@ export default function Footer() {
 
               {/* Social */}
               <h3
-                className="text-base font-bold uppercase tracking-wider text-[#F4C542] font-sans mb-3.5"
-                style={{ color: '#F4C542' }}
+                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-3.5"
+                style={{ color: 'var(--color-amber-500)' }}
               >
                 {language === 'en' ? 'Follow Us' : 'Kết nối'}
               </h3>
@@ -147,7 +147,7 @@ export default function Footer() {
                   href="https://www.facebook.com/suabapnepthaison"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-[#F4C542] hover:text-[#0F2A1F] transition-all hover:scale-105"
+                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all hover:scale-105"
                   aria-label="Facebook"
                 >
                   <FacebookIcon className="w-5 h-5" />
@@ -156,7 +156,7 @@ export default function Footer() {
                   href="https://www.youtube.com/channel/UCiyHE1-nGSmHRaFb-OgZfMA"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-[#F4C542] hover:text-[#0F2A1F] transition-all hover:scale-105"
+                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all hover:scale-105"
                   aria-label="YouTube"
                 >
                   <YoutubeIcon className="w-5 h-5" />
@@ -165,7 +165,7 @@ export default function Footer() {
                   href="https://instagram.com/suabapnepthaison"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-[#F4C542] hover:text-[#0F2A1F] transition-all hover:scale-105"
+                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all hover:scale-105"
                   aria-label="Instagram"
                 >
                   <InstagramIcon className="w-5 h-5" />
@@ -176,12 +176,12 @@ export default function Footer() {
 
           {/* Free shipping notice */}
           <div className="mt-8 p-4 sm:p-5 bg-white/10 rounded-xl text-[15px] sm:text-base text-white/95 flex items-center gap-3 border border-white/10">
-            <Truck className="w-5 h-5 text-[#F4C542] shrink-0" />
+            <Truck className="w-5 h-5 text-amber-500 shrink-0" />
             <span className="font-medium">
               {language === 'en'
                 ? 'Free shipping in HCMC, Bien Hoa, Long Thanh on orders from '
                 : 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ '}
-              <span className="font-bold text-[#F4C542]">200.000đ</span>
+              <span className="text-amber-500 text-[1.125em]">200.000đ</span>
             </span>
           </div>
 

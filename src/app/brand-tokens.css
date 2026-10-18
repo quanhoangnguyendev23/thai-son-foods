@@ -1,0 +1,412 @@
+/*
+ * ============================================================
+ *  BRAND TOKENS — NGUỒN SỰ THẬT DUY NHẤT CHO MÀU SẮC
+ *  Thái Sơn Foods. Chỉnh màu ở ĐÂY, không viết mã HEX trong component.
+ *
+ *  Bảng màu thương hiệu (chuẩn công ty):
+ *    brand-forest   #22544C  primary (header, nút chính, tiêu đề)
+ *    brand-emerald  #236E45  primary hover/active, success, link
+ *    brand-leaf     #7CA250  secondary, info, tag/badge, biểu đồ
+ *    brand-amber    #E09245  accent 1, warning, highlight
+ *    brand-copper   #B56322  accent 2 (CẦN XÁC NHẬN: ảnh gốc ghi trùng #7CA250)
+ *    brand-chestnut #82422D  nhấn tối, chữ nhấn mạnh, border đậm
+ *    brand-crimson  #EE355C  CTA nổi bật, error, badge hot/mới
+ *
+ *  QUY TẮC: KHÔNG dùng màu đen (mọi dạng biểu diễn, kể cả gần đen) và KHÔNG dùng
+ *  màu tím (mọi dải hue 250-320). Chữ chính = ink-950 (xanh rêu
+ *  cực đậm), shadow/overlay = rgba(34,84,76,x).
+ *
+ *  Thang 50-950 sinh từ màu gốc: sáng hơn = trộn trắng, tối hơn = trộn xanh rêu
+ *  #1B4A42 (xanh rêu, không trộn đen). Bước chứa đúng màu gốc: forest/emerald/chestnut = 700,
+ *  copper = 600, leaf/amber/crimson = 500.
+ *
+ *  Các palette mặc định của Tailwind (slate, gray, emerald, amber, red, blue,
+ *  purple...) được GHI ĐÈ bên dưới bằng thang thương hiệu, nên class cũ như
+ *  text-gray-600 hay bg-emerald-50 tự dùng màu thương hiệu.
+ * ============================================================
+ */
+@theme static {
+  /* --- Màu thương hiệu gốc --- */
+  --color-brand-forest: #22544C;
+  --color-brand-emerald: #236E45;
+  --color-brand-leaf: #7CA250;
+  --color-brand-amber: #E09245;
+  --color-brand-copper: #B56322;
+  --color-brand-chestnut: #82422D;
+  --color-brand-crimson: #EE355C;
+
+  /* --- Thang màu thương hiệu --- */
+  /* forest */
+  --color-forest-50: #F0F3F2;
+  --color-forest-100: #E0E7E6;
+  --color-forest-200: #C1CFCD;
+  --color-forest-300: #9CB2AE;
+  --color-forest-400: #6F908B;
+  --color-forest-500: #4A736C;
+  --color-forest-600: #34625A;
+  --color-forest-700: #22544C;
+  --color-forest-800: #1F5048;
+  --color-forest-900: #1E4F47;
+  --color-forest-950: #1D4D45;
+  /* emerald */
+  --color-emerald-50: #F0F5F2;
+  --color-emerald-100: #E0EBE5;
+  --color-emerald-200: #C1D6CB;
+  --color-emerald-300: #9CBEAB;
+  --color-emerald-400: #70A186;
+  --color-emerald-500: #4B8866;
+  --color-emerald-600: #357A54;
+  --color-emerald-700: #236E45;
+  --color-emerald-800: #206044;
+  --color-emerald-900: #1F5A43;
+  --color-emerald-950: #1D5543;
+  /* leaf */
+  --color-leaf-50: #F6F8F3;
+  --color-leaf-100: #EDF2E7;
+  --color-leaf-200: #DAE5CE;
+  --color-leaf-300: #C4D5B0;
+  --color-leaf-400: #AAC38D;
+  --color-leaf-500: #7CA250;
+  --color-leaf-600: #627D42;
+  --color-leaf-700: #536B38;
+  --color-leaf-800: #46592F;
+  --color-leaf-900: #3F502A;
+  --color-leaf-950: #394A27;
+  /* amber */
+  --color-amber-50: #FDF7F2;
+  --color-amber-100: #FBF0E5;
+  --color-amber-200: #F6E0CB;
+  --color-amber-300: #F1CEAB;
+  --color-amber-400: #EBB886;
+  --color-amber-500: #E09245;
+  --color-amber-600: #A86523;
+  --color-amber-700: #8E561D;
+  --color-amber-800: #784819;
+  --color-amber-900: #6C4116;
+  --color-amber-950: #633C14;
+  /* copper */
+  --color-copper-50: #FAF4F0;
+  --color-copper-100: #F5E9E0;
+  --color-copper-200: #EAD3C1;
+  --color-copper-300: #DEB99C;
+  --color-copper-400: #CF9A6F;
+  --color-copper-500: #C27F4A;
+  --color-copper-600: #B56322;
+  --color-copper-700: #935321;
+  --color-copper-800: #7A461C;
+  --color-copper-900: #6F3F19;
+  --color-copper-950: #673A17;
+  /* chestnut */
+  --color-chestnut-50: #F6F2F0;
+  --color-chestnut-100: #EEE5E2;
+  --color-chestnut-200: #DCCAC4;
+  --color-chestnut-300: #C7AAA1;
+  --color-chestnut-400: #AE8477;
+  --color-chestnut-500: #996453;
+  --color-chestnut-600: #8C513E;
+  --color-chestnut-700: #82422D;
+  --color-chestnut-800: #7E4330;
+  --color-chestnut-900: #723D2B;
+  --color-chestnut-950: #683828;
+  /* crimson */
+  --color-crimson-50: #FEF1F4;
+  --color-crimson-100: #FDE3E8;
+  --color-crimson-200: #FAC6D1;
+  --color-crimson-300: #F7A4B6;
+  --color-crimson-400: #F47C95;
+  --color-crimson-500: #EE355C;
+  --color-crimson-600: #E31F49;
+  --color-crimson-700: #C3183C;
+  --color-crimson-800: #A41533;
+  --color-crimson-900: #96132E;
+  --color-crimson-950: #89112B;
+  /* ink: trung tính xanh-xám cùng tông forest (thay đen/xám) */
+  --color-ink-50: #F7FAFA;
+  --color-ink-100: #EEF3F3;
+  --color-ink-200: #DEE7E6;
+  --color-ink-300: #C5D3D1;
+  --color-ink-400: #98AEAB;
+  --color-ink-500: #6F908C;
+  --color-ink-600: #557773;
+  --color-ink-700: #40645F;
+  --color-ink-800: #315B56;
+  --color-ink-900: #27534D;
+  --color-ink-950: #143D38;
+
+  /* --- Ngữ nghĩa trạng thái --- */
+  --color-success: var(--color-brand-emerald);
+  --color-warning: var(--color-brand-amber);
+  --color-error: var(--color-brand-crimson);
+  --color-info: var(--color-leaf-600);
+
+  /* --- Thay thế đen / tím của Tailwind --- */
+  --color-black: var(--color-ink-950);
+
+  /* --- Ghi đè palette mặc định Tailwind bằng thang thương hiệu --- */
+  /* slate -> ink */
+  --color-slate-50: var(--color-ink-50);
+  --color-slate-100: var(--color-ink-100);
+  --color-slate-200: var(--color-ink-200);
+  --color-slate-300: var(--color-ink-300);
+  --color-slate-400: var(--color-ink-400);
+  --color-slate-500: var(--color-ink-500);
+  --color-slate-600: var(--color-ink-600);
+  --color-slate-700: var(--color-ink-700);
+  --color-slate-800: var(--color-ink-800);
+  --color-slate-900: var(--color-ink-900);
+  --color-slate-950: var(--color-ink-950);
+  /* gray -> ink */
+  --color-gray-50: var(--color-ink-50);
+  --color-gray-100: var(--color-ink-100);
+  --color-gray-200: var(--color-ink-200);
+  --color-gray-300: var(--color-ink-300);
+  --color-gray-400: var(--color-ink-400);
+  --color-gray-500: var(--color-ink-500);
+  --color-gray-600: var(--color-ink-600);
+  --color-gray-700: var(--color-ink-700);
+  --color-gray-800: var(--color-ink-800);
+  --color-gray-900: var(--color-ink-900);
+  --color-gray-950: var(--color-ink-950);
+  /* zinc -> ink */
+  --color-zinc-50: var(--color-ink-50);
+  --color-zinc-100: var(--color-ink-100);
+  --color-zinc-200: var(--color-ink-200);
+  --color-zinc-300: var(--color-ink-300);
+  --color-zinc-400: var(--color-ink-400);
+  --color-zinc-500: var(--color-ink-500);
+  --color-zinc-600: var(--color-ink-600);
+  --color-zinc-700: var(--color-ink-700);
+  --color-zinc-800: var(--color-ink-800);
+  --color-zinc-900: var(--color-ink-900);
+  --color-zinc-950: var(--color-ink-950);
+  /* neutral -> ink */
+  --color-neutral-50: var(--color-ink-50);
+  --color-neutral-100: var(--color-ink-100);
+  --color-neutral-200: var(--color-ink-200);
+  --color-neutral-300: var(--color-ink-300);
+  --color-neutral-400: var(--color-ink-400);
+  --color-neutral-500: var(--color-ink-500);
+  --color-neutral-600: var(--color-ink-600);
+  --color-neutral-700: var(--color-ink-700);
+  --color-neutral-800: var(--color-ink-800);
+  --color-neutral-900: var(--color-ink-900);
+  --color-neutral-950: var(--color-ink-950);
+  /* stone -> ink */
+  --color-stone-50: var(--color-ink-50);
+  --color-stone-100: var(--color-ink-100);
+  --color-stone-200: var(--color-ink-200);
+  --color-stone-300: var(--color-ink-300);
+  --color-stone-400: var(--color-ink-400);
+  --color-stone-500: var(--color-ink-500);
+  --color-stone-600: var(--color-ink-600);
+  --color-stone-700: var(--color-ink-700);
+  --color-stone-800: var(--color-ink-800);
+  --color-stone-900: var(--color-ink-900);
+  --color-stone-950: var(--color-ink-950);
+  /* green -> forest */
+  --color-green-50: var(--color-forest-50);
+  --color-green-100: var(--color-forest-100);
+  --color-green-200: var(--color-forest-200);
+  --color-green-300: var(--color-forest-300);
+  --color-green-400: var(--color-forest-400);
+  --color-green-500: var(--color-forest-500);
+  --color-green-600: var(--color-forest-600);
+  --color-green-700: var(--color-forest-700);
+  --color-green-800: var(--color-forest-800);
+  --color-green-900: var(--color-forest-900);
+  --color-green-950: var(--color-forest-950);
+  /* teal -> forest */
+  --color-teal-50: var(--color-forest-50);
+  --color-teal-100: var(--color-forest-100);
+  --color-teal-200: var(--color-forest-200);
+  --color-teal-300: var(--color-forest-300);
+  --color-teal-400: var(--color-forest-400);
+  --color-teal-500: var(--color-forest-500);
+  --color-teal-600: var(--color-forest-600);
+  --color-teal-700: var(--color-forest-700);
+  --color-teal-800: var(--color-forest-800);
+  --color-teal-900: var(--color-forest-900);
+  --color-teal-950: var(--color-forest-950);
+  /* lime -> leaf */
+  --color-lime-50: var(--color-leaf-50);
+  --color-lime-100: var(--color-leaf-100);
+  --color-lime-200: var(--color-leaf-200);
+  --color-lime-300: var(--color-leaf-300);
+  --color-lime-400: var(--color-leaf-400);
+  --color-lime-500: var(--color-leaf-500);
+  --color-lime-600: var(--color-leaf-600);
+  --color-lime-700: var(--color-leaf-700);
+  --color-lime-800: var(--color-leaf-800);
+  --color-lime-900: var(--color-leaf-900);
+  --color-lime-950: var(--color-leaf-950);
+  /* blue -> leaf */
+  --color-blue-50: var(--color-leaf-50);
+  --color-blue-100: var(--color-leaf-100);
+  --color-blue-200: var(--color-leaf-200);
+  --color-blue-300: var(--color-leaf-300);
+  --color-blue-400: var(--color-leaf-400);
+  --color-blue-500: var(--color-leaf-500);
+  --color-blue-600: var(--color-leaf-600);
+  --color-blue-700: var(--color-leaf-700);
+  --color-blue-800: var(--color-leaf-800);
+  --color-blue-900: var(--color-leaf-900);
+  --color-blue-950: var(--color-leaf-950);
+  /* sky -> leaf */
+  --color-sky-50: var(--color-leaf-50);
+  --color-sky-100: var(--color-leaf-100);
+  --color-sky-200: var(--color-leaf-200);
+  --color-sky-300: var(--color-leaf-300);
+  --color-sky-400: var(--color-leaf-400);
+  --color-sky-500: var(--color-leaf-500);
+  --color-sky-600: var(--color-leaf-600);
+  --color-sky-700: var(--color-leaf-700);
+  --color-sky-800: var(--color-leaf-800);
+  --color-sky-900: var(--color-leaf-900);
+  --color-sky-950: var(--color-leaf-950);
+  /* cyan -> leaf */
+  --color-cyan-50: var(--color-leaf-50);
+  --color-cyan-100: var(--color-leaf-100);
+  --color-cyan-200: var(--color-leaf-200);
+  --color-cyan-300: var(--color-leaf-300);
+  --color-cyan-400: var(--color-leaf-400);
+  --color-cyan-500: var(--color-leaf-500);
+  --color-cyan-600: var(--color-leaf-600);
+  --color-cyan-700: var(--color-leaf-700);
+  --color-cyan-800: var(--color-leaf-800);
+  --color-cyan-900: var(--color-leaf-900);
+  --color-cyan-950: var(--color-leaf-950);
+  /* purple -> leaf */
+  --color-purple-50: var(--color-leaf-50);
+  --color-purple-100: var(--color-leaf-100);
+  --color-purple-200: var(--color-leaf-200);
+  --color-purple-300: var(--color-leaf-300);
+  --color-purple-400: var(--color-leaf-400);
+  --color-purple-500: var(--color-leaf-500);
+  --color-purple-600: var(--color-leaf-600);
+  --color-purple-700: var(--color-leaf-700);
+  --color-purple-800: var(--color-leaf-800);
+  --color-purple-900: var(--color-leaf-900);
+  --color-purple-950: var(--color-leaf-950);
+  /* violet -> leaf */
+  --color-violet-50: var(--color-leaf-50);
+  --color-violet-100: var(--color-leaf-100);
+  --color-violet-200: var(--color-leaf-200);
+  --color-violet-300: var(--color-leaf-300);
+  --color-violet-400: var(--color-leaf-400);
+  --color-violet-500: var(--color-leaf-500);
+  --color-violet-600: var(--color-leaf-600);
+  --color-violet-700: var(--color-leaf-700);
+  --color-violet-800: var(--color-leaf-800);
+  --color-violet-900: var(--color-leaf-900);
+  --color-violet-950: var(--color-leaf-950);
+  /* indigo -> leaf */
+  --color-indigo-50: var(--color-leaf-50);
+  --color-indigo-100: var(--color-leaf-100);
+  --color-indigo-200: var(--color-leaf-200);
+  --color-indigo-300: var(--color-leaf-300);
+  --color-indigo-400: var(--color-leaf-400);
+  --color-indigo-500: var(--color-leaf-500);
+  --color-indigo-600: var(--color-leaf-600);
+  --color-indigo-700: var(--color-leaf-700);
+  --color-indigo-800: var(--color-leaf-800);
+  --color-indigo-900: var(--color-leaf-900);
+  --color-indigo-950: var(--color-leaf-950);
+  /* yellow -> amber */
+  --color-yellow-50: var(--color-amber-50);
+  --color-yellow-100: var(--color-amber-100);
+  --color-yellow-200: var(--color-amber-200);
+  --color-yellow-300: var(--color-amber-300);
+  --color-yellow-400: var(--color-amber-400);
+  --color-yellow-500: var(--color-amber-500);
+  --color-yellow-600: var(--color-amber-600);
+  --color-yellow-700: var(--color-amber-700);
+  --color-yellow-800: var(--color-amber-800);
+  --color-yellow-900: var(--color-amber-900);
+  --color-yellow-950: var(--color-amber-950);
+  /* orange -> copper */
+  --color-orange-50: var(--color-copper-50);
+  --color-orange-100: var(--color-copper-100);
+  --color-orange-200: var(--color-copper-200);
+  --color-orange-300: var(--color-copper-300);
+  --color-orange-400: var(--color-copper-400);
+  --color-orange-500: var(--color-copper-500);
+  --color-orange-600: var(--color-copper-600);
+  --color-orange-700: var(--color-copper-700);
+  --color-orange-800: var(--color-copper-800);
+  --color-orange-900: var(--color-copper-900);
+  --color-orange-950: var(--color-copper-950);
+  /* red -> crimson */
+  --color-red-50: var(--color-crimson-50);
+  --color-red-100: var(--color-crimson-100);
+  --color-red-200: var(--color-crimson-200);
+  --color-red-300: var(--color-crimson-300);
+  --color-red-400: var(--color-crimson-400);
+  --color-red-500: var(--color-crimson-500);
+  --color-red-600: var(--color-crimson-600);
+  --color-red-700: var(--color-crimson-700);
+  --color-red-800: var(--color-crimson-800);
+  --color-red-900: var(--color-crimson-900);
+  --color-red-950: var(--color-crimson-950);
+  /* rose -> crimson */
+  --color-rose-50: var(--color-crimson-50);
+  --color-rose-100: var(--color-crimson-100);
+  --color-rose-200: var(--color-crimson-200);
+  --color-rose-300: var(--color-crimson-300);
+  --color-rose-400: var(--color-crimson-400);
+  --color-rose-500: var(--color-crimson-500);
+  --color-rose-600: var(--color-crimson-600);
+  --color-rose-700: var(--color-crimson-700);
+  --color-rose-800: var(--color-crimson-800);
+  --color-rose-900: var(--color-crimson-900);
+  --color-rose-950: var(--color-crimson-950);
+  /* pink -> crimson */
+  --color-pink-50: var(--color-crimson-50);
+  --color-pink-100: var(--color-crimson-100);
+  --color-pink-200: var(--color-crimson-200);
+  --color-pink-300: var(--color-crimson-300);
+  --color-pink-400: var(--color-crimson-400);
+  --color-pink-500: var(--color-crimson-500);
+  --color-pink-600: var(--color-crimson-600);
+  --color-pink-700: var(--color-crimson-700);
+  --color-pink-800: var(--color-crimson-800);
+  --color-pink-900: var(--color-crimson-900);
+  --color-pink-950: var(--color-crimson-950);
+  /* fuchsia -> crimson */
+  --color-fuchsia-50: var(--color-crimson-50);
+  --color-fuchsia-100: var(--color-crimson-100);
+  --color-fuchsia-200: var(--color-crimson-200);
+  --color-fuchsia-300: var(--color-crimson-300);
+  --color-fuchsia-400: var(--color-crimson-400);
+  --color-fuchsia-500: var(--color-crimson-500);
+  --color-fuchsia-600: var(--color-crimson-600);
+  --color-fuchsia-700: var(--color-crimson-700);
+  --color-fuchsia-800: var(--color-crimson-800);
+  --color-fuchsia-900: var(--color-crimson-900);
+  --color-fuchsia-950: var(--color-crimson-950);
+
+  /* --- Đổ bóng: thay bóng đen mặc định bằng brand-forest rgb(34 84 76 / x) --- */
+  --shadow-2xs: 0 1px rgb(34 84 76 / 0.05);
+  --shadow-xs: 0 1px 2px 0 rgb(34 84 76 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(34 84 76 / 0.1), 0 1px 2px -1px rgb(34 84 76 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(34 84 76 / 0.1), 0 2px 4px -2px rgb(34 84 76 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(34 84 76 / 0.1), 0 4px 6px -4px rgb(34 84 76 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(34 84 76 / 0.1), 0 8px 10px -6px rgb(34 84 76 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(34 84 76 / 0.25);
+  --inset-shadow-2xs: inset 0 1px rgb(34 84 76 / 0.05);
+  --inset-shadow-xs: inset 0 1px 1px rgb(34 84 76 / 0.05);
+  --inset-shadow-sm: inset 0 2px 4px rgb(34 84 76 / 0.05);
+  --drop-shadow-xs: 0 1px 1px rgb(34 84 76 / 0.05);
+  --drop-shadow-sm: 0 1px 2px rgb(34 84 76 / 0.15);
+  --drop-shadow-md: 0 3px 3px rgb(34 84 76 / 0.12);
+  --drop-shadow-lg: 0 4px 4px rgb(34 84 76 / 0.15);
+  --drop-shadow-xl: 0 9px 7px rgb(34 84 76 / 0.1);
+  --drop-shadow-2xl: 0 25px 25px rgb(34 84 76 / 0.15);
+  --text-shadow-2xs: 0px 1px 0px rgb(34 84 76 / 0.15);
+  --text-shadow-xs: 0px 1px 1px rgb(34 84 76 / 0.2);
+  --text-shadow-sm: 0px 1px 0px rgb(34 84 76 / 0.075), 0px 1px 1px rgb(34 84 76 / 0.075), 0px 2px 2px rgb(34 84 76 / 0.075);
+  --text-shadow-md: 0px 1px 1px rgb(34 84 76 / 0.1), 0px 1px 2px rgb(34 84 76 / 0.1), 0px 2px 4px rgb(34 84 76 / 0.1);
+  --text-shadow-lg: 0px 1px 2px rgb(34 84 76 / 0.1), 0px 3px 2px rgb(34 84 76 / 0.1), 0px 4px 8px rgb(34 84 76 / 0.1);
+  --shadow: 0 1px 3px 0 rgb(34 84 76 / 0.1), 0 1px 2px -1px rgb(34 84 76 / 0.1);
+  --shadow-inner: inset 0 2px 4px 0 rgb(34 84 76 / 0.05);
+  --drop-shadow: 0 1px 2px rgb(34 84 76 / 0.1), 0 1px 1px rgb(34 84 76 / 0.06);
+}

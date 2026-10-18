@@ -83,7 +83,7 @@ export default function ProductBundleSuggestions({
 
   return (
     <section className={cn('max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8', className)}>
-      <h2 className="text-lg md:text-xl font-bold text-[#0F1111] mb-1">
+      <h2 className="text-xl md:text-2xl text-ink-950 mb-1">
         {isEn ? 'Frequently paired' : 'Gợi ý mua kèm'}
       </h2>
       <p className="text-xs md:text-sm text-gray-600 mb-4">
@@ -135,16 +135,16 @@ export default function ProductBundleSuggestions({
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleItem(item.product.id)}
-                        className="mt-0.5 w-4 h-4 shrink-0 accent-[#1B5E3B] cursor-pointer"
+                        className="mt-0.5 w-4 h-4 shrink-0 accent-forest-700 cursor-pointer"
                       />
-                      <span className="text-[13px] leading-snug text-[#0F1111] line-clamp-3">
+                      <span className="text-[13px] leading-snug text-ink-950 line-clamp-3">
                         {item.isCurrent && (
-                          <strong className="font-semibold">{isEn ? 'This item: ' : 'Sản phẩm này: '}</strong>
+                          <strong className="text-[1.125em]">{isEn ? 'This item: ' : 'Sản phẩm này: '}</strong>
                         )}
                         {name} ({packLabel})
                       </span>
                     </label>
-                    <div className="pl-6 mt-1 text-sm font-bold text-[#0F1111]">{formatPrice(item.price)}đ</div>
+                    <div className="pl-6 mt-1 text-base text-ink-950">{formatPrice(item.price)}đ</div>
                   </div>
                 </div>
               </React.Fragment>
@@ -156,7 +156,7 @@ export default function ProductBundleSuggestions({
         <div className="lg:w-[260px] shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 pt-4 lg:pt-0 lg:pl-6">
           <div className="text-sm text-gray-700 mb-2.5">
             {isEn ? 'Total for selected items: ' : `Tổng (${selectedCount} sản phẩm): `}
-            <span className="text-lg font-bold text-[#0F1111]">{formatPrice(totalPrice)}đ</span>
+            <span className="text-xl text-ink-950">{formatPrice(totalPrice)}đ</span>
           </div>
 
           <button
@@ -164,10 +164,10 @@ export default function ProductBundleSuggestions({
             onClick={handleAddToCart}
             disabled={selectedCount === 0 || successCount !== null}
             className={cn(
-              'w-full h-10 px-5 rounded-full text-sm font-semibold transition-colors border',
+              'w-full h-10 px-5 rounded-full text-base transition-colors border',
               successCount !== null
                 ? 'bg-emerald-600 border-emerald-600 text-white cursor-default'
-                : 'bg-corn hover:bg-corn-dark border-corn-dark/60 text-[#0F1111] cursor-pointer',
+                : 'bg-corn hover:bg-corn-dark border-corn-dark/60 text-ink-950 cursor-pointer',
               'disabled:cursor-not-allowed',
               selectedCount === 0 && 'bg-gray-200 border-gray-300 text-gray-500 hover:bg-gray-200'
             )}

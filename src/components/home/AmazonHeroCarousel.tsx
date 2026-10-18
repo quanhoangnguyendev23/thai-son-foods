@@ -113,7 +113,7 @@ export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: Amazo
               aria-label="Banner trước"
               className="absolute left-0 top-0 z-[3] h-full w-12 sm:w-16 lg:w-20 flex items-center justify-center text-white/90 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-corn cursor-pointer group"
             >
-              <span className="flex items-center justify-center w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-black/25 group-hover:bg-black/45 transition-colors">
+              <span className="flex items-center justify-center w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-ink-950/25 group-hover:bg-ink-950/45 transition-colors">
                 <ChevronLeft className="w-6 h-6 lg:w-8 lg:h-8" strokeWidth={2.5} />
               </span>
             </button>
@@ -123,7 +123,7 @@ export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: Amazo
               aria-label="Banner tiếp theo"
               className="absolute right-0 top-0 z-[3] h-full w-12 sm:w-16 lg:w-20 flex items-center justify-center text-white/90 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-corn cursor-pointer group"
             >
-              <span className="flex items-center justify-center w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-black/25 group-hover:bg-black/45 transition-colors">
+              <span className="flex items-center justify-center w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-ink-950/25 group-hover:bg-ink-950/45 transition-colors">
                 <ChevronRight className="w-6 h-6 lg:w-8 lg:h-8" strokeWidth={2.5} />
               </span>
             </button>
@@ -138,7 +138,7 @@ export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: Amazo
                   aria-label={`Xem banner ${i + 1}`}
                   aria-current={i === index}
                   className={cn(
-                    'h-1.5 rounded-full transition-all cursor-pointer',
+                    'relative before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[\'\'] h-1.5 rounded-full transition-all cursor-pointer',
                     i === index ? 'w-6 bg-white' : 'w-1.5 bg-white/60'
                   )}
                 />

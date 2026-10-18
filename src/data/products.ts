@@ -433,10 +433,10 @@ export const products: Product[] = [
     isBestSeller: false,
     isActive: true,
     variants: [
-      { id: 'tsg-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'tsg-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'tsg-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'tsg-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'tsg-7chai', name: "Trà Sữa nấu từ trà nguyên bản, đậm vị trà béo vị sữa, thức uống tiện lợi dùng ngay, chai 330ml", quantity: 7, price: 18000, unit: "1 chai", volume: '7 x 330ml' },
+      { id: 'tsg-10chai', name: "Trà Sữa nấu từ trà nguyên bản, đậm vị trà béo vị sữa, thức uống tiện lợi dùng ngay, chai 330ml", quantity: 10, price: 18000, unit: "1 chai", volume: '10 x 330ml' },
+      { id: 'tsg-12chai', name: "Trà Sữa nấu từ trà nguyên bản, đậm vị trà béo vị sữa, thức uống tiện lợi dùng ngay, chai 330ml", quantity: 12, price: 18000, unit: "1 chai", volume: '12 x 330ml' },
+      { id: 'tsg-15chai', name: "Trà Sữa nấu từ trà nguyên bản, đậm vị trà béo vị sữa, thức uống tiện lợi dùng ngay, chai 330ml", quantity: 15, price: 18000, unit: "1 chai", volume: '15 x 330ml' },
     ],
   },
   {

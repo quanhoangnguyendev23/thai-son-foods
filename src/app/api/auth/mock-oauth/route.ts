@@ -37,8 +37,8 @@ export async function GET(req: NextRequest) {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
           font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-          background: #FAF9F5;
-          color: #2D3748;
+          background: #FAF7F0;
+          color: #315B56;
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -48,8 +48,8 @@ export async function GET(req: NextRequest) {
         .card {
           background: #fff;
           border-radius: 24px;
-          border: 1px solid #E2E8F0;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+          border: 1px solid #DEE7E6;
+          box-shadow: 0 10px 25px -5px rgba(34,84,76,0.05);
           width: 100%;
           max-width: 480px;
           padding: 32px;
@@ -59,21 +59,21 @@ export async function GET(req: NextRequest) {
           width: 60px;
           height: 60px;
           border-radius: 16px;
-          background: ${isGoogle ? '#FFF5F5' : '#EFF6FF'};
+          background: ${isGoogle ? '#FEF1F4' : '#F0F5F2'};
           display: inline-flex;
           align-items: center;
           justify-content: center;
           margin-bottom: 16px;
         }
-        h1 { font-size: 20px; font-weight: 800; color: #1A202C; margin-bottom: 8px; }
-        p.subtitle { font-size: 13px; color: #718096; margin-bottom: 24px; line-height: 1.5; }
+        h1 { font-size: 22px; font-weight: 400; color: #27534D; margin-bottom: 8px; }
+        p.subtitle { font-size: 13px; color: #6F908C; margin-bottom: 24px; line-height: 1.5; }
         .btn-quick {
           display: block;
           width: 100%;
-          background: #1B5E3B;
+          background: #22544C;
           color: #fff;
-          font-size: 14px;
-          font-weight: 700;
+          font-size: 16px;
+          font-weight: 400;
           padding: 14px 20px;
           border-radius: 14px;
           border: none;
@@ -81,69 +81,69 @@ export async function GET(req: NextRequest) {
           transition: background 0.2s;
           margin-bottom: 16px;
         }
-        .btn-quick:hover { background: #14482D; }
+        .btn-quick:hover { background: #1F5048; }
         .divider {
           display: flex;
           align-items: center;
           text-align: center;
           margin: 20px 0;
-          color: #A0AEC0;
-          font-size: 11px;
-          font-weight: 700;
+          color: #98AEAB;
+          font-size: 12px;
+          font-weight: 400;
           text-transform: uppercase;
         }
         .divider::before, .divider::after {
           content: '';
           flex: 1;
-          border-bottom: 1px solid #E2E8F0;
+          border-bottom: 1px solid #DEE7E6;
         }
         .divider::before { margin-right: 12px; }
         .divider::after { margin-left: 12px; }
         .form-group { text-align: left; margin-bottom: 14px; }
-        label { display: block; font-size: 12px; font-weight: 700; color: #4A5568; margin-bottom: 6px; }
+        label { display: block; font-size: 14px; font-weight: 400; color: #40645F; margin-bottom: 6px; }
         input {
           width: 100%;
           padding: 11px 14px;
-          border: 1px solid #E2E8F0;
+          border: 1px solid #DEE7E6;
           border-radius: 12px;
           font-size: 13px;
           outline: none;
         }
-        input:focus { border-color: #1B5E3B; }
+        input:focus { border-color: #22544C; }
         .btn-custom {
           display: block;
           width: 100%;
           background: #fff;
-          color: #2D3748;
-          border: 1.5px solid #E2E8F0;
-          font-size: 13px;
-          font-weight: 700;
+          color: #315B56;
+          border: 1.5px solid #DEE7E6;
+          font-size: 15px;
+          font-weight: 400;
           padding: 12px;
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.2s;
         }
-        .btn-custom:hover { background: #F7FAFC; border-color: #CBD5E0; }
+        .btn-custom:hover { background: #F0F5F2; border-color: #C5D3D1; }
         .info-box {
           margin-top: 24px;
-          background: #F8FAFC;
-          border: 1px dashed #CBD5E0;
+          background: #F0F5F2;
+          border: 1px dashed #C5D3D1;
           border-radius: 12px;
           padding: 12px 14px;
           text-align: left;
           font-size: 11px;
-          color: #718096;
+          color: #6F908C;
           line-height: 1.5;
         }
         .info-box code {
-          background: #EDF2F7;
-          color: #C53030;
+          background: #EEF3F3;
+          color: #C3183C;
           padding: 2px 4px;
           border-radius: 4px;
           font-family: monospace;
           font-size: 11px;
         }
-        a.cancel { display: inline-block; margin-top: 16px; font-size: 12px; color: #718096; text-decoration: none; }
+        a.cancel { display: inline-block; margin-top: 16px; font-size: 12px; color: #6F908C; text-decoration: none; }
         a.cancel:hover { text-decoration: underline; }
       </style>
     </head>
@@ -195,7 +195,7 @@ export async function GET(req: NextRequest) {
         </form>
 
         <div class="info-box">
-          💡 <strong>Khi triển khai thực tế (Production):</strong><br>
+          <strong style="font-size: 1.125em;">Khi triển khai thực tế (Production):</strong><br>
           Cấu hình <code>GOOGLE_CLIENT_ID</code> và <code>GOOGLE_CLIENT_SECRET</code> (hoặc <code>FACEBOOK_CLIENT_ID</code> và <code>FACEBOOK_CLIENT_SECRET</code>) trong file <code>.env</code>, hệ thống sẽ tự động chuyển hướng trực tiếp sang Google/Meta OAuth thật!
         </div>
 

@@ -17,7 +17,7 @@ export default function Badge({ children, variant = 'hot', className }: BadgePro
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-1 text-xs font-semibold tracking-wide rounded-lg uppercase',
+        'inline-flex items-center px-2.5 py-1 text-sm tracking-wide rounded-lg uppercase',
         variants[variant],
         className
       )}

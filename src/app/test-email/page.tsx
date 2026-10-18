@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   Truck,
-  Sparkles,
   ArrowRight,
   Info,
 } from 'lucide-react';
@@ -68,15 +67,15 @@ export default function EmailTestingStudio() {
       badge: 'Cửa hàng giao Shipper',
       icon: <Truck className="w-4 h-4 text-amber-600" />,
       desc: 'Thông báo hàng đã xuất chi nhánh, kèm số điện thoại tài xế giao nhận, hotline và lưu ý giữ nhiệt.',
-      subject: '[Thái Sơn Foods] Đơn hàng #DH1234 đang trên đường giao đến bạn 🚚',
+      subject: '[Thái Sơn Foods] Đơn hàng #DH1234 đang trên đường giao đến bạn',
     },
     completed: {
       type: 'ORDER_COMPLETED',
       title: '4. Cảm ơn & Bảo quản đồ uống',
       badge: 'Khách đã nhận hàng',
-      icon: <Sparkles className="w-4 h-4 text-emerald-700" />,
+      icon: null,
       desc: 'Lời tri ân chân thành, 4 nguyên tắc vàng giữ lạnh 2°C-5°C, cam kết 1-đổi-1 và tặng voucher 10%.',
-      subject: '[Thái Sơn Foods] Cảm ơn bạn & Cẩm nang bảo quản đồ uống tươi chuẩn vị 🌿',
+      subject: '[Thái Sơn Foods] Cảm ơn bạn & Cẩm nang bảo quản đồ uống tươi chuẩn vị',
     },
   };
 
@@ -166,11 +165,11 @@ export default function EmailTestingStudio() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <h1 className="text-5xl font-black text-slate-800 mb-2">404</h1>
+          <h1 className="text-5xl text-slate-800 mb-2">404</h1>
           <p className="text-slate-600 font-medium mb-4">Trang không tồn tại hoặc đã bị vô hiệu hóa.</p>
           <Link
             href="/"
-            className="inline-block px-4 py-2 bg-[#005A34] text-white rounded-lg text-sm font-semibold hover:bg-[#004829] transition-colors"
+            className="inline-block px-4 py-2 bg-forest-800 text-white rounded-lg text-base hover:bg-forest-900 transition-colors"
           >
             Về trang chủ
           </Link>
@@ -184,7 +183,7 @@ export default function EmailTestingStudio() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
           <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-slate-900 mb-1">Truy cập bị từ chối</h2>
+          <h2 className="text-xl text-slate-900 mb-1">Truy cập bị từ chối</h2>
           <p className="text-xs text-slate-500 mb-4">
             {authError === 'unauthorized'
               ? 'Yêu cầu đăng nhập tài khoản quản trị SUPER_ADMIN để truy cập công cụ này.'
@@ -192,7 +191,7 @@ export default function EmailTestingStudio() {
           </p>
           <Link
             href="/admin/login"
-            className="inline-block px-4 py-2 bg-[#005A34] text-white rounded-lg text-xs font-bold hover:bg-[#004829] transition-colors"
+            className="inline-block px-4 py-2 bg-forest-800 text-white rounded-lg text-sm hover:bg-forest-900 transition-colors"
           >
             Đăng nhập quản trị
           </Link>
@@ -202,20 +201,20 @@ export default function EmailTestingStudio() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6F4] text-slate-800 flex flex-col">
+    <div className="min-h-screen bg-ink-50 text-slate-800 flex flex-col">
       {/* Header Studio */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#005A34] to-[#1B5E3B] flex items-center justify-center text-white shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-forest-800 to-forest-700 flex items-center justify-center text-white shadow-sm">
               <Mail className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900">
+                <h1 className="text-lg sm:text-xl text-slate-900">
                   Thái Sơn Foods • Email Testing Studio
                 </h1>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <span className="px-2 py-0.5 rounded-full text-sm bg-emerald-100 text-emerald-800 border border-emerald-200">
                   v1.0 Live Test
                 </span>
               </div>
@@ -228,14 +227,14 @@ export default function EmailTestingStudio() {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="text-xs font-medium text-slate-600 hover:text-[#005A34] transition-colors"
+              className="text-xs font-medium text-slate-600 hover:text-forest-800 transition-colors"
             >
               Về Trang chủ
             </Link>
             <span className="text-slate-300">|</span>
             <Link
               href="/admin"
-              className="text-xs font-medium text-slate-600 hover:text-[#005A34] transition-colors"
+              className="text-xs font-medium text-slate-600 hover:text-forest-800 transition-colors"
             >
               Quản trị Admin
             </Link>
@@ -262,12 +261,12 @@ export default function EmailTestingStudio() {
                     }}
                     className={`text-left p-3 rounded-xl border transition-all duration-200 relative ${
                       isActive
-                        ? 'bg-white border-[#005A34] text-slate-900 shadow-sm ring-1 ring-[#005A34]/20'
+                        ? 'bg-white border-forest-800 text-slate-900 shadow-sm ring-1 ring-forest-800/20'
                         : 'bg-white/60 hover:bg-white border-slate-200/80 text-slate-600'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-xs font-semibold line-clamp-1">{conf.title}</span>
+                      <span className="text-sm line-clamp-1">{conf.title}</span>
                       {conf.icon}
                     </div>
                     <span
@@ -288,7 +287,7 @@ export default function EmailTestingStudio() {
           {/* Email Info Bar */}
           <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 flex-1 min-w-[260px]">
-              <span className="font-semibold text-slate-500 whitespace-nowrap">Tiêu đề gửi:</span>
+              <span className="text-slate-500 whitespace-nowrap text-[1.125em]">Tiêu đề gửi:</span>
               <span className="font-medium text-slate-800 bg-white px-2.5 py-1 rounded-md border border-slate-200 truncate select-all">
                 {currentTab.subject}
               </span>
@@ -347,7 +346,7 @@ export default function EmailTestingStudio() {
           </div>
 
           {/* Iframe Preview Container */}
-          <div className="flex-1 bg-[#EEF2F0] p-4 flex items-center justify-center overflow-auto min-h-[550px]">
+          <div className="flex-1 bg-emerald-50 p-4 flex items-center justify-center overflow-auto min-h-[550px]">
             <div
               className={`transition-all duration-300 rounded-xl overflow-hidden shadow-md bg-white border border-slate-300 ${
                 viewMode === 'desktop' ? 'w-[620px]' : 'w-[375px]'
@@ -369,22 +368,22 @@ export default function EmailTestingStudio() {
           {/* Card: Test Send Controller */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
                 <Send className="w-4 h-4" />
               </div>
-              <h2 className="text-sm font-bold text-slate-900">
+              <h2 className="text-base text-slate-900">
                 Gửi Thử Nghiệm Trực Tiếp
               </h2>
             </div>
 
             <p className="text-xs text-slate-500 mb-4 leading-relaxed">
               Nhập email thực tế của bạn để gửi mẫu thư đang chọn (
-              <span className="font-semibold text-emerald-800">{currentTab.title}</span>).
+              <span className="text-emerald-800 text-[1.125em]">{currentTab.title}</span>).
             </p>
 
             <form onSubmit={handleSendTest} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-sm text-slate-700 mb-1">
                   Email người nhận:
                 </label>
                 <input
@@ -393,14 +392,14 @@ export default function EmailTestingStudio() {
                   onChange={(e) => setTestEmail(e.target.value)}
                   placeholder="vidu@gmail.com"
                   required
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#005A34] focus:border-transparent"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-forest-800 focus:border-transparent"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={sending}
-                className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-white bg-gradient-to-r from-[#005A34] to-[#1B5E3B] hover:opacity-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-xl text-sm text-white bg-gradient-to-r from-forest-800 to-forest-700 hover:opacity-95 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {sending ? (
                   <>
@@ -432,7 +431,7 @@ export default function EmailTestingStudio() {
                     <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   )}
                   <div>
-                    <div className="font-bold mb-0.5">
+                    <div className="mb-0.5 text-[1.125em]">
                       {sendResult.success ? 'Gửi thành công!' : 'Chưa gửi được'}
                     </div>
                     <div>{sendResult.message}</div>
@@ -449,12 +448,12 @@ export default function EmailTestingStudio() {
 
           {/* Card: Configuration Note */}
           <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900">
-            <div className="flex items-center gap-1.5 font-bold mb-1.5">
+            <div className="flex items-center gap-1.5 mb-1.5 text-[1.125em]">
               <Info className="w-4 h-4 text-amber-700" />
               Lưu ý về môi trường:
             </div>
             <p className="text-[11px] leading-relaxed text-amber-800">
-              Hiện tại nếu bạn chưa điền <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">RESEND_API_KEY</code> hoặc tài khoản Gmail SMTP trong file <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">.env</code>, hệ thống chạy ở chế độ <strong>MOCK Development</strong> (ghi lưu vết trực tiếp vào cơ sở dữ liệu PostgreSQL bên dưới mà không lo phát sinh lỗi).
+              Hiện tại nếu bạn chưa điền <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">RESEND_API_KEY</code> hoặc tài khoản Gmail SMTP trong file <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">.env</code>, hệ thống chạy ở chế độ <strong className="text-[1.125em]">MOCK Development</strong> (ghi lưu vết trực tiếp vào cơ sở dữ liệu PostgreSQL bên dưới mà không lo phát sinh lỗi).
             </p>
           </div>
 
@@ -463,14 +462,14 @@ export default function EmailTestingStudio() {
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-slate-600" />
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                <h3 className="text-sm text-slate-900 uppercase tracking-wide">
                   Nhật Ký Gửi Thư (email_logs)
                 </h3>
               </div>
               <button
                 onClick={fetchLogs}
                 disabled={loadingLogs}
-                className="text-[11px] text-[#005A34] hover:underline flex items-center gap-1"
+                className="text-[11px] text-forest-800 hover:underline flex items-center gap-1"
               >
                 <RefreshCw className={`w-3 h-3 ${loadingLogs ? 'animate-spin' : ''}`} />
                 Làm mới
@@ -486,11 +485,11 @@ export default function EmailTestingStudio() {
                 logs.map((log) => (
                   <div key={log.id} className="py-2.5 text-xs">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="font-semibold text-slate-800 truncate">
+                      <span className="text-slate-800 truncate text-[1.125em]">
                         {log.recipient}
                       </span>
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-1.5 py-0.5 rounded text-[11px] ${
                           log.status === 'SENT'
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-rose-100 text-rose-800'

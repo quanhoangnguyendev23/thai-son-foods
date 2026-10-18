@@ -83,13 +83,13 @@ export default function ProductSponsoredMiniCard({
 
   return (
     <div
-      className={`w-full bg-white rounded-lg border border-gray-200/90 p-3 sm:p-3.5 shadow-[0_1px_4px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_10px_rgba(0,0,0,0.07)] transition-all duration-300 ${waitingRandom ? 'invisible' : ''} ${className}`}
+      className={`w-full bg-white rounded-lg border border-gray-200/90 p-3 sm:p-3.5 shadow-[0_1px_4px_rgba(34,84,76,0.03)] hover:shadow-[0_2px_10px_rgba(34,84,76,0.07)] transition-all duration-300 ${waitingRandom ? 'invisible' : ''} ${className}`}
     >
       <div className="flex items-center gap-3 sm:gap-4">
         {/* Ảnh sản phẩm bên trái (Tỉ lệ chuẩn Amazon) */}
         <Link
           href={productLink}
-          className="relative w-20 h-20 sm:w-24 sm:h-24 bg-[#F8F9FA] rounded-md border border-gray-100 shrink-0 overflow-hidden group p-1 flex items-center justify-center"
+          className="relative w-20 h-20 sm:w-24 sm:h-24 bg-ink-50 rounded-md border border-gray-100 shrink-0 overflow-hidden group p-1 flex items-center justify-center"
         >
           <Image
             src={thumbnail}
@@ -105,7 +105,7 @@ export default function ProductSponsoredMiniCard({
           {/* Tên sản phẩm */}
           <Link
             href={productLink}
-            className="text-xs sm:text-[13px] font-medium text-gray-900 hover:text-[#007185] transition-colors leading-snug line-clamp-2"
+            className="text-xs sm:text-[13px] font-medium text-gray-900 hover:text-forest-700 transition-colors leading-snug line-clamp-2"
             title={displayTitle}
           >
             {displayTitle}
@@ -115,21 +115,21 @@ export default function ProductSponsoredMiniCard({
           <div className="flex items-center gap-1.5 text-xs mt-1.5 flex-wrap">
             {!hideUnverifiedStats && (
               <>
-            <div className="flex items-center text-[#FFA41C]">
+            <div className="flex items-center text-amber-500">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className="w-3 h-3 fill-[#FFA41C] stroke-[#FFA41C]"
+                  className="w-3 h-3 fill-amber-500 stroke-amber-500"
                 />
               ))}
             </div>
-            <span className="text-[11px] text-[#007185] font-medium">
+            <span className="text-[11px] text-forest-700 font-medium">
               77
             </span>
             <span className="text-gray-300 text-xs">|</span>
               </>
             )}
-            <span className="text-xs sm:text-[13px] font-bold text-gray-900">
+            <span className="text-sm sm:text-[15px] text-gray-900">
               {price.toLocaleString('vi-VN')}₫
             </span>
             <span className="text-[11px] text-gray-500 font-normal">
@@ -137,9 +137,9 @@ export default function ProductSponsoredMiniCard({
             </span>
             {/* Huy hiệu Prime chuẩn Amazon */}
             {!hideUnverifiedStats && (
-            <span className="inline-flex items-center text-[#007185] font-black text-xs italic tracking-tighter ml-auto sm:ml-1">
-              <span className="text-[#007185] mr-0.5 font-bold not-italic">✓</span>
-              <span className="text-[#007185] font-black not-italic text-[11px] font-sans">
+            <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter ml-auto sm:ml-1">
+              <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
+              <span className="text-forest-700 not-italic text-[12px] font-sans">
                 prime
               </span>
             </span>
@@ -150,7 +150,7 @@ export default function ProductSponsoredMiniCard({
           <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-50">
             <Link
               href={productLink}
-              className="text-xs text-[#007185] hover:text-[#C7511F] hover:underline font-medium inline-flex items-center gap-0.5"
+              className="text-xs text-forest-700 hover:text-copper-600 hover:underline font-medium inline-flex items-center gap-0.5"
             >
               Shop now ›
             </Link>

@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
     '127.0.0.1:3000',
   ],
   images: {
+    // Ảnh bị nén quá tay (mặc định 75) làm chữ trên nhãn chai mờ; nâng lên 90.
+    // Next 16 quy giá trị quality về mục gần nhất trong danh sách này.
+    // 91 (thay vì 90) để bỏ qua cache ảnh cũ trong .next/dev/cache/images (khóa cache gồm quality).
+    qualities: [91],
     remotePatterns: [
       {
         protocol: 'https',

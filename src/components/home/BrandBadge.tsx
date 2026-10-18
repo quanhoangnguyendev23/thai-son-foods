@@ -57,7 +57,7 @@ export default function BrandBadge() {
       >
         <svg
           viewBox="0 0 120 120"
-          className="w-full h-full drop-shadow-[0_4px_14px_rgba(27,94,59,0.14)]"
+          className="w-full h-full drop-shadow-[0_4px_14px_rgba(34,84,76,0.14)]"
           style={{ overflow: 'visible' }}
         >
           <defs>
@@ -71,7 +71,7 @@ export default function BrandBadge() {
             <radialGradient id="badgeBgGradient" cx="45%" cy="40%" r="60%">
               <stop offset="0%" stopColor="#FFFFFF" />
               <stop offset="85%" stopColor="#FFFDF8" />
-              <stop offset="100%" stopColor="#FAF2E4" />
+              <stop offset="100%" stopColor="var(--color-ivory-dark)" />
             </radialGradient>
           </defs>
 
@@ -81,7 +81,7 @@ export default function BrandBadge() {
             cy="60"
             r="57"
             fill="url(#badgeBgGradient)"
-            stroke="#1B5E3B"
+            stroke="var(--color-forest-700)"
             strokeWidth="1.2"
             strokeOpacity="0.35"
           />
@@ -92,7 +92,7 @@ export default function BrandBadge() {
             cy="60"
             r="54"
             fill="none"
-            stroke="#1B5E3B"
+            stroke="var(--color-forest-700)"
             strokeWidth="1"
             strokeDasharray="3 3"
             initial={{ pathLength: 0, opacity: 0 }}
@@ -107,7 +107,7 @@ export default function BrandBadge() {
             cy="60"
             r="32"
             fill="none"
-            stroke="#1B5E3B"
+            stroke="var(--color-forest-700)"
             strokeWidth="0.8"
             strokeOpacity="0.25"
           />
@@ -129,7 +129,7 @@ export default function BrandBadge() {
             style={{ transformOrigin: '60px 60px' }}
           >
             <text
-              fill="#1B5E3B"
+              fill="var(--color-forest-700)"
               fontSize="7.6"
               fontWeight="700"
               letterSpacing="0.09em"
@@ -145,9 +145,9 @@ export default function BrandBadge() {
                 lengthAdjust="spacing"
               >
                 {language === 'en' ? (
-                  <>THAI SON FOODS<tspan fill="#D4A82E" fontSize="9" fontWeight="900"> • </tspan>NATURAL BEVERAGES<tspan fill="#D4A82E" fontSize="9" fontWeight="900"> • </tspan></>
+                  <>THAI SON FOODS<tspan fill="var(--color-amber-600)" fontSize="9" fontWeight="900"> • </tspan>NATURAL BEVERAGES<tspan fill="var(--color-amber-600)" fontSize="9" fontWeight="900"> • </tspan></>
                 ) : (
-                  <>THÁI SƠN FOODS<tspan fill="#D4A82E" fontSize="9" fontWeight="900"> • </tspan>THỨC UỐNG TỰ NHIÊN<tspan fill="#D4A82E" fontSize="9" fontWeight="900"> • </tspan></>
+                  <>THÁI SƠN FOODS<tspan fill="var(--color-amber-600)" fontSize="9" fontWeight="900"> • </tspan>THỨC UỐNG TỰ NHIÊN<tspan fill="var(--color-amber-600)" fontSize="9" fontWeight="900"> • </tspan></>
                 )}
               </textPath>
             </text>
@@ -162,7 +162,7 @@ export default function BrandBadge() {
               width="32"
               height="32"
               rx="9"
-              fill="#1B5E3B"
+              fill="var(--color-forest-700)"
               className="drop-shadow-xs"
             />
             {/* Inner subtle border line */}
@@ -217,15 +217,15 @@ export default function BrandBadge() {
               {/* Leaf body */}
               <path
                 d="M 0,16 C 0,7 8,0 16,0 C 16,9 8,16 0,16 Z"
-                fill="#2A7A50"
-                stroke="#1B5E3B"
+                fill="var(--color-emerald-600)"
+                stroke="var(--color-forest-700)"
                 strokeWidth="0.8"
               />
               {/* Leaf center vein */}
               <path
                 d="M 2,14 Q 8,8 14,2"
                 fill="none"
-                stroke="#FAF7F0"
+                stroke="var(--color-ivory)"
                 strokeWidth="0.7"
                 strokeLinecap="round"
                 strokeOpacity="0.8"

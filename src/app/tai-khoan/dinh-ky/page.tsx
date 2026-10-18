@@ -13,9 +13,7 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
-  ShieldCheck,
   ShoppingBag,
-  Sparkles,
 } from 'lucide-react';
 import { useUserAuth } from '@/context/UserAuthContext';
 import { formatPrice, safeFetchJson, safeParseJson } from '@/lib/utils';
@@ -212,13 +210,13 @@ export default function SubscriptionsManagementPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-sm border border-gray-200">
           <Calendar className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 font-heading">Quản Lý Giao Định Kỳ</h2>
+          <h2 className="text-2xl text-gray-900 font-heading">Quản Lý Giao Định Kỳ</h2>
           <p className="text-sm text-gray-600 mt-2 mb-6">
             Vui lòng đăng nhập hoặc xác thực số điện thoại để xem và điều chỉnh các hợp đồng giao sữa hạt định kỳ.
           </p>
           <button
             onClick={() => openAuthModal('login')}
-            className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition"
+            className="w-full py-3 rounded-xl bg-emerald-600 text-white text-base hover:bg-emerald-700 transition"
           >
             Đăng Nhập Ngay
           </button>
@@ -232,19 +230,19 @@ export default function SubscriptionsManagementPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 uppercase tracking-wide">
+            <div className="flex items-center gap-2 text-sm text-emerald-700 uppercase tracking-wide">
               <RefreshCw className="w-3.5 h-3.5" />
               Subscribe & Save Hub
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 font-heading mt-1">
+            <h1 className="text-2xl sm:text-3xl text-gray-900 font-heading mt-1">
               Lịch Giao Hàng Định Kỳ Của Bạn
             </h1>
           </div>
           <Link
             href="/member"
-            className="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold hover:bg-emerald-200 transition flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-sm hover:bg-emerald-200 transition flex items-center gap-1.5"
           >
-            <Sparkles className="w-3.5 h-3.5" /> Đặc quyền Thái Sơn Prime
+            Đặc quyền Thái Sơn Prime
           </Link>
         </div>
 
@@ -264,13 +262,13 @@ export default function SubscriptionsManagementPage() {
         ) : subscriptions.length === 0 ? (
           <div className="bg-white rounded-2xl p-10 text-center border border-gray-200 shadow-sm">
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-gray-800 font-heading">Chưa Có Hợp Đồng Giao Định Kỳ</h3>
+            <h3 className="text-xl text-gray-800 font-heading">Chưa Có Hợp Đồng Giao Định Kỳ</h3>
             <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">
               Bạn chưa đăng ký sản phẩm định kỳ nào. Hãy khám phá 12 sản phẩm sữa hạt nấu mới & 12 combo tiết kiệm giảm 15% giao tận nhà mỗi tuần!
             </p>
             <Link
               href="/#subscribe-save"
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition"
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white text-base hover:bg-emerald-700 transition"
             >
               Khám Phá Sản Phẩm Subscribe & Save <ChevronRight className="w-4 h-4" />
             </Link>
@@ -303,11 +301,11 @@ export default function SubscriptionsManagementPage() {
                   {/* Header thẻ hợp đồng */}
                   <div className="bg-gray-50/80 p-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs font-bold px-2.5 py-1 rounded bg-gray-200 text-gray-800">
+                      <span className="font-mono text-sm px-2.5 py-1 rounded bg-gray-200 text-gray-800">
                         #{sub.subscriptionCode}
                       </span>
                       <span
-                        className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                        className={`text-sm px-2.5 py-0.5 rounded-full ${
                           isCancelled ? 'bg-gray-200 text-gray-600' : 'bg-emerald-100 text-emerald-800'
                         }`}
                       >
@@ -318,7 +316,7 @@ export default function SubscriptionsManagementPage() {
                     <div className="text-xs text-gray-500 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-gray-400" />
                       Chu kỳ:{' '}
-                      <span className="font-semibold text-gray-800">
+                      <span className="text-gray-800 text-[1.125em]">
                         {sub.deliveryFrequency === '1_WEEK'
                           ? 'Mỗi tuần'
                           : sub.deliveryFrequency === '2_WEEKS'
@@ -334,10 +332,10 @@ export default function SubscriptionsManagementPage() {
                     {!isCancelled && (
                       <div className="mb-6 p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 flex flex-wrap items-center justify-between gap-4">
                         <div>
-                          <div className="text-xs text-emerald-800 font-semibold uppercase tracking-wider">
+                          <div className="text-sm text-emerald-800 uppercase tracking-wider">
                             Kỳ giao tiếp theo dự kiến
                           </div>
-                          <div className="text-lg font-bold text-emerald-950 mt-0.5 flex items-center gap-2">
+                          <div className="text-xl text-emerald-950 mt-0.5 flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-emerald-600" />
                             {dateStr} ({sub.preferredTimeSlot})
                           </div>
@@ -347,7 +345,7 @@ export default function SubscriptionsManagementPage() {
                         <button
                           disabled={isSubmitting}
                           onClick={() => handleSkip(sub.id)}
-                          className="px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                          className="px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100 text-sm transition flex items-center gap-1.5 shadow-sm"
                         >
                           <SkipForward className="w-3.5 h-3.5" />
                           Bỏ Qua Kỳ Này (Skip)
@@ -357,7 +355,7 @@ export default function SubscriptionsManagementPage() {
 
                     {/* Danh sách sản phẩm trong hợp đồng */}
                     <div className="space-y-3 mb-6">
-                      <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      <div className="text-sm text-gray-500 uppercase tracking-wider">
                         Danh sách sản phẩm định kỳ:
                       </div>
                       {sub.items.map((it) => (
@@ -366,15 +364,15 @@ export default function SubscriptionsManagementPage() {
                           className="flex items-center justify-between text-sm py-2 border-b border-gray-50 last:border-0"
                         >
                           <div>
-                            <span className="font-semibold text-gray-900">{it.name}</span>
+                            <span className="text-gray-900 text-[1.125em]">{it.name}</span>
                             <span className="text-xs text-gray-500 ml-2">({it.unit})</span>
                           </div>
                           <div className="text-right">
-                            <span className="font-bold text-emerald-700">{formatPrice(it.finalPrice)}</span>
+                            <span className="text-emerald-700 text-[1.125em]">{formatPrice(it.finalPrice)}</span>
                             <span className="text-xs text-gray-500 line-through ml-2">
                               {formatPrice(it.priceSnapshot)}
                             </span>
-                            <span className="text-xs font-semibold text-gray-700 ml-2">x {it.quantity}</span>
+                            <span className="text-sm text-gray-700 ml-2">x {it.quantity}</span>
                           </div>
                         </div>
                       ))}
@@ -384,13 +382,13 @@ export default function SubscriptionsManagementPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-600 bg-gray-50 p-4 rounded-xl">
                       <div>
                         <div className="text-gray-400 font-medium">Người nhận:</div>
-                        <div className="font-semibold text-gray-900 mt-0.5">
+                        <div className="text-gray-900 mt-0.5 text-[1.125em]">
                           {sub.recipientName} — {sub.recipientPhone}
                         </div>
                       </div>
                       <div>
                         <div className="text-gray-400 font-medium">Địa chỉ giao xe lạnh:</div>
-                        <div className="font-semibold text-gray-900 mt-0.5 line-clamp-1">
+                        <div className="text-gray-900 mt-0.5 line-clamp-1 text-[1.125em]">
                           {sub.shippingAddress}, {sub.ward}, {sub.district}
                         </div>
                       </div>
@@ -400,9 +398,9 @@ export default function SubscriptionsManagementPage() {
                     <div className="mt-6 pt-5 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
                       <div>
                         <span className="text-xs text-gray-500">Tổng thanh toán mỗi kỳ:</span>
-                        <div className="text-xl font-black text-gray-900">
+                        <div className="text-2xl text-gray-900">
                           {formatPrice(totalCost)}{' '}
-                          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                          <span className="text-sm text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
                             Miễn phí ship 100%
                           </span>
                         </div>
@@ -416,7 +414,7 @@ export default function SubscriptionsManagementPage() {
                               setSelectedDay(sub.preferredDayOfWeek);
                               setFreqModalSub(sub);
                             }}
-                            className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition flex items-center gap-1.5"
+                            className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm transition flex items-center gap-1.5"
                           >
                             <RefreshCw className="w-3.5 h-3.5" />
                             Đổi tần suất
@@ -424,7 +422,7 @@ export default function SubscriptionsManagementPage() {
 
                           <button
                             onClick={() => openAddressModal(sub)}
-                            className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition flex items-center gap-1.5"
+                            className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm transition flex items-center gap-1.5"
                           >
                             <MapPin className="w-3.5 h-3.5" />
                             Đổi địa chỉ
@@ -432,7 +430,7 @@ export default function SubscriptionsManagementPage() {
 
                           <button
                             onClick={() => setCancelModalSub(sub)}
-                            className="px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 text-xs font-semibold transition"
+                            className="px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 text-sm transition"
                           >
                             Hủy hợp đồng
                           </button>
@@ -449,19 +447,19 @@ export default function SubscriptionsManagementPage() {
 
       {/* ── MODAL ĐỔI TẦN SUẤT ── */}
       {freqModalSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
             <button onClick={() => setFreqModalSub(null)} className="absolute right-4 top-4 text-gray-400">✕</button>
-            <h3 className="text-lg font-bold text-gray-900 font-heading">Đổi Tần Suất & Ngày Giao Hàng</h3>
+            <h3 className="text-xl text-gray-900 font-heading">Đổi Tần Suất & Ngày Giao Hàng</h3>
             <p className="text-xs text-gray-500 mt-1">Hợp đồng #{freqModalSub.subscriptionCode}</p>
 
             <div className="mt-5 space-y-3">
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Tần suất giao:</label>
+                <label className="text-sm text-gray-700 block mb-1">Tần suất giao:</label>
                 <select
                   value={selectedFreq}
                   onChange={(e) => setSelectedFreq(e.target.value as any)}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-800"
+                  className="w-full p-2.5 rounded-xl border border-gray-300 text-base text-gray-800"
                 >
                   <option value="1_WEEK">Mỗi tuần (1 tuần / lần)</option>
                   <option value="2_WEEKS">2 tuần / lần</option>
@@ -470,11 +468,11 @@ export default function SubscriptionsManagementPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Ngày giao trong tuần:</label>
+                <label className="text-sm text-gray-700 block mb-1">Ngày giao trong tuần:</label>
                 <select
                   value={selectedDay}
                   onChange={(e) => setSelectedDay(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-800"
+                  className="w-full p-2.5 rounded-xl border border-gray-300 text-base text-gray-800"
                 >
                   <option value={2}>Thứ Hai (Sáng 08:00 - 12:00)</option>
                   <option value={3}>Thứ Ba</option>
@@ -487,13 +485,13 @@ export default function SubscriptionsManagementPage() {
             </div>
 
             <div className="mt-6 flex justify-end gap-2 pt-4 border-t border-gray-100">
-              <button onClick={() => setFreqModalSub(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold">
+              <button onClick={() => setFreqModalSub(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm">
                 Hủy
               </button>
               <button
                 disabled={isSubmitting}
                 onClick={handleUpdateFrequency}
-                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
+                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-700 transition"
               >
                 {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
               </button>
@@ -504,18 +502,18 @@ export default function SubscriptionsManagementPage() {
 
       {/* ── MODAL HỦY HỢP ĐỒNG ── */}
       {cancelModalSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
             <button onClick={() => setCancelModalSub(null)} className="absolute right-4 top-4 text-gray-400">✕</button>
-            <h3 className="text-lg font-bold text-gray-900 font-heading">Xác Nhận Hủy Hợp Đồng Giao Định Kỳ</h3>
+            <h3 className="text-xl text-gray-900 font-heading">Xác Nhận Hủy Hợp Đồng Giao Định Kỳ</h3>
             <p className="text-xs text-gray-500 mt-1">Hợp đồng #{cancelModalSub.subscriptionCode}</p>
 
             <p className="text-sm text-gray-600 mt-4">
-              Bạn có chắc chắn muốn hủy đăng ký nhận sữa định kỳ? Bạn hoàn toàn có thể chọn <span className="font-bold text-emerald-700">Bỏ qua kỳ này</span> hoặc <span className="font-bold text-emerald-700">Đổi sang 2 tuần/lần</span> thay vì hủy.
+              Bạn có chắc chắn muốn hủy đăng ký nhận sữa định kỳ? Bạn hoàn toàn có thể chọn <span className="text-emerald-700 text-[1.125em]">Bỏ qua kỳ này</span> hoặc <span className="text-emerald-700 text-[1.125em]">Đổi sang 2 tuần/lần</span> thay vì hủy.
             </p>
 
             <div className="mt-4">
-              <label className="text-xs font-bold text-gray-700 block mb-1">Lý do hủy (Tùy chọn):</label>
+              <label className="text-sm text-gray-700 block mb-1">Lý do hủy (Tùy chọn):</label>
               <input
                 type="text"
                 value={cancelReason}
@@ -526,13 +524,13 @@ export default function SubscriptionsManagementPage() {
             </div>
 
             <div className="mt-6 flex justify-between gap-2 pt-4 border-t border-gray-100">
-              <button onClick={() => setCancelModalSub(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold">
+              <button onClick={() => setCancelModalSub(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm">
                 Giữ lại hợp đồng
               </button>
               <button
                 disabled={isSubmitting}
                 onClick={handleCancelSub}
-                className="px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition"
+                className="px-5 py-2 rounded-xl bg-red-600 text-white text-sm hover:bg-red-700 transition"
               >
                 {isSubmitting ? 'Đang hủy...' : 'Xác nhận hủy'}
               </button>
@@ -543,10 +541,10 @@ export default function SubscriptionsManagementPage() {
 
       {/* ── MODAL ĐỔI ĐỊA CHỈ NHẬN HÀNG ── */}
       {addressModalSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
             <button onClick={() => setAddressModalSub(null)} className="absolute right-4 top-4 text-gray-400">✕</button>
-            <h3 className="text-lg font-bold text-gray-900 font-heading">Đổi Địa Chỉ Nhận Hàng Định Kỳ</h3>
+            <h3 className="text-xl text-gray-900 font-heading">Đổi Địa Chỉ Nhận Hàng Định Kỳ</h3>
             <p className="text-xs text-gray-500 mt-1">Hợp đồng #{addressModalSub.subscriptionCode}</p>
 
             {addressError && (
@@ -557,7 +555,7 @@ export default function SubscriptionsManagementPage() {
 
             <div className="mt-4 space-y-3">
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Họ tên người nhận:</label>
+                <label className="text-sm text-gray-700 block mb-1">Họ tên người nhận:</label>
                 <input
                   type="text"
                   value={editName}
@@ -567,7 +565,7 @@ export default function SubscriptionsManagementPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Số điện thoại:</label>
+                <label className="text-sm text-gray-700 block mb-1">Số điện thoại:</label>
                 <input
                   type="tel"
                   value={editPhone}
@@ -577,7 +575,7 @@ export default function SubscriptionsManagementPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Địa chỉ (Số nhà, tên đường):</label>
+                <label className="text-sm text-gray-700 block mb-1">Địa chỉ (Số nhà, tên đường):</label>
                 <input
                   type="text"
                   value={editAddress}
@@ -588,7 +586,7 @@ export default function SubscriptionsManagementPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Phường / Xã:</label>
+                  <label className="text-sm text-gray-700 block mb-1">Phường / Xã:</label>
                   <input
                     type="text"
                     value={editWard}
@@ -597,7 +595,7 @@ export default function SubscriptionsManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Quận / Huyện:</label>
+                  <label className="text-sm text-gray-700 block mb-1">Quận / Huyện:</label>
                   <input
                     type="text"
                     value={editDistrict}
@@ -609,13 +607,13 @@ export default function SubscriptionsManagementPage() {
             </div>
 
             <div className="mt-6 flex justify-end gap-2 pt-4 border-t border-gray-100">
-              <button onClick={() => setAddressModalSub(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold">
+              <button onClick={() => setAddressModalSub(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm">
                 Hủy
               </button>
               <button
                 disabled={isSubmitting}
                 onClick={handleUpdateAddress}
-                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
+                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-700 transition"
               >
                 {isSubmitting ? 'Đang lưu...' : 'Lưu địa chỉ mới'}
               </button>

@@ -7,10 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  Sparkles,
   RefreshCw,
   Star,
-  ShieldCheck,
   Truck,
   X,
   Phone,
@@ -582,16 +580,16 @@ export default function SubscribeSaveSection({
         <div>
           {/* Huy hiệu chiết khấu cố định 15% theo đặc tả nghiệp vụ */}
           <div className="flex items-center justify-between gap-0.5 mb-1">
-            <span className="px-1 py-0.5 bg-orange-600 text-white font-extrabold text-[8px] sm:text-[9px] rounded leading-none shrink-0">
+            <span className="px-1 py-0.5 bg-orange-600 text-white text-[9px] sm:text-[10px] rounded leading-none shrink-0">
               -15%
             </span>
-            <span className="text-[8px] sm:text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 leading-none shrink-0 truncate">
+            <span className="text-[9px] sm:text-[10px] text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 leading-none shrink-0 truncate">
               Freeship
             </span>
           </div>
 
           {/* Ảnh sản phẩm / combo — Tỷ lệ chuẩn 4:3 khớp chính xác với kích thước ảnh gốc 1200x900, hiển thị toàn diện không cắt xén */}
-          <div className="relative w-full aspect-[4/3] bg-[#FAF8F5] rounded-md overflow-hidden mb-1 flex items-center justify-center">
+          <div className="relative w-full aspect-[4/3] bg-ivory rounded-md overflow-hidden mb-1 flex items-center justify-center">
             <Image
               src={item.image || UNIFIED_PRODUCT_IMAGE}
               alt={language === 'en' ? item.nameEn : item.nameVi}
@@ -604,7 +602,7 @@ export default function SubscribeSaveSection({
           {/* Tên sản phẩm / combo */}
           <h4
             title={language === 'en' ? item.nameEn : item.nameVi}
-            className="text-[10px] sm:text-[11px] font-bold text-gray-900 line-clamp-2 min-h-[26px] sm:min-h-[28px] leading-tight"
+            className="text-[11px] sm:text-[12px] text-gray-900 line-clamp-2 min-h-[26px] sm:min-h-[28px] leading-tight"
           >
             {language === 'en' ? item.nameEn : item.nameVi}
           </h4>
@@ -624,14 +622,14 @@ export default function SubscribeSaveSection({
           {/* Khung Giá bán */}
           <div className="mt-1 pt-1 border-t border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
-              <span className="text-[11px] sm:text-xs font-black text-[#B12704] whitespace-nowrap">
+              <span className="text-[12px] sm:text-sm text-crimson-600 whitespace-nowrap">
                 {formatPrice(subPrice)} ₫
               </span>
               <span className="text-[8px] sm:text-[9px] text-gray-400 line-through whitespace-nowrap">
                 {formatPrice(item.retailPrice)} ₫
               </span>
             </div>
-            <div className="text-[8px] sm:text-[9px] text-emerald-700 font-semibold truncate">
+            <div className="text-[9px] sm:text-[10px] text-emerald-700 truncate">
               {language === 'en'
                 ? `-${item.discountRate}%`
                 : `Giảm ${formatPrice(savingAmount)} ₫`}
@@ -640,7 +638,7 @@ export default function SubscribeSaveSection({
 
           {/* Dropdown chọn tần suất giao hàng */}
           <div className="mt-1">
-            <label className="block text-[8px] sm:text-[9px] font-semibold text-gray-500 mb-0.5 truncate">
+            <label className="block text-[9px] sm:text-[10px] text-gray-500 mb-0.5 truncate">
               {language === 'en' ? 'Deliver:' : 'Chu kỳ:'}
             </label>
             <select
@@ -665,7 +663,7 @@ export default function SubscribeSaveSection({
           <button
             onClick={() => handleSubscribeClick(item)}
             type="button"
-            className="w-full mt-1.5 py-1.5 px-1 bg-[#FFD814] hover:bg-[#F7CA00] active:scale-[0.98] text-gray-900 font-bold text-[9px] sm:text-[10px] rounded border border-[#FCD200] shadow-2xs flex items-center justify-center gap-0.5 transition-all cursor-pointer whitespace-nowrap"
+            className="w-full mt-1.5 py-1.5 px-1 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-gray-900 text-[10px] sm:text-[11px] rounded border border-amber-700 shadow-2xs flex items-center justify-center gap-0.5 transition-all cursor-pointer whitespace-nowrap"
           >
             <RefreshCw className="w-2.5 h-2.5 text-gray-800 shrink-0" />
             <span>{language === 'en' ? 'Subscribe' : 'Đăng ký ngay'}</span>
@@ -681,11 +679,10 @@ export default function SubscribeSaveSection({
       <div className="w-full px-2 sm:px-3 md:px-4 lg:px-5 xl:px-6">
         {/* Header Section phong cách Amazon Subscribe & Save */}
         <div className="mb-4">
-          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1">
-            <Sparkles className="w-3 h-3 text-amber-600 fill-amber-500" />
+          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] sm:text-sm uppercase tracking-wider mb-1">
             <span>{badgeText || 'Subscribe & Save • Tiết kiệm 15%'}</span>
           </div>
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-extrabold text-gray-900 tracking-tight font-heading">
+          <h2 className="text-xl sm:text-2xl lg:text-2xl text-gray-900 tracking-tight font-heading">
             {displayTitle}
           </h2>
           <p className="text-[11px] sm:text-xs text-gray-600 mt-0.5 max-w-4xl">
@@ -697,10 +694,10 @@ export default function SubscribeSaveSection({
         <div className="mb-5">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-800 font-heading">
+            <h3 className="text-sm sm:text-base uppercase tracking-wider text-gray-800 font-heading">
               {language === 'en' ? '12 Fresh Nut Milk & Herbal Products' : '12 Sản Phẩm Sữa Hạt & Giải Khát Nấu Mới'}
             </h3>
-            <span className="text-[9px] sm:text-[10px] font-semibold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] sm:text-[11px] text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full">
               {language === 'en' ? 'Save 15%' : 'Tiết kiệm 15%'}
             </span>
           </div>
@@ -714,10 +711,10 @@ export default function SubscribeSaveSection({
         <div>
           <div className="flex items-center gap-2 mb-2 pt-2.5 border-t border-amber-100/60">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-800 font-heading">
+            <h3 className="text-sm sm:text-base uppercase tracking-wider text-gray-800 font-heading">
               {language === 'en' ? '12 Family & Office Value Combos' : '12 Combo Tiết Kiệm Gia Đình & Văn Phòng'}
             </h3>
-            <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] sm:text-[11px] text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full">
               {language === 'en' ? 'Freeship 100%' : 'Freeship 100%'}
             </span>
           </div>
@@ -730,7 +727,7 @@ export default function SubscribeSaveSection({
 
       {/* ── MODAL FULLSTACK ĐĂNG KÝ HỢP ĐỒNG ĐỊNH KỲ ── */}
       {activeModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-amber-200 relative animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setActiveModalItem(null)}
@@ -745,27 +742,27 @@ export default function SubscribeSaveSection({
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle2 className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 font-heading">
+                <h3 className="text-2xl text-gray-900 font-heading">
                   Đăng Ký Thành Công!
                 </h3>
                 <p className="text-sm text-gray-600 mt-2">
-                  Hợp đồng định kỳ <span className="font-bold text-emerald-800">#{createdSub.subscriptionCode}</span> đã được kích hoạt.
+                  Hợp đồng định kỳ <span className="text-emerald-800 text-[1.125em]">#{createdSub.subscriptionCode}</span> đã được kích hoạt.
                 </p>
 
                 <div className="my-5 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs text-emerald-950 space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Kỳ giao đầu tiên:</span>
-                    <span className="font-bold">
+                    <span className="text-[1.125em]">
                       {new Date(createdSub.nextDeliveryDate).toLocaleDateString('vi-VN')}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Chu kỳ:</span>
-                    <span className="font-bold">{activeModalItem.freqLabel}</span>
+                    <span className="text-[1.125em]">{activeModalItem.freqLabel}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Địa chỉ giao:</span>
-                    <span className="font-bold line-clamp-1">{createdSub.shippingAddress}</span>
+                    <span className="line-clamp-1 text-[1.125em]">{createdSub.shippingAddress}</span>
                   </div>
                 </div>
 
@@ -773,13 +770,13 @@ export default function SubscribeSaveSection({
                   <Link
                     href="/tai-khoan/dinh-ky"
                     onClick={() => setActiveModalItem(null)}
-                    className="block w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow transition"
+                    className="block w-full py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-base shadow transition"
                   >
                     Xem & Quản Lý Lịch Giao Tại Trang Cá Nhân
                   </Link>
                   <button
                     onClick={() => setActiveModalItem(null)}
-                    className="w-full py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition"
+                    className="w-full py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 transition"
                   >
                     Đóng cửa sổ
                   </button>
@@ -791,7 +788,7 @@ export default function SubscribeSaveSection({
                   <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-2 text-amber-700">
                     <RefreshCw className="w-6 h-6 text-amber-600" />
                   </div>
-                  <h3 className="text-xl font-black text-gray-900 font-heading">
+                  <h3 className="text-2xl text-gray-900 font-heading">
                     Ký Hợp Đồng Giao Định Kỳ
                   </h3>
                   <p className="text-xs text-gray-600 mt-1">
@@ -803,19 +800,19 @@ export default function SubscribeSaveSection({
                 <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2 text-xs text-gray-700 mb-5">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Sản phẩm:</span>
-                    <span className="font-bold text-gray-900 text-right line-clamp-1 max-w-[220px]">
+                    <span className="text-gray-900 text-right line-clamp-1 max-w-[220px] text-[1.125em]">
                       {activeModalItem.item.nameVi}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Chu kỳ:</span>
-                    <span className="font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                    <span className="text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md text-[1.125em]">
                       {activeModalItem.freqLabel}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Giá mỗi kỳ (-15%):</span>
-                    <span className="font-extrabold text-sm text-emerald-900">
+                    <span className="text-base text-emerald-900">
                       {formatPrice(activeModalItem.subPrice)} ₫
                     </span>
                   </div>
@@ -831,7 +828,7 @@ export default function SubscribeSaveSection({
                 {/* BƯỚC XÁC THỰC SĐT NẾU CHƯA ĐĂNG NHẬP */}
                 {!user ? (
                   <div className="space-y-3.5 p-4 rounded-2xl bg-gray-50 border border-gray-200 mb-4">
-                    <div className="flex items-center gap-2 text-xs font-bold text-gray-800">
+                    <div className="flex items-center gap-2 text-sm text-gray-800">
                       <Lock className="w-3.5 h-3.5 text-emerald-600" />
                       Xác thực số điện thoại để đăng ký hợp đồng
                     </div>
@@ -845,12 +842,12 @@ export default function SubscribeSaveSection({
                             value={phoneInput}
                             onChange={(e) => setPhoneInput(e.target.value)}
                             placeholder="VD: 0901234567"
-                            className="flex-1 p-2.5 rounded-xl border border-gray-300 text-sm font-semibold"
+                            className="flex-1 p-2.5 rounded-xl border border-gray-300 text-base"
                           />
                           <button
                             disabled={isSubmitting}
                             onClick={handleSendOtp}
-                            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 transition"
+                            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm shrink-0 transition"
                           >
                             {isSubmitting ? 'Đang gửi...' : 'Gửi mã OTP'}
                           </button>
@@ -870,12 +867,12 @@ export default function SubscribeSaveSection({
                             value={otpInput}
                             onChange={(e) => setOtpInput(e.target.value)}
                             placeholder="Nhập 123456"
-                            className="flex-1 p-2.5 rounded-xl border border-gray-300 text-sm font-mono tracking-widest text-center font-bold"
+                            className="flex-1 p-2.5 rounded-xl border border-gray-300 text-base font-mono tracking-widest text-center"
                           />
                           <button
                             disabled={isSubmitting}
                             onClick={handleVerifyOtp}
-                            className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shrink-0 transition"
+                            className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm shrink-0 transition"
                           >
                             {isSubmitting ? 'Đang duyệt...' : 'Xác thực'}
                           </button>
@@ -894,7 +891,7 @@ export default function SubscribeSaveSection({
                   <div className="space-y-3 mb-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div>
-                        <label className="text-xs font-semibold text-gray-700 block mb-1">Họ và tên:</label>
+                        <label className="text-sm text-gray-700 block mb-1">Họ và tên:</label>
                         <input
                           type="text"
                           value={fullNameInput}
@@ -904,7 +901,7 @@ export default function SubscribeSaveSection({
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-gray-700 block mb-1">Số điện thoại:</label>
+                        <label className="text-sm text-gray-700 block mb-1">Số điện thoại:</label>
                         <input
                           type="tel"
                           value={phoneInput}
@@ -916,7 +913,7 @@ export default function SubscribeSaveSection({
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">
+                      <label className="text-sm text-gray-700 block mb-1">
                         Địa chỉ nhận hàng:
                       </label>
                       <input
@@ -929,11 +926,11 @@ export default function SubscribeSaveSection({
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-gray-700 block mb-1">Phương thức thanh toán:</label>
+                      <label className="text-sm text-gray-700 block mb-1">Phương thức thanh toán:</label>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <label
                           className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition ${
-                            paymentMethod === 'vietqr' ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold' : 'border-gray-200'
+                            paymentMethod === 'vietqr' ? 'border-emerald-600 bg-emerald-50 text-emerald-950' : 'border-gray-200'
                           }`}
                         >
                           <input
@@ -948,7 +945,7 @@ export default function SubscribeSaveSection({
 
                         <label
                           className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition ${
-                            paymentMethod === 'cod' ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold' : 'border-gray-200'
+                            paymentMethod === 'cod' ? 'border-emerald-600 bg-emerald-50 text-emerald-950' : 'border-gray-200'
                           }`}
                         >
                           <input
@@ -966,7 +963,7 @@ export default function SubscribeSaveSection({
                     <button
                       disabled={isSubmitting}
                       onClick={handleCreateSubscription}
-                      className="w-full mt-4 py-3 rounded-xl bg-[#1B5E3B] hover:bg-[#14482D] text-white font-bold text-sm shadow-md transition cursor-pointer"
+                      className="w-full mt-4 py-3 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-base shadow-md transition cursor-pointer"
                     >
                       {isSubmitting ? 'Đang tạo hợp đồng...' : 'Xác Nhận Ký Hợp Đồng Giao Định Kỳ'}
                     </button>
@@ -974,7 +971,6 @@ export default function SubscribeSaveSection({
                 )}
 
                 <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-gray-500">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Bỏ qua kỳ hoặc hủy hợp đồng dễ dàng trong 1 chạm tại trang cá nhân.</span>
                 </div>
               </div>

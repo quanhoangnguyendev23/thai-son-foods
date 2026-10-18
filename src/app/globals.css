@@ -1,4 +1,6 @@
-@import "tailwindcss";
+/* Chỉ quét class trong src/ (không quét _backup, docs, scripts… để CSS không chứa màu cũ) */
+@import "tailwindcss" source("../");
+@import "./brand-tokens.css";
 
 @font-face {
   font-family: 'Queens Condensed';
@@ -17,23 +19,24 @@
 }
 
 @theme inline {
+  /* Token ngữ nghĩa cũ -> trỏ về token thương hiệu (xem brand-tokens.css) */
   --color-ivory: #FAF7F0;
   --color-ivory-dark: #F0EBE0;
-  --color-green-primary: #1B5E3B;
-  --color-green-dark: #144A2E;
-  --color-green-light: #2A7A50;
-  --color-corn: #F4C542;
-  --color-corn-light: #F8D76B;
-  --color-corn-dark: #D4A82E;
-  --color-text-dark: #0F2A1F;
-  --color-text-body: #3A4F44;
-  --color-text-muted: #6B7F74;
-  --color-sale: #D94A26;
-  --color-sale-light: #E8633F;
-  --color-border: #E8E2D6;
-  --color-border-light: #F0EBE0;
+  --color-green-primary: var(--color-brand-forest);
+  --color-green-dark: var(--color-forest-800);
+  --color-green-light: var(--color-brand-emerald);
+  --color-corn: var(--color-brand-amber);
+  --color-corn-light: var(--color-amber-400);
+  --color-corn-dark: var(--color-amber-600);
+  --color-text-dark: var(--color-ink-950);
+  --color-text-body: var(--color-ink-700);
+  --color-text-muted: var(--color-ink-600);
+  --color-sale: var(--color-crimson-600);
+  --color-sale-light: var(--color-brand-crimson);
+  --color-border: var(--color-ink-200);
+  --color-border-light: var(--color-ink-100);
   --color-white: #FFFFFF;
-  --color-overlay: rgba(0, 0, 0, 0.45);
+  --color-overlay: rgba(34, 84, 76, 0.5);
 
   --font-heading: var(--font-fira-sans), sans-serif;
   --font-body: var(--font-roboto), sans-serif;
@@ -46,6 +49,7 @@
 /* ===== BASE STYLES ===== */
 html {
   scroll-behavior: smooth;
+  color: var(--color-ink-950);
 }
 
 body {
@@ -81,6 +85,13 @@ body {
     font-family: var(--font-fira-sans), sans-serif;
     color: inherit;
     line-height: 1.2;
+  }
+
+  /* Quy ước giao diện: KHÔNG dùng chữ in đậm.
+     Nhấn mạnh bằng kích thước chữ (tiêu đề to hơn, nội dung cỡ thường).
+     Đặt trong @layer base nên các class tiện ích Tailwind vẫn ghi đè được. */
+  strong, b, th {
+    font-weight: 400;
   }
 }
 
@@ -173,7 +184,7 @@ body {
 .hero-swiper .swiper-button-prev,
 .hero-swiper .swiper-button-next {
   color: white;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(34, 84, 76, 0.35);
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -182,13 +193,13 @@ body {
 
 .hero-swiper .swiper-button-prev:hover,
 .hero-swiper .swiper-button-next:hover {
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(34, 84, 76, 0.55);
 }
 
 .hero-swiper .swiper-button-prev::after,
 .hero-swiper .swiper-button-next::after {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 400;
 }
 
 /* ===== REDUCED MOTION ===== */
@@ -203,7 +214,7 @@ body {
 
 /* ===== SELECTION ===== */
 ::selection {
-  background-color: var(--color-corn);
+  background-color: var(--color-amber-300);
   color: var(--color-text-dark);
 }
 
@@ -215,7 +226,7 @@ body {
   }
   20% {
     transform: scale(1.36) rotate(-7deg);
-    filter: drop-shadow(0 0 12px rgba(27, 94, 59, 0.45));
+    filter: drop-shadow(0 0 12px rgba(34, 84, 76, 0.45));
   }
   40% {
     transform: scale(0.88) rotate(5deg);
@@ -239,16 +250,112 @@ body {
 
 @keyframes cartRipple {
   0% {
-    box-shadow: 0 0 0 0 rgba(27, 94, 59, 0.6);
+    box-shadow: 0 0 0 0 rgba(34, 84, 76, 0.6);
   }
   70% {
-    box-shadow: 0 0 0 14px rgba(27, 94, 59, 0);
+    box-shadow: 0 0 0 14px rgba(34, 84, 76, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(27, 94, 59, 0);
+    box-shadow: 0 0 0 0 rgba(34, 84, 76, 0);
   }
 }
 
 .animate-cart-ripple {
   animation: cartRipple 0.6s ease-out forwards;
+}
+
+/* ===== MẶC ĐỊNH TRÌNH DUYỆT -> THƯƠNG HIỆU (không đen, không tím) ===== */
+html {
+  accent-color: var(--color-brand-emerald);
+  scrollbar-color: var(--color-ink-300) var(--color-ivory);
+}
+
+/* Link đã truy cập (mặc định của trình duyệt là tím) */
+a:visited:not([class]) {
+  color: var(--color-emerald-700);
+}
+
+/* Vòng focus */
+:focus-visible {
+  outline: 2px solid var(--color-emerald-600);
+  outline-offset: 2px;
+}
+
+/* Autofill của trình duyệt */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-forest-50) inset;
+  -webkit-text-fill-color: var(--color-ink-950);
+  caret-color: var(--color-ink-950);
+}
+
+::placeholder {
+  color: var(--color-ink-500);
+  opacity: 1;
+}
+
+/* ===== MÀU ĐỔ BÓNG MẶC ĐỊNH (thay bóng đen của Tailwind bằng brand-forest) =====
+   Các class shadow-*, drop-shadow-* dùng biến này làm màu mặc định; class có màu riêng
+   (vd shadow-emerald-900/30) vẫn ghi đè bình thường. */
+@layer base {
+  *, ::before, ::after {
+    --tw-shadow-color: rgb(34 84 76 / 0.14);
+    --tw-inset-shadow-color: rgb(34 84 76 / 0.1);
+    --tw-drop-shadow-color: rgb(34 84 76 / 0.16);
+  }
+}
+
+/* ===== THƯ VIỆN BÊN THỨ BA (Leaflet, Swiper): thay màu đen mặc định bằng màu thương hiệu =====
+   Không sửa node_modules; ghi đè bằng selector cụ thể hơn. */
+.leaflet-container .leaflet-bar,
+.leaflet-container .leaflet-control-layers,
+.leaflet-container .leaflet-bar a {
+  box-shadow: 0 1px 5px rgb(34 84 76 / 0.45);
+}
+.leaflet-container .leaflet-bar a,
+.leaflet-container .leaflet-bar a:hover,
+.leaflet-container .leaflet-bar a:focus {
+  color: var(--color-ink-950);
+}
+.leaflet-container .leaflet-bar a {
+  box-shadow: none;
+}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+  border-color: rgb(34 84 76 / 0.3);
+}
+.leaflet-container .leaflet-control-layers-expanded,
+.leaflet-container .leaflet-control-layers,
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-popup-tip {
+  color: var(--color-ink-700);
+}
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-popup-tip {
+  box-shadow: 0 3px 14px rgb(34 84 76 / 0.4);
+}
+.leaflet-container .leaflet-tooltip {
+  color: var(--color-ink-950);
+  border-color: var(--color-ink-400);
+  box-shadow: 0 1px 3px rgb(34 84 76 / 0.4);
+}
+html:root {
+  --swiper-pagination-bullet-inactive-color: var(--color-ink-300);
+  --swiper-navigation-color: var(--color-brand-forest);
+  --swiper-theme-color: var(--color-brand-forest);
+}
+.swiper-3d .swiper-slide-shadow,
+.swiper-3d .swiper-slide-shadow-left,
+.swiper-3d .swiper-slide-shadow-right,
+.swiper-3d .swiper-slide-shadow-top,
+.swiper-3d .swiper-slide-shadow-bottom {
+  background: rgb(34 84 76 / 0.5);
+}
+
+/* ===== BẢN ĐỒ: nâng điểm đen của lớp tile (ảnh nền OSM/vệ tinh từ bên thứ ba) thành xanh rêu thương hiệu ===== */
+.leaflet-container .leaflet-tile-pane {
+  filter: url(#brand-black-lift);
 }

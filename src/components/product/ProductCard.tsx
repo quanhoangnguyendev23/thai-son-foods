@@ -108,7 +108,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
           {/* Khung thẻ ảnh */}
           <div
             className={`relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center ${
-              isBottle ? 'bg-[#FAF8F5]' : 'bg-gray-100'
+              isBottle ? 'bg-ivory' : 'bg-gray-100'
             }`}
           >
             <Image
@@ -122,7 +122,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
                   ? 'object-contain p-2 sm:p-3'
                   : 'object-cover object-top'
               } transition-transform duration-500 group-hover:scale-105`}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
               loading="lazy"
             />
 
@@ -133,12 +133,12 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               } flex flex-col gap-0.5 z-10`}
             >
               {product.isBestSeller && (
-                <span className="px-1.5 py-0.5 text-[10px] sm:text-[9px] font-semibold bg-green-primary text-white rounded shadow-xs">
+                <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-leaf-900 text-white rounded shadow-xs">
                   {bestSellerText}
                 </span>
               )}
               {product.isNew && (
-                <span className="px-1.5 py-0.5 text-[10px] sm:text-[9px] font-semibold bg-corn text-text-dark rounded shadow-xs">
+                <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-corn text-text-dark rounded shadow-xs">
                   {newText}
                 </span>
               )}
@@ -150,7 +150,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             <div>
               <h3
                 title={fullName}
-                className={`text-[13px] sm:text-[13px] font-bold text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors ${
+                className={`text-[15px] sm:text-[15px] text-text-dark mb-1 leading-snug group-hover:text-leaf-900 transition-colors ${
                   isHomepage ? 'line-clamp-2' : ''
                 }`}
               >
@@ -160,20 +160,20 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
 
             <div className="flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
               <div className="flex flex-col">
-                <div className="text-sm sm:text-[13px] font-bold text-green-primary flex flex-wrap items-baseline gap-x-0.5">
+                <div className="text-base sm:text-[15px] text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
                   <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
-                  <span className="text-[10px] sm:text-[9px] font-semibold text-text-muted">
+                  <span className="text-[11px] lg:text-[10px] text-text-muted">
                     /{packDisplayUnit}
                   </span>
                 </div>
-                <span className="text-[10px] sm:text-[8.5px] text-text-muted font-normal" suppressHydrationWarning>
+                <span className="text-[10px] lg:text-[8.5px] text-text-muted font-normal" suppressHydrationWarning>
                   ~{formatPrice(product.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                 </span>
               </div>
 
               <button
                 onClick={handleAddToCart}
-                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center bg-green-primary text-white rounded-lg hover:bg-green-dark transition-colors active:scale-95 cursor-pointer shadow-xs"
+                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center bg-leaf-900 text-white rounded-lg hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
                 aria-label={language === 'en' ? `Add ${fullName} (${defaultVariant.name}) to cart` : `Thêm ${fullName} (${defaultVariant.name}) vào giỏ hàng`}
                 title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
               >
@@ -197,7 +197,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
           {/* 1 BÊN LÀ SẢN PHẨM (Khung ảnh) — Đồng bộ chuẩn tỷ lệ 4:3 (1200x900px) giống hệt hàng 3 sản phẩm */}
           <div
             className={`relative w-[44%] sm:w-[46%] md:w-[48%] aspect-[4/3] shrink-0 overflow-hidden flex items-center justify-center ${
-              isBottle ? 'bg-[#FAF8F5]' : 'bg-gray-100'
+              isBottle ? 'bg-ivory' : 'bg-gray-100'
             }`}
           >
             <Image
@@ -222,12 +222,12 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               } flex flex-col gap-1 z-10`}
             >
               {product.isBestSeller && (
-                <span className="px-1.5 sm:px-2 py-0.5 text-[10px] md:text-xs font-semibold bg-green-primary text-white rounded sm:rounded-md shadow-xs">
+                <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-leaf-900 text-white rounded sm:rounded-md shadow-xs">
                   {bestSellerText}
                 </span>
               )}
               {product.isNew && (
-                <span className="px-1.5 sm:px-2 py-0.5 text-[10px] md:text-xs font-semibold bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
+                <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
                   {newText}
                 </span>
               )}
@@ -239,7 +239,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             <div>
               <h3
                 title={fullName}
-                className={`text-[13px] sm:text-base md:text-lg font-bold text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-green-primary transition-colors ${
+                className={`text-[15px] sm:text-lg md:text-xl text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-leaf-900 transition-colors ${
                   isHomepage ? 'line-clamp-2' : ''
                 }`}
               >
@@ -249,9 +249,9 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
 
             <div className="flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
               <div className="flex flex-col">
-                <div className="text-sm sm:text-base md:text-lg font-bold text-green-primary flex flex-wrap items-baseline gap-x-1">
+                <div className="text-base sm:text-lg md:text-xl text-leaf-900 flex flex-wrap items-baseline gap-x-1">
                   <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
-                  <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-text-muted">
+                  <span className="text-[11px] sm:text-sm md:text-base text-text-muted">
                     /{packDisplayUnit}
                   </span>
                 </div>
@@ -262,7 +262,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
 
               <button
                 onClick={handleAddToCart}
-                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-green-primary text-white rounded-lg sm:rounded-xl hover:bg-green-dark transition-colors active:scale-95 cursor-pointer shadow-xs"
+                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-leaf-900 text-white rounded-lg sm:rounded-xl hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
                 aria-label={language === 'en' ? `Add ${fullName} (${defaultVariant.name}) to cart` : `Thêm ${fullName} (${defaultVariant.name}) vào giỏ hàng`}
                 title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
               >
@@ -285,7 +285,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
         {/* Khung thẻ ảnh — Tỷ lệ chuẩn 4:3 khớp hoàn hảo với poster cánh đồng và chai đơn */}
         <div
           className={`relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center ${
-            isBottle ? 'bg-[#FAF8F5]' : 'bg-gray-100'
+            isBottle ? 'bg-ivory' : 'bg-gray-100'
           }`}
         >
           <Image
@@ -310,12 +310,12 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             } flex flex-col gap-1 z-10`}
           >
             {product.isBestSeller && (
-              <span className="px-1.5 sm:px-2 py-0.5 text-[10px] md:text-xs font-semibold bg-green-primary text-white rounded sm:rounded-md shadow-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-leaf-900 text-white rounded sm:rounded-md shadow-xs">
                 {bestSellerText}
               </span>
             )}
             {product.isNew && (
-              <span className="px-1.5 sm:px-2 py-0.5 text-[10px] md:text-xs font-semibold bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
                 {newText}
               </span>
             )}
@@ -327,7 +327,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
           <div>
             <h3
               title={fullName}
-              className={`text-[13px] sm:text-base md:text-lg font-bold text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-green-primary transition-colors ${
+              className={`text-[15px] sm:text-lg md:text-xl text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-leaf-900 transition-colors ${
                 isHomepage ? 'line-clamp-2' : ''
               }`}
             >
@@ -337,9 +337,9 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
 
           <div className="flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
             <div className="flex flex-col">
-              <div className="text-sm sm:text-base md:text-lg font-bold text-green-primary flex flex-wrap items-baseline gap-x-1">
+              <div className="text-base sm:text-lg md:text-xl text-leaf-900 flex flex-wrap items-baseline gap-x-1">
                 <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
-                <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-text-muted">
+                <span className="text-[11px] sm:text-sm md:text-base text-text-muted">
                   /{packDisplayUnit}
                 </span>
               </div>
@@ -350,7 +350,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
 
             <button
               onClick={handleAddToCart}
-              className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-green-primary text-white rounded-lg sm:rounded-xl hover:bg-green-dark transition-colors active:scale-95 cursor-pointer shadow-xs"
+              className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-leaf-900 text-white rounded-lg sm:rounded-xl hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
               aria-label={language === 'en' ? `Add ${fullName} (${defaultVariant.name}) to cart` : `Thêm ${fullName} (${defaultVariant.name}) vào giỏ hàng`}
               title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
             >

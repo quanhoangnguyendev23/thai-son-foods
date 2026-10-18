@@ -47,14 +47,14 @@ export default function AmazonRecentlyViewed({ products }: { products: Product[]
 
   return (
     <section className="bg-white rounded-2xl border border-border shadow-xs px-4 sm:px-6 py-5" aria-label={title}>
-      <h2 className="font-heading text-lg md:text-xl font-bold text-text-dark mb-2">{title}</h2>
+      <h2 className="font-heading text-xl md:text-2xl text-text-dark mb-2">{title}</h2>
       <div className="flex items-center gap-3 text-sm text-text-muted">
         <History className="w-5 h-5 text-green-primary shrink-0" />
         <p>
           {language === 'en'
             ? 'Products you view will appear here. '
             : 'Sản phẩm bạn xem sẽ được lưu ở đây để quay lại nhanh. '}
-          <Link href="/#san-pham" className="font-semibold text-green-primary hover:underline">
+          <Link href="/#san-pham" className="text-green-primary hover:underline text-[1.125em]">
             {language === 'en' ? 'Start browsing' : 'Bắt đầu xem sản phẩm'}
           </Link>
         </p>

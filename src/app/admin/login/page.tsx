@@ -96,24 +96,24 @@ function AdminLoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-forest-950 text-slate-100 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-sans selection:bg-emerald-500 selection:text-white">
       {/* Ambient background glow effects */}
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-teal-600/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(var(--color-ink-900)_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
 
       {/* Main Container */}
       <div className="w-full max-w-md relative z-10">
         {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 p-0.5 shadow-xl shadow-emerald-950/50 mb-4 ring-4 ring-emerald-500/20">
-            <div className="w-full h-full bg-[#0b1329] rounded-[14px] flex items-center justify-center">
-              <span className="font-black text-2xl tracking-tighter bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
+            <div className="w-full h-full bg-forest-950 rounded-[14px] flex items-center justify-center">
+              <span className="text-2xl tracking-tighter bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
                 TSF
               </span>
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
+          <h1 className="text-2xl sm:text-3xl tracking-tight text-white mb-2">
             Đăng Nhập Quản Trị
           </h1>
           <p className="text-sm text-slate-400">
@@ -126,13 +126,13 @@ function AdminLoginForm() {
           <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm flex items-start gap-3 shadow-lg">
             <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-amber-300">Khởi tạo hệ thống lần đầu!</p>
+              <p className="text-amber-300 text-[1.125em]">Khởi tạo hệ thống lần đầu!</p>
               <p className="text-xs text-amber-200/80 mt-1">
                 Chưa có tài khoản quản trị nào trong cơ sở dữ liệu. Vui lòng bấm Đăng Ký để tạo tài khoản Super Admin đầu tiên.
               </p>
               <Link
                 href="/admin/register"
-                className="inline-flex items-center gap-1.5 mt-2.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors"
+                className="inline-flex items-center gap-1.5 mt-2.5 px-3 py-1.5 rounded-lg text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors"
               >
                 <span>Tạo Super Admin ngay</span>
               </Link>
@@ -141,7 +141,7 @@ function AdminLoginForm() {
         )}
 
         {/* Login Card */}
-        <div className="bg-slate-900/85 backdrop-blur-xl border border-slate-800 rounded-2xl p-7 sm:p-8 shadow-2xl shadow-black/80 relative">
+        <div className="bg-slate-900/85 backdrop-blur-xl border border-slate-800 rounded-2xl p-7 sm:p-8 shadow-2xl shadow-ink-950/80 relative">
           {/* PostgreSQL Indicator Pill */}
           <div className="flex items-center justify-between pb-5 mb-5 border-b border-slate-800/80 text-xs">
             <div className="flex items-center gap-2 text-slate-400">
@@ -172,7 +172,7 @@ function AdminLoginForm() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Identifier input */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+              <label className="block text-sm uppercase tracking-wider text-slate-300 mb-2">
                 Tên đăng nhập hoặc Email
               </label>
               <div className="relative">
@@ -195,7 +195,7 @@ function AdminLoginForm() {
             {/* Password input */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                <label className="block text-sm uppercase tracking-wider text-slate-300">
                   Mật khẩu
                 </label>
               </div>
@@ -239,7 +239,7 @@ function AdminLoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/60 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 rounded-xl text-base bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/60 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -260,7 +260,7 @@ function AdminLoginForm() {
             <span>Chưa có tài khoản quản trị? </span>
             <Link
               href="/admin/register"
-              className="text-emerald-400 hover:text-emerald-300 font-semibold hover:underline ml-1"
+              className="text-emerald-400 hover:text-emerald-300 hover:underline ml-1 text-[1.125em]"
             >
               Đăng ký tài khoản mới
             </Link>

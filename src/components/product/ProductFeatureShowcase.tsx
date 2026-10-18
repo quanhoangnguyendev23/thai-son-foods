@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Sparkles } from 'lucide-react';
 import { Product, ProductFeatureBanner } from '@/types';
 
 interface ProductFeatureShowcaseProps {
@@ -169,15 +168,14 @@ export default function ProductFeatureShowcase({
     banners.subtitle || 'Thức uống thuần chay dinh dưỡng, vị ngon thanh mát từ thiên nhiên dành riêng cho bạn.';
 
   return (
-    <section className={`bg-[#FAF9F5] py-12 md:py-16 border-t border-gray-200 ${className}`}>
+    <section className={`bg-ivory py-12 md:py-16 border-t border-gray-200 ${className}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* 1. HEADER TRUNG TÂM */}
         <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-[#1B5E3B] text-xs font-semibold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-forest-700 text-sm uppercase tracking-wider">
             <span>ĐẶC TÍNH & NGUỒN GỐC THUẦN TỰ NHIÊN</span>
           </span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+          <h2 className="text-2xl sm:text-3xl text-gray-900 mt-2">
             {title}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
@@ -188,7 +186,7 @@ export default function ProductFeatureShowcase({
         {/* 2. CARD CHỨA 2 BANNER XẾP CHỒNG (STACKED CARD) */}
         <div className="bg-white rounded-2xl border border-gray-200/90 shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
           {/* Banner 1 (Phía trên): Banner chữ A - Hình ảnh thiết kế hoàn chỉnh */}
-          <div className="relative w-full aspect-[1920/850] bg-[#FAF8F5] overflow-hidden group">
+          <div className="relative w-full aspect-[1920/850] bg-ivory overflow-hidden group">
             <Image
               src={banners.banner1}
               alt={banners.alt1 || `${product?.name || productName} - Thành phần từ thiên nhiên`}
@@ -203,7 +201,7 @@ export default function ProductFeatureShowcase({
           <div className="w-full h-px bg-gray-100" />
 
           {/* Banner 2 (Phía dưới): Banner chữ 4 nhánh Infographic */}
-          <div className="relative w-full aspect-[1920/850] bg-[#FAF8F5] overflow-hidden group">
+          <div className="relative w-full aspect-[1920/850] bg-ivory overflow-hidden group">
             <Image
               src={banners.banner2}
               alt={banners.alt2 || `${product?.name || productName} - Đặc tính sản phẩm`}

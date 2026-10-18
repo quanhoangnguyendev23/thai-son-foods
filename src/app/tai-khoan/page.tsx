@@ -175,7 +175,7 @@ function AccountContent() {
   if (isLoading) {
     return (
       <div className="section-container py-20 text-center">
-        <div className="w-12 h-12 border-3 border-[#1B5E3B]/20 border-t-[#1B5E3B] rounded-full animate-spin mx-auto mb-4" />
+        <div className="w-12 h-12 border-3 border-forest-700/20 border-t-forest-700 rounded-full animate-spin mx-auto mb-4" />
         <p className="text-gray-500 text-sm">
           {language === 'en' ? 'Loading account details...' : 'Đang tải thông tin tài khoản...'}
         </p>
@@ -188,10 +188,10 @@ function AccountContent() {
     return (
       <div className="section-container py-16 md:py-24 text-center">
         <div className="max-w-md mx-auto bg-white p-8 rounded-3xl border border-gray-200 shadow-sm">
-          <div className="w-20 h-20 bg-emerald-50 text-[#1B5E3B] rounded-full flex items-center justify-center mx-auto mb-5">
+          <div className="w-20 h-20 bg-emerald-50 text-forest-700 rounded-full flex items-center justify-center mx-auto mb-5">
             <User className="w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 font-heading mb-2">
+          <h1 className="text-2xl text-gray-900 font-heading mb-2">
             {language === 'en' ? 'Customer Account' : 'Tài Khoản Khách Hàng'}
           </h1>
           <p className="text-sm text-gray-600 mb-6 leading-relaxed">
@@ -203,19 +203,19 @@ function AccountContent() {
           <div className="flex flex-col gap-3">
             <button
               onClick={() => openAuthModal('login')}
-              className="w-full py-3.5 bg-[#1B5E3B] hover:bg-[#14482D] text-white font-bold rounded-xl transition-all text-sm shadow-xs cursor-pointer active:scale-[0.98]"
+              className="w-full py-3.5 bg-forest-700 hover:bg-forest-800 text-white rounded-xl transition-all text-base shadow-xs cursor-pointer active:scale-[0.98]"
             >
               {language === 'en' ? 'Sign In' : 'Đăng nhập ngay'}
             </button>
             <button
               onClick={() => openAuthModal('register')}
-              className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100/70 text-[#1B5E3B] font-bold rounded-xl transition-all text-sm cursor-pointer"
+              className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100/70 text-forest-700 rounded-xl transition-all text-base cursor-pointer"
             >
               {language === 'en' ? 'Register New Account' : 'Tạo tài khoản mới'}
             </button>
             <Link
               href="/"
-              className="w-full py-3 text-gray-500 hover:text-gray-800 text-xs font-semibold transition-colors mt-2"
+              className="w-full py-3 text-gray-500 hover:text-gray-800 text-sm transition-colors mt-2"
             >
               ← {language === 'en' ? 'Continue Shopping as Guest' : 'Tiếp tục mua hàng không cần đăng nhập'}
             </Link>
@@ -230,7 +230,7 @@ function AccountContent() {
     const s = status.toUpperCase();
     if (s === 'COMPLETED' || s === 'DELIVERED') {
       return (
-        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold flex items-center gap-1">
+        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm flex items-center gap-1">
           <CheckCircle className="w-3.5 h-3.5" />
           {language === 'en' ? 'Completed' : 'Hoàn thành'}
         </span>
@@ -238,7 +238,7 @@ function AccountContent() {
     }
     if (s === 'PROCESSING' || s === 'SHIPPING') {
       return (
-        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold flex items-center gap-1">
+        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center gap-1">
           <Truck className="w-3.5 h-3.5" />
           {language === 'en' ? 'Shipping' : 'Đang giao hàng'}
         </span>
@@ -246,14 +246,14 @@ function AccountContent() {
     }
     if (s === 'CANCELLED') {
       return (
-        <span className="px-3 py-1 bg-rose-100 text-rose-800 rounded-full text-xs font-bold flex items-center gap-1">
+        <span className="px-3 py-1 bg-rose-100 text-rose-800 rounded-full text-sm flex items-center gap-1">
           <AlertCircle className="w-3.5 h-3.5" />
           {language === 'en' ? 'Cancelled' : 'Đã hủy'}
         </span>
       );
     }
     return (
-      <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold flex items-center gap-1">
+      <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm flex items-center gap-1">
         <Clock className="w-3.5 h-3.5" />
         {language === 'en' ? 'Pending' : 'Chờ xác nhận'}
       </span>
@@ -266,12 +266,12 @@ function AccountContent() {
       <nav aria-label="Breadcrumb" className="mb-6">
         <ol className="flex items-center gap-1.5 text-xs text-gray-500">
           <li>
-            <Link href="/" className="hover:text-[#1B5E3B] transition-colors">
+            <Link href="/" className="hover:text-forest-700 transition-colors">
               {language === 'en' ? 'Home' : 'Trang chủ'}
             </Link>
           </li>
           <li>/</li>
-          <li className="text-gray-900 font-semibold">
+          <li className="text-gray-900 text-[1.125em]">
             {language === 'en' ? 'My Account' : 'Tài khoản của tôi'}
           </li>
         </ol>
@@ -280,11 +280,11 @@ function AccountContent() {
       {/* Account Header Card */}
       <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-xs mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1B5E3B] to-[#2E7D4E] text-white flex items-center justify-center font-bold text-2xl shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-forest-700 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-sm">
             {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900 font-heading">
+            <h1 className="text-2xl md:text-2xl text-gray-900 font-heading">
               {user.fullName}
             </h1>
             <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
@@ -305,14 +305,14 @@ function AccountContent() {
         <div className="flex items-center gap-3 self-end sm:self-center">
           <Link
             href="/#san-pham"
-            className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100/70 text-[#1B5E3B] rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100/70 text-forest-700 rounded-xl text-sm transition-colors flex items-center gap-1.5"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>{language === 'en' ? 'Shop More' : 'Mua sắm'}</span>
           </Link>
           <button
             onClick={handleLogout}
-            className="px-4 py-2.5 bg-gray-100 hover:bg-red-50 hover:text-red-700 text-gray-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2.5 bg-gray-100 hover:bg-red-50 hover:text-red-700 text-gray-700 rounded-xl text-sm transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>{language === 'en' ? 'Log Out' : 'Đăng xuất'}</span>
@@ -327,9 +327,9 @@ function AccountContent() {
           <button
             onClick={() => setActiveTab('orders')}
             className={cn(
-              'w-full flex items-center justify-between p-4 rounded-2xl text-sm font-bold transition-all text-left cursor-pointer',
+              'w-full flex items-center justify-between p-4 rounded-2xl text-base transition-all text-left cursor-pointer',
               activeTab === 'orders'
-                ? 'bg-[#1B5E3B] text-white shadow-xs'
+                ? 'bg-forest-700 text-white shadow-xs'
                 : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-100'
             )}
           >
@@ -339,7 +339,7 @@ function AccountContent() {
             </div>
             <span
               className={cn(
-                'px-2 py-0.5 rounded-full text-xs font-bold',
+                'px-2 py-0.5 rounded-full text-sm',
                 activeTab === 'orders' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
               )}
             >
@@ -350,9 +350,9 @@ function AccountContent() {
           <button
             onClick={() => setActiveTab('profile')}
             className={cn(
-              'w-full flex items-center gap-3 p-4 rounded-2xl text-sm font-bold transition-all text-left cursor-pointer',
+              'w-full flex items-center gap-3 p-4 rounded-2xl text-base transition-all text-left cursor-pointer',
               activeTab === 'profile'
-                ? 'bg-[#1B5E3B] text-white shadow-xs'
+                ? 'bg-forest-700 text-white shadow-xs'
                 : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-100'
             )}
           >
@@ -363,9 +363,9 @@ function AccountContent() {
           <button
             onClick={() => setActiveTab('reviews')}
             className={cn(
-              'w-full flex items-center justify-between p-4 rounded-2xl text-sm font-bold transition-all text-left cursor-pointer',
+              'w-full flex items-center justify-between p-4 rounded-2xl text-base transition-all text-left cursor-pointer',
               activeTab === 'reviews'
-                ? 'bg-[#1B5E3B] text-white shadow-xs'
+                ? 'bg-forest-700 text-white shadow-xs'
                 : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-100'
             )}
           >
@@ -375,7 +375,7 @@ function AccountContent() {
             </div>
             <span
               className={cn(
-                'px-2 py-0.5 rounded-full text-xs font-bold',
+                'px-2 py-0.5 rounded-full text-sm',
                 activeTab === 'reviews' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
               )}
             >
@@ -390,7 +390,7 @@ function AccountContent() {
             /* TAB: ORDERS */
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-bold text-gray-900 font-heading">
+                <h2 className="text-xl text-gray-900 font-heading">
                   {language === 'en' ? 'Your Orders' : 'Danh sách đơn hàng'}
                 </h2>
                 <span className="text-xs text-gray-500">
@@ -400,7 +400,7 @@ function AccountContent() {
 
               {isLoadingOrders ? (
                 <div className="bg-white p-12 rounded-3xl border border-gray-100 text-center">
-                  <div className="w-8 h-8 border-2 border-[#1B5E3B]/20 border-t-[#1B5E3B] rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-8 h-8 border-2 border-forest-700/20 border-t-forest-700 rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-xs text-gray-500">
                     {language === 'en' ? 'Loading orders...' : 'Đang tải danh sách đơn hàng...'}
                   </p>
@@ -410,7 +410,7 @@ function AccountContent() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                     <ShoppingBag className="w-8 h-8" />
                   </div>
-                  <h3 className="text-base font-bold text-gray-800 mb-1">
+                  <h3 className="text-lg text-gray-800 mb-1">
                     {language === 'en' ? 'No orders yet' : 'Bạn chưa có đơn hàng nào'}
                   </h3>
                   <p className="text-xs text-gray-500 max-w-sm mx-auto mb-6">
@@ -420,7 +420,7 @@ function AccountContent() {
                   </p>
                   <Link
                     href="/#san-pham"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#1B5E3B] text-white font-bold text-xs rounded-xl hover:bg-[#14482D] transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-forest-700 text-white text-sm rounded-xl hover:bg-forest-800 transition-colors"
                   >
                     <span>{language === 'en' ? 'Shop Drinks Now' : 'Mua sắm ngay'}</span>
                     <ArrowRight className="w-4 h-4" />
@@ -436,7 +436,7 @@ function AccountContent() {
                     <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-100">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-[#1B5E3B] text-base">
+                          <span className="text-forest-700 text-lg">
                             #{order.order_code}
                           </span>
                           {getStatusBadge(order.status)}
@@ -456,7 +456,7 @@ function AccountContent() {
                         <div className="text-xs text-gray-500">
                           {language === 'en' ? 'Total Amount' : 'Tổng thanh toán'}
                         </div>
-                        <div className="text-lg font-bold text-[#1B5E3B]">
+                        <div className="text-xl text-forest-700">
                           {formatPrice(order.total)} ₫
                         </div>
                       </div>
@@ -478,12 +478,12 @@ function AccountContent() {
                                   />
                                 </div>
                               ) : (
-                                <div className="w-10 h-10 rounded-lg bg-emerald-50 text-[#1B5E3B] flex items-center justify-center font-bold text-xs shrink-0">
+                                <div className="w-10 h-10 rounded-lg bg-emerald-50 text-forest-700 flex items-center justify-center text-sm shrink-0">
                                   TSF
                                 </div>
                               )}
                               <div>
-                                <span className="font-semibold text-gray-800 line-clamp-1">
+                                <span className="text-gray-800 line-clamp-1 text-[1.125em]">
                                   {item.name}
                                 </span>
                                 <span className="text-gray-400 text-[11px]">
@@ -491,7 +491,7 @@ function AccountContent() {
                                 </span>
                               </div>
                             </div>
-                            <span className="font-bold text-gray-900 shrink-0">
+                            <span className="text-gray-900 shrink-0 text-[1.125em]">
                               {formatPrice(item.price * item.quantity)} ₫
                             </span>
                           </div>
@@ -517,7 +517,7 @@ function AccountContent() {
           ) : (
             /* TAB: PROFILE */
             <div className="bg-white rounded-3xl border border-gray-100 shadow-2xs p-6 md:p-8">
-              <h2 className="text-lg font-bold text-gray-900 font-heading mb-1">
+              <h2 className="text-xl text-gray-900 font-heading mb-1">
                 {language === 'en' ? 'Personal Information' : 'Thông tin cá nhân & Địa chỉ giao hàng'}
               </h2>
               <p className="text-xs text-gray-500 mb-6">
@@ -547,7 +547,7 @@ function AccountContent() {
               <form onSubmit={handleProfileSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Full Name' : 'Họ và tên'} *
                     </label>
                     <input
@@ -557,12 +557,12 @@ function AccountContent() {
                       onChange={(e) =>
                         setProfileForm({ ...profileForm, fullName: e.target.value })
                       }
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm text-gray-700 mb-1.5">
                       Email ({language === 'en' ? 'cannot be changed' : 'cố định'})
                     </label>
                     <input
@@ -574,7 +574,7 @@ function AccountContent() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Phone Number' : 'Số điện thoại'}
                     </label>
                     <input
@@ -584,12 +584,12 @@ function AccountContent() {
                         setProfileForm({ ...profileForm, phone: e.target.value })
                       }
                       placeholder="0912 345 678"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Province / City' : 'Tỉnh / Thành phố'}
                     </label>
                     <input
@@ -599,12 +599,12 @@ function AccountContent() {
                         setProfileForm({ ...profileForm, province: e.target.value })
                       }
                       placeholder={language === 'en' ? 'Ho Chi Minh City' : 'TP. Hồ Chí Minh'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'District' : 'Quận / Huyện'}
                     </label>
                     <input
@@ -614,12 +614,12 @@ function AccountContent() {
                         setProfileForm({ ...profileForm, district: e.target.value })
                       }
                       placeholder={language === 'en' ? 'Tan Binh District' : 'Quận Tân Bình'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Ward' : 'Phường / Xã'}
                     </label>
                     <input
@@ -627,12 +627,12 @@ function AccountContent() {
                       value={profileForm.ward}
                       onChange={(e) => setProfileForm({ ...profileForm, ward: e.target.value })}
                       placeholder={language === 'en' ? 'Tan Son Hoa Ward' : 'Phường Tân Sơn Hòa'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Street Address' : 'Địa chỉ chi tiết (Số nhà, tên đường)'}
                     </label>
                     <input
@@ -642,7 +642,7 @@ function AccountContent() {
                         setProfileForm({ ...profileForm, address: e.target.value })
                       }
                       placeholder={language === 'en' ? '123 Le Van Sy...' : '123 Lê Văn Sỹ...'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                     />
                   </div>
                 </div>
@@ -651,7 +651,7 @@ function AccountContent() {
                   <button
                     type="submit"
                     disabled={isSavingProfile}
-                    className="px-6 py-3 bg-[#1B5E3B] hover:bg-[#14482D] text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-60 active:scale-[0.98]"
+                    className="px-6 py-3 bg-forest-700 hover:bg-forest-800 text-white rounded-xl text-sm transition-all flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-60 active:scale-[0.98]"
                   >
                     <Save className="w-4 h-4" />
                     <span>
@@ -675,7 +675,7 @@ function AccountContent() {
               <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-xs">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                   <div>
-                    <h2 className="text-lg md:text-xl font-bold text-gray-900 font-heading">
+                    <h2 className="text-xl md:text-2xl text-gray-900 font-heading">
                       {language === 'en' ? 'My Product Reviews' : 'Đánh giá của tôi'}
                     </h2>
                     <p className="text-xs text-gray-500 mt-1">
@@ -686,7 +686,7 @@ function AccountContent() {
                   </div>
                   <Link
                     href="/#san-pham"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#1B5E3B] text-xs font-bold transition"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-forest-700 text-sm transition"
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
                     <span>{language === 'en' ? 'Review more products' : 'Đánh giá sản phẩm khác'}</span>
@@ -703,7 +703,7 @@ function AccountContent() {
                     <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-4">
                       <Star className="w-8 h-8 fill-amber-400" />
                     </div>
-                    <h3 className="text-base font-bold text-gray-800">
+                    <h3 className="text-lg text-gray-800">
                       {language === 'en' ? 'No reviews submitted yet' : 'Bạn chưa gửi đánh giá nào'}
                     </h3>
                     <p className="text-xs text-gray-500 max-w-sm mx-auto mt-1 mb-6">
@@ -713,7 +713,7 @@ function AccountContent() {
                     </p>
                     <Link
                       href="/#san-pham"
-                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1B5E3B] text-white rounded-xl text-xs font-bold hover:bg-[#14482D] transition shadow-xs"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-forest-700 text-white rounded-xl text-sm hover:bg-forest-800 transition shadow-xs"
                     >
                       <ShoppingBag className="w-4 h-4" />
                       <span>{language === 'en' ? 'Explore Products' : 'Khám phá sản phẩm'}</span>
@@ -729,11 +729,11 @@ function AccountContent() {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-gray-900 text-sm">
+                              <span className="text-gray-900 text-base">
                                 {rev.productId}
                               </span>
                               {rev.isVerifiedBuyer && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] border border-emerald-200">
                                   <CheckCircle className="w-2.5 h-2.5" /> Đã mua hàng
                                 </span>
                               )}
@@ -748,7 +748,7 @@ function AccountContent() {
                           <div className="flex items-center gap-2">
                             <span
                               className={cn(
-                                'px-2.5 py-1 rounded-full text-[11px] font-bold border',
+                                'px-2.5 py-1 rounded-full text-[12px] border',
                                 rev.status === 'APPROVED'
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   : rev.status === 'PENDING'
@@ -779,7 +779,7 @@ function AccountContent() {
                         </div>
 
                         {/* Title and comment */}
-                        {rev.title && <h4 className="font-bold text-gray-900 text-sm">{rev.title}</h4>}
+                        {rev.title && <h4 className="text-gray-900 text-base">{rev.title}</h4>}
                         <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-line">
                           {rev.comment}
                         </p>
@@ -787,7 +787,7 @@ function AccountContent() {
                         {/* Brand official response if exists */}
                         {rev.adminReply && (
                           <div className="bg-emerald-50/70 border-l-4 border-emerald-600 p-3 rounded-r-xl text-xs space-y-1">
-                            <div className="flex items-center gap-1 font-bold text-emerald-900">
+                            <div className="flex items-center gap-1 text-emerald-900 text-[1.125em]">
                               <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
                               <span>Phản hồi từ Thái Sơn Foods</span>
                             </div>

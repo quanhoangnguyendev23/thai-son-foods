@@ -53,7 +53,7 @@ export default function ProductCarousel({ title, products, subtitle, action, cla
     <section className={cn('max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8', className)}>
       <div className="flex items-end justify-between gap-3 mb-3">
         <div className="min-w-0">
-          <h2 className="text-lg md:text-xl font-bold text-[#0F1111]">{title}</h2>
+          <h2 className="text-xl md:text-2xl text-ink-950">{title}</h2>
           {subtitle && <p className="text-xs md:text-sm text-gray-600 mt-0.5">{subtitle}</p>}
         </div>
         {action}

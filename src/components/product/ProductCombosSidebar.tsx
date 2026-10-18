@@ -9,7 +9,7 @@ import { formatPrice, cn, safeFetchJson } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { Sparkles, ArrowRight, ShoppingBag, Check, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Check, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import SectionTitle from '@/components/ui/SectionTitle';
 
@@ -150,24 +150,24 @@ export default function ProductCombosSidebar({
             title={`Xem chi tiết ${combo.name}`}
           >
             {/* Ảnh Combo Thumbnail (aspect 4/3 đồng bộ ProductCard) */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#FAF8F5] flex items-center justify-center">
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-ivory flex items-center justify-center">
               <Image
                 src={combo.image}
                 alt={comboTitle}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
                 loading="lazy"
               />
 
               {/* Badge số chai */}
-              <span className="absolute bottom-1 right-1 bg-black/75 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded">
+              <span className="absolute bottom-1 right-1 bg-ink-950/75 backdrop-blur-xs text-white text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded">
                 {combo.totalItems} {language === 'en' ? 'chai' : 'chai'}
               </span>
 
               {/* Badge giảm giá */}
               {combo.discount > 0 && (
-                <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[8px] sm:text-[9px] font-bold bg-sale text-white rounded shadow-xs">
+                <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[9px] sm:text-[10px] bg-sale text-white rounded shadow-xs">
                   -{combo.discount}%
                 </span>
               )}
@@ -178,7 +178,7 @@ export default function ProductCombosSidebar({
               <div>
                 <h4
                   title={comboTitle}
-                  className="text-xs sm:text-[13px] font-bold text-text-dark leading-snug group-hover:text-green-primary transition-colors"
+                  className="text-sm sm:text-[15px] text-text-dark leading-snug group-hover:text-green-primary transition-colors"
                 >
                   {comboTitle}
                 </h4>
@@ -189,7 +189,7 @@ export default function ProductCombosSidebar({
 
                 {/* Giá bán */}
                 <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="text-xs sm:text-[13px] font-extrabold text-green-primary">
+                  <span className="text-sm sm:text-[15px] text-green-primary">
                     {formatPrice(combo.salePrice)}đ
                   </span>
                   <span className="text-[10px] text-gray-400 line-through">
@@ -206,9 +206,8 @@ export default function ProductCombosSidebar({
               {isCustomizable ? (
                 <Link
                   href={`/combo/${combo.slug}`}
-                  className="w-full py-2.5 px-1.5 rounded-lg bg-emerald-50 hover:bg-green-primary text-emerald-900 hover:text-white font-bold text-[10px] sm:text-[11px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs"
+                  className="w-full py-2.5 px-1.5 rounded-lg bg-emerald-50 hover:bg-green-primary text-emerald-900 hover:text-white text-[11px] sm:text-[12px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs"
                 >
-                  <Sparkles className="w-3 h-3 text-corn shrink-0" />
                   <span>{customText}</span>
                   <ArrowRight className="w-3 h-3 shrink-0" />
                 </Link>
@@ -217,10 +216,10 @@ export default function ProductCombosSidebar({
                   type="button"
                   onClick={(e) => handleQuickAdd(combo, e)}
                   className={cn(
-                    'w-full py-2.5 px-1.5 rounded-lg font-bold text-[10px] sm:text-[11px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs cursor-pointer',
+                    'w-full py-2.5 px-1.5 rounded-lg text-[11px] sm:text-[12px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs cursor-pointer',
                     isJustAdded
                       ? 'bg-green-primary text-white'
-                      : 'bg-[#FAF8F5] hover:bg-green-primary text-gray-800 hover:text-white border border-gray-200/80 hover:border-green-primary'
+                      : 'bg-ivory hover:bg-green-primary text-gray-800 hover:text-white border border-gray-200/80 hover:border-green-primary'
                   )}
                 >
                   {isJustAdded ? (
@@ -284,7 +283,7 @@ export default function ProductCombosSidebar({
           title={`Xem chi tiết ${combo.name}`}
         >
           {/* Ảnh Combo Thumbnail */}
-          <div className="relative rounded-lg overflow-hidden bg-[#F5F2EB] shrink-0 border border-gray-100 w-16 h-16 sm:w-18 sm:h-18">
+          <div className="relative rounded-lg overflow-hidden bg-ivory-dark shrink-0 border border-gray-100 w-16 h-16 sm:w-18 sm:h-18">
             <Image
               src={combo.image}
               alt={comboTitle}
@@ -293,14 +292,14 @@ export default function ProductCombosSidebar({
               sizes="72px"
             />
             {/* Badge số chai */}
-            <span className="absolute bottom-1 right-1 bg-black/75 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.2 rounded">
+            <span className="absolute bottom-1 right-1 bg-ink-950/75 backdrop-blur-xs text-white text-[10px] px-1.5 py-0.2 rounded">
               {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
             </span>
           </div>
 
           {/* Thông tin Text */}
           <div className="min-w-0 flex-1 w-full">
-            <h4 className="text-xs font-bold text-text-dark leading-snug group-hover/card:text-emerald-800 transition-colors">
+            <h4 className="text-sm text-text-dark leading-snug group-hover/card:text-emerald-800 transition-colors">
               {comboTitle}
             </h4>
 
@@ -310,13 +309,13 @@ export default function ProductCombosSidebar({
 
             {/* Giá bán */}
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-xs sm:text-sm font-extrabold text-emerald-800">
+              <span className="text-sm sm:text-base text-emerald-800">
                 {formatPrice(combo.salePrice)}đ
               </span>
               <span className="text-[10px] text-gray-400 line-through">
                 {formatPrice(combo.originalPrice)}đ
               </span>
-              <span className="text-[9px] font-bold text-sale bg-red-50 px-1 py-0.2 rounded">
+              <span className="text-[10px] text-sale bg-red-50 px-1 py-0.2 rounded">
                 -{combo.discount}%
               </span>
             </div>
@@ -328,9 +327,8 @@ export default function ProductCombosSidebar({
           {isCustomizable ? (
             <Link
               href={`/combo/${combo.slug}`}
-              className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-700 text-emerald-900 hover:text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs"
+              className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-700 text-emerald-900 hover:text-white text-[12px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs"
             >
-              <Sparkles className="w-3 h-3 text-corn" />
               <span>{customText}</span>
               <ArrowRight className="w-3 h-3" />
             </Link>
@@ -339,10 +337,10 @@ export default function ProductCombosSidebar({
               type="button"
               onClick={(e) => handleQuickAdd(combo, e)}
               className={cn(
-                'w-full py-1.5 px-2.5 rounded-lg font-bold text-[11px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs cursor-pointer',
+                'w-full py-1.5 px-2.5 rounded-lg text-[12px] flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs cursor-pointer',
                 isJustAdded
                   ? 'bg-emerald-700 text-white'
-                  : 'bg-[#FAF8F5] hover:bg-emerald-800 text-gray-800 hover:text-white border border-gray-200/80 hover:border-emerald-800'
+                  : 'bg-ivory hover:bg-emerald-800 text-gray-800 hover:text-white border border-gray-200/80 hover:border-emerald-800'
               )}
             >
               {isJustAdded ? (
@@ -423,15 +421,15 @@ export default function ProductCombosSidebar({
   // LAYOUT DỌC (vertical) — sidebar gốc
   // ──────────────────────────────────────────────────────
   return (
-    <aside className="w-full bg-[#FAF9F5] border border-[#EBE4D8] rounded-2xl p-3.5 sm:p-4 shadow-xs">
+    <aside className="w-full bg-ivory border border-amber-200 rounded-2xl p-3.5 sm:p-4 shadow-xs">
       {/* Tiêu đề Khối Combo */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E8DFC8]">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-amber-200">
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-6 rounded-lg bg-emerald-800 text-white flex items-center justify-center shadow-xs">
             <Layers className="w-3.5 h-3.5 text-corn" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#11241C] font-heading leading-none">
+            <h3 className="text-base text-forest-950 font-heading leading-none">
               {language === 'en' ? 'Value Combos' : 'Combo tiết kiệm'}
             </h3>
             <p className="text-[11px] text-text-muted mt-0.5">
@@ -439,7 +437,7 @@ export default function ProductCombosSidebar({
             </p>
           </div>
         </div>
-        <span className="text-[10px] font-bold bg-sale/10 text-sale px-2 py-0.5 rounded-full border border-sale/20">
+        <span className="text-[11px] bg-sale/10 text-sale px-2 py-0.5 rounded-full border border-sale/20">
           {language === 'en' ? `Up to ${maxDiscount}% off` : `Giảm đến ${maxDiscount}%`}
         </span>
       </div>
@@ -450,10 +448,10 @@ export default function ProductCombosSidebar({
       </div>
 
       {/* Ghi chú chân sidebar */}
-      <div className="mt-3 pt-2.5 border-t border-[#E8DFC8]/70 text-center">
+      <div className="mt-3 pt-2.5 border-t border-amber-200/70 text-center">
         <Link
           href="/combo"
-          className="text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 inline-flex items-center gap-1 hover:underline"
+          className="text-[12px] text-emerald-800 hover:text-emerald-950 inline-flex items-center gap-1 hover:underline"
         >
           <span>{language === 'en' ? 'View all combo offers' : 'Xem tất cả ưu đãi Combo'}</span>
           <ArrowRight className="w-3 h-3" />

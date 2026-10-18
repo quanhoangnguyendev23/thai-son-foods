@@ -10,7 +10,6 @@ import {
   Trash2,
   ArrowRight,
   CheckCircle2,
-  Sparkles,
   MapPin,
   AlertTriangle,
 } from 'lucide-react';
@@ -65,12 +64,12 @@ export default function CartStickySidebar() {
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-[#11241C] font-heading leading-tight">
+              <h2 className="text-lg text-forest-950 font-heading leading-tight">
                 {language === 'en' ? 'Your Cart' : 'Giỏ hàng của bạn'}
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-semibold text-emerald-800">
+                <span className="text-[12px] text-emerald-800">
                   {language === 'en' ? 'Live updates' : 'Cập nhật trực tiếp'}
                 </span>
               </div>
@@ -83,12 +82,12 @@ export default function CartStickySidebar() {
           <div className="flex items-center justify-between text-xs text-text-dark mb-1.5">
             <span className="font-medium text-text-body">
               {language === 'en' ? (
-                <>Add <strong className="font-bold text-emerald-800">200.000đ</strong> more for Free Shipping</>
+                <>Add <strong className="text-emerald-800 text-[1.125em]">200.000đ</strong> more for Free Shipping</>
               ) : (
-                <>Mua thêm <strong className="font-bold text-emerald-800">200.000đ</strong> để được Freeship</>
+                <>Mua thêm <strong className="text-emerald-800 text-[1.125em]">200.000đ</strong> để được Freeship</>
               )}
             </span>
-            <span className="font-bold text-emerald-900 text-[11px]">0%</span>
+            <span className="text-emerald-900 text-[12px]">0%</span>
           </div>
           <div className="w-full h-2 bg-emerald-100/70 rounded-full overflow-hidden">
             <div className="h-full bg-emerald-600 rounded-full w-0" />
@@ -100,7 +99,7 @@ export default function CartStickySidebar() {
           <div className="w-20 h-20 bg-ivory rounded-2xl flex items-center justify-center mb-4 border border-dashed border-gray-300">
             <ShoppingBag className="w-9 h-9 text-gray-400" />
           </div>
-          <h3 className="text-base font-bold text-text-dark font-heading mb-1">
+          <h3 className="text-lg text-text-dark font-heading mb-1">
             {language === 'en' ? 'Your cart is empty' : 'Giỏ hàng đang trống'}
           </h3>
           <p className="text-xs text-text-muted max-w-[240px] leading-relaxed mb-4">
@@ -108,8 +107,8 @@ export default function CartStickySidebar() {
               ? 'Select delicious natural beverages from Thai Son Foods to add to your cart!'
               : 'Hãy chọn những thức uống thơm ngon tự nhiên từ Thái Sơn Foods để bỏ vào giỏ nhé!'}
           </p>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full">
-            {language === 'en' ? '👈 Click "Add to Cart" on the left' : '👈 Bấm "Thêm vào giỏ" bên trái'}
+          <span className="inline-flex items-center gap-1.5 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full">
+            {language === 'en' ? 'Click "Add to Cart" on the left' : 'Bấm "Thêm vào giỏ" bên trái'}
           </span>
         </div>
       </div>
@@ -124,18 +123,18 @@ export default function CartStickySidebar() {
           <div id="cart-target-sticky" className="relative w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 shadow-xs transition-transform">
             <ShoppingBag className="w-5 h-5" />
             {totalQuantity > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-sale text-white text-[10px] font-black flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-sale text-white text-[11px] flex items-center justify-center shadow-xs">
                 {totalQuantity > 99 ? '99+' : totalQuantity}
               </span>
             )}
           </div>
           <div>
-            <h2 className="text-base font-extrabold text-[#11241C] font-heading leading-tight">
+            <h2 className="text-lg text-forest-950 font-heading leading-tight">
               {language === 'en' ? 'Your Cart' : 'Giỏ hàng của bạn'}
             </h2>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-semibold text-emerald-800">
+              <span className="text-[12px] text-emerald-800">
                 {totalQuantity > 0
                   ? (language === 'en' ? `${totalQuantity} item(s) in cart` : `${totalQuantity} sản phẩm trong giỏ`)
                   : (language === 'en' ? 'Live updates' : 'Cập nhật trực tiếp')}
@@ -148,7 +147,7 @@ export default function CartStickySidebar() {
           <button
             type="button"
             onClick={clearCart}
-            className="text-xs font-semibold text-gray-400 hover:text-sale transition-colors cursor-pointer"
+            className="text-sm text-gray-400 hover:text-sale transition-colors cursor-pointer"
             title={language === 'en' ? 'Clear all items in cart' : 'Xóa tất cả món trong giỏ'}
           >
             {language === 'en' ? 'Clear' : 'Làm trống'}
@@ -161,15 +160,14 @@ export default function CartStickySidebar() {
         <div className="flex items-center justify-between text-xs text-text-dark mb-1.5">
           <span className="font-medium text-text-body">
             {remainingForFreeShipping <= 0 ? (
-              <span className="font-bold text-emerald-800 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-emerald-800 flex items-center gap-1 text-[1.125em]">
                 {language === 'en' ? 'FREE SHIPPING UNLOCKED!' : 'Đủ điều kiện MIỄN PHÍ VẬN CHUYỂN!'}
               </span>
             ) : (
               language === 'en' ? (
                 <>
                   Add{' '}
-                  <strong className="font-bold text-emerald-800">
+                  <strong className="text-emerald-800 text-[1.125em]">
                     {formatPrice(remainingForFreeShipping)}đ
                   </strong>{' '}
                   more for Free Shipping
@@ -177,7 +175,7 @@ export default function CartStickySidebar() {
               ) : (
                 <>
                   Mua thêm{' '}
-                  <strong className="font-bold text-emerald-800">
+                  <strong className="text-emerald-800 text-[1.125em]">
                     {formatPrice(remainingForFreeShipping)}đ
                   </strong>{' '}
                   để được Freeship
@@ -185,7 +183,7 @@ export default function CartStickySidebar() {
               )
             )}
           </span>
-          <span className="font-bold text-emerald-900 text-[11px]">
+          <span className="text-emerald-900 text-[12px]">
             {Math.round(progress)}%
           </span>
         </div>
@@ -202,16 +200,16 @@ export default function CartStickySidebar() {
       {/* Chỉ báo chi nhánh đang phục vụ giỏ hàng */}
       <div className="px-5 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 truncate text-gray-700">
-          <MapPin className="w-3.5 h-3.5 text-[#1B5E3B] shrink-0" />
+          <MapPin className="w-3.5 h-3.5 text-forest-700 shrink-0" />
           <span className="text-text-muted hidden sm:inline shrink-0">Kho:</span>
-          <span className="font-semibold text-gray-900 truncate">
-            {selectedBranch?.name || 'Chi nhánh 1 (Tân Phú)'}
+          <span className="text-gray-900 truncate text-[1.125em]">
+            {selectedBranch?.name || 'Cửa Hàng NH - Phú Thọ Hòa'}
           </span>
         </div>
         <button
           type="button"
           onClick={openBranchModal}
-          className="text-[#1B5E3B] hover:text-emerald-800 font-bold underline cursor-pointer shrink-0 ml-2"
+          className="text-forest-700 hover:text-emerald-800 underline cursor-pointer shrink-0 ml-2 text-[1.125em]"
         >
           {language === 'en' ? 'Change' : 'Đổi'}
         </button>
@@ -224,7 +222,7 @@ export default function CartStickySidebar() {
             <div className="w-20 h-20 bg-ivory rounded-2xl flex items-center justify-center mb-4 border border-dashed border-gray-300">
               <ShoppingBag className="w-9 h-9 text-gray-400" />
             </div>
-            <h3 className="text-base font-bold text-text-dark font-heading mb-1">
+            <h3 className="text-lg text-text-dark font-heading mb-1">
               {language === 'en' ? 'Your cart is empty' : 'Giỏ hàng đang trống'}
             </h3>
             <p className="text-xs text-text-muted max-w-[240px] leading-relaxed mb-4">
@@ -232,8 +230,8 @@ export default function CartStickySidebar() {
                 ? 'Select delicious natural beverages from Thai Son Foods to add to your cart!'
                 : 'Hãy chọn những thức uống thơm ngon tự nhiên từ Thái Sơn Foods để bỏ vào giỏ nhé!'}
             </p>
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full">
-              {language === 'en' ? '👈 Click "Add to Cart" on the left' : '👈 Bấm "Thêm vào giỏ" bên trái'}
+            <span className="inline-flex items-center gap-1.5 text-sm text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-full">
+              {language === 'en' ? 'Click "Add to Cart" on the left' : 'Bấm "Thêm vào giỏ" bên trái'}
             </span>
           </div>
         ) : (
@@ -249,7 +247,7 @@ export default function CartStickySidebar() {
                 className="pt-3 first:pt-0 flex items-center gap-3 group"
               >
                 {/* Thumbnail sản phẩm */}
-                <div className="relative w-14 h-16 rounded-xl overflow-hidden bg-[#FAF8F5] shrink-0 border border-gray-100 p-1 flex items-center justify-center">
+                <div className="relative w-14 h-16 rounded-xl overflow-hidden bg-ivory shrink-0 border border-gray-100 p-1 flex items-center justify-center">
                   <Image
                     src={item.thumbnail}
                     alt={item.name}
@@ -261,7 +259,7 @@ export default function CartStickySidebar() {
 
                 {/* Thông tin món */}
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-xs sm:text-[13px] font-bold text-text-dark leading-snug break-words">
+                  <h4 className="text-sm sm:text-[15px] text-text-dark leading-snug break-words">
                     {item.name}
                   </h4>
                   {item.variantName && (
@@ -269,7 +267,7 @@ export default function CartStickySidebar() {
                       {item.variantName}
                     </p>
                   )}
-                  <p className="text-xs font-extrabold text-emerald-800 mt-1">
+                  <p className="text-sm text-emerald-800 mt-1">
                     {formatPrice(item.price)}đ
                   </p>
 
@@ -290,7 +288,7 @@ export default function CartStickySidebar() {
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="px-2 text-xs font-bold text-text-dark min-w-[20px] text-center">
+                      <span className="px-2 text-sm text-text-dark min-w-[20px] text-center">
                         {item.quantity}
                       </span>
                       {(() => {
@@ -317,7 +315,7 @@ export default function CartStickySidebar() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-text-dark">
+                      <span className="text-sm text-text-dark">
                         {formatPrice(item.price * item.quantity)}đ
                       </span>
                       <button
@@ -347,7 +345,7 @@ export default function CartStickySidebar() {
               {language === 'en' ? 'Subtotal:' : 'Tạm tính:'}
             </span>
             <div className="text-right">
-              <span className="font-black text-emerald-800 text-lg">
+              <span className="text-emerald-800 text-xl">
                 {formatPrice(totalPrice)}đ
               </span>
               <span className="text-[11px] text-gray-400 block font-normal">
@@ -361,7 +359,7 @@ export default function CartStickySidebar() {
           {/* Cảnh báo thiếu hàng nếu có */}
           {!isAvailable && (
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
-              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+              <div className="flex items-center gap-1.5 text-amber-900 text-[1.125em]">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>Chi nhánh hiện chưa đủ số lượng</span>
               </div>
@@ -371,19 +369,19 @@ export default function CartStickySidebar() {
               <ul className="list-disc pl-4 space-y-0.5 text-[11px]">
                 {insufficientItems.map((it) => (
                   <li key={it.productId}>
-                    <strong>{it.productName.slice(0, 32)}...</strong>: cần {it.requested}, kho còn {it.available}
+                    <strong className="text-[1.125em]">{it.productName.slice(0, 32)}...</strong>: cần {it.requested}, kho còn {it.available}
                   </li>
                 ))}
               </ul>
               {alternativeStores.length > 0 ? (
                 <div className="pt-1 border-t border-amber-200/70 flex items-center justify-between gap-1">
                   <span className="text-[11px] text-gray-700">
-                    Kho <strong>{alternativeStores[0].name.slice(0, 16)}</strong> đủ hàng
+                    Kho <strong className="text-[1.125em]">{alternativeStores[0].name.slice(0, 16)}</strong> đủ hàng
                   </span>
                   <button
                     type="button"
                     onClick={() => setSelectedBranch(alternativeStores[0] as any)}
-                    className="text-[11px] font-bold text-emerald-800 underline hover:text-emerald-900 cursor-pointer"
+                    className="text-[12px] text-emerald-800 underline hover:text-emerald-900 cursor-pointer"
                   >
                     Đổi kho này
                   </button>
@@ -392,7 +390,7 @@ export default function CartStickySidebar() {
                 <button
                   type="button"
                   onClick={openBranchModal}
-                  className="text-[11px] font-bold text-emerald-800 underline cursor-pointer block text-left"
+                  className="text-[12px] text-emerald-800 underline cursor-pointer block text-left"
                 >
                   Chọn chi nhánh khác còn hàng
                 </button>
@@ -404,7 +402,7 @@ export default function CartStickySidebar() {
           {isAvailable ? (
             <Link
               href="/thanh-toan"
-              className="w-full py-3 bg-gradient-to-r from-emerald-700 to-[#1B4D3E] text-white font-bold rounded-xl hover:opacity-95 transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-98"
+              className="w-full py-3 bg-gradient-to-r from-emerald-700 to-forest-800 text-white rounded-xl hover:opacity-95 transition-all text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-98"
             >
               <span>{language === 'en' ? 'Place Order' : 'Đặt hàng'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -413,9 +411,9 @@ export default function CartStickySidebar() {
             <button
               type="button"
               disabled
-              className="w-full py-2.5 px-2 bg-amber-50/90 text-amber-950 font-semibold rounded-xl text-xs flex flex-col items-center justify-center cursor-not-allowed border border-amber-300 text-center leading-tight gap-0.5 shadow-xs"
+              className="w-full py-2.5 px-2 bg-amber-50/90 text-amber-950 rounded-xl text-sm flex flex-col items-center justify-center cursor-not-allowed border border-amber-300 text-center leading-tight gap-0.5 shadow-xs"
             >
-              <span className="font-bold text-amber-950 text-xs">
+              <span className="text-amber-950 text-sm">
                 {language === 'en' ? 'Branch currently out of stock' : 'Chi nhánh tạm chưa đủ hàng'}
               </span>
               <span className="text-[10.5px] text-amber-800 font-normal">
@@ -427,7 +425,7 @@ export default function CartStickySidebar() {
           {/* Nút xem chi tiết giỏ hàng */}
           <Link
             href="/gio-hang"
-            className="w-full py-2 px-2 bg-white border border-gray-200 text-text-dark font-semibold rounded-xl hover:bg-gray-50 transition-all text-xs text-center flex items-center justify-center block"
+            className="w-full py-2 px-2 bg-white border border-gray-200 text-text-dark rounded-xl hover:bg-gray-50 transition-all text-sm text-center flex items-center justify-center block"
           >
             {language === 'en' ? 'View Cart' : 'Xem giỏ hàng'}
           </Link>

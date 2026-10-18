@@ -68,7 +68,7 @@ export default function FloatingCartWidget() {
             className="pointer-events-auto mb-3 bg-white/98 backdrop-blur-md rounded-2xl shadow-2xl border border-emerald-600/30 p-3 sm:p-3.5 w-[290px] sm:w-[320px] flex flex-col gap-2.5 ring-4 ring-emerald-500/10"
           >
             <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+              <div className="flex items-center gap-1.5 text-sm text-emerald-800">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>{language === 'vi' ? 'Đã quăng vào giỏ hàng!' : 'Added to cart!'}</span>
               </div>
@@ -97,10 +97,10 @@ export default function FloatingCartWidget() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h4 className="text-xs sm:text-[13px] font-bold text-[#11241C] leading-snug">
+                <h4 className="text-sm sm:text-[15px] text-forest-950 leading-snug">
                   {toastName}
                 </h4>
-                <p className="text-xs font-extrabold text-emerald-700 mt-1">
+                <p className="text-sm text-emerald-700 mt-1">
                   {formatPrice(toastItem.price)}đ
                   {toastItem.quantity > 1 ? ` x ${toastItem.quantity}` : ''}
                 </p>
@@ -113,7 +113,7 @@ export default function FloatingCartWidget() {
                 setToastItem(null);
                 clearLastAddedItem();
               }}
-              className="flex items-center justify-center gap-1.5 w-full py-1.5 mt-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 mt-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[12px] transition-colors cursor-pointer"
             >
               <span>{language === 'vi' ? 'Xem giỏ hàng & thanh toán' : 'View cart & checkout'}</span>
               <ArrowRight className="w-3 h-3" />
@@ -142,7 +142,7 @@ export default function FloatingCartWidget() {
         <Link
           href="/gio-hang"
           id="cart-target-floating"
-          className="group relative flex items-center gap-2.5 sm:gap-3 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-emerald-800 via-[#1B5E3B] to-emerald-900 text-white shadow-2xl shadow-emerald-950/40 border border-emerald-500/40 hover:border-emerald-300 transition-all cursor-pointer"
+          className="group relative flex items-center gap-2.5 sm:gap-3 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-emerald-800 via-forest-700 to-emerald-900 text-white shadow-2xl shadow-emerald-950/40 border border-emerald-500/40 hover:border-emerald-300 transition-all cursor-pointer"
           aria-label={
             language === 'en'
               ? `Cart: ${isMounted ? totalQuantity : 0} items, subtotal ${formatPrice(isMounted ? totalPrice : 0)}đ`
@@ -161,7 +161,7 @@ export default function FloatingCartWidget() {
                 initial={{ scale: 0.5 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', damping: 15 }}
-                className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-sale text-white text-[11px] font-black flex items-center justify-center shadow-md border-2 border-emerald-900"
+                className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-sale text-white text-[12px] flex items-center justify-center shadow-md border-2 border-emerald-900"
               >
                 {totalQuantity > 99 ? '99+' : totalQuantity}
               </motion.span>
@@ -170,12 +170,12 @@ export default function FloatingCartWidget() {
 
           {/* Nhãn giỏ hàng & Tạm tính */}
           <div className="relative z-10 text-left min-w-0 pr-0.5">
-            <div className="text-[11px] font-semibold text-emerald-200 leading-tight">
+            <div className="text-[12px] text-emerald-200 leading-tight">
               {isMounted && totalQuantity > 0
                 ? (language === 'vi' ? 'Giỏ hàng của bạn' : 'Your Cart')
                 : (language === 'vi' ? 'Giỏ hàng' : 'Cart')}
             </div>
-            <div className="text-xs sm:text-[13px] font-black text-white leading-tight mt-0.5">
+            <div className="text-sm sm:text-[15px] text-white leading-tight mt-0.5">
               {isMounted && totalQuantity > 0
                 ? `${formatPrice(totalPrice)}đ`
                 : (language === 'vi' ? '0 món' : '0 items')}

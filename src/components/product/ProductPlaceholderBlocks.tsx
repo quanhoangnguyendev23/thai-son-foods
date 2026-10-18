@@ -47,18 +47,18 @@ export function MonthlySalesPlaceholder() {
 export function CouponPlaceholder() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-lg border border-[#FFD8B3] bg-[#FFF8F1] px-3 py-2 text-xs text-[#0F1111]">
+    <div className="rounded-lg border border-amber-200 bg-ivory px-3 py-2 text-xs text-ink-950">
       <div className="flex items-start gap-2 flex-wrap">
-        <span className="shrink-0 rounded bg-sale px-1.5 py-0.5 text-[11px] font-bold text-white">
+        <span className="shrink-0 rounded bg-sale px-1.5 py-0.5 text-[12px] text-white">
           {COUPON_PLACEHOLDER.badge}
         </span>
         <span className="min-w-0 flex-1 leading-relaxed">
-          <strong>{COUPON_PLACEHOLDER.title}</strong>: {COUPON_PLACEHOLDER.description}{' '}
+          <strong className="text-[1.125em]">{COUPON_PLACEHOLDER.title}</strong>: {COUPON_PLACEHOLDER.description}{' '}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
-            className="text-[#007185] hover:underline cursor-pointer"
+            className="text-forest-700 hover:underline cursor-pointer"
           >
             {COUPON_PLACEHOLDER.termsLabel}
           </button>
@@ -89,7 +89,7 @@ export function DeliveryAddressPlaceholder() {
         <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" aria-hidden />
         <span className="min-w-0 flex-1 leading-snug">
           <span className="text-gray-600">Giao đến: </span>
-          <span className="text-[#007185] group-hover:underline">{selected?.line}</span>
+          <span className="text-forest-700 group-hover:underline">{selected?.line}</span>
         </span>
         <ChevronDown className={cn('w-4 h-4 text-gray-400 shrink-0 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
@@ -106,10 +106,10 @@ export function DeliveryAddressPlaceholder() {
                 name={`${listId}-addr`}
                 checked={addr.id === selectedId}
                 onChange={() => setSelectedId(addr.id)}
-                className="mt-0.5 accent-[#1B5E3B]"
+                className="mt-0.5 accent-forest-700"
               />
               <span className="leading-snug">
-                <strong className="font-semibold">{addr.label}</strong>
+                <strong className="text-[1.125em]">{addr.label}</strong>
                 <span className="block text-xs text-gray-600">{addr.line}</span>
               </span>
             </label>
@@ -132,7 +132,7 @@ export function ReturnPolicyPlaceholder() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex items-center gap-2 text-[#007185] hover:underline cursor-pointer"
+        className="flex items-center gap-2 text-forest-700 hover:underline cursor-pointer"
       >
         <RotateCcw className="w-3.5 h-3.5 text-gray-500" aria-hidden />
         {RETURN_POLICY_PLACEHOLDER.title}
@@ -156,7 +156,7 @@ export function WishlistPlaceholderButton() {
         type="button"
         onClick={() => setSaved((v) => !v)}
         aria-pressed={saved}
-        className="w-full h-9 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-[13px] text-[#0F1111] inline-flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full h-9 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-[13px] text-ink-950 inline-flex items-center justify-center gap-2 cursor-pointer"
       >
         <Heart className={cn('w-4 h-4', saved ? 'fill-red-500 text-red-500' : 'text-gray-600')} aria-hidden />
         {saved ? 'Đã đánh dấu (chưa lưu vào tài khoản)' : 'Thêm vào danh sách yêu thích'}
@@ -183,7 +183,7 @@ export function ProductQAPlaceholder() {
   return (
     <section className="max-w-[1456px] mx-auto px-4 sm:px-6 py-8 md:py-10" aria-labelledby="qa-title">
       <div className="flex items-center gap-2 flex-wrap mb-4">
-        <h2 id="qa-title" className="text-xl md:text-2xl font-bold text-[#0F1111]">
+        <h2 id="qa-title" className="text-2xl md:text-2xl text-ink-950">
           Câu hỏi & trả lời
         </h2>
         <PlaceholderBadge />
@@ -243,7 +243,7 @@ export function ProductQAPlaceholder() {
                 className="flex w-full items-start justify-between gap-3 text-left cursor-pointer"
               >
                 <span className="text-sm">
-                  <strong className="font-semibold">Hỏi: </strong>
+                  <strong className="text-[1.125em]">Hỏi: </strong>
                   {qa.question}
                 </span>
                 <ChevronDown className={cn('w-4 h-4 text-gray-400 shrink-0 mt-0.5 transition-transform', isOpen && 'rotate-180')} aria-hidden />
@@ -251,7 +251,7 @@ export function ProductQAPlaceholder() {
               {isOpen && (
                 <div className="mt-2 text-sm text-gray-700">
                   <p>
-                    <strong className="font-semibold">Đáp: </strong>
+                    <strong className="text-[1.125em]">Đáp: </strong>
                     {qa.answer}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
@@ -272,7 +272,7 @@ export function ReviewImagesPlaceholder() {
   return (
     <section className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-8" aria-labelledby="review-images-title">
       <div className="flex items-center gap-2 flex-wrap mb-3">
-        <h2 id="review-images-title" className="text-lg font-bold text-[#0F1111]">
+        <h2 id="review-images-title" className="text-xl text-ink-950">
           Hình ảnh từ khách hàng
         </h2>
         <PlaceholderBadge />

@@ -37,13 +37,13 @@ export default function MobileBuyBar({
       aria-hidden={!visible}
       className={cn(
         'lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur',
-        'pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] transition-transform duration-200',
+        'pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_16px_rgba(34,84,76,0.06)] transition-transform duration-200',
         visible ? 'translate-y-0' : 'translate-y-full pointer-events-none'
       )}
     >
       <div className="flex items-center gap-2 px-4 py-2.5">
         <div className="min-w-0 flex-1">
-          <div className="text-base font-bold text-[#0F1111] leading-tight">{formatPrice(price)}đ</div>
+          <div className="text-lg text-ink-950 leading-tight">{formatPrice(price)}đ</div>
           <div className="text-[11px] text-gray-600 truncate">{packLabel}</div>
         </div>
         {isOutOfStock ? (
@@ -51,7 +51,7 @@ export default function MobileBuyBar({
             type="button"
             tabIndex={visible ? 0 : -1}
             onClick={onChangeBranch}
-            className="h-11 px-4 rounded-full border border-gray-300 text-sm font-medium text-[#0F1111] cursor-pointer"
+            className="h-11 px-4 rounded-full border border-gray-300 text-sm font-medium text-ink-950 cursor-pointer"
           >
             {isEn ? 'Other branch' : 'Chọn chi nhánh khác'}
           </button>
@@ -63,7 +63,7 @@ export default function MobileBuyBar({
               onClick={onAddToCart}
               disabled={!canAdd}
               aria-label={isEn ? 'Add to cart' : 'Thêm vào giỏ hàng'}
-              className="h-11 w-11 shrink-0 rounded-full bg-corn border border-corn-dark/60 text-[#0F1111] inline-flex items-center justify-center cursor-pointer disabled:bg-gray-200 disabled:border-gray-300 disabled:text-gray-500"
+              className="h-11 w-11 shrink-0 rounded-full bg-corn border border-corn-dark/60 text-ink-950 inline-flex items-center justify-center cursor-pointer disabled:bg-gray-200 disabled:border-gray-300 disabled:text-gray-500"
             >
               <ShoppingCart className="w-5 h-5" aria-hidden />
             </button>
@@ -72,7 +72,7 @@ export default function MobileBuyBar({
               tabIndex={visible ? 0 : -1}
               onClick={onBuyNow}
               disabled={!canAdd}
-              className="h-11 px-5 rounded-full bg-green-primary text-white text-sm font-semibold cursor-pointer disabled:bg-gray-200 disabled:text-gray-500"
+              className="h-11 px-5 rounded-full bg-leaf-900 hover:bg-leaf-900 text-white text-base cursor-pointer disabled:bg-gray-200 disabled:text-gray-500"
             >
               {isEn ? 'Buy now' : 'Mua ngay'}
             </button>

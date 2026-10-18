@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { ChevronDown, Sparkles, Layers } from 'lucide-react';
+import { ChevronDown, Layers } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 export interface ScrollBannerItem {
@@ -47,9 +47,9 @@ export default function ScrollBannerShowcase(props: ScrollBannerShowcaseProps = 
 
   if (!mounted) {
     return (
-      <div className="relative w-full h-[180vh] sm:h-[260vh] bg-[#0A1612] select-none">
+      <div className="relative w-full h-[180vh] sm:h-[260vh] bg-forest-950 select-none">
         <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center z-20">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0F281E]/60 via-[#0A1612] to-[#050D0A] z-0" />
+          <div className="absolute inset-0 bg-gradient-to-b from-forest-950/60 via-forest-950 to-forest-950 z-0" />
           <div className="relative w-full h-full">
             <Image
               src={defaultScrollBanners[0].image}
@@ -161,7 +161,7 @@ function ScrollBannerContent({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[180vh] sm:h-[260vh] bg-[#0A1612] select-none"
+      className="relative w-full h-[180vh] sm:h-[260vh] bg-forest-950 select-none"
       aria-label={language === 'en' ? 'Explore Thai Son Foods visual brand collection by scrolling' : 'Khám phá bộ sưu tập banner Thái Sơn Foods bằng cách lướt chuột'}
     >
       {/* 
@@ -170,7 +170,7 @@ function ScrollBannerContent({
       */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center z-20">
         {/* Nền Gradient mờ tối điện ảnh */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0F281E]/60 via-[#0A1612] to-[#050D0A] z-0" />
+        <div className="absolute inset-0 bg-gradient-to-b from-forest-950/60 via-forest-950 to-forest-950 z-0" />
 
         {/* ════════════ SLIDE 1 ════════════ */}
         <motion.div
@@ -215,14 +215,14 @@ function ScrollBannerContent({
         </motion.div>
 
         {/* Lớp phủ chuyển sắc nhẹ ở viền để nổi bật nội dung */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/25 z-10" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-950/40 via-transparent to-ink-950/25 z-10" />
 
         {/* ════════════ GIAO DIỆN ĐIỀU HƯỚNG & TIẾN TRÌNH CAO CẤP ════════════ */}
         {/* Góc trên bên trái: Badge nhận diện thương hiệu (Ẩn trên mobile để không bị header che mất) */}
         <div className="hidden sm:block absolute top-8 left-10 z-30">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-white/90 text-xs font-semibold shadow-sm">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-ink-950/45 backdrop-blur-md border border-white/15 text-white/90 text-sm shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="tracking-wide uppercase text-[11px] font-bold">Thái Sơn Group • Brand Visual</span>
+            <span className="tracking-wide uppercase text-[12px]">Thái Sơn Group • Brand Visual</span>
           </div>
         </div>
 
@@ -231,8 +231,7 @@ function ScrollBannerContent({
           style={{ opacity: hintOpacity }}
           className="pointer-events-none absolute bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2 text-white/90"
         >
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 shadow-lg text-[12px] font-semibold tracking-wide whitespace-nowrap">
-            <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin" style={{ animationDuration: '6s' }} />
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-ink-950/50 backdrop-blur-md border border-white/15 shadow-lg text-[13px] tracking-wide whitespace-nowrap">
             <span className="hidden sm:inline">
               {language === 'en' ? 'Scroll down to switch banner' : 'Lướt chuột xuống để chuyển đổi banner'}
             </span>
@@ -245,13 +244,13 @@ function ScrollBannerContent({
 
         {/* Mép dưới: Chỉ số 01 / 02 và thanh tiến trình Apple-style (Căn giữa trên mobile, góc phải trên desktop) */}
         <div className="absolute bottom-5 sm:bottom-8 left-1/2 sm:left-auto sm:right-10 -translate-x-1/2 sm:translate-x-0 z-30 flex flex-col items-center sm:items-end gap-2 sm:gap-2.5">
-          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/55 backdrop-blur-md border border-white/15 shadow-xl">
+          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-ink-950/55 backdrop-blur-md border border-white/15 shadow-xl">
             {/* Nút Slide 1 */}
             <motion.button
               type="button"
               onClick={() => handleScrollToSlide(0)}
               style={{ opacity: pill1Active }}
-              className="px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-bold text-white hover:bg-white/15 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 sm:py-2.5 rounded-xl text-sm text-white hover:bg-white/15 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <span className="font-mono text-emerald-400">01</span>
               <span className="hidden sm:inline">
@@ -266,7 +265,7 @@ function ScrollBannerContent({
               type="button"
               onClick={() => handleScrollToSlide(1)}
               style={{ opacity: pill2Active }}
-              className="px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-bold text-white hover:bg-white/15 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 sm:py-2.5 rounded-xl text-sm text-white hover:bg-white/15 transition-all cursor-pointer flex items-center gap-1.5"
             >
               <span className="font-mono text-amber-400">02</span>
               <span className="hidden sm:inline">

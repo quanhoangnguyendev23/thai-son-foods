@@ -15,14 +15,11 @@ import {
   Lock,
   ChevronDown,
   Check,
-  Sparkles,
   Info,
-  Flame,
   Clock,
   Package,
   Plus,
   Minus,
-  Leaf,
   ChevronRight,
   MapPin,
   AlertTriangle,
@@ -385,11 +382,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     <div className="flex flex-col space-y-3.5 w-full">
       {/* 1. Tiêu đề sản phẩm chuẩn Amazon */}
       <div className="space-y-1">
-        <h1 className="text-2xl lg:text-[25px] font-medium text-[#0F1111] leading-snug tracking-tight">
+        <h1 className="text-2xl lg:text-[25px] font-medium text-ink-950 leading-snug tracking-tight">
           {displayName}
         </h1>
         {displayShortDesc && (
-          <p className="text-sm text-[#333333] pt-0.5 leading-relaxed">
+          <p className="text-sm text-ink-800 pt-0.5 leading-relaxed">
             {displayShortDesc}
           </p>
         )}
@@ -399,7 +396,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       <div className="flex items-center justify-between text-sm flex-wrap gap-2 pb-1 border-b border-gray-100">
         <Link
           href="/#ve-chung-toi"
-          className="text-[#007185] hover:text-[#C7511F] hover:underline text-sm font-medium transition-colors"
+          className="text-forest-700 hover:text-copper-600 hover:underline text-sm font-medium transition-colors"
         >
           Ghé thăm cửa hàng Thái Sơn Foods
         </Link>
@@ -409,17 +406,17 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       {/* 3. Đánh giá & Lượt bán */}
-      <div className="flex items-center gap-2 flex-wrap text-sm text-[#0F1111]">
+      <div className="flex items-center gap-2 flex-wrap text-sm text-ink-950">
         {reviewSummary && reviewSummary.totalReviews > 0 ? (
           <>
-            <span className="font-semibold text-sm">{reviewSummary.averageRating.toFixed(1)}</span>
+            <span className="text-base">{reviewSummary.averageRating.toFixed(1)}</span>
             <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
                   className={`w-4 h-4 ${
                     s <= Math.round(reviewSummary.averageRating)
-                      ? 'fill-[#FFA41C] text-[#FFA41C]'
+                      ? 'fill-amber-500 text-amber-500'
                       : 'fill-gray-200 text-gray-200'
                   }`}
                 />
@@ -432,7 +429,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 const el = document.getElementById('danh-gia') || document.getElementById('danh-gia-khach-hang');
                 el?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="text-[#007185] hover:text-[#C7511F] hover:underline text-xs sm:text-sm cursor-pointer font-medium"
+              className="text-forest-700 hover:text-copper-600 hover:underline text-xs sm:text-sm cursor-pointer font-medium"
             >
               ({reviewSummary.totalReviews}) đánh giá
             </a>
@@ -457,7 +454,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           </a>
         )}
         <span className="text-gray-300">|</span>
-        <span className="text-xs sm:text-sm text-[#565959]">
+        <span className="text-xs sm:text-sm text-ink-700">
           Hơn 200 sản phẩm đã được mua trong tháng trước.
         </span>
       </div>
@@ -465,10 +462,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       {/* 4. Khối Giá & Ưu đãi */}
       <div className="py-1">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-2xl text-[#CC0C39] font-light mr-2">
+          <span className="text-2xl text-crimson-600 font-light mr-2">
             -{discountRate}%
           </span>
-          <span className="text-3xl font-bold text-[#0F1111]">
+          <span className="text-3xl text-ink-950">
             {formatPrice(currentPrice)} đ
           </span>
           <span className="text-xs text-gray-500">
@@ -482,17 +479,17 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       </div>
 
       {/* 5. Banner Mã giảm giá */}
-      <div className="bg-[#FFF5ED] border border-[#FFD8B3] rounded-lg p-3 text-xs flex items-center gap-2 text-[#0F1111] leading-relaxed">
-        <span className="bg-[#C7511F] text-white font-bold px-1.5 py-0.5 rounded text-[11px] shrink-0">
+      <div className="bg-ivory border border-amber-200 rounded-lg p-3 text-xs flex items-center gap-2 text-ink-950 leading-relaxed">
+        <span className="bg-crimson-600 text-white px-1.5 py-0.5 rounded text-[12px] shrink-0">
           Mã giảm giá:
         </span>
         <div className="flex-1 min-w-0">
-          <strong>Tiết kiệm 5%</strong>: Mã giảm giá chỉ áp dụng cho tùy chọn mua hàng trực tiếp website.{' '}
-          <Link href="/#khuyen-mai" className="text-[#007185] hover:text-[#C7511F] hover:underline font-medium">
+          <strong className="text-[1.125em]">Tiết kiệm 5%</strong>: Mã giảm giá chỉ áp dụng cho tùy chọn mua hàng trực tiếp website.{' '}
+          <Link href="/#khuyen-mai" className="text-forest-700 hover:text-copper-600 hover:underline font-medium">
             Mua sắm các mặt hàng
           </Link>{' '}
           |{' '}
-          <span className="text-[#007185] hover:text-[#C7511F] hover:underline cursor-pointer">
+          <span className="text-forest-700 hover:text-copper-600 hover:underline cursor-pointer">
             Điều khoản
           </span>
         </div>
@@ -500,9 +497,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
       {/* 6. Selector Chọn biến thể bộ sản phẩm: 3 Card ngang */}
       <div className="space-y-2 pt-1">
-        <div className="text-sm text-[#0F1111]">
+        <div className="text-sm text-ink-950">
           <span>Tên bộ sản phẩm: </span>
-          <strong className="font-bold">{currentUnit} ({currentVolume})</strong>
+          <strong className="text-[1.125em]">{currentUnit} ({currentVolume})</strong>
         </div>
 
         <div
@@ -528,20 +525,20 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 className={cn(
                   'rounded-lg p-3 text-left transition-all relative flex flex-col justify-between cursor-pointer',
                   isSelected
-                    ? 'border-2 border-[#007185] bg-blue-50/10 shadow-xs'
+                    ? 'border-2 border-forest-700 bg-blue-50/10 shadow-xs'
                     : 'border border-gray-200 bg-white hover:border-gray-400'
                 )}
               >
                 <div className="flex items-center justify-between w-full mb-1">
-                  <span className="text-sm font-bold text-[#0F1111]">{vDisplayName}</span>
+                  <span className="text-base text-ink-950">{vDisplayName}</span>
                   {isSelected && (
-                    <span className="w-4 h-4 rounded-full bg-[#007185] text-white flex items-center justify-center text-[10px]">
+                    <span className="w-4 h-4 rounded-full bg-forest-700 text-white flex items-center justify-center text-[10px]">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                     </span>
                   )}
                 </div>
 
-                <div className="text-sm sm:text-base font-bold text-[#0F1111]">
+                <div className="text-base sm:text-lg text-ink-950">
                   {formatPrice(v.price)} đ
                 </div>
 
@@ -563,7 +560,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         {/* Dòng giá nhắc lại + Badge Thuần chay */}
         <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-gray-100">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-xl font-bold text-[#0F1111]">
+            <span className="text-2xl text-ink-950">
               {formatPrice(currentPrice)} đ
             </span>
             <span className="text-xs text-gray-500">
@@ -573,30 +570,29 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
           {isVegan && (
             <div className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5 text-xs font-medium">
-              <Leaf className="w-3.5 h-3.5 text-emerald-600" />
               <span>Thuần chay</span>
             </div>
           )}
         </div>
 
         {/* Giao hàng miễn phí */}
-        <div className="flex items-center gap-2 text-xs sm:text-sm text-[#0F1111]">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-ink-950">
           <Truck className="w-4 h-4 text-sky-600 shrink-0" />
           <span>
-            Giao hàng <strong className="text-emerald-700 font-bold">MIỄN PHÍ</strong> cho đơn hàng từ 200.000 đ
+            Giao hàng <strong className="text-emerald-700 text-[1.125em]">MIỄN PHÍ</strong> cho đơn hàng từ 200.000 đ
           </span>
         </div>
 
         {/* Vị trí kho */}
-        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-[#565959]">
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-ink-700">
           <MapPin className="w-4 h-4 text-gray-500 shrink-0" />
           <span className="truncate">
-            Giao hàng đến: <strong className="text-[#0F1111]">{selectedBranch?.name || 'Cửa Hàng Vườn Lài (Tân Phú)'}</strong>
+            Giao hàng đến: <strong className="text-ink-950 text-[1.125em]">{selectedBranch?.name || 'Cửa Hàng NH - Phú Thọ Hòa'}</strong>
           </span>
           <button
             type="button"
             onClick={openBranchModal}
-            className="text-[#007185] hover:text-[#C7511F] hover:underline font-medium ml-1 shrink-0 cursor-pointer"
+            className="text-forest-700 hover:text-copper-600 hover:underline font-medium ml-1 shrink-0 cursor-pointer"
           >
             (Đổi kho)
           </button>
@@ -606,7 +602,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className="pt-0.5">
           {isOutOfStock ? (
             <div className="space-y-1">
-              <div className="text-red-600 font-semibold text-sm flex items-start gap-1.5 leading-snug">
+              <div className="text-red-600 text-base flex items-start gap-1.5 leading-snug">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-600 shrink-0 mt-1"></span>
                 <span>Tạm thời hết hàng chúng tôi đang nỗ lực để sớm có hàng trở lại.</span>
               </div>
@@ -615,12 +611,12 @@ export default function ProductInfo({ product }: ProductInfoProps) {
               </p>
             </div>
           ) : isLowStock ? (
-            <div className="text-amber-700 font-semibold text-sm flex items-center gap-1.5">
+            <div className="text-amber-700 text-base flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
               <span>Sắp hết hàng ({maxAvailableInBranch} {currentUnit} có sẵn)</span>
             </div>
           ) : (
-            <div className="text-emerald-700 font-semibold text-sm flex items-center gap-1.5">
+            <div className="text-emerald-700 text-base flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
               <span>Còn hàng</span>
             </div>
@@ -644,7 +640,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
-                <span className="px-3 py-1 text-sm font-bold text-gray-900 min-w-[32px] text-center">
+                <span className="px-3 py-1 text-base text-gray-900 min-w-[32px] text-center">
                   {remainingCanAdd <= 0 ? 0 : quantity}
                 </span>
                 <button
@@ -665,7 +661,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 type="button"
                 onClick={handleAddToCart}
                 disabled={remainingCanAdd <= 0}
-                className="w-full py-3 px-4 bg-[#FFD814] hover:bg-[#F7CA00] active:scale-[0.99] text-[#0F1111] font-medium rounded-full text-sm shadow-sm transition-all border border-[#FCD200] cursor-pointer text-center"
+                className="w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-ink-950 font-medium rounded-full text-sm shadow-sm transition-all border border-amber-700 cursor-pointer text-center"
               >
                 Thêm vào giỏ hàng
               </button>
@@ -674,7 +670,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 type="button"
                 onClick={handleBuyNow}
                 disabled={remainingCanAdd <= 0}
-                className="w-full py-3 px-4 bg-[#1B5E3B] hover:bg-[#14482D] active:scale-[0.99] text-white font-medium rounded-full text-sm shadow-sm transition-all cursor-pointer text-center"
+                className="w-full py-3 px-4 bg-leaf-900 hover:bg-leaf-900 active:scale-[0.99] text-white font-medium rounded-full text-sm shadow-sm transition-all cursor-pointer text-center"
               >
                 Mua ngay
               </button>
@@ -687,7 +683,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs px-3 py-2 rounded-lg flex items-center gap-2 animate-fade-in-up">
             <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>
-              Đã thêm <strong>{quantity} {currentUnit} ({currentVolume})</strong> vào giỏ hàng!
+              Đã thêm <strong className="text-[1.125em]">{quantity} {currentUnit} ({currentVolume})</strong> vào giỏ hàng!
             </span>
           </div>
         )}
@@ -699,10 +695,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xs">
           <button
             onClick={() => toggleAccordion('highlights')}
-            className="w-full flex items-center justify-between px-4 py-3 text-left font-bold text-sm md:text-base text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-4 py-3 text-left text-base md:text-lg text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-2">
-              <Sparkles className="w-4.5 h-4.5 text-[#1B5E3B]" />
               {language === 'en' ? 'Key Highlights' : 'Đặc điểm nổi bật'}
             </span>
             <ChevronDown
@@ -716,9 +711,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             <div className="px-4 pb-4 text-sm md:text-base text-gray-700 space-y-2 border-t border-gray-100 pt-3 leading-relaxed">
               {highlights.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2">
-                  <span className="text-[#1B5E3B] font-bold">•</span>
+                  <span className="text-forest-700 text-[1.125em]">•</span>
                   <span>
-                    <strong>
+                    <strong className="text-[1.125em]">
                       {language === 'en' ? item.labelEn : item.labelVi}:{' '}
                     </strong>
                     {language === 'en' ? item.contentEn : item.contentVi}
@@ -733,10 +728,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xs">
           <button
             onClick={() => toggleAccordion('details')}
-            className="w-full flex items-center justify-between px-4 py-3 text-left font-bold text-sm md:text-base text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-4 py-3 text-left text-base md:text-lg text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-2">
-              <Info className="w-4.5 h-4.5 text-[#1B5E3B]" />
+              <Info className="w-4.5 h-4.5 text-forest-700" />
               {language === 'en' ? 'Product Details' : 'Thông tin chi tiết'}
             </span>
             <ChevronDown
@@ -751,27 +746,27 @@ export default function ProductInfo({ product }: ProductInfoProps) {
               <table className="w-full text-left">
                 <tbody>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 font-semibold text-gray-600 w-40">{language === 'en' ? 'Brand' : 'Thương hiệu'}</td>
+                    <td className="py-2.5 text-gray-600 w-40 text-[1.125em]">{language === 'en' ? 'Brand' : 'Thương hiệu'}</td>
                     <td className="py-2.5 text-gray-900 font-medium">Thái Sơn Foods</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 font-semibold text-gray-600">{language === 'en' ? 'Origin' : 'Xuất xứ'}</td>
+                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Origin' : 'Xuất xứ'}</td>
                     <td className="py-2.5 text-gray-900">{language === 'en' ? 'Vietnam' : 'Việt Nam'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 font-semibold text-gray-600">{language === 'en' ? 'Product Code' : 'Mã sản phẩm'}</td>
+                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Product Code' : 'Mã sản phẩm'}</td>
                     <td className="py-2.5 text-gray-900 font-mono">{product.sku || 'TSF-PRODUCT'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 font-semibold text-gray-600">{language === 'en' ? 'Certification' : 'Chứng nhận'}</td>
-                    <td className="py-2.5 text-emerald-700 font-semibold">{language === 'en' ? 'International HACCP Certification' : 'Chứng nhận Quốc tế HACCP'}</td>
+                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Certification' : 'Chứng nhận'}</td>
+                    <td className="py-2.5 text-emerald-700 text-[1.125em]">{language === 'en' ? 'International HACCP Certification' : 'Chứng nhận Quốc tế HACCP'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 font-semibold text-gray-600">{language === 'en' ? 'Expiry Date' : 'Hạn sử dụng'}</td>
+                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Expiry Date' : 'Hạn sử dụng'}</td>
                     <td className="py-2.5 text-gray-900">{language === 'en' ? 'Printed on bottle cap' : 'Xem trên nắp chai'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 font-semibold text-gray-600">{language === 'en' ? 'Usage Instructions' : 'Hướng dẫn sử dụng'}</td>
+                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Usage Instructions' : 'Hướng dẫn sử dụng'}</td>
                     <td className="py-2.5 text-gray-900">
                       {language === 'en'
                         ? 'Best consumed within 24 hours after opening. Keep refrigerated during use.'
@@ -779,7 +774,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                     </td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 font-semibold text-gray-600">{language === 'en' ? 'Storage Instructions' : 'Hướng dẫn bảo quản'}</td>
+                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Storage Instructions' : 'Hướng dẫn bảo quản'}</td>
                     <td className="py-2.5 text-gray-900">
                       {language === 'en'
                         ? 'Store at 5 - 10°C in refrigerator chiller compartment.'
@@ -796,10 +791,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xs">
           <button
             onClick={() => toggleAccordion('measurements')}
-            className="w-full flex items-center justify-between px-4 py-3 text-left font-bold text-sm md:text-base text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-between px-4 py-3 text-left text-base md:text-lg text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-2">
-              <Package className="w-4.5 h-4.5 text-[#1B5E3B]" />
+              <Package className="w-4.5 h-4.5 text-forest-700" />
               {language === 'en' ? 'Packaging & Dimensions' : 'Quy cách & Kích thước'}
             </span>
             <ChevronDown
@@ -811,8 +806,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           </button>
           {openAccordions.measurements && (
             <div className="px-4 pb-4 text-sm text-gray-700 border-t border-gray-100 pt-3 space-y-2 leading-relaxed">
-              <p>• {language === 'en' ? 'Standard bottle volume: ' : 'Dung tích đóng chai tiêu chuẩn: '}<strong>{bottleVolume}</strong></p>
-              <p>• {language === 'en' ? 'Packaging material: ' : 'Chất liệu bao bì: '}<strong>{language === 'en' ? 'Food-grade virgin PET, 100% recyclable' : 'Nhựa nguyên sinh an toàn thực phẩm, có thể tái chế.'}</strong></p>
+              <p>• {language === 'en' ? 'Standard bottle volume: ' : 'Dung tích đóng chai tiêu chuẩn: '}<strong className="text-[1.125em]">{bottleVolume}</strong></p>
+              <p>• {language === 'en' ? 'Packaging material: ' : 'Chất liệu bao bì: '}<strong className="text-[1.125em]">{language === 'en' ? 'Food-grade virgin PET, 100% recyclable' : 'Nhựa nguyên sinh an toàn thực phẩm, có thể tái chế.'}</strong></p>
             </div>
           )}
         </div>
@@ -837,7 +832,7 @@ export function ProductBreadcrumb({
   const productName = language === 'en' ? (product.nameEn || product.name) : product.name;
 
   return (
-    <div className="border-b border-gray-100 bg-[#F7F8F8] py-2.5 text-xs">
+    <div className="border-b border-gray-100 bg-ink-50 py-2.5 text-xs">
       <div className="section-container">
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-1.5 text-gray-500 flex-wrap">
@@ -853,7 +848,7 @@ export function ProductBreadcrumb({
               </Link>
             </li>
             <li><ChevronRight className="w-3.5 h-3.5 text-gray-400 inline" /></li>
-            <li className="text-gray-900 font-semibold break-words">
+            <li className="text-gray-900 break-words text-[1.125em]">
               {productName}
             </li>
           </ol>

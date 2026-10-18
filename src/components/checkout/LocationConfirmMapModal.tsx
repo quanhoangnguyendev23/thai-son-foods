@@ -213,9 +213,9 @@ export default function LocationConfirmMapModal({
       const dot = L.layerGroup([
         L.circle([userPos.lat, userPos.lng], {
           radius: Math.min(userPos.accuracy || 30, 200),
-          color: '#2563eb',
+          color: 'var(--color-emerald-400)',
           weight: 1,
-          fillColor: '#3b82f6',
+          fillColor: 'var(--color-emerald-400)',
           fillOpacity: 0.15,
           interactive: false,
         }),
@@ -223,7 +223,7 @@ export default function LocationConfirmMapModal({
           radius: 8,
           color: '#ffffff',
           weight: 3,
-          fillColor: '#2563eb',
+          fillColor: 'var(--color-emerald-400)',
           fillOpacity: 1,
           interactive: false,
         }),
@@ -300,16 +300,16 @@ export default function LocationConfirmMapModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-4 bg-ink-950/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full h-full sm:h-[90vh] sm:max-w-3xl bg-white sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-4 bg-white border-b border-gray-100 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
               <MapPin className="w-4 h-4 text-emerald-700" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight">
+              <h3 className="text-gray-900 text-base sm:text-lg leading-tight">
                 Xác nhận vị trí giao hàng chính xác
               </h3>
               <p className="text-[11px] text-gray-500">
@@ -335,9 +335,9 @@ export default function LocationConfirmMapModal({
             {/* Nhãn trên pin */}
             <div
               className={cn(
-                'px-2.5 py-1 rounded-full text-[11px] font-bold shadow-lg mb-1 whitespace-nowrap transition-all flex items-center gap-1',
+                'px-2.5 py-1 rounded-full text-[12px] shadow-lg mb-1 whitespace-nowrap transition-all flex items-center gap-1',
                 isDragging
-                  ? 'bg-amber-500 text-white scale-105'
+                  ? 'bg-amber-500 text-ink-950 scale-105'
                   : 'bg-emerald-800 text-white'
               )}
             >
@@ -354,17 +354,17 @@ export default function LocationConfirmMapModal({
               <svg width="40" height="48" viewBox="0 0 24 30" fill="none">
                 <path
                   d="M12 0C5.373 0 0 5.373 0 12c0 9 12 18 12 18s12-9 12-18c0-6.627-5.373-12-12-12z"
-                  fill="#059669"
+                  fill="var(--color-emerald-700)"
                 />
                 <circle cx="12" cy="11" r="5" fill="#ffffff" />
-                <circle cx="12" cy="11" r="2.5" fill="#047857" />
+                <circle cx="12" cy="11" r="2.5" fill="var(--color-forest-700)" />
               </svg>
             </div>
 
             {/* Bóng đổ của Pin */}
             <div
               className={cn(
-                'w-4 h-1.5 bg-black/30 rounded-full blur-[1px] transition-all',
+                'w-4 h-1.5 bg-ink-950/30 rounded-full blur-[1px] transition-all',
                 isDragging ? 'scale-75 opacity-40' : 'scale-100 opacity-70'
               )}
             />
@@ -377,7 +377,7 @@ export default function LocationConfirmMapModal({
               type="button"
               onClick={toggleSatellite}
               className={cn(
-                'px-3 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-md',
+                'px-3 py-2 rounded-xl text-sm shadow-md flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-md',
                 isSatellite
                   ? 'bg-emerald-800 text-white'
                   : 'bg-white/95 text-gray-700 hover:bg-white'
@@ -406,7 +406,7 @@ export default function LocationConfirmMapModal({
 
           {/* Chú thích chấm xanh vị trí của khách / nhắc bật định vị */}
           {userPos ? (
-            <div className="absolute bottom-3 left-3 z-30 px-2.5 py-1.5 rounded-xl bg-white/95 text-[11px] font-semibold text-gray-700 shadow-md flex items-center gap-1.5 backdrop-blur-md pointer-events-none">
+            <div className="absolute bottom-3 left-3 z-30 px-2.5 py-1.5 rounded-xl bg-white/95 text-[12px] text-gray-700 shadow-md flex items-center gap-1.5 backdrop-blur-md pointer-events-none">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 ring-2 ring-white shadow" />
               <span>Chấm xanh: vị trí hiện tại của bạn</span>
             </div>
@@ -418,7 +418,7 @@ export default function LocationConfirmMapModal({
 
           {/* Cảnh báo nếu khách kéo lệch quá 150m */}
           {distanceShiftMeters > 150 && (
-            <div className="absolute top-3 left-3 right-16 sm:right-auto sm:max-w-xs z-30 p-2.5 rounded-xl bg-amber-500/95 text-white text-xs shadow-lg flex items-center gap-2 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="absolute top-3 left-3 right-16 sm:right-auto sm:max-w-xs z-30 p-2.5 rounded-xl bg-amber-500/95 text-ink-950 text-xs shadow-lg flex items-center gap-2 backdrop-blur-xs animate-in fade-in duration-150">
               <AlertTriangle className="w-4 h-4 shrink-0 text-white" />
               <span>Đang lệch ~{distanceShiftMeters}m so với vị trí tìm kiếm. Hãy chắc chắn đây là đúng nhà bạn.</span>
             </div>
@@ -430,12 +430,12 @@ export default function LocationConfirmMapModal({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-0.5">
               <span>Tọa độ xác nhận:</span>
-              <span className="font-mono font-semibold text-emerald-800">
+              <span className="font-mono text-emerald-800 text-[1.125em]">
                 {centerCoords.lat.toFixed(6)}, {centerCoords.lng.toFixed(6)}
               </span>
               {isReverseGeocoding && <Loader2 className="w-3 h-3 animate-spin text-emerald-600" />}
             </div>
-            <p className="text-sm font-bold text-gray-900 truncate">
+            <p className="text-base text-gray-900 truncate">
               {resolvedAddress || initialAddress || 'Đang cập nhật địa chỉ...'}
             </p>
           </div>
@@ -444,14 +444,14 @@ export default function LocationConfirmMapModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-semibold transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-base transition-colors cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="button"
               onClick={handleConfirm}
-              className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-base shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Xác nhận vị trí</span>

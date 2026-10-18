@@ -78,10 +78,10 @@ function RatingStars({ value }: { value: number }) {
         return half ? (
           <span key={s} className="relative w-4 h-4">
             <Star className="absolute inset-0 w-4 h-4 fill-gray-200 text-gray-200" />
-            <StarHalf className="absolute inset-0 w-4 h-4 fill-[#FFA41C] text-[#FFA41C]" />
+            <StarHalf className="absolute inset-0 w-4 h-4 fill-amber-500 text-amber-500" />
           </span>
         ) : (
-          <Star key={s} className={cn('w-4 h-4', full ? 'fill-[#FFA41C] text-[#FFA41C]' : 'fill-gray-200 text-gray-200')} />
+          <Star key={s} className={cn('w-4 h-4', full ? 'fill-amber-500 text-amber-500' : 'fill-gray-200 text-gray-200')} />
         );
       })}
     </span>
@@ -176,7 +176,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
             aria-label={`${r.averageRating.toFixed(1)} / 5 — ${r.totalReviews} ${isEn ? 'ratings' : 'đánh giá'}`}
           >
             <RatingStars value={r.averageRating} />
-            <span className="text-[#007185] group-hover:text-[#C7511F] group-hover:underline">{r.totalReviews}</span>
+            <span className="text-forest-700 group-hover:text-copper-600 group-hover:underline">{r.totalReviews}</span>
           </Link>
         );
       },
@@ -187,10 +187,10 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
       label: isEn ? 'Price' : 'Giá cả',
       render: (p) => {
         const v = sortVariants(p.variants)[0];
-        if (!v) return p.price > 0 ? <span className="text-[17px] font-medium text-[#0F1111]">{formatPrice(p.price)}đ</span> : dash;
+        if (!v) return p.price > 0 ? <span className="text-[17px] font-medium text-ink-950">{formatPrice(p.price)}đ</span> : dash;
         return (
           <span className="block">
-            <span className="text-[17px] font-medium text-[#0F1111]">{formatPrice(v.price)}đ</span>
+            <span className="text-[17px] font-medium text-ink-950">{formatPrice(v.price)}đ</span>
             <span className="block text-xs text-gray-600">/{getVariantLabel(v, language)}</span>
             <span className="block text-xs text-gray-500">
               ({formatPrice(getUnitPrice(v))}đ/{isEn ? 'bottle' : 'chai'})
@@ -251,14 +251,14 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
     { kind: 'check', key: 'new', label: isEn ? 'New arrival' : 'Sản phẩm mới', test: (p) => Boolean(p.isNew) },
   ];
 
-  const cellBase = 'px-3 py-2.5 text-center align-middle text-[13px] text-[#0F1111] border-b border-gray-200';
+  const cellBase = 'px-3 py-2.5 text-center align-middle text-[13px] text-ink-950 border-b border-gray-200';
   const labelCell =
-    'sticky left-0 z-[1] bg-[#F7F7F7] px-3 py-2.5 text-center align-middle text-[13px] font-normal text-gray-700 border-b border-r border-gray-200';
+    'sticky left-0 z-[1] bg-ink-50 px-3 py-2.5 text-center align-middle text-[13px] font-normal text-gray-700 border-b border-r border-gray-200';
   const currentTint = 'bg-green-primary/[0.035]';
 
   return (
     <section className="max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8" aria-labelledby="compare-title">
-      <h2 id="compare-title" className="text-lg md:text-xl font-bold text-[#0F1111] mb-4">
+      <h2 id="compare-title" className="text-xl md:text-2xl text-ink-950 mb-4">
         {isEn ? 'Compare with similar items' : 'So sánh với sản phẩm tương tự'}
       </h2>
 
@@ -291,7 +291,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
                         <CompareImage product={p} alt={name} />
                       </span>
                       <span
-                        className="mt-3 block min-h-[2.5em] text-[13px] sm:text-sm font-bold leading-tight text-[#007185] group-hover:text-[#C7511F] group-hover:underline line-clamp-2"
+                        className="mt-3 block min-h-[2.5em] text-[15px] sm:text-base leading-tight text-forest-700 group-hover:text-copper-600 group-hover:underline line-clamp-2"
                         title={fullName(p)}
                       >
                         {name}
@@ -300,7 +300,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
 
                     <div className="mt-2 flex justify-center">
                       {isCurrent ? (
-                        <span className="inline-flex items-center whitespace-nowrap rounded-full border border-green-primary/40 bg-white px-3 py-1.5 text-[12px] sm:text-[13px] font-semibold text-green-primary">
+                        <span className="inline-flex items-center whitespace-nowrap rounded-full border border-green-primary/40 bg-white px-3 py-1.5 text-[13px] sm:text-[15px] text-green-primary">
                           {isEn ? 'This item' : 'Sản phẩm đang xem'}
                         </span>
                       ) : v ? (
@@ -309,7 +309,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
                           onClick={(e) => handleAdd(p, e)}
                           className={cn(
                             'whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] sm:text-[13px] leading-tight shadow-xs transition-colors cursor-pointer',
-                            justAdded ? 'bg-green-primary text-white' : 'bg-corn hover:bg-corn-dark text-[#0F1111]'
+                            justAdded ? 'bg-green-primary text-white' : 'bg-corn hover:bg-corn-dark text-ink-950'
                           )}
                           aria-label={
                             isEn
@@ -331,7 +331,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
                         // Chưa có quy cách đóng gói → chọn trên trang chi tiết
                         <Link
                           href={`/san-pham/${p.slug}`}
-                          className="whitespace-nowrap rounded-full border border-gray-400 bg-white px-3.5 py-1.5 text-[12px] sm:text-[13px] text-[#0F1111] hover:bg-gray-50 shadow-xs"
+                          className="whitespace-nowrap rounded-full border border-gray-400 bg-white px-3.5 py-1.5 text-[12px] sm:text-[13px] text-ink-950 hover:bg-gray-50 shadow-xs"
                         >
                           {isEn ? 'See options' : 'Tùy chọn mua'}
                         </Link>
@@ -356,7 +356,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
                     return (
                       <td key={p.id} className={cn(cellBase, isCurrent && currentTint)}>
                         {ok ? (
-                          <Check className="w-4 h-4 mx-auto text-[#0F1111]" strokeWidth={2} aria-label={isEn ? 'Yes' : 'Có'} />
+                          <Check className="w-4 h-4 mx-auto text-ink-950" strokeWidth={2} aria-label={isEn ? 'Yes' : 'Có'} />
                         ) : (
                           <span className="sr-only">{isEn ? 'No' : 'Không'}</span>
                         )}

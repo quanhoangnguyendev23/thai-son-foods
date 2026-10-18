@@ -140,7 +140,7 @@ export default function AuthModal() {
   return (
     <div
       onClick={closeAuthModal}
-      className="fixed inset-0 z-[999999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[999999] bg-ink-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -166,7 +166,7 @@ export default function AuthModal() {
               className="object-contain"
             />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 font-heading">
+          <h2 className="text-2xl text-gray-900 font-heading">
             {activeTab === 'login'
               ? language === 'en'
                 ? 'Welcome Back'
@@ -190,9 +190,9 @@ export default function AuthModal() {
                 setErrorMsg('');
               }}
               className={cn(
-                'flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer',
+                'flex-1 py-2 text-sm rounded-xl transition-all cursor-pointer',
                 activeTab === 'login'
-                  ? 'bg-white text-[#1B5E3B] shadow-xs'
+                  ? 'bg-white text-forest-700 shadow-xs'
                   : 'text-gray-500 hover:text-gray-800'
               )}
             >
@@ -205,9 +205,9 @@ export default function AuthModal() {
                 setErrorMsg('');
               }}
               className={cn(
-                'flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer',
+                'flex-1 py-2 text-sm rounded-xl transition-all cursor-pointer',
                 activeTab === 'register'
-                  ? 'bg-white text-[#1B5E3B] shadow-xs'
+                  ? 'bg-white text-forest-700 shadow-xs'
                   : 'text-gray-500 hover:text-gray-800'
               )}
             >
@@ -240,7 +240,7 @@ export default function AuthModal() {
             /* Login Form */
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   Email
                 </label>
                 <div className="relative">
@@ -250,14 +250,14 @@ export default function AuthModal() {
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                     placeholder="email@example.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <Mail className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   {language === 'en' ? 'Password' : 'Mật khẩu'}
                 </label>
                 <div className="relative">
@@ -267,7 +267,7 @@ export default function AuthModal() {
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10 transition-colors"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                   <button
@@ -283,7 +283,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 bg-[#1B5E3B] hover:bg-[#14482D] text-white font-bold rounded-xl shadow-sm text-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.98]"
+                className="w-full py-3 bg-forest-700 hover:bg-forest-800 text-white rounded-xl shadow-sm text-base transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.98]"
               >
                 {isSubmitting ? (
                   <>
@@ -303,7 +303,7 @@ export default function AuthModal() {
                     setActiveTab('register');
                     setErrorMsg('');
                   }}
-                  className="font-bold text-[#1B5E3B] hover:underline cursor-pointer"
+                  className="text-forest-700 hover:underline cursor-pointer text-[1.125em]"
                 >
                   {language === 'en' ? 'Register now' : 'Đăng ký ngay'}
                 </button>
@@ -313,7 +313,7 @@ export default function AuthModal() {
             /* Register Form */
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   {language === 'en' ? 'Full Name' : 'Họ và tên'} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -323,14 +323,14 @@ export default function AuthModal() {
                     value={registerForm.fullName}
                     onChange={(e) => setRegisterForm({ ...registerForm, fullName: e.target.value })}
                     placeholder={language === 'en' ? 'Nguyen Van A' : 'Nguyễn Văn A'}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <UserIcon className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   Email <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -340,14 +340,14 @@ export default function AuthModal() {
                     value={registerForm.email}
                     onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                     placeholder="email@example.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <Mail className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   {language === 'en' ? 'Phone Number' : 'Số điện thoại'}
                 </label>
                 <div className="relative">
@@ -356,14 +356,14 @@ export default function AuthModal() {
                     value={registerForm.phone}
                     onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
                     placeholder="0912 345 678"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <Phone className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   {language === 'en' ? 'Password (min 6 characters)' : 'Mật khẩu (tối thiểu 6 ký tự)'}{' '}
                   <span className="text-red-500">*</span>
                 </label>
@@ -375,7 +375,7 @@ export default function AuthModal() {
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/10 transition-colors"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                   <button
@@ -391,7 +391,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full mt-2 py-3 bg-[#1B5E3B] hover:bg-[#14482D] text-white font-bold rounded-xl shadow-sm text-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.98]"
+                className="w-full mt-2 py-3 bg-forest-700 hover:bg-forest-800 text-white rounded-xl shadow-sm text-base transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.98]"
               >
                 {isSubmitting ? (
                   <>
@@ -411,7 +411,7 @@ export default function AuthModal() {
                     setActiveTab('login');
                     setErrorMsg('');
                   }}
-                  className="font-bold text-[#1B5E3B] hover:underline cursor-pointer"
+                  className="text-forest-700 hover:underline cursor-pointer text-[1.125em]"
                 >
                   {language === 'en' ? 'Sign in' : 'Đăng nhập ngay'}
                 </button>
@@ -423,7 +423,7 @@ export default function AuthModal() {
           <div className="mt-5 pt-4 border-t border-gray-100 flex items-start gap-2.5 text-[11px] text-gray-500 bg-gray-50/80 p-3 rounded-xl">
             <ShoppingBag className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-gray-800">
+              <span className="text-gray-800 text-[1.125em]">
                 {language === 'en' ? 'Guest Checkout Available' : 'Mua sắm không bắt buộc đăng nhập'}:
               </span>{' '}
               {language === 'en'

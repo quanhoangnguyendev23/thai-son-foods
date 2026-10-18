@@ -123,7 +123,7 @@ export default function AdminPartnersPage() {
                 <ArrowLeft className="w-3.5 h-3.5" /> Bảng điều khiển Admin
               </Link>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-2xl text-slate-900 flex items-center gap-2.5">
               <span className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
                 <Users className="w-5 h-5" />
               </span>
@@ -137,7 +137,7 @@ export default function AdminPartnersPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/admin/payouts"
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm transition-all"
             >
               Xem Duyệt Rút Tiền →
             </Link>
@@ -200,7 +200,7 @@ export default function AdminPartnersPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/70">
+                  <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/70 text-[1.125em]">
                     <th className="py-3 px-4">Mã Đối Tác</th>
                     <th className="py-3 px-4">Họ và Tên</th>
                     <th className="py-3 px-4">Số Điện Thoại</th>
@@ -213,12 +213,12 @@ export default function AdminPartnersPage() {
                 <tbody className="divide-y divide-slate-100">
                   {filteredPartners.map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-emerald-800">{p.partnerCode}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-900">{p.fullName}</td>
+                      <td className="py-3 px-4 font-mono text-emerald-800 text-[1.125em]">{p.partnerCode}</td>
+                      <td className="py-3 px-4 text-slate-900 text-[1.125em]">{p.fullName}</td>
                       <td className="py-3 px-4 font-mono text-slate-600">{p.phone}</td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
+                          className={`px-2 py-0.5 rounded-full text-[12px] ${
                             p.partnerType === 'DEALER'
                               ? 'bg-amber-100 text-amber-900 border border-amber-300'
                               : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
@@ -229,11 +229,11 @@ export default function AdminPartnersPage() {
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-0.5 rounded-md font-semibold text-[11px] ${
+                          className={`px-2 py-0.5 rounded-md text-[12px] ${
                             p.lifecycleStatus === 'ACTIVE'
                               ? 'bg-emerald-50 text-emerald-700'
                               : p.lifecycleStatus === 'SUBMITTED'
-                              ? 'bg-blue-50 text-blue-700 font-bold animate-pulse'
+                              ? 'bg-blue-50 text-blue-700 animate-pulse'
                               : p.lifecycleStatus === 'SUSPENDED'
                               ? 'bg-rose-50 text-rose-700'
                               : 'bg-slate-100 text-slate-700'
@@ -245,7 +245,7 @@ export default function AdminPartnersPage() {
                       <td className="py-3 px-4 text-slate-600">
                         {p.bankAccountNumber ? (
                           <div>
-                            <span className="font-semibold text-slate-800">{p.bankName}:</span>{' '}
+                            <span className="text-slate-800 text-[1.125em]">{p.bankName}:</span>{' '}
                             <span className="font-mono">{p.bankAccountNumber}</span>
                           </div>
                         ) : (
@@ -255,7 +255,7 @@ export default function AdminPartnersPage() {
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => setSelectedPartner(p)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs transition-all"
+                          className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-sm transition-all"
                         >
                           Chi Tiết & Duyệt
                         </button>
@@ -274,7 +274,7 @@ export default function AdminPartnersPage() {
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 duration-150">
               <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Chi Tiết Hồ Sơ Đối Tác</h3>
+                  <h3 className="text-lg text-slate-900">Chi Tiết Hồ Sơ Đối Tác</h3>
                   <p className="text-xs text-slate-500 font-mono">ID: {selectedPartner.id}</p>
                 </div>
                 <button
@@ -289,42 +289,42 @@ export default function AdminPartnersPage() {
                 <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl">
                   <div>
                     <span className="text-slate-500 block">Họ và tên:</span>
-                    <strong className="text-slate-900 text-sm">{selectedPartner.fullName}</strong>
+                    <strong className="text-slate-900 text-base">{selectedPartner.fullName}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Mã đối tác:</span>
-                    <strong className="text-emerald-800 text-sm font-mono">{selectedPartner.partnerCode}</strong>
+                    <strong className="text-emerald-800 text-base font-mono">{selectedPartner.partnerCode}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Số điện thoại:</span>
-                    <strong className="text-slate-800 font-mono">{selectedPartner.phone}</strong>
+                    <strong className="text-slate-800 font-mono text-[1.125em]">{selectedPartner.phone}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 block">Trạng thái:</span>
-                    <strong className="text-slate-800">{selectedPartner.lifecycleStatus}</strong>
+                    <strong className="text-slate-800 text-[1.125em]">{selectedPartner.lifecycleStatus}</strong>
                   </div>
                 </div>
 
                 <div className="p-3 bg-slate-50 rounded-xl space-y-1.5">
-                  <span className="font-bold text-slate-800 block">Hồ Sơ Định Danh & Ngân Hàng:</span>
+                  <span className="text-slate-800 block text-[1.125em]">Hồ Sơ Định Danh & Ngân Hàng:</span>
                   <div className="grid grid-cols-2 gap-2">
-                    <div>Số CCCD: <strong className="font-mono">{selectedPartner.idCardNumber || 'Chưa có'}</strong></div>
-                    <div>Ngân hàng: <strong>{selectedPartner.bankName || 'Chưa có'}</strong></div>
-                    <div>Số tài khoản: <strong className="font-mono">{selectedPartner.bankAccountNumber || 'Chưa có'}</strong></div>
-                    <div>Chủ tài khoản: <strong className="uppercase">{selectedPartner.bankAccountName || 'Chưa có'}</strong></div>
+                    <div>Số CCCD: <strong className="font-mono text-[1.125em]">{selectedPartner.idCardNumber || 'Chưa có'}</strong></div>
+                    <div>Ngân hàng: <strong className="text-[1.125em]">{selectedPartner.bankName || 'Chưa có'}</strong></div>
+                    <div>Số tài khoản: <strong className="font-mono text-[1.125em]">{selectedPartner.bankAccountNumber || 'Chưa có'}</strong></div>
+                    <div>Chủ tài khoản: <strong className="uppercase text-[1.125em]">{selectedPartner.bankAccountName || 'Chưa có'}</strong></div>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="border-t border-slate-100 pt-4 space-y-2">
-                <span className="text-xs font-bold text-slate-700 block">Thao Tác Quản Trị:</span>
+                <span className="text-sm text-slate-700 block">Thao Tác Quản Trị:</span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {selectedPartner.lifecycleStatus !== 'ACTIVE' && (
                     <button
                       disabled={actionLoading}
                       onClick={() => handlePartnerAction(selectedPartner.id, 'APPROVE')}
-                      className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                      className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
                     >
                       Duyệt & Kích Hoạt
                     </button>
@@ -334,7 +334,7 @@ export default function AdminPartnersPage() {
                     <button
                       disabled={actionLoading}
                       onClick={() => handlePartnerAction(selectedPartner.id, 'UPGRADE_DEALER', { tierId: 'tier_dealer_1' })}
-                      className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs"
+                      className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm"
                     >
                       Nâng Cấp Đại Lý
                     </button>
@@ -344,7 +344,7 @@ export default function AdminPartnersPage() {
                     <button
                       disabled={actionLoading}
                       onClick={() => handlePartnerAction(selectedPartner.id, 'SUSPEND', { reason: 'Tạm khóa theo quy định' })}
-                      className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs"
+                      className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm"
                     >
                       Tạm Khóa (Suspend)
                     </button>

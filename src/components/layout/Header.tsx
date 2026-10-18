@@ -17,7 +17,6 @@ import {
   Phone,
   MessageCircle,
   Clock,
-  ShieldCheck,
   ChevronRight,
   Globe,
   ChevronDown,
@@ -149,7 +148,7 @@ export default function Header() {
         href: '#ho-tro',
         action: 'open-support',
         icon: Headphones,
-        color: 'text-[#1B5E3B]',
+        color: 'text-forest-700',
       },
     ],
     [t]
@@ -275,7 +274,7 @@ export default function Header() {
                 <MapPin className="w-4 h-4 text-green-primary shrink-0 mb-0.5" aria-hidden />
                 <span className="min-w-0 leading-tight">
                   <span className="block text-[11px] text-gray-500">Giao từ chi nhánh</span>
-                  <span className="block text-[13px] font-semibold text-gray-900 truncate">
+                  <span className="block text-[15px] text-gray-900 truncate">
                     {selectedBranch?.name || 'Chọn chi nhánh'}
                   </span>
                 </span>
@@ -295,7 +294,7 @@ export default function Header() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     placeholder={t('searchPlaceholder')}
-                    className="w-full pl-10 pr-24 py-2.5 bg-gray-50/90 hover:bg-gray-100/70 focus:bg-white text-base sm:text-sm text-gray-800 rounded-full border border-gray-200/90 focus:border-[#1B5E3B] focus:ring-2 focus:ring-[#1B5E3B]/15 focus:outline-none transition-all shadow-2xs placeholder:text-gray-400 font-medium"
+                    className="w-full pl-10 pr-24 py-2.5 bg-gray-50/90 hover:bg-gray-100/70 focus:bg-white text-base sm:text-sm text-gray-800 rounded-full border border-gray-200/90 focus:border-forest-700 focus:ring-2 focus:ring-forest-700/15 focus:outline-none transition-all shadow-2xs placeholder:text-gray-400 font-medium"
                   />
                   <Search className="absolute left-3.5 w-4 h-4 text-emerald-700 pointer-events-none" />
 
@@ -312,7 +311,7 @@ export default function Header() {
 
                   <button
                     type="submit"
-                    className="absolute right-1.5 px-3.5 py-1.5 bg-[#1B5E3B] hover:bg-[#14482D] text-white text-xs font-bold rounded-full transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                    className="absolute right-1.5 px-3.5 py-1.5 bg-forest-700 hover:bg-forest-800 text-white text-sm rounded-full transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
                   >
                     <Search className="w-3.5 h-3.5" />
                     <span className="hidden lg:inline">{t('searchBtn')}</span>
@@ -323,7 +322,7 @@ export default function Header() {
               {/* Live Search Popup / Dropdown gợi ý sản phẩm */}
               {isSearchFocused && searchQuery.trim().length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-fade-in-up">
-                  <div className="p-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between text-xs font-bold text-gray-700">
+                  <div className="p-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between text-sm text-gray-700">
                     <span>{language === 'vi' ? 'Sản phẩm gợi ý cho' : 'Suggested products for'} &quot;{searchQuery}&quot;</span>
                     <span className="text-emerald-700 font-medium">{searchResults.length} {language === 'vi' ? 'kết quả' : 'results'}</span>
                   </div>
@@ -347,7 +346,7 @@ export default function Header() {
                             onClick={() => handleSelectProduct(item.slug)}
                             className="flex items-center gap-3 p-2 rounded-xl hover:bg-emerald-50/50 transition-colors cursor-pointer group"
                           >
-                            <div className="relative w-12 h-12 rounded-lg bg-[#FAF8F5] border border-gray-200/80 p-1 overflow-hidden shrink-0">
+                            <div className="relative w-12 h-12 rounded-lg bg-ivory border border-gray-200/80 p-1 overflow-hidden shrink-0">
                               <Image
                                 src={item.thumbnail}
                                 alt={language === 'en' && item.nameEn ? item.nameEn : item.name}
@@ -357,11 +356,11 @@ export default function Header() {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-[#1B5E3B] transition-colors leading-snug">
+                              <h4 className="text-sm sm:text-base text-gray-900 group-hover:text-forest-700 transition-colors leading-snug">
                                 {language === 'en' && item.nameEn ? item.nameEn : item.name}
                               </h4>
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-xs font-bold text-emerald-700">
+                                <span className="text-sm text-emerald-700">
                                   {formatPrice(itemPrice)} ₫
                                 </span>
                                 <span className="text-[10px] text-gray-400">
@@ -369,14 +368,14 @@ export default function Header() {
                                 </span>
                               </div>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[#1B5E3B] transition-colors" />
+                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-forest-700 transition-colors" />
                           </div>
                         );
                       })}
                       <div className="pt-2 px-2 pb-1">
                         <button
                           onClick={handleSearchSubmit}
-                          className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/70 text-[#1B5E3B] text-xs font-bold rounded-xl transition-colors text-center"
+                          className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/70 text-forest-700 text-sm rounded-xl transition-colors text-center"
                         >
                           {language === 'vi' ? 'Xem tất cả sản phẩm liên quan →' : 'View all related products →'}
                         </button>
@@ -405,7 +404,7 @@ export default function Header() {
               {/* Nút Hotline / Hỗ trợ nhanh */}
               <button
                 onClick={() => setIsSupportModalOpen(true)}
-                className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/50 hover:bg-emerald-100/50 text-[#1B5E3B] text-xs font-bold transition-all cursor-pointer"
+                className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/50 hover:bg-emerald-100/50 text-forest-700 text-sm transition-all cursor-pointer"
                 title="Trung tâm hỗ trợ khách hàng"
               >
                 <Headphones className="w-3.5 h-3.5 text-emerald-700" />
@@ -417,12 +416,12 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full border border-gray-200/90 bg-gray-50/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-gray-800 text-xs font-bold transition-all cursor-pointer shadow-2xs group"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full border border-gray-200/90 bg-gray-50/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-gray-800 text-sm transition-all cursor-pointer shadow-2xs group"
                   aria-label={t('changeLanguage')}
                   title={t('changeLanguage')}
                 >
                   <Globe className="w-3.5 h-3.5 text-emerald-700 group-hover:rotate-12 transition-transform" />
-                  <span className="font-extrabold text-[11px] sm:text-xs tracking-wider">
+                  <span className="text-[12px] sm:text-sm tracking-wider">
                     {language === 'vi' ? 'VI' : 'EN'}
                   </span>
                   <ChevronDown
@@ -443,9 +442,9 @@ export default function Header() {
                         setIsLangDropdownOpen(false);
                       }}
                       className={cn(
-                        'w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors cursor-pointer text-left',
+                        'w-full flex items-center justify-between px-3 py-2 text-sm transition-colors cursor-pointer text-left',
                         language === 'vi'
-                          ? 'bg-emerald-50/90 text-emerald-800 font-bold'
+                          ? 'bg-emerald-50/90 text-emerald-800'
                           : 'text-gray-700 hover:bg-gray-50 hover:text-emerald-700'
                       )}
                     >
@@ -463,9 +462,9 @@ export default function Header() {
                         setIsLangDropdownOpen(false);
                       }}
                       className={cn(
-                        'w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors cursor-pointer text-left',
+                        'w-full flex items-center justify-between px-3 py-2 text-sm transition-colors cursor-pointer text-left',
                         language === 'en'
-                          ? 'bg-emerald-50/90 text-emerald-800 font-bold'
+                          ? 'bg-emerald-50/90 text-emerald-800'
                           : 'text-gray-700 hover:bg-gray-50 hover:text-emerald-700'
                       )}
                     >
@@ -485,12 +484,12 @@ export default function Header() {
                   <button
                     type="button"
                     onClick={() => openAuthModal('login')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200/90 bg-gray-50/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-gray-800 text-xs font-bold transition-all cursor-pointer shadow-2xs group"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200/90 bg-gray-50/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-gray-800 text-sm transition-all cursor-pointer shadow-2xs group"
                     aria-label={language === 'en' ? 'Sign In / Register' : 'Đăng nhập / Đăng ký'}
                     title={language === 'en' ? 'Sign In / Register' : 'Đăng nhập / Đăng ký'}
                   >
                     <User className="w-3.5 h-3.5 text-emerald-700 group-hover:scale-110 transition-transform" />
-                    <span className="hidden md:inline font-bold">
+                    <span className="hidden md:inline text-[1.125em]">
                       {language === 'en' ? 'Sign In' : 'Đăng nhập'}
                     </span>
                   </button>
@@ -499,10 +498,10 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/60 text-emerald-900 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/60 text-emerald-900 text-sm transition-all cursor-pointer shadow-2xs"
                       aria-label="Tài khoản cá nhân"
                     >
-                      <span className="w-6 h-6 rounded-full bg-[#1B5E3B] text-white flex items-center justify-center text-[11px] font-extrabold shadow-2xs">
+                      <span className="w-6 h-6 rounded-full bg-forest-700 text-white flex items-center justify-center text-[12px] shadow-2xs">
                         {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
                       </span>
                       <span className="hidden md:inline max-w-[110px] truncate">
@@ -520,13 +519,13 @@ export default function Header() {
                     {isUserDropdownOpen && (
                       <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                         <div className="px-4 py-2 border-b border-gray-100">
-                          <p className="text-xs font-bold text-gray-900 line-clamp-1">{user.fullName}</p>
+                          <p className="text-sm text-gray-900 line-clamp-1">{user.fullName}</p>
                           <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
                         </div>
                         <Link
                           href="/tai-khoan?tab=orders"
                           onClick={() => setIsUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-[#1B5E3B] transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-forest-700 transition-colors"
                         >
                           <ShoppingBag className="w-4 h-4 text-emerald-700" />
                           <span>{language === 'en' ? 'My Orders' : 'Đơn hàng của tôi'}</span>
@@ -534,7 +533,7 @@ export default function Header() {
                         <Link
                           href="/tai-khoan?tab=profile"
                           onClick={() => setIsUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-[#1B5E3B] transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-forest-700 transition-colors"
                         >
                           <User className="w-4 h-4 text-emerald-700" />
                           <span>{language === 'en' ? 'Account Details' : 'Thông tin tài khoản'}</span>
@@ -543,9 +542,8 @@ export default function Header() {
                           <Link
                             href="/member"
                             onClick={() => setIsUserDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-50 transition-colors"
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-amber-800 hover:bg-amber-50 transition-colors"
                           >
-                            <Crown className="w-4 h-4 text-amber-600" />
                             <span>Thái Sơn Prime</span>
                           </Link>
                         )}
@@ -553,7 +551,7 @@ export default function Header() {
                           <Link
                             href="/tai-khoan/dinh-ky"
                             onClick={() => setIsUserDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 transition-colors"
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
                           >
                             <RefreshCw className="w-4 h-4 text-emerald-600" />
                             <span>Lịch Giao Định Kỳ</span>
@@ -566,7 +564,7 @@ export default function Header() {
                               setIsUserDropdownOpen(false);
                               logout();
                             }}
-                            className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left cursor-pointer"
+                            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left cursor-pointer"
                           >
                             <LogOut className="w-4 h-4" />
                             <span>{language === 'en' ? 'Log Out' : 'Đăng xuất'}</span>
@@ -601,14 +599,14 @@ export default function Header() {
                   {isMounted && totalQuantity > 0 && (
                     <span
                       key={`mobile-badge-${totalQuantity}`}
-                      className="sm:hidden absolute -top-1.5 -right-2 min-w-[16px] h-4 flex items-center justify-center px-1 text-[10px] font-black text-white bg-sale rounded-full animate-pulse-badge shadow-2xs"
+                      className="sm:hidden absolute -top-1.5 -right-2 min-w-[16px] h-4 flex items-center justify-center px-1 text-[11px] text-white bg-sale rounded-full animate-pulse-badge shadow-2xs"
                     >
                       {totalQuantity > 99 ? '99+' : totalQuantity}
                     </span>
                   )}
                 </div>
 
-                <span className="hidden sm:inline text-xs font-bold">
+                <span className="hidden sm:inline text-sm">
                   {language === 'en' ? 'Cart' : 'Giỏ hàng'}
                 </span>
 
@@ -616,9 +614,9 @@ export default function Header() {
                 <span
                   key={`desktop-badge-${totalQuantity}`}
                   className={cn(
-                    'hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-black transition-all',
+                    'hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[12px] transition-all',
                     isMounted && totalQuantity > 0
-                      ? 'bg-[#1B5E3B] text-white shadow-2xs animate-pulse-badge'
+                      ? 'bg-forest-700 text-white shadow-2xs animate-pulse-badge'
                       : 'bg-gray-200/80 text-gray-600'
                   )}
                 >
@@ -653,12 +651,12 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={language === 'en' ? 'Search products...' : 'Tìm kiếm sản phẩm...'}
-                className="w-full pl-9 pr-20 py-2.5 bg-gray-50 text-base text-gray-800 rounded-full border border-gray-200 focus:border-[#1B5E3B] focus:outline-none"
+                className="w-full pl-9 pr-20 py-2.5 bg-gray-50 text-base text-gray-800 rounded-full border border-gray-200 focus:border-forest-700 focus:outline-none"
               />
               <Search className="absolute left-3 w-4 h-4 text-gray-400" />
               <button
                 type="submit"
-                className="absolute right-1 px-4 py-2 bg-[#1B5E3B] text-white text-xs font-bold rounded-full"
+                className="absolute right-1 px-4 py-2 bg-forest-700 text-white text-sm rounded-full"
               >
                 {language === 'en' ? 'Search' : 'Tìm'}
               </button>
@@ -667,7 +665,7 @@ export default function Header() {
         )}
 
         {/* TẦNG 2: THANH TASKBAG (Taskbag / Sub-navigation bar) */}
-        <div className="border-t border-gray-100 bg-[#FAF9F5]/70 backdrop-blur-xs">
+        <div className="border-t border-gray-100 bg-ivory">
           <div className="section-container">
             <div className="flex items-center justify-between h-11">
               {/* 4 Mục Taskbag chính */}
@@ -683,7 +681,7 @@ export default function Header() {
                         key={item.id}
                         type="button"
                         onClick={() => setIsSupportModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-3 md:py-1.5 rounded-lg text-xs md:text-sm font-semibold text-gray-700 hover:text-[#1B5E3B] hover:bg-emerald-50/80 transition-colors whitespace-nowrap cursor-pointer shrink-0"
+                        className="flex items-center gap-1.5 px-3 py-3 md:py-1.5 rounded-lg text-sm md:text-base text-gray-700 hover:text-forest-700 hover:bg-emerald-50/80 transition-colors whitespace-nowrap cursor-pointer shrink-0"
                       >
                         <Icon className={cn('w-4 h-4', item.color)} />
                         <span>{item.label}</span>
@@ -694,12 +692,12 @@ export default function Header() {
                     <Link
                       key={item.id}
                       href={item.href}
-                      className="flex items-center gap-1.5 px-3 py-3 md:py-1.5 rounded-lg text-xs md:text-sm font-semibold text-gray-700 hover:text-green-primary hover:bg-ivory-dark/60 transition-colors whitespace-nowrap shrink-0"
+                      className="flex items-center gap-1.5 px-3 py-3 md:py-1.5 rounded-lg text-sm md:text-base text-gray-700 hover:text-green-primary hover:bg-ivory-dark/60 transition-colors whitespace-nowrap shrink-0"
                     >
                       <Icon className={cn('w-4 h-4', item.color)} />
                       <span>{item.label}</span>
                       {item.badge && (
-                        <span className="px-1.5 py-0.2 text-[9px] font-extrabold text-white bg-red-500 rounded-full animate-pulse">
+                        <span className="px-1.5 py-0.2 text-[10px] text-white bg-red-500 rounded-full animate-pulse">
                           {item.badge}
                         </span>
                       )}
@@ -711,7 +709,6 @@ export default function Header() {
               {/* Cam kết thương hiệu bên phải (desktop) */}
               <div className="hidden lg:flex items-center gap-3 text-xs text-gray-500 font-medium shrink-0">
                 <span className="flex items-center gap-1 text-emerald-800">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   {t('naturalIngredients')}
                 </span>
                 <span className="text-gray-300">•</span>
@@ -740,11 +737,11 @@ export default function Header() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-2.5 min-w-0 flex-1"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-[#1B5E3B] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-forest-700 text-white flex items-center justify-center text-base shrink-0">
                     {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-gray-900 truncate">{user.fullName}</div>
+                    <div className="text-sm text-gray-900 truncate">{user.fullName}</div>
                     <div className="text-[10px] text-gray-500 truncate">{user.email}</div>
                   </div>
                 </Link>
@@ -773,7 +770,7 @@ export default function Header() {
             ) : (
               <div className="mb-2 p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-gray-800">
+                  <div className="text-sm text-gray-800">
                     {language === 'en' ? 'Customer Account' : 'Tài khoản khách hàng'}
                   </div>
                   <div className="text-[10px] text-gray-500">
@@ -786,7 +783,7 @@ export default function Header() {
                     setIsMobileMenuOpen(false);
                     openAuthModal('login');
                   }}
-                  className="px-4 py-2.5 bg-[#1B5E3B] hover:bg-[#14482D] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                  className="px-4 py-2.5 bg-forest-700 hover:bg-forest-800 text-white text-sm rounded-xl transition-all shadow-xs cursor-pointer"
                 >
                   {language === 'en' ? 'Sign In' : 'Đăng nhập'}
                 </button>
@@ -803,7 +800,7 @@ export default function Header() {
                       setIsMobileMenuOpen(false);
                       setIsSupportModalOpen(true);
                     }}
-                    className="flex items-center gap-2.5 px-4 py-3 text-base font-semibold text-text-body hover:text-green-primary hover:bg-ivory-dark/50 rounded-lg transition-colors text-left cursor-pointer"
+                    className="flex items-center gap-2.5 px-4 py-3 text-lg text-text-body hover:text-green-primary hover:bg-ivory-dark/50 rounded-lg transition-colors text-left cursor-pointer"
                   >
                     <Icon className={cn('w-4.5 h-4.5', item.color)} />
                     <span>{item.label}</span>
@@ -815,14 +812,14 @@ export default function Header() {
                   key={item.id}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-4 py-3 text-base font-semibold text-text-body hover:text-green-primary hover:bg-ivory-dark/50 rounded-lg transition-colors"
+                  className="flex items-center justify-between px-4 py-3 text-lg text-text-body hover:text-green-primary hover:bg-ivory-dark/50 rounded-lg transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon className={cn('w-4.5 h-4.5', item.color)} />
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                    <span className="px-2 py-0.5 text-[11px] text-white bg-red-500 rounded-full">
                       {item.badge}
                     </span>
                   )}
@@ -832,7 +829,7 @@ export default function Header() {
 
             {/* Chuyển ngữ trong Mobile Menu */}
             <div className="pt-3 mt-2 border-t border-gray-100 flex items-center justify-between px-4">
-              <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+              <span className="text-sm text-gray-600 flex items-center gap-1.5">
                 <Globe className="w-4 h-4 text-emerald-700" />
                 <span>{t('changeLanguage')}</span>
               </span>
@@ -841,7 +838,7 @@ export default function Header() {
                   type="button"
                   onClick={() => setLanguage('vi')}
                   className={cn(
-                    'px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                    'px-3 py-2.5 rounded-lg text-sm transition-all cursor-pointer',
                     language === 'vi'
                       ? 'bg-white text-emerald-800 shadow-xs'
                       : 'text-gray-500 hover:text-gray-800'
@@ -853,7 +850,7 @@ export default function Header() {
                   type="button"
                   onClick={() => setLanguage('en')}
                   className={cn(
-                    'px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                    'px-3 py-2.5 rounded-lg text-sm transition-all cursor-pointer',
                     language === 'en'
                       ? 'bg-white text-emerald-800 shadow-xs'
                       : 'text-gray-500 hover:text-gray-800'
@@ -871,7 +868,7 @@ export default function Header() {
       {isSupportModalOpen && isMounted && (
         <div
           onClick={() => setIsSupportModalOpen(false)}
-          className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fade-in-up"
+          className="fixed inset-0 z-[99999] bg-ink-950/60 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fade-in-up"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -880,11 +877,11 @@ export default function Header() {
             {/* Header Modal */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#1B5E3B] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-forest-700 flex items-center justify-center">
                   <Headphones className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base leading-tight">
+                  <h3 className="text-gray-900 text-lg leading-tight">
                     {t('supportTitle')}
                   </h3>
                   <p className="text-[11px] text-gray-500">
@@ -909,17 +906,17 @@ export default function Header() {
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 hover:bg-emerald-100/70 transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1B5E3B] text-white flex items-center justify-center shadow-xs">
+                  <div className="w-10 h-10 rounded-full bg-forest-700 text-white flex items-center justify-center shadow-xs">
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-gray-600">{t('hotlineConsult')}</div>
-                    <div className="text-base font-bold text-gray-900 group-hover:text-[#1B5E3B]">
+                    <div className="text-sm text-gray-600">{t('hotlineConsult')}</div>
+                    <div className="text-lg text-gray-900 group-hover:text-forest-700">
                       028 6291 5024
                     </div>
                   </div>
                 </div>
-                <span className="text-xs font-bold text-white bg-[#1B5E3B] px-3 py-1.5 rounded-xl shadow-2xs">
+                <span className="text-sm text-white bg-forest-700 px-3 py-1.5 rounded-xl shadow-2xs">
                   {t('callNow')}
                 </span>
               </a>
@@ -932,17 +929,17 @@ export default function Header() {
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 hover:bg-blue-100/70 transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#0068FF] text-white flex items-center justify-center shadow-xs font-bold text-xs">
+                  <div className="w-10 h-10 rounded-full bg-[#0068FF] text-white flex items-center justify-center shadow-xs text-sm">
                     Zalo
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-gray-600">{t('zaloChat')}</div>
-                    <div className="text-sm font-bold text-gray-900 group-hover:text-[#0068FF]">
+                    <div className="text-sm text-gray-600">{t('zaloChat')}</div>
+                    <div className="text-base text-gray-900 group-hover:text-[#0068FF]">
                       Thái Sơn Foods Official
                     </div>
                   </div>
                 </div>
-                <span className="text-xs font-bold text-[#0068FF] bg-white border border-blue-200 px-3 py-1.5 rounded-xl shadow-2xs">
+                <span className="text-sm text-[#0068FF] bg-white border border-blue-200 px-3 py-1.5 rounded-xl shadow-2xs">
                   {t('chatImmediate')}
                 </span>
               </a>
@@ -951,22 +948,21 @@ export default function Header() {
               <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 space-y-2 text-xs text-gray-600">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span><strong>{language === 'vi' ? 'Thời gian phục vụ:' : 'Service hours:'}</strong> {language === 'vi' ? '07:30 - 21:30 hàng ngày' : '07:30 - 21:30 daily'}</span>
+                  <span><strong className="text-[1.125em]">{language === 'vi' ? 'Thời gian phục vụ:' : 'Service hours:'}</strong> {language === 'vi' ? '07:30 - 21:30 hàng ngày' : '07:30 - 21:30 daily'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span><strong>{language === 'vi' ? 'Giao hàng:' : 'Delivery:'}</strong> {language === 'vi' ? 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận' : 'Express delivery in 2 hours in HCMC'}</span>
+                  <span><strong className="text-[1.125em]">{language === 'vi' ? 'Giao hàng:' : 'Delivery:'}</strong> {language === 'vi' ? 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận' : 'Express delivery in 2 hours in HCMC'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span><strong>{language === 'vi' ? 'Đổi trả:' : 'Returns:'}</strong> {language === 'vi' ? 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào' : '100% exchange if any issue'}</span>
+                  <span><strong className="text-[1.125em]">{language === 'vi' ? 'Đổi trả:' : 'Returns:'}</strong> {language === 'vi' ? 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào' : '100% exchange if any issue'}</span>
                 </div>
               </div>
 
               {/* Nút đóng */}
               <button
                 onClick={() => setIsSupportModalOpen(false)}
-                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm transition-colors cursor-pointer"
               >
                 {t('close')}
               </button>

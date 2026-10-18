@@ -1,14 +1,6 @@
 'use client';
 
 import React from 'react';
-import {
-  Sparkles,
-  Leaf,
-  Award,
-  ShieldCheck,
-  ThermometerSnowflake,
-  HeartPulse,
-} from 'lucide-react';
 
 interface ProductDescriptionProps {
   productName?: string;
@@ -28,12 +20,11 @@ export default function ProductDescription({
     <section className={`bg-white py-12 md:py-16 border-t border-gray-200 ${className}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
         {/* 1. SECTION HEADER */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#1B5E3B] text-xs font-semibold uppercase tracking-wider mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-[#1B5E3B]" />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-forest-700 text-sm uppercase tracking-wider mb-3">
           <span>MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG</span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl text-gray-900 tracking-tight">
           Dinh Dưỡng Lành Tự Nhiên Từ {productName}
         </h2>
 
@@ -46,10 +37,7 @@ export default function ProductDescription({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 my-12 text-left">
           {/* Card 1: Nguyên liệu tươi */}
           <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-5 hover:shadow-md transition-all">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center mb-3">
-              <Leaf className="w-5 h-5 text-amber-700" />
-            </div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">
+            <h3 className="text-gray-900 text-lg mb-1">
               Nguyên liệu tươi chọn lọc
             </h3>
             <p className="text-xs text-gray-600 leading-relaxed">
@@ -59,10 +47,7 @@ export default function ProductDescription({
 
           {/* Card 2: Chuẩn Quốc Tế HACCP */}
           <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-5 hover:shadow-md transition-all">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600/10 text-[#1B5E3B] flex items-center justify-center mb-3">
-              <Award className="w-5 h-5 text-[#1B5E3B]" />
-            </div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">
+            <h3 className="text-gray-900 text-lg mb-1">
               Chuẩn Quốc Tế HACCP
             </h3>
             <p className="text-xs text-gray-600 leading-relaxed">
@@ -72,10 +57,7 @@ export default function ProductDescription({
 
           {/* Card 3: Không chất bảo quản */}
           <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-5 hover:shadow-md transition-all">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/10 text-blue-700 flex items-center justify-center mb-3">
-              <ShieldCheck className="w-5 h-5 text-blue-700" />
-            </div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">
+            <h3 className="text-gray-900 text-lg mb-1">
               Không chất bảo quản
             </h3>
             <p className="text-xs text-gray-600 leading-relaxed">
@@ -85,10 +67,7 @@ export default function ProductDescription({
 
           {/* Card 4: Bảo quản mát */}
           <div className="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-5 hover:shadow-md transition-all">
-            <div className="w-10 h-10 rounded-xl bg-sky-600/10 text-sky-700 flex items-center justify-center mb-3">
-              <ThermometerSnowflake className="w-5 h-5 text-sky-700" />
-            </div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">
+            <h3 className="text-gray-900 text-lg mb-1">
               Bảo quản mát 5 - 10°C
             </h3>
             <p className="text-xs text-gray-600 leading-relaxed">
@@ -102,10 +81,7 @@ export default function ProductDescription({
           {/* Cột trái (Narrative - 7 cột) */}
           <div className={hideEstimatedNutrition ? 'lg:col-span-12 space-y-4' : 'lg:col-span-7 space-y-4'}>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                <HeartPulse className="w-4.5 h-4.5 text-emerald-700" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-lg sm:text-xl">
+              <h3 className="text-gray-900 text-xl sm:text-2xl">
                 Thức uống dinh dưỡng - Uống một bữa ăn ngon lành
               </h3>
             </div>
@@ -134,9 +110,9 @@ export default function ProductDescription({
           {/* Cột phải (Bảng Dinh dưỡng - 5 cột) */}
           {!hideEstimatedNutrition && (
           <div className="lg:col-span-5">
-            <div className="bg-[#FAFAFA] border border-gray-200 rounded-2xl p-5 shadow-xs">
+            <div className="bg-ink-50 border border-gray-200 rounded-2xl p-5 shadow-xs">
               <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-                <h4 className="font-bold text-gray-900 text-sm sm:text-base">
+                <h4 className="text-gray-900 text-base sm:text-lg">
                   Giá trị dinh dưỡng (Trong 100ml)
                 </h4>
                 <span className="text-[11px] text-gray-400 bg-white border border-gray-200 rounded-md px-2 py-0.5 font-medium">
@@ -147,23 +123,23 @@ export default function ProductDescription({
               <div className="divide-y divide-gray-100">
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Năng lượng / Energy</span>
-                  <span className="font-bold text-gray-900">~62 kcal</span>
+                  <span className="text-gray-900 text-[1.125em]">~62 kcal</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Carbohydrate</span>
-                  <span className="font-bold text-gray-900">11.8 g</span>
+                  <span className="text-gray-900 text-[1.125em]">11.8 g</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Chất đạm / Protein</span>
-                  <span className="font-bold text-gray-900">1.2 g</span>
+                  <span className="text-gray-900 text-[1.125em]">1.2 g</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Chất béo / Fat</span>
-                  <span className="font-bold text-gray-900">1.0 g</span>
+                  <span className="text-gray-900 text-[1.125em]">1.0 g</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Chất xơ / Dietary Fiber</span>
-                  <span className="font-bold text-gray-900">0.8 g</span>
+                  <span className="text-gray-900 text-[1.125em]">0.8 g</span>
                 </div>
               </div>
 

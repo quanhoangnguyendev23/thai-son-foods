@@ -189,11 +189,11 @@ export default function FrequentlyBoughtTogether({
 
   return (
     <div
-      className={`w-full bg-white rounded-xl border border-gray-200/90 p-4 sm:p-6 shadow-[0_1px_4px_rgba(0,0,0,0.03)] ${className}`}
+      className={`w-full bg-white rounded-xl border border-gray-200/90 p-4 sm:p-6 shadow-[0_1px_4px_rgba(34,84,76,0.03)] ${className}`}
     >
       {/* ── TIÊU ĐỀ KHỐI (Chuẩn Amazon) ── */}
-      <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug mb-5">
-        Các sản phẩm của <span className="text-[#1B5E3B]">Thái Sơn Foods</span> mà khách hàng đã mua cùng nhau.
+      <h3 className="text-lg sm:text-xl text-gray-900 leading-snug mb-5">
+        Các sản phẩm của <span className="text-forest-700">Thái Sơn Foods</span> mà khách hàng đã mua cùng nhau.
       </h3>
 
       {/* ── BỐ CỤC CHÍNH: HÀNG SẢN PHẨM BÊN TRÁI & KHỐI TỔNG GIÁ BÊN PHẢI ── */}
@@ -219,7 +219,7 @@ export default function FrequentlyBoughtTogether({
                   }`}
                 >
                   {/* Khung ảnh có Checkbox góc trên bên phải */}
-                  <div className="relative w-full aspect-square max-w-[160px] sm:max-w-[170px] bg-[#F8F9FA] rounded-lg border border-gray-200/80 p-2.5 mx-auto md:mx-0 flex items-center justify-center overflow-hidden group">
+                  <div className="relative w-full aspect-square max-w-[160px] sm:max-w-[170px] bg-ink-50 rounded-lg border border-gray-200/80 p-2.5 mx-auto md:mx-0 flex items-center justify-center overflow-hidden group">
                     <Link
                       href={`/san-pham/${item.product.slug}`}
                       className="relative w-full h-full block"
@@ -239,7 +239,7 @@ export default function FrequentlyBoughtTogether({
                       onClick={() => toggleItem(item.id)}
                       className={`absolute top-2 right-2 w-5 h-5 rounded flex items-center justify-center transition-all z-10 shadow-xs border ${
                         isSelected
-                          ? 'bg-[#007185] border-[#007185] text-white hover:bg-[#005f70]'
+                          ? 'bg-forest-700 border-forest-700 text-white hover:bg-forest-700'
                           : 'bg-white border-gray-400 hover:border-gray-600'
                       }`}
                       aria-label={isSelected ? `Bỏ chọn ${item.cleanName}` : `Chọn ${item.cleanName}`}
@@ -261,11 +261,11 @@ export default function FrequentlyBoughtTogether({
                     {/* Tên sản phẩm */}
                     <Link
                       href={`/san-pham/${item.product.slug}`}
-                      className="block text-xs font-semibold text-gray-900 hover:text-[#007185] transition-colors leading-snug line-clamp-2"
+                      className="block text-sm text-gray-900 hover:text-forest-700 transition-colors leading-snug line-clamp-2"
                       title={`${item.cleanName} (${item.packName})`}
                     >
                       {item.isCurrent && (
-                        <span className="font-bold text-gray-900 mr-1">
+                        <span className="text-gray-900 mr-1 text-[1.125em]">
                           Sản phẩm này:
                         </span>
                       )}
@@ -274,18 +274,18 @@ export default function FrequentlyBoughtTogether({
 
                     {/* Đánh giá sao */}
                     <div className="flex items-center gap-1 text-[11px] mt-1 flex-wrap">
-                      <span className="font-bold text-gray-800 text-[11px]">
+                      <span className="text-gray-800 text-[12px]">
                         {item.rating}
                       </span>
-                      <div className="flex items-center text-[#FFA41C]">
+                      <div className="flex items-center text-amber-500">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className="w-2.5 h-2.5 fill-[#FFA41C] stroke-[#FFA41C]"
+                            className="w-2.5 h-2.5 fill-amber-500 stroke-amber-500"
                           />
                         ))}
                       </div>
-                      <span className="text-[11px] text-[#007185] font-medium">
+                      <span className="text-[11px] text-forest-700 font-medium">
                         {item.reviewCount}
                       </span>
                     </div>
@@ -293,11 +293,11 @@ export default function FrequentlyBoughtTogether({
                     {/* Giá tiền & Huy hiệu Prime */}
                     <div className="flex items-baseline gap-1.5 flex-wrap mt-1">
                       {item.discountPercent && (
-                        <span className="text-xs font-semibold text-[#CC0C39]">
+                        <span className="text-sm text-crimson-600">
                           -{item.discountPercent}%
                         </span>
                       )}
-                      <span className="text-sm font-bold text-gray-900 leading-none">
+                      <span className="text-base text-gray-900 leading-none">
                         {item.price.toLocaleString('vi-VN')}₫
                       </span>
                       {item.originalPrice && (
@@ -306,9 +306,9 @@ export default function FrequentlyBoughtTogether({
                         </span>
                       )}
                       {item.hasPrime && (
-                        <span className="inline-flex items-center text-[#007185] font-black text-xs italic tracking-tighter ml-1">
-                          <span className="text-[#007185] mr-0.5 font-bold not-italic">✓</span>
-                          <span className="text-[#007185] font-black not-italic text-[11px] font-sans">
+                        <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter ml-1">
+                          <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
+                          <span className="text-forest-700 not-italic text-[12px] font-sans">
                             prime
                           </span>
                         </span>
@@ -326,7 +326,7 @@ export default function FrequentlyBoughtTogether({
           {/* Dòng Tổng giá */}
           <div className="text-sm text-gray-700 mb-2.5">
             <span>Tổng giá: </span>
-            <span className="text-base sm:text-lg font-bold text-[#B12704] ml-1">
+            <span className="text-lg sm:text-xl text-crimson-600 ml-1">
               {formatPrice(totalPrice)}
             </span>
           </div>
@@ -336,11 +336,11 @@ export default function FrequentlyBoughtTogether({
             type="button"
             onClick={handleAddToCart}
             disabled={selectedCount === 0 || isSuccess}
-            className={`w-full py-2.5 px-5 rounded-full text-xs sm:text-sm font-medium transition-all shadow-[0_2px_5px_rgba(213,217,217,0.5)] border ${
+            className={`w-full py-2.5 px-5 rounded-full text-xs sm:text-sm font-medium transition-all shadow-[0_2px_5px_rgba(34,84,76,0.18)] border ${
               isSuccess
-                ? 'bg-emerald-600 border-emerald-600 text-white font-bold cursor-default'
+                ? 'bg-emerald-600 border-emerald-600 text-white cursor-default'
                 : selectedCount > 0
-                ? 'bg-[#FFD814] hover:bg-[#F7CA00] active:bg-[#F0B800] text-gray-900 border-[#FCD200] hover:shadow-md cursor-pointer'
+                ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-700 text-gray-900 border-amber-700 hover:shadow-md cursor-pointer'
                 : 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed'
             }`}
           >

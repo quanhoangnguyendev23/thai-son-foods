@@ -100,7 +100,7 @@ export default function WarehouseSection() {
       <div className="block lg:hidden">
         {/* Tiêu đề mục trên Mobile */}
         <div className="mb-2.5 px-0.5 text-center sm:text-left">
-          <h2 className="text-lg sm:text-xl font-bold uppercase tracking-tight font-serif text-[#001A36]">
+          <h2 className="text-xl sm:text-2xl uppercase tracking-tight font-serif text-forest-950">
             {language === 'en' ? 'WHY CHOOSE THAI SON FOODS?' : 'VÌ SAO THÁI SƠN FOODS ĐƯỢC TIN CHỌN?'}
           </h2>
         </div>
@@ -133,11 +133,11 @@ export default function WarehouseSection() {
             </AnimatePresence>
 
             {/* Gradient đáy ảnh để nút Tab Pill nổi bật */}
-            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-10" />
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink-950/70 to-transparent pointer-events-none z-10" />
 
             {/* Nút Tab Pill chuyển tab trên Mobile */}
             <div className="absolute bottom-2.5 left-0 right-0 flex justify-center z-20 px-2">
-              <div className="flex items-center p-1 rounded-full bg-black/65 backdrop-blur-md border border-white/20 shadow-xl">
+              <div className="flex items-center p-1 rounded-full bg-ink-950/65 backdrop-blur-md border border-white/20 shadow-xl">
                 {warehouseTabs.map((tab, index) => {
                   const isActive = activeIndex === index;
                   return (
@@ -146,7 +146,7 @@ export default function WarehouseSection() {
                       type="button"
                       onClick={() => handleTabClick(index)}
                       className={cn(
-                        'px-3 py-1 rounded-full transition-all duration-300 font-mono text-xs font-bold flex items-center gap-1.5 cursor-pointer',
+                        'px-3 py-1 rounded-full transition-all duration-300 font-mono text-sm flex items-center gap-1.5 cursor-pointer',
                         isActive
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/60 scale-105'
                           : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -166,7 +166,7 @@ export default function WarehouseSection() {
           </div>
 
           {/* Phần 2: Thẻ vé màu ngà với mép cắt răng cưa */}
-          <div className="bg-[#FFF8EE] p-4 sm:p-5 relative pb-5">
+          <div className="bg-ivory p-4 sm:p-5 relative pb-5">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentTab.id}
@@ -176,26 +176,26 @@ export default function WarehouseSection() {
                 transition={{ duration: 0.35, ease: 'easeOut' }}
               >
                 {currentTab.subTitle && (
-                  <h3 className="text-xs font-semibold text-[#1B5E3B] mb-1 font-sans">
+                  <h3 className="text-sm text-forest-700 mb-1 font-sans">
                     {currentTab.subTitle}
                   </h3>
                 )}
 
-                <h4 className="text-lg sm:text-xl font-bold text-[#001A36] leading-snug font-serif tracking-tight mb-1.5">
+                <h4 className="text-xl sm:text-2xl text-forest-950 leading-snug font-serif tracking-tight mb-1.5">
                   {language === 'en' ? currentTab.titleEn : currentTab.title}
                 </h4>
 
-                <p className="text-xs sm:text-[13px] text-[#001A36]/80 leading-relaxed font-sans mb-3">
+                <p className="text-xs sm:text-[13px] text-forest-950/80 leading-relaxed font-sans mb-3">
                   {language === 'en' ? currentTab.descriptionEn : currentTab.description}
                 </p>
               </motion.div>
             </AnimatePresence>
 
             {/* Hotline & Liên kết */}
-            <div className="pt-2.5 border-t border-[#001A36]/10 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+            <div className="pt-2.5 border-t border-forest-950/10 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
               <a
                 href="tel:02862915024"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1B5E3B] hover:text-[#14482D] transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm text-forest-700 hover:text-forest-800 transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
                 <span>{language === 'en' ? 'Wholesale: 028 6291 5024' : 'Hotline sỉ: 028 6291 5024'}</span>
@@ -203,7 +203,7 @@ export default function WarehouseSection() {
 
               <Link
                 href="/#san-pham"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#001A36] hover:text-[#1B5E3B] transition-colors"
+                className="inline-flex items-center gap-1 text-sm text-forest-950 hover:text-forest-700 transition-colors"
               >
                 <span>{language === 'en' ? 'Explore products' : 'Xem sản phẩm'}</span>
                 <ArrowRight className="w-3 h-3" />
@@ -214,7 +214,7 @@ export default function WarehouseSection() {
             <div className="absolute -bottom-[9px] left-0 right-0 h-[10px] overflow-hidden leading-none pointer-events-none">
               <svg
                 viewBox="0 0 1200 24"
-                className="w-full h-[10px] fill-[#FFF8EE]"
+                className="w-full h-[10px] fill-ivory"
                 preserveAspectRatio="none"
               >
                 <path d="M0,0 L15,24 L30,0 L45,24 L60,0 L75,24 L90,0 L105,24 L120,0 L135,24 L150,0 L165,24 L180,0 L195,24 L210,0 L225,24 L240,0 L255,24 L270,0 L285,24 L300,0 L315,24 L330,0 L345,24 L360,0 L375,24 L390,0 L405,24 L420,0 L435,24 L450,0 L465,24 L480,0 L495,24 L510,0 L525,24 L540,0 L555,24 L570,0 L585,24 L600,0 L615,24 L630,0 L645,24 L660,0 L675,24 L690,0 L705,24 L720,0 L735,24 L750,0 L765,24 L780,0 L795,24 L810,0 L825,24 L840,0 L855,24 L870,0 L885,24 L900,0 L915,24 L930,0 L945,24 L960,0 L975,24 L990,0 L1005,24 L1020,0 L1035,24 L1050,0 L1065,24 L1080,0 L1095,24 L1110,0 L1125,24 L1140,0 L1155,24 L1170,0 L1185,24 L1200,0 Z" />
@@ -259,8 +259,8 @@ export default function WarehouseSection() {
           </AnimatePresence>
 
           {/* Gradient đáy dưới & cạnh phải */}
-          <div className="absolute bottom-0 left-0 right-0 h-44 sm:h-56 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none z-10" />
-          <div className="absolute top-0 right-0 bottom-0 w-48 sm:w-60 bg-gradient-to-l from-black/30 to-transparent pointer-events-none z-10" />
+          <div className="absolute bottom-0 left-0 right-0 h-44 sm:h-56 bg-gradient-to-t from-ink-950/95 via-ink-950/60 to-transparent pointer-events-none z-10" />
+          <div className="absolute top-0 right-0 bottom-0 w-48 sm:w-60 bg-gradient-to-l from-ink-950/30 to-transparent pointer-events-none z-10" />
         </div>
 
         {/* Content Wrapper trên Desktop */}
@@ -275,7 +275,7 @@ export default function WarehouseSection() {
               transition={{ duration: 0.7, ease: 'easeOut' }}
               className="w-full max-w-[380px] lg:max-w-[440px] relative"
             >
-              <div className="bg-[#FFF8EE] p-5 lg:p-6 shadow-[0_12px_36px_rgba(0,0,0,0.35)] relative">
+              <div className="bg-ivory p-5 lg:p-6 shadow-[0_12px_36px_rgba(34,84,76,0.35)] relative">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentTab.id}
@@ -285,26 +285,26 @@ export default function WarehouseSection() {
                     transition={{ duration: 0.45, ease: 'easeOut' }}
                   >
                     {currentTab.subTitle && (
-                      <h3 className="text-xs font-semibold text-[#1B5E3B] mb-1 font-sans">
+                      <h3 className="text-sm text-forest-700 mb-1 font-sans">
                         {currentTab.subTitle}
                       </h3>
                     )}
 
-                    <h4 className="text-xl lg:text-2xl font-bold text-[#001A36] leading-snug font-serif tracking-tight mb-2">
+                    <h4 className="text-2xl lg:text-2xl text-forest-950 leading-snug font-serif tracking-tight mb-2">
                       {language === 'en' ? currentTab.titleEn : currentTab.title}
                     </h4>
 
-                    <p className="text-xs sm:text-[13px] text-[#001A36]/80 leading-relaxed font-sans mb-4">
+                    <p className="text-xs sm:text-[13px] text-forest-950/80 leading-relaxed font-sans mb-4">
                       {language === 'en' ? currentTab.descriptionEn : currentTab.description}
                     </p>
                   </motion.div>
                 </AnimatePresence>
 
                 {/* Hotline & Liên hệ trực tiếp */}
-                <div className="pt-3 border-t border-[#001A36]/10 flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-forest-950/10 flex items-center justify-between gap-2">
                   <a
                     href="tel:02862915024"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1B5E3B] hover:text-[#14482D] transition-colors"
+                    className="inline-flex items-center gap-1.5 text-sm text-forest-700 hover:text-forest-800 transition-colors"
                   >
                     <Phone className="w-3.5 h-3.5" />
                     <span>{language === 'en' ? 'Wholesale: 028 6291 5024' : 'Hotline sỉ: 028 6291 5024'}</span>
@@ -312,7 +312,7 @@ export default function WarehouseSection() {
 
                   <Link
                     href="/#san-pham"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#001A36] hover:text-[#1B5E3B] transition-colors"
+                    className="inline-flex items-center gap-1 text-sm text-forest-950 hover:text-forest-700 transition-colors"
                   >
                     <span>{language === 'en' ? 'Explore products' : 'Xem sản phẩm'}</span>
                     <ArrowRight className="w-3 h-3" />
@@ -323,7 +323,7 @@ export default function WarehouseSection() {
                 <div className="absolute -bottom-[9px] left-0 right-0 h-[10px] overflow-hidden leading-none pointer-events-none">
                   <svg
                     viewBox="0 0 1200 24"
-                    className="w-full h-[10px] fill-[#FFF8EE]"
+                    className="w-full h-[10px] fill-ivory"
                     preserveAspectRatio="none"
                   >
                     <path d="M0,0 L15,24 L30,0 L45,24 L60,0 L75,24 L90,0 L105,24 L120,0 L135,24 L150,0 L165,24 L180,0 L195,24 L210,0 L225,24 L240,0 L255,24 L270,0 L285,24 L300,0 L315,24 L330,0 L345,24 L360,0 L375,24 L390,0 L405,24 L420,0 L435,24 L450,0 L465,24 L480,0 L495,24 L510,0 L525,24 L540,0 L555,24 L570,0 L585,24 L600,0 L615,24 L630,0 L645,24 L660,0 L675,24 L690,0 L705,24 L720,0 L735,24 L750,0 L765,24 L780,0 L795,24 L810,0 L825,24 L840,0 L855,24 L870,0 L885,24 L900,0 L915,24 L930,0 L945,24 L960,0 L975,24 L990,0 L1005,24 L1020,0 L1035,24 L1050,0 L1065,24 L1080,0 L1095,24 L1110,0 L1125,24 L1140,0 L1155,24 L1170,0 L1185,24 L1200,0 Z" />
@@ -353,7 +353,7 @@ export default function WarehouseSection() {
                       <div className="flex items-center gap-4 transition-all duration-300">
                         <span
                           className={cn(
-                            'text-3xl lg:text-4xl font-bold font-serif transition-all duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]',
+                            'text-3xl lg:text-4xl font-serif transition-all duration-300 drop-shadow-[0_2px_8px_rgba(34,84,76,0.8)]',
                             isActive
                               ? 'text-white scale-110'
                               : 'text-white/40 group-hover:text-white/80'
@@ -403,10 +403,10 @@ export default function WarehouseSection() {
             className="w-full pt-4 pb-0.5"
           >
             <h2
-              className="text-2xl md:text-3xl lg:text-4xl font-bold uppercase tracking-tight font-serif text-left leading-tight"
+              className="text-2xl md:text-3xl lg:text-4xl uppercase tracking-tight font-serif text-left leading-tight"
               style={{
                 color: '#FFFFFF',
-                textShadow: '0 2px 12px rgba(0, 0, 0, 0.95), 0 4px 28px rgba(0, 0, 0, 0.9), 0 1px 4px rgba(0, 0, 0, 1)',
+                textShadow: '0 2px 12px rgba(34,84,76,0.95), 0 4px 28px rgba(34,84,76,0.9), 0 1px 4px rgba(34,84,76,1)',
               }}
             >
               {language === 'en' ? 'WHY CHOOSE THAI SON FOODS?' : 'VÌ SAO THÁI SƠN FOODS ĐƯỢC TIN CHỌN?'}

@@ -210,8 +210,8 @@ export function FlyToCartProvider({ children }: { children: React.ReactNode }) {
       flyEl.style.borderRadius = '16px';
       flyEl.style.overflow = 'hidden';
       flyEl.style.backgroundColor = '#ffffff';
-      flyEl.style.border = '2px solid rgba(27, 94, 59, 0.25)';
-      flyEl.style.boxShadow = '0 12px 28px -4px rgba(0, 0, 0, 0.28), 0 6px 14px -3px rgba(0, 0, 0, 0.15)';
+      flyEl.style.border = '2px solid rgba(34,84,76, 0.25)';
+      flyEl.style.boxShadow = '0 12px 28px -4px rgba(34,84,76,0.28), 0 6px 14px -3px rgba(34,84,76,0.15)';
       flyEl.style.display = 'flex';
       flyEl.style.alignItems = 'center';
       flyEl.style.justifyContent = 'center';

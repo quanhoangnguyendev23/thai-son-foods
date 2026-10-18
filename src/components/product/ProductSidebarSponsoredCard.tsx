@@ -73,7 +73,7 @@ export default function ProductSidebarSponsoredCard({
   return (
     <div className={`w-full space-y-3 sm:space-y-3.5 ${className}`}>
       {/* ── Box Prime Hội Viên (Ảnh 1): Hiển thị ở trên mục gợi ý sản phẩm tài trợ ("trên mục này") ── */}
-      <div className="relative bg-white rounded-lg border border-gray-200/90 p-3.5 sm:p-4 shadow-[0_1px_4px_rgba(0,0,0,0.03)] hover:shadow-[0_3px_12px_rgba(0,0,0,0.07)] transition-all duration-300">
+      <div className="relative bg-white rounded-lg border border-gray-200/90 p-3.5 sm:p-4 shadow-[0_1px_4px_rgba(34,84,76,0.03)] hover:shadow-[0_3px_12px_rgba(34,84,76,0.07)] transition-all duration-300">
         {/* Logo Thương Hiệu Thái Sơn (thay thế cho logo Prime) */}
         <Link href="/member" className="inline-block group mb-2.5">
           <div className="relative w-28 h-8 sm:w-32 sm:h-9">
@@ -96,7 +96,7 @@ export default function ProductSidebarSponsoredCard({
         <div className="mt-3">
           <Link
             href="/member"
-            className="text-xs sm:text-[13px] text-[#007185] hover:text-[#C7511F] hover:underline font-medium inline-block transition-colors"
+            className="text-xs sm:text-[13px] text-forest-700 hover:text-copper-600 hover:underline font-medium inline-block transition-colors"
           >
             Tham gia
           </Link>
@@ -105,7 +105,7 @@ export default function ProductSidebarSponsoredCard({
 
       {/* ── Box quảng cáo gợi ý chuẩn Amazon Sponsored Product Card ── */}
       <div className={waitingRandom ? 'invisible' : undefined}>
-        <div className="relative bg-white rounded-lg border border-gray-200/90 p-3.5 sm:p-4 shadow-[0_1px_4px_rgba(0,0,0,0.03)] hover:shadow-[0_3px_12px_rgba(0,0,0,0.07)] transition-all duration-300">
+        <div className="relative bg-white rounded-lg border border-gray-200/90 p-3.5 sm:p-4 shadow-[0_1px_4px_rgba(34,84,76,0.03)] hover:shadow-[0_3px_12px_rgba(34,84,76,0.07)] transition-all duration-300">
           <Link href={productLink} className="block group">
             {/* HÀNG TRÊN: Logo thương hiệu bên trái + Mini banner/ảnh sản phẩm bên phải */}
             <div className="flex items-center justify-between gap-3 pb-3 border-b border-gray-100">
@@ -136,7 +136,7 @@ export default function ProductSidebarSponsoredCard({
             <div className="pt-2">
               {/* Tag định danh Bán chạy nhất */}
               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded tracking-tight uppercase">
+                <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[11px] px-1.5 py-0.5 rounded tracking-tight uppercase">
                   Bán chạy nhất
                 </span>
                 <span className="text-[11px] text-gray-500 font-medium">
@@ -146,7 +146,7 @@ export default function ProductSidebarSponsoredCard({
 
               {/* Tên sản phẩm chuẩn xác, gọn gàng */}
               <h4
-                className="text-xs sm:text-[13px] font-bold text-gray-900 group-hover:text-[#1B5E3B] transition-colors leading-snug line-clamp-2"
+                className="text-sm sm:text-[15px] text-gray-900 group-hover:text-forest-700 transition-colors leading-snug line-clamp-2"
                 title={`${cleanName} (${packUnit})`}
               >
                 {cleanName} ({packUnit})
@@ -155,13 +155,13 @@ export default function ProductSidebarSponsoredCard({
               {/* Hàng Đánh Giá Sao Chuẩn Amazon */}
               {!hideUnverifiedStats && (
               <div className="flex items-center gap-1 text-xs mt-1.5 flex-wrap">
-                <span className="font-bold text-gray-900 text-xs">4.8</span>
-                <div className="flex items-center text-[#FFA41C]">
+                <span className="text-gray-900 text-sm">4.8</span>
+                <div className="flex items-center text-amber-500">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-[#FFA41C] stroke-[#FFA41C]" />
+                    <Star key={i} className="w-3 h-3 fill-amber-500 stroke-amber-500" />
                   ))}
                 </div>
-                <span className="text-[11px] text-[#007185] font-medium ml-0.5">
+                <span className="text-[11px] text-forest-700 font-medium ml-0.5">
                   548
                 </span>
               </div>
@@ -169,7 +169,7 @@ export default function ProductSidebarSponsoredCard({
 
               {/* Hàng Giá & Huy hiệu Prime */}
               <div className="flex items-baseline gap-2 flex-wrap mt-1.5">
-                <span className="text-sm sm:text-base font-bold text-gray-900 leading-none">
+                <span className="text-base sm:text-lg text-gray-900 leading-none">
                   {price.toLocaleString('vi-VN')}₫
                 </span>
                 {originalPrice > price && (
@@ -179,9 +179,9 @@ export default function ProductSidebarSponsoredCard({
                 )}
                 {/* Huy hiệu Prime chuẩn Amazon */}
                 {!hideUnverifiedStats && (
-                <span className="inline-flex items-center text-[#007185] font-black text-xs italic tracking-tighter ml-auto">
-                  <span className="text-[#007185] mr-0.5 font-bold not-italic">✓</span>
-                  <span className="text-[#007185] font-black not-italic text-[11px] font-sans">prime</span>
+                <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter ml-auto">
+                  <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
+                  <span className="text-forest-700 not-italic text-[12px] font-sans">prime</span>
                 </span>
                 )}
               </div>
@@ -189,7 +189,7 @@ export default function ProductSidebarSponsoredCard({
               {/* Huy hiệu Ưu đãi / Subscribe & Save chuẩn Ahorra con Planea y ahorra */}
               {!hideUnverifiedStats && (
               <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                <span className="bg-[#CC0C39] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-xs tracking-tight uppercase">
+                <span className="bg-crimson-600 text-white text-[11px] px-1.5 py-0.5 rounded-xs tracking-tight uppercase">
                   Tiết kiệm 15%
                 </span>
                 <span className="text-[11px] text-gray-700 font-medium">

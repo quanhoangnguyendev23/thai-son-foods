@@ -49,7 +49,7 @@ function CardShell({
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-3">
-        <h2 className="font-heading text-[17px] lg:text-[19px] font-bold text-text-dark leading-snug">{title}</h2>
+        <h2 className="font-heading text-[19px] lg:text-[21px] text-text-dark leading-snug">{title}</h2>
         {badge}
       </div>
       <div className="flex-1 min-h-0">{children}</div>
@@ -60,7 +60,7 @@ function CardShell({
 
 function MoreLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="text-[13px] font-semibold text-green-primary hover:text-green-dark hover:underline">
+    <Link href={href} className="relative before:absolute before:-inset-y-3 before:inset-x-0 before:content-[''] text-[15px] text-green-primary hover:text-green-dark hover:underline">
       {children}
     </Link>
   );
@@ -129,25 +129,25 @@ function SignInColumn() {
         {user ? (
           <>
             <div className="flex items-center gap-3 mb-3">
-              <span className="w-10 h-10 rounded-full bg-green-primary text-white flex items-center justify-center font-bold">
+              <span className="w-10 h-10 rounded-full bg-green-primary text-white flex items-center justify-center text-[1.125em]">
                 {user.fullName ? user.fullName.charAt(0).toUpperCase() : <UserRound className="w-5 h-5" />}
               </span>
               <div className="min-w-0">
                 <p className="text-[13px] text-text-muted">{language === 'en' ? 'Hello,' : 'Xin chào,'}</p>
-                <p className="font-heading text-[17px] font-bold text-text-dark truncate">{user.fullName}</p>
+                <p className="font-heading text-[19px] text-text-dark truncate">{user.fullName}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Link
                 href="/tai-khoan?tab=orders"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-border px-2 py-2 text-[13px] font-semibold text-text-dark hover:bg-ivory"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-border px-2 py-2 text-[15px] text-text-dark hover:bg-ivory"
               >
                 <Package className="w-4 h-4 text-green-primary" />
                 {language === 'en' ? 'Orders' : 'Đơn hàng'}
               </Link>
               <Link
                 href="/tai-khoan?tab=profile"
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-border px-2 py-2 text-[13px] font-semibold text-text-dark hover:bg-ivory"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-border px-2 py-2 text-[15px] text-text-dark hover:bg-ivory"
               >
                 <UserRound className="w-4 h-4 text-green-primary" />
                 {language === 'en' ? 'Account' : 'Tài khoản'}
@@ -156,13 +156,13 @@ function SignInColumn() {
           </>
         ) : (
           <>
-            <h2 className="font-heading text-[17px] lg:text-[19px] font-bold text-text-dark leading-snug mb-3">
+            <h2 className="font-heading text-[19px] lg:text-[21px] text-text-dark leading-snug mb-3">
               {language === 'en' ? 'Sign in for a better shopping experience' : 'Đăng nhập để mua sắm thuận tiện hơn'}
             </h2>
             <button
               type="button"
               onClick={() => openAuthModal('login')}
-              className="w-full flex items-center justify-center gap-2 rounded-full bg-corn hover:bg-corn-dark text-text-dark font-bold text-sm py-2.5 shadow-xs cursor-pointer transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-full bg-corn hover:bg-corn-dark text-text-dark text-base py-2.5 shadow-xs cursor-pointer transition-colors"
             >
               <LogIn className="w-4 h-4" />
               {language === 'en' ? 'Sign in securely' : 'Đăng nhập'}
@@ -172,7 +172,7 @@ function SignInColumn() {
               <button
                 type="button"
                 onClick={() => openAuthModal('register')}
-                className="font-semibold text-green-primary hover:underline cursor-pointer"
+                className="text-green-primary hover:underline cursor-pointer text-[1.125em]"
               >
                 {language === 'en' ? 'Create an account' : 'Tạo tài khoản'}
               </button>
@@ -182,7 +182,7 @@ function SignInColumn() {
       </div>
 
       {/* Chính sách miễn phí giao hàng — số liệu thật từ INVENTORY_CONFIG.SHIPPING (đồng bộ với Footer) */}
-      <div className="flex-1 bg-green-primary text-white rounded-2xl p-4 lg:p-5 flex flex-col justify-between gap-3 shadow-xs">
+      <div className="flex-1 bg-leaf-900 text-white rounded-2xl p-4 lg:p-5 flex flex-col justify-between gap-3 shadow-xs">
         <div className="flex items-start gap-3">
           <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
             <Truck className="w-5 h-5 text-corn" />
@@ -191,12 +191,12 @@ function SignInColumn() {
             {language === 'en'
               ? 'Free shipping in HCMC, Bien Hoa, Long Thanh on orders from '
               : 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ '}
-            <strong className="text-corn">{formatPrice(threshold)}đ</strong>
+            <strong className="text-corn text-[1.125em]">{formatPrice(threshold)}đ</strong>
           </p>
         </div>
         <Link
           href="/gio-hang"
-          className="inline-flex items-center gap-1.5 self-start text-[13px] font-semibold text-corn hover:underline"
+          className="inline-flex items-center gap-1.5 self-start text-[15px] text-corn hover:underline"
         >
           <ShoppingBag className="w-4 h-4" />
           {language === 'en' ? 'Go to cart' : 'Xem giỏ hàng'}
@@ -226,7 +226,7 @@ function ComboQuadCard({ combos }: { combos: Combo[] }) {
               <div className="relative aspect-[4/3] rounded-lg bg-ivory overflow-hidden">
                 <TileImage src={c.image} alt={name} sizes="(max-width: 640px) 40vw, 160px" />
                 {c.discount > 0 && (
-                  <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] font-bold bg-sale text-white rounded">
+                  <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[11px] bg-sale text-white rounded">
                     -{c.discount}%
                   </span>
                 )}
@@ -259,7 +259,7 @@ function BuyAgainPlaceholderCard() {
           <button
             type="button"
             onClick={() => openAuthModal('login')}
-            className="text-[13px] font-semibold text-green-primary hover:underline cursor-pointer"
+            className="text-[15px] text-green-primary hover:underline cursor-pointer"
           >
             {language === 'en' ? 'Sign in to see your orders' : 'Đăng nhập để xem đơn hàng'}
           </button>
@@ -326,7 +326,7 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
               src="/images/warehouse/1920x850-3.png"
               alt={language === 'en' ? 'Thai Son Foods customer care' : 'Thái Sơn Foods chăm sóc khách hàng'}
               fill
-              sizes="(max-width: 640px) 80vw, 320px"
+              sizes="(max-width: 640px) 160vw, 700px"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>

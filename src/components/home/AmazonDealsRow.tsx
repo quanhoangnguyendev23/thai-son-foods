@@ -37,7 +37,7 @@ function PlaceholderCountdown() {
   const parts = [Math.floor(total / 3600), Math.floor((total % 3600) / 60), total % 60];
 
   return (
-    <span className="inline-flex items-center gap-1 font-mono text-[13px] font-bold text-text-dark" aria-label="Đồng hồ đếm ngược minh hoạ">
+    <span className="inline-flex items-center gap-1 font-mono text-[15px] text-text-dark" aria-label="Đồng hồ đếm ngược minh hoạ">
       <Clock className="w-4 h-4 text-sale" />
       {ms === null ? '--:--:--' : parts.map(pad).join(':')}
     </span>
@@ -66,11 +66,11 @@ function DealTile({ combo }: { combo: Combo }) {
       </div>
       <div className="mt-2 flex items-center gap-2 flex-wrap">
         {combo.discount > 0 && (
-          <span className="px-1.5 py-0.5 rounded bg-sale text-white text-[11px] font-bold">-{combo.discount}%</span>
+          <span className="px-1.5 py-0.5 rounded bg-sale text-white text-[12px]">-{combo.discount}%</span>
         )}
-        <span className="text-[11px] font-semibold text-sale">{language === 'en' ? 'Combo deal' : 'Ưu đãi combo'}</span>
+        <span className="text-[12px] text-sale">{language === 'en' ? 'Combo deal' : 'Ưu đãi combo'}</span>
       </div>
-      <p className="mt-1 text-[13px] font-bold text-green-primary">
+      <p className="mt-1 text-[15px] text-green-primary">
         {formatPrice(combo.salePrice)}đ
         {combo.originalPrice > combo.salePrice && (
           <span className="ml-1.5 text-[11px] font-normal text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
@@ -100,13 +100,13 @@ export default function AmazonDealsRow({ combos }: { combos: Combo[] }) {
   return (
     <section className="bg-white rounded-2xl border border-border shadow-xs px-4 sm:px-6 py-5" aria-label="Deal trong ngày">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-        <h2 className="font-heading text-lg md:text-xl font-bold text-text-dark">
+        <h2 className="font-heading text-xl md:text-2xl text-text-dark">
           {language === 'en' ? "Today's deals" : DEAL_COUNTDOWN_PLACEHOLDER.title}
         </h2>
         <PlaceholderCountdown />
         <PlaceholderBadge />
         <span className="text-[11px] text-text-muted">{DEAL_COUNTDOWN_PLACEHOLDER.note}</span>
-        <Link href="/#combo" className="ml-auto text-[13px] font-semibold text-green-primary hover:underline">
+        <Link href="/#combo" className="relative before:absolute before:-inset-y-3 before:inset-x-0 before:content-[''] ml-auto text-[15px] text-green-primary hover:underline">
           {language === 'en' ? 'See all deals' : 'Xem tất cả ưu đãi'}
         </Link>
       </div>

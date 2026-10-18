@@ -97,16 +97,16 @@ export default function StoreRecommendationSheet({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-ink-950/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full h-[85vh] sm:h-[85vh] sm:max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
         {/* Header */}
         <div className="p-4 sm:p-5 bg-white border-b border-gray-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
               <Store className="w-5 h-5 text-emerald-700" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 text-base leading-tight">
+              <h3 className="text-gray-900 text-lg leading-tight">
                 Chọn chi nhánh phục vụ đơn hàng
               </h3>
               <p className="text-xs text-gray-500">
@@ -130,7 +130,7 @@ export default function StoreRecommendationSheet({
               type="button"
               onClick={() => onModeChange('delivery')}
               className={cn(
-                'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer',
+                'flex-1 py-2 px-3 rounded-xl text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer',
                 mode === 'delivery'
                   ? 'bg-emerald-800 text-white shadow-xs'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -143,7 +143,7 @@ export default function StoreRecommendationSheet({
               type="button"
               onClick={() => onModeChange('pickup')}
               className={cn(
-                'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer',
+                'flex-1 py-2 px-3 rounded-xl text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer',
                 mode === 'pickup'
                   ? 'bg-emerald-800 text-white shadow-xs'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -174,7 +174,7 @@ export default function StoreRecommendationSheet({
           {/* PHẦN 1: CÁC GỢI Ý GẦN NHẤT & GIAO ĐƯỢC (TỐI ĐA 3-4 CỬA HÀNG) */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              <span className="text-[12px] text-gray-500 uppercase tracking-wider">
                 Gợi ý giao hàng tối ưu nhất ({topStores.length})
               </span>
               <span className="text-[11px] text-emerald-800 font-medium">Bán kính ≤ 10 km</span>
@@ -227,9 +227,9 @@ export default function StoreRecommendationSheet({
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-gray-900 text-sm">{st.name}</span>
+                          <span className="text-gray-900 text-base">{st.name}</span>
                           {st.areaLabel && (
-                            <span className="text-[11px] text-emerald-800 font-semibold bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                            <span className="text-[12px] text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
                               {st.areaLabel}
                             </span>
                           )}
@@ -238,7 +238,7 @@ export default function StoreRecommendationSheet({
                       </div>
 
                       {isSelected && (
-                        <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0 flex items-center gap-1">
+                        <span className="text-[12px] text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0 flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" />
                           <span>Đang chọn</span>
                         </span>
@@ -247,21 +247,21 @@ export default function StoreRecommendationSheet({
 
                     {/* Hàng giữa: Các thông số Quãng đường, ETA, Phí ship, Giờ đóng cửa */}
                     <div className="flex items-center gap-2 flex-wrap text-xs pt-1 border-t border-gray-100">
-                      <span className="font-bold text-gray-800 flex items-center gap-1">
+                      <span className="text-gray-800 flex items-center gap-1 text-[1.125em]">
                         <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                         <span>{st.roadKm} km</span>
                       </span>
 
                       <span className="text-gray-300">•</span>
 
-                      <span className="font-bold text-gray-800 flex items-center gap-1">
+                      <span className="text-gray-800 flex items-center gap-1 text-[1.125em]">
                         <Clock className="w-3.5 h-3.5 text-blue-600" />
                         <span>~{st.etaMinutes} phút</span>
                       </span>
 
                       <span className="text-gray-300">•</span>
 
-                      <span className="font-bold text-emerald-800">
+                      <span className="text-emerald-800 text-[1.125em]">
                         {st.shippingFee === 0 ? 'Freeship' : `${st.shippingFee.toLocaleString('vi-VN')}đ`}
                       </span>
 
@@ -280,7 +280,7 @@ export default function StoreRecommendationSheet({
                           <span
                             key={b}
                             className={cn(
-                              'text-[10px] font-bold px-2 py-0.5 rounded-md',
+                              'text-[11px] px-2 py-0.5 rounded-md',
                               b === 'Đề xuất'
                                 ? 'bg-emerald-800 text-white'
                                 : b === 'Gần nhất'
@@ -327,7 +327,7 @@ export default function StoreRecommendationSheet({
               <button
                 type="button"
                 onClick={() => setShowAllStores(true)}
-                className="w-full py-2.5 px-4 text-xs font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 px-4 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Xem thêm các chi nhánh khác ({others.length + unavailable.length})</span>
                 <ChevronRight className="w-4 h-4" />
@@ -335,7 +335,7 @@ export default function StoreRecommendationSheet({
             ) : (
               <div className="space-y-4 animate-in fade-in duration-150">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                  <span className="text-[12px] text-gray-500 uppercase tracking-wider">
                     Tất cả chi nhánh hệ thống
                   </span>
                   <button
@@ -353,7 +353,7 @@ export default function StoreRecommendationSheet({
 
                   return (
                     <div key={provName} className="space-y-2">
-                      <p className="text-xs font-bold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-lg">
+                      <p className="text-sm text-gray-700 bg-gray-100 px-2.5 py-1 rounded-lg">
                         {provName} ({filtered.length})
                       </p>
 
@@ -379,13 +379,13 @@ export default function StoreRecommendationSheet({
                               )}
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-bold text-gray-900">{st.name}</span>
+                                <span className="text-gray-900 text-[1.125em]">{st.name}</span>
                                 {st.roadKm && <span className="text-gray-500">~{st.roadKm} km</span>}
                               </div>
                               <p className="text-[11px] text-gray-500 truncate">{st.addressNew}</p>
                               {isUnavailable && unavailReason && (
                                 <p className="text-[10px] text-amber-800 font-medium">
-                                  ⚠️ {unavailReason}
+                                  {unavailReason}
                                 </p>
                               )}
                             </div>

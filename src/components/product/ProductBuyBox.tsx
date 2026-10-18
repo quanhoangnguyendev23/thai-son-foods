@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { Truck, MapPin, Check, ShieldCheck, Snowflake, CalendarClock, ShoppingCart, Zap, Store } from 'lucide-react';
+import { Truck, MapPin, Check, CalendarClock, ShoppingCart, Store } from 'lucide-react';
 import { ProductVariant } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
 import { calculateShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
@@ -10,7 +10,6 @@ import QuantitySelector from '@/components/product/QuantitySelector';
 import { STORE_SALES_INFO } from '@/data/product-detail-content';
 import {
   DeliveryAddressPlaceholder,
-  ReturnPolicyPlaceholder,
   WishlistPlaceholderButton,
 } from '@/components/product/ProductPlaceholderBlocks';
 
@@ -89,7 +88,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       {/* Giá */}
       <div>
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-[28px] leading-none font-bold text-[#0F1111]">{formatPrice(price)}đ</span>
+          <span className="text-[28px] leading-none text-ink-950">{formatPrice(price)}đ</span>
           {originalPrice && (
             <span className="text-sm text-gray-500 line-through">{formatPrice(originalPrice)}đ</span>
           )}
@@ -103,22 +102,22 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       </div>
 
       {/* Giao hàng */}
-      <div className="space-y-2 text-[13px] text-[#0F1111] border-t border-gray-100 pt-3">
+      <div className="space-y-2 text-[13px] text-ink-950 border-t border-gray-100 pt-3">
         {showPlaceholders && <DeliveryAddressPlaceholder />}
         <div className="flex items-start gap-2">
           <Truck className="w-4 h-4 text-green-primary shrink-0 mt-0.5" aria-hidden />
           <div className="leading-snug">
             {shipping.isFree ? (
               <span>
-                <strong className="text-green-primary">{isEn ? 'Free delivery' : 'Miễn phí giao hàng'}</strong>{' '}
+                <strong className="text-green-primary text-[1.125em]">{isEn ? 'Free delivery' : 'Miễn phí giao hàng'}</strong>{' '}
                 {isEn ? 'for this order value' : 'cho giá trị đơn này'}
               </span>
             ) : (
               <span>
                 {isEn ? 'Delivery fee ' : 'Phí giao hàng '}
-                <strong>{formatPrice(shipping.fee)}đ</strong>.{' '}
+                <strong className="text-[1.125em]">{formatPrice(shipping.fee)}đ</strong>.{' '}
                 {isEn ? 'Add ' : 'Mua thêm '}
-                <strong>{formatPrice(remainingForFree)}đ</strong>
+                <strong className="text-[1.125em]">{formatPrice(remainingForFree)}đ</strong>
                 {isEn ? ' for free delivery' : ' để được miễn phí giao hàng'}
               </span>
             )}
@@ -132,7 +131,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       </div>
 
       {/* Tồn kho */}
-      <div className="text-[15px] font-semibold" aria-live="polite">
+      <div className="text-[17px]" aria-live="polite">
         {stock.isOutOfStock ? (
           <div className="space-y-1">
             <p className="text-red-600">{isEn ? 'Out of stock at this branch' : 'Tạm hết hàng tại chi nhánh này'}</p>
@@ -144,7 +143,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             {stock.alternativeStoreName && (
               <p className="text-xs font-normal text-gray-600">
                 {isEn ? 'Available at: ' : 'Còn hàng tại: '}
-                <strong className="font-semibold">{stock.alternativeStoreName}</strong>
+                <strong className="text-[1.125em]">{stock.alternativeStoreName}</strong>
               </p>
             )}
           </div>
@@ -164,7 +163,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
         <button
           type="button"
           onClick={onChangeBranch}
-          className="w-full h-11 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium text-[#0F1111] inline-flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full h-11 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium text-ink-950 inline-flex items-center justify-center gap-2 cursor-pointer"
         >
           <Store className="w-4 h-4" aria-hidden />
           {isEn ? 'Choose another branch' : 'Chọn chi nhánh khác'}
@@ -200,8 +199,8 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             onClick={onAddToCart}
             disabled={!canAdd}
             className={cn(
-              'w-full h-11 rounded-full text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors',
-              'bg-corn hover:bg-corn-dark text-[#0F1111] border border-corn-dark/60 cursor-pointer',
+              'w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-colors',
+              'bg-corn hover:bg-corn-dark text-ink-950 border border-corn-dark/60 cursor-pointer',
               'disabled:bg-gray-200 disabled:border-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed'
             )}
           >
@@ -213,12 +212,11 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             onClick={onBuyNow}
             disabled={!canAdd && stock.existingCartQty === 0}
             className={cn(
-              'w-full h-11 rounded-full text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors',
-              'bg-green-primary hover:bg-green-dark text-white cursor-pointer',
+              'w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-colors',
+              'bg-leaf-900 hover:bg-leaf-900 text-white cursor-pointer',
               'disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed'
             )}
           >
-            <Zap className="w-4 h-4" aria-hidden />
             {isEn ? 'Buy now' : 'Mua ngay'}
           </button>
 
@@ -237,34 +235,32 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       {/* Giao từ / Bán bởi / Thanh toán */}
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs border-t border-gray-100 pt-3">
         <dt className="text-gray-500">{isEn ? 'Ships from' : 'Giao từ'}</dt>
-        <dd className="min-w-0 text-[#0F1111]">
+        <dd className="min-w-0 text-ink-950">
           <span className="font-medium">{branchName || (isEn ? 'No branch selected' : 'Chưa chọn chi nhánh')}</span>{' '}
           <button
             type="button"
             onClick={onChangeBranch}
-            className="text-[#007185] hover:text-[#C7511F] hover:underline font-medium cursor-pointer inline-flex items-center gap-0.5"
+            className="text-forest-700 hover:text-copper-600 hover:underline font-medium cursor-pointer inline-flex items-center gap-0.5"
           >
             <MapPin className="w-3 h-3" aria-hidden />
             {isEn ? 'Change' : 'Đổi'}
           </button>
         </dd>
         <dt className="text-gray-500">{isEn ? 'Sold by' : 'Bán bởi'}</dt>
-        <dd className="text-[#0F1111] font-medium">{STORE_SALES_INFO.seller}</dd>
+        <dd className="text-ink-950 font-medium">{STORE_SALES_INFO.seller}</dd>
         <dt className="text-gray-500">{isEn ? 'Payment' : 'Thanh toán'}</dt>
-        <dd className="text-[#0F1111]">{isEn ? STORE_SALES_INFO.paymentEn : STORE_SALES_INFO.paymentVi}</dd>
+        <dd className="text-ink-950">{isEn ? STORE_SALES_INFO.paymentEn : STORE_SALES_INFO.paymentVi}</dd>
       </dl>
 
       {/* Cam kết / bảo quản — chỉ thông tin đã có trong dữ liệu sản phẩm */}
       <ul className="border-t border-gray-100 pt-3 space-y-2 text-xs text-gray-700">
         {certification && (
           <li className="flex items-start gap-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-green-primary shrink-0 mt-px" aria-hidden />
             <span>{isEn ? `Produced under ${certification} process` : `Sản xuất theo quy trình ${certification}`}</span>
           </li>
         )}
         {storageText && (
           <li className="flex items-start gap-2">
-            <Snowflake className="w-3.5 h-3.5 text-sky-600 shrink-0 mt-px" aria-hidden />
             <span>{storageText}</span>
           </li>
         )}
@@ -272,11 +268,6 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
           <li className="flex items-start gap-2">
             <CalendarClock className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-px" aria-hidden />
             <span>{expiryText}</span>
-          </li>
-        )}
-        {showPlaceholders && (
-          <li>
-            <ReturnPolicyPlaceholder />
           </li>
         )}
       </ul>

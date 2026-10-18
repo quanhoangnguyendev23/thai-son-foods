@@ -9,7 +9,6 @@ import {
   CheckCircle,
   ArrowLeft,
   Banknote,
-  ShieldCheck,
   AlertCircle,
   AlertTriangle,
   User,
@@ -21,10 +20,8 @@ import {
   Compass,
   Loader2,
   Clock,
-  Sparkles,
   Phone,
   Truck,
-  ShoppingBag,
   ChevronRight,
   Maximize2,
   CheckCircle2,
@@ -142,28 +139,28 @@ function DeliveryMiniMap({
         onClick={onOpenModal}
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-10 flex flex-col items-center"
       >
-        <div className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-800 text-white shadow-md mb-0.5 whitespace-nowrap">
+        <div className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-800 text-white shadow-md mb-0.5 whitespace-nowrap">
           {coords ? (isConfirmed ? '✓ Vị trí giao hàng' : 'Tọa độ ước tính') : 'Chạm để ghim vị trí'}
         </div>
         <svg width="32" height="38" viewBox="0 0 24 30" fill="none" className="drop-shadow-md">
           <path
             d="M12 0C5.373 0 0 5.373 0 12c0 9 12 18 12 18s12-9 12-18c0-6.627-5.373-12-12-12z"
-            fill={coords ? (isConfirmed ? '#047857' : '#f59e0b') : '#047857'}
+            fill={coords ? (isConfirmed ? 'var(--color-forest-700)' : 'var(--color-amber-600)') : 'var(--color-forest-700)'}
           />
           <circle cx="12" cy="11" r="5" fill="#ffffff" />
-          <circle cx="12" cy="11" r="2.5" fill={coords ? (isConfirmed ? '#047857' : '#f59e0b') : '#047857'} />
+          <circle cx="12" cy="11" r="2.5" fill={coords ? (isConfirmed ? 'var(--color-forest-700)' : 'var(--color-amber-600)') : 'var(--color-forest-700)'} />
         </svg>
-        <div className="w-3 h-1 bg-black/30 rounded-full blur-[1px]" />
+        <div className="w-3 h-1 bg-ink-950/30 rounded-full blur-[1px]" />
       </div>
 
       <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-2 pointer-events-none">
         <div
           className={cn(
-            'px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5 shadow-sm backdrop-blur-md',
+            'px-2.5 py-1 rounded-xl text-[12px] flex items-center gap-1.5 shadow-sm backdrop-blur-md',
             coords
               ? isConfirmed
                 ? 'bg-emerald-600/95 text-white'
-                : 'bg-amber-500/95 text-white'
+                : 'bg-amber-500/95 text-ink-950'
               : 'bg-emerald-800/90 text-white'
           )}
         >
@@ -190,7 +187,7 @@ function DeliveryMiniMap({
         <button
           type="button"
           onClick={onOpenModal}
-          className="pointer-events-auto px-2.5 py-1 rounded-xl bg-white/95 hover:bg-white text-gray-800 hover:text-emerald-800 text-[11px] font-bold shadow-md flex items-center gap-1 transition-all cursor-pointer backdrop-blur-md"
+          className="pointer-events-auto px-2.5 py-1 rounded-xl bg-white/95 hover:bg-white text-gray-800 hover:text-emerald-800 text-[12px] shadow-md flex items-center gap-1 transition-all cursor-pointer backdrop-blur-md"
           title="Mở toàn màn hình để điều chỉnh ghim"
         >
           <Maximize2 className="w-3.5 h-3.5" />
@@ -202,7 +199,7 @@ function DeliveryMiniMap({
         <div className="min-w-0 flex items-center gap-2">
           <span className="text-[11px] text-gray-500 font-medium">GPS:</span>
           {coords ? (
-            <span className="font-mono text-[11px] font-bold text-emerald-800 truncate">
+            <span className="font-mono text-[12px] text-emerald-800 truncate">
               {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
             </span>
           ) : (
@@ -219,7 +216,7 @@ function DeliveryMiniMap({
         <button
           type="button"
           onClick={onOpenModal}
-          className="shrink-0 text-[11px] font-bold text-emerald-800 hover:text-emerald-900 underline cursor-pointer"
+          className="shrink-0 text-[12px] text-emerald-800 hover:text-emerald-900 underline cursor-pointer"
         >
           {coords ? (isConfirmed ? 'Điều chỉnh lại' : 'Chấm ghim ngay') : 'Chấm ghim trên bản đồ'}
         </button>
@@ -1126,20 +1123,20 @@ export default function CheckoutPage() {
           <div className="w-20 h-20 bg-green-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-primary" />
           </div>
-          <span className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider text-green-primary bg-green-primary/10 rounded-full mb-3">
+          <span className="inline-block px-3 py-1 text-sm uppercase tracking-wider text-green-primary bg-green-primary/10 rounded-full mb-3">
             {language === 'en' ? `Order #${orderCode}` : `Đơn hàng #${orderCode}`}
           </span>
-          <h1 className="text-2xl md:text-3xl font-bold text-text-dark font-heading mb-3">
+          <h1 className="text-2xl md:text-3xl text-text-dark font-heading mb-3">
             {language === 'en' ? 'Order Placed Successfully!' : 'Đặt hàng thành công!'}
           </h1>
           <p className="text-text-muted text-sm md:text-base mb-8">
             {language === 'en' ? (
               <>
-                Thank you for choosing <span className="font-semibold text-green-primary">Thai Son Foods</span>. Your order is being received and processed quickly.
+                Thank you for choosing <span className="text-green-primary text-[1.125em]">Thai Son Foods</span>. Your order is being received and processed quickly.
               </>
             ) : (
               <>
-                Cảm ơn bạn đã tin tưởng chọn <span className="font-semibold text-green-primary">Thái Sơn Foods</span>. Đơn hàng của bạn đang được tiếp nhận và xử lý nhanh chóng.
+                Cảm ơn bạn đã tin tưởng chọn <span className="text-green-primary text-[1.125em]">Thái Sơn Foods</span>. Đơn hàng của bạn đang được tiếp nhận và xử lý nhanh chóng.
               </>
             )}
           </p>
@@ -1149,7 +1146,7 @@ export default function CheckoutPage() {
             <div className="mb-6 p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-left text-xs text-emerald-950 flex items-start gap-2.5">
               <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold text-emerald-900 mb-0.5">
+                <p className="text-emerald-900 mb-0.5 text-[1.125em]">
                   {language === 'en' ? 'Confirmation Email Sent!' : 'Đã gửi email xác nhận đến hộp thư!'}
                 </p>
                 <p className="text-emerald-800 text-[11px] leading-relaxed">
@@ -1165,48 +1162,48 @@ export default function CheckoutPage() {
           <div className="bg-ivory/60 rounded-2xl p-5 text-left text-sm space-y-3 mb-8 border border-border-light">
             <div className="flex justify-between pb-2 border-b border-border-light">
               <span className="text-text-muted">{language === 'en' ? 'Recipient:' : 'Người nhận:'}</span>
-              <span className="font-semibold text-text-dark">{completedOrder.fullName}</span>
+              <span className="text-text-dark text-[1.125em]">{completedOrder.fullName}</span>
             </div>
             <div className="flex justify-between pb-2 border-b border-border-light">
               <span className="text-text-muted">{language === 'en' ? 'Phone:' : 'Số điện thoại:'}</span>
-              <span className="font-semibold text-text-dark">{completedOrder.phone}</span>
+              <span className="text-text-dark text-[1.125em]">{completedOrder.phone}</span>
             </div>
             {completedOrder.email && (
               <div className="flex justify-between pb-2 border-b border-border-light">
                 <span className="text-text-muted">{language === 'en' ? 'Email:' : 'Email nhận tin:'}</span>
-                <span className="font-semibold text-emerald-800 text-right">{completedOrder.email}</span>
+                <span className="text-emerald-800 text-right text-[1.125em]">{completedOrder.email}</span>
               </div>
             )}
             <div className="flex justify-between pb-2 border-b border-border-light">
               <span className="text-text-muted">{language === 'en' ? 'Delivery Address:' : 'Địa chỉ giao:'}</span>
-              <span className="font-semibold text-text-dark text-right max-w-[280px]">{completedOrder.address}</span>
+              <span className="text-text-dark text-right max-w-[280px] text-[1.125em]">{completedOrder.address}</span>
             </div>
             {completedOrder.storeAddress && (
               <div className="flex justify-between pb-2 border-b border-border-light">
                 <span className="text-text-muted">{language === 'en' ? 'Fulfillment Branch:' : 'Chi nhánh tiếp nhận:'}</span>
-                <span className="font-semibold text-emerald-800 text-right max-w-[280px]">{completedOrder.storeAddress}</span>
+                <span className="text-emerald-800 text-right max-w-[280px] text-[1.125em]">{completedOrder.storeAddress}</span>
               </div>
             )}
             <div className="flex justify-between pb-2 border-b border-border-light">
               <span className="text-text-muted">{language === 'en' ? 'Payment Method:' : 'Phương thức:'}</span>
-              <span className="font-semibold text-green-primary">{completedOrder.paymentMethod}</span>
+              <span className="text-green-primary text-[1.125em]">{completedOrder.paymentMethod}</span>
             </div>
             <div className="flex justify-between pt-1 text-base">
-              <span className="font-bold text-text-dark">{language === 'en' ? 'Total Payment:' : 'Tổng thanh toán:'}</span>
-              <span className="font-bold text-green-primary text-lg">{formatPrice(completedOrder.total)}đ</span>
+              <span className="text-text-dark text-[1.125em]">{language === 'en' ? 'Total Payment:' : 'Tổng thanh toán:'}</span>
+              <span className="text-green-primary text-xl">{formatPrice(completedOrder.total)}đ</span>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-green-primary text-white font-semibold rounded-xl hover:bg-green-dark transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-green-primary text-white rounded-xl hover:bg-green-dark transition-colors text-base"
             >
               {language === 'en' ? 'Back to Home' : 'Về trang chủ'}
             </Link>
             <Link
               href="/#san-pham"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white border border-border text-text-dark font-semibold rounded-xl hover:bg-ivory transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white border border-border text-text-dark rounded-xl hover:bg-ivory transition-colors text-base"
             >
               {language === 'en' ? 'Shop More Drinks' : 'Mua thêm thức uống'}
             </Link>
@@ -1232,7 +1229,7 @@ export default function CheckoutPage() {
     return (
       <div className="section-container py-20 text-center">
         <div className="max-w-md mx-auto">
-          <h1 className="text-2xl font-bold text-text-dark font-heading mb-2">
+          <h1 className="text-2xl text-text-dark font-heading mb-2">
             {language === 'en' ? 'No items in cart' : 'Không có sản phẩm'}
           </h1>
           <p className="text-text-muted mb-8">
@@ -1242,7 +1239,7 @@ export default function CheckoutPage() {
           </p>
           <Link
             href="/#san-pham"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-green-primary text-white font-semibold rounded-xl hover:bg-green-dark transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-primary text-white rounded-xl hover:bg-green-dark transition-colors text-[1.125em]"
           >
             <ArrowLeft className="w-4 h-4" />
             {language === 'en' ? 'Shop Now' : 'Mua sắm ngay'}
@@ -1260,41 +1257,41 @@ export default function CheckoutPage() {
           <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-bold text-text-dark font-heading mb-2">
+          <h1 className="text-2xl text-text-dark font-heading mb-2">
             {language === 'en' ? 'Minimum Order Requirement Not Met' : 'Đơn hàng chưa đạt mức tối thiểu'}
           </h1>
           <p className="text-text-muted text-sm mb-3">
             {language === 'en' ? (
               <>
-                Thai Son Foods applies a minimum order value of <strong>{formatPrice(MIN_ORDER_THRESHOLD)}đ</strong>.
+                Thai Son Foods applies a minimum order value of <strong className="text-[1.125em]">{formatPrice(MIN_ORDER_THRESHOLD)}đ</strong>.
               </>
             ) : (
               <>
-                Thái Sơn Foods áp dụng mức đặt hàng tối thiểu từ <strong>{formatPrice(MIN_ORDER_THRESHOLD)}đ</strong>.
+                Thái Sơn Foods áp dụng mức đặt hàng tối thiểu từ <strong className="text-[1.125em]">{formatPrice(MIN_ORDER_THRESHOLD)}đ</strong>.
               </>
             )}
           </p>
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-800 mb-6 font-medium text-left space-y-1">
             <p>
               • {language === 'en' ? 'Current cart total:' : 'Giá trị giỏ hàng hiện tại:'}{' '}
-              <strong className="text-text-dark">{formatPrice(subtotal)}đ</strong>
+              <strong className="text-text-dark text-[1.125em]">{formatPrice(subtotal)}đ</strong>
             </p>
             <p>
               • {language === 'en' ? 'Need to add at least:' : 'Cần chọn thêm ít nhất:'}{' '}
-              <strong className="text-amber-900 font-bold">{formatPrice(missingForMinOrder)}đ</strong>
+              <strong className="text-amber-900 text-[1.125em]">{formatPrice(missingForMinOrder)}đ</strong>
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/#san-pham"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-primary text-white font-semibold rounded-xl hover:bg-green-dark transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-primary text-white rounded-xl hover:bg-green-dark transition-colors text-base"
             >
               <ArrowLeft className="w-4 h-4" />
               {language === 'en' ? 'Shop More Products' : 'Mua thêm sản phẩm'}
             </Link>
             <Link
               href="/gio-hang"
-              className="inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-sm"
+              className="inline-flex items-center justify-center px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors text-base"
             >
               {language === 'en' ? 'View Cart' : 'Xem lại giỏ hàng'}
             </Link>
@@ -1327,7 +1324,7 @@ export default function CheckoutPage() {
         </ol>
       </nav>
 
-      <h1 className="text-2xl md:text-3xl font-bold text-text-dark font-heading mb-8">
+      <h1 className="text-2xl md:text-3xl text-text-dark font-heading mb-8">
         {language === 'en' ? 'Checkout' : 'Thanh toán'}
       </h1>
 
@@ -1339,18 +1336,18 @@ export default function CheckoutPage() {
             {user ? (
               <div className="p-3.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#1B5E3B] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-forest-700 text-white flex items-center justify-center text-sm shrink-0">
                     {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
                   </div>
                   <div>
                     <span className="text-gray-600">
                       {language === 'en' ? 'Ordering with account:' : 'Đang đặt hàng với tài khoản:'}{' '}
                     </span>
-                    <span className="font-bold text-gray-900">{user.fullName}</span>{' '}
+                    <span className="text-gray-900 text-[1.125em]">{user.fullName}</span>{' '}
                     <span className="text-gray-400">({user.email})</span>
                   </div>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-800 bg-white/90 px-2.5 py-1 rounded-lg border border-emerald-200">
+                <span className="text-[12px] text-emerald-800 bg-white/90 px-2.5 py-1 rounded-lg border border-emerald-200">
                   {language === 'en' ? '✓ Auto-filled address' : '✓ Đã tự động điền địa chỉ'}
                 </span>
               </div>
@@ -1361,7 +1358,7 @@ export default function CheckoutPage() {
                     <User className="w-4 h-4" />
                   </div>
                   <div className="text-gray-600">
-                    <span className="font-bold text-gray-800">
+                    <span className="text-gray-800 text-[1.125em]">
                       {language === 'en' ? 'Already have an account?' : 'Bạn đã có tài khoản Thái Sơn Foods?'}
                     </span>{' '}
                     <span className="hidden sm:inline">
@@ -1374,7 +1371,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
                   <a
                     href="/api/auth/google?returnUrl=/thanh-toan"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl transition-colors shadow-2xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm rounded-xl transition-colors shadow-2xs"
                     title="Đăng nhập nhanh với Google"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24">
@@ -1387,7 +1384,7 @@ export default function CheckoutPage() {
                   </a>
                   <a
                     href="/api/auth/facebook?returnUrl=/thanh-toan"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] hover:bg-[#166FE5] text-white text-xs font-bold rounded-xl transition-colors shadow-2xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] hover:bg-emerald-400 text-ink-950 text-sm rounded-xl transition-colors shadow-2xs"
                     title="Đăng nhập nhanh với Facebook"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1398,7 +1395,7 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => openAuthModal('login')}
-                    className="px-3 py-1.5 bg-[#1B5E3B] hover:bg-[#14482D] text-white font-bold rounded-xl whitespace-nowrap transition-colors cursor-pointer text-xs"
+                    className="px-3 py-1.5 bg-forest-700 hover:bg-forest-800 text-white rounded-xl whitespace-nowrap transition-colors cursor-pointer text-sm"
                   >
                     {language === 'en' ? 'Email' : 'Email'}
                   </button>
@@ -1406,7 +1403,7 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <h2 className="text-lg font-bold text-text-dark">
+            <h2 className="text-xl text-text-dark">
               {language === 'en' ? 'Shipping Information' : 'Thông tin giao hàng'}
             </h2>
 
@@ -1465,7 +1462,7 @@ export default function CheckoutPage() {
                     </span>
                   </span>
                   {user?.email && (
-                    <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <span className="text-[12px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                       {language === 'en' ? 'Account email' : 'Email từ tài khoản'}
                     </span>
                   )}
@@ -1590,20 +1587,20 @@ export default function CheckoutPage() {
                       type="button"
                       onClick={handleLocateGPS}
                       disabled={isLocating}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-semibold rounded-lg border border-emerald-200 transition-colors disabled:opacity-60 cursor-pointer shadow-2xs"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[12px] rounded-lg border border-emerald-200 transition-colors disabled:opacity-60 cursor-pointer shadow-2xs"
                       title={language === 'en' ? 'Auto-detect device GPS location' : 'Định vị GPS thiết bị để tự động điền địa chỉ'}
                     >
                       <Navigation className={cn('w-3 h-3 text-emerald-600', isLocating && 'animate-spin')} />
-                      <span>{isLocating ? (language === 'en' ? 'Locating...' : 'Đang lấy GPS...') : (language === 'en' ? '📍 Auto GPS Locate' : '📍 Lấy vị trí GPS')}</span>
+                      <span>{isLocating ? (language === 'en' ? 'Locating...' : 'Đang lấy GPS...') : (language === 'en' ? 'Auto GPS Locate' : 'Lấy vị trí GPS')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsMapModalOpen(true)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white text-[12px] rounded-lg transition-colors cursor-pointer shadow-2xs"
                       title={language === 'en' ? 'Open satellite map to adjust pin' : 'Mở bản đồ vệ tinh để chấm vị trí ghim nhà bạn'}
                     >
                       <MapPin className="w-3 h-3 text-white" />
-                      <span>{language === 'en' ? 'Pin on Map' : '📍 Chỉnh pin bản đồ'}</span>
+                      <span>{language === 'en' ? 'Pin on Map' : 'Chỉnh pin bản đồ'}</span>
                     </button>
                   </div>
                 </div>
@@ -1659,7 +1656,7 @@ export default function CheckoutPage() {
                 {/* Dropdown Gợi ý từ Google Maps / OpenStreetMap / Tuyến đường GPS */}
                 {showSuggestions && suggestions.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1.5 z-[1050] bg-white rounded-2xl shadow-2xl border border-emerald-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-                    <div className="px-3.5 py-2 bg-emerald-50/80 flex items-center justify-between text-[11px] font-semibold text-emerald-950 border-b border-emerald-100">
+                    <div className="px-3.5 py-2 bg-emerald-50/80 flex items-center justify-between text-[12px] text-emerald-950 border-b border-emerald-100">
                       <span className="flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                         {language === 'en'
@@ -1678,17 +1675,17 @@ export default function CheckoutPage() {
                           onClick={() => handleSelectSuggestion(item)}
                           className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/70 transition-colors flex items-start gap-2.5 cursor-pointer group"
                         >
-                          <div className="w-7 h-7 rounded-lg bg-emerald-100/90 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-200 transition-colors text-emerald-800 font-bold text-xs">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-100/90 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-200 transition-colors text-emerald-800 text-sm">
                             <MapPin className="w-3.5 h-3.5 text-emerald-700" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                              <p className="text-xs font-bold text-gray-900 group-hover:text-emerald-800">
+                              <p className="text-sm text-gray-900 group-hover:text-emerald-800">
                                 {removeKhuPho(item.main_text)}
                               </p>
                               <span
                                 className={cn(
-                                  'text-[9px] font-semibold px-1.5 py-0.5 rounded-md border shrink-0',
+                                  'text-[10px] px-1.5 py-0.5 rounded-md border shrink-0',
                                   item.source === 'google'
                                     ? 'text-blue-700 bg-blue-50 border-blue-200'
                                     : item.source === 'nominatim'
@@ -1712,7 +1709,7 @@ export default function CheckoutPage() {
                                 if (!nearest) return null;
                                 return (
                                   <span className="text-[9px] text-emerald-800 bg-emerald-100/70 border border-emerald-200 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
-                                    🚚 Gần {nearest.name} ({nearest.dist.toFixed(1)} km)
+                                    Gần {nearest.name} ({nearest.dist.toFixed(1)} km)
                                   </span>
                                 );
                               })()}
@@ -1732,7 +1729,7 @@ export default function CheckoutPage() {
                   <div className="mt-2 p-2.5 bg-amber-50 rounded-xl border border-amber-300 flex items-start gap-2 text-xs text-amber-900 shadow-2xs">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold mb-0.5">
+                      <p className="mb-0.5 text-[1.125em]">
                         {language === 'en' ? 'Typed address does not match your map pin' : 'Địa chỉ đã nhập không khớp với ghim trên bản đồ'}
                       </p>
                       <p className="text-[11px] leading-snug">
@@ -1744,7 +1741,7 @@ export default function CheckoutPage() {
                         <button
                           type="button"
                           onClick={() => setIsMapModalOpen(true)}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-800 text-white font-bold text-[11px] cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-[12px] cursor-pointer"
                         >
                           {language === 'en' ? 'Adjust pin' : 'Chỉnh lại ghim'}
                         </button>
@@ -1757,7 +1754,7 @@ export default function CheckoutPage() {
                             setLocationConfirmedBy('MANUAL_INPUT');
                             setTypedAddrCoords(null);
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 font-bold text-[11px] cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 text-[12px] cursor-pointer"
                         >
                           {language === 'en' ? 'Use typed address location' : 'Dùng vị trí theo địa chỉ đã gõ'}
                         </button>
@@ -1769,7 +1766,7 @@ export default function CheckoutPage() {
                   <div className="mt-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200/90 flex items-start gap-2 text-xs text-emerald-900 shadow-2xs">
                     <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-emerald-950 mb-0.5 flex items-center justify-between">
+                      <p className="text-emerald-950 mb-0.5 flex items-center justify-between text-[1.125em]">
                         <span>{language === 'en' ? 'Verified Delivery Location' : 'Đã xác định vị trí giao hàng chuẩn xác'}</span>
                         {customerCoords && (
                           <span className="text-[10px] text-emerald-700 font-mono font-normal">
@@ -1842,7 +1839,7 @@ export default function CheckoutPage() {
             {/* THẺ TÓM TẮT THÔNG MINH CHI NHÁNH PHỤC VỤ (Mục 18.5) */}
             <div className="pt-4 border-t border-border-light space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h2 className="text-lg font-bold text-text-dark flex items-center gap-2">
+                <h2 className="text-xl text-text-dark flex items-center gap-2">
                   <Store className="w-5 h-5 text-emerald-600" />
                   <span>
                     {language === 'en'
@@ -1851,40 +1848,10 @@ export default function CheckoutPage() {
                   </span>
                 </h2>
 
-                {/* Chế độ Giao tận nơi vs Nhận tại cửa hàng */}
-                <div className="inline-flex items-center p-1 bg-gray-100 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFulfillmentMode('delivery');
-                      if (customerCoords) fetchStoreRecommendation(customerCoords, 'delivery');
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer',
-                      fulfillmentMode === 'delivery'
-                        ? 'bg-emerald-800 text-white shadow-2xs'
-                        : 'text-gray-600 hover:text-gray-900'
-                    )}
-                  >
-                    <Truck className="w-3.5 h-3.5" />
-                    <span>Giao tận nơi</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFulfillmentMode('pickup');
-                      if (customerCoords) fetchStoreRecommendation(customerCoords, 'pickup');
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer',
-                      fulfillmentMode === 'pickup'
-                        ? 'bg-emerald-800 text-white shadow-2xs'
-                        : 'text-gray-600 hover:text-gray-900'
-                    )}
-                  >
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Tự nhận tại quán</span>
-                  </button>
+                {/* Phương thức phục vụ: Giao tận nơi */}
+                <div className="inline-flex items-center px-3 py-1.5 bg-emerald-800 text-white rounded-xl text-sm gap-1.5 shadow-2xs">
+                  <Truck className="w-3.5 h-3.5" />
+                  <span>Giao tận nơi</span>
                 </div>
               </div>
 
@@ -1893,11 +1860,11 @@ export default function CheckoutPage() {
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-base font-extrabold text-gray-900">
+                      <span className="text-lg text-gray-900">
                         {activeRecommendedItem?.name || selectedStore?.name || 'Chi nhánh Thái Sơn Foods'}
                       </span>
                       {(activeRecommendedItem?.areaLabel || selectedStore?.area_label) && (
-                        <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                        <span className="text-sm text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
                           {activeRecommendedItem?.areaLabel || selectedStore?.area_label}
                         </span>
                       )}
@@ -1905,7 +1872,7 @@ export default function CheckoutPage() {
                         <span
                           key={b}
                           className={cn(
-                            'text-[10px] font-bold px-2 py-0.5 rounded-md',
+                            'text-[11px] px-2 py-0.5 rounded-md',
                             b === 'Đề xuất'
                               ? 'bg-emerald-800 text-white'
                               : b === 'Gần nhất'
@@ -1929,7 +1896,7 @@ export default function CheckoutPage() {
                   {(activeRecommendedItem?.phone || selectedStore?.phone) && (
                     <a
                       href={`tel:${activeRecommendedItem?.phone || selectedStore?.phone}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition-colors shrink-0"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-xl transition-colors shrink-0"
                     >
                       <Phone className="w-3.5 h-3.5 text-gray-500" />
                       <span>{activeRecommendedItem?.phone || selectedStore?.phone}</span>
@@ -1943,7 +1910,7 @@ export default function CheckoutPage() {
                     <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <span className="text-[10px] text-gray-400 block">Khoảng cách</span>
-                      <span className="font-bold text-gray-900">
+                      <span className="text-gray-900 text-[1.125em]">
                         {activeRecommendedItem?.roadKm
                           ? `~ ${activeRecommendedItem.roadKm} km`
                           : currentStoreDistanceKm
@@ -1957,7 +1924,7 @@ export default function CheckoutPage() {
                     <Clock className="w-4 h-4 text-blue-600 shrink-0" />
                     <div>
                       <span className="text-[10px] text-gray-400 block">Thời gian giao</span>
-                      <span className="font-bold text-gray-900">
+                      <span className="text-gray-900 text-[1.125em]">
                         {activeRecommendedItem?.etaMinutes
                           ? `~ ${activeRecommendedItem.etaMinutes} phút`
                           : 'Khoảng 25-30 phút'}
@@ -1969,7 +1936,7 @@ export default function CheckoutPage() {
                     <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
                     <div>
                       <span className="text-[10px] text-gray-400 block">Phí vận chuyển</span>
-                      <span className="font-bold text-emerald-800">
+                      <span className="text-emerald-800 text-[1.125em]">
                         {fulfillmentMode === 'pickup'
                           ? '0đ (Tự nhận)'
                           : shippingFee === 0
@@ -1980,10 +1947,9 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="p-2 rounded-xl bg-white/80 border border-emerald-100 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                     <div>
                       <span className="text-[10px] text-gray-400 block">Giờ phục vụ</span>
-                      <span className="font-bold text-gray-900">
+                      <span className="text-gray-900 text-[1.125em]">
                         {activeRecommendedItem?.closesAt
                           ? `Mở đến ${activeRecommendedItem.closesAt}`
                           : '07:00 - 21:30'}
@@ -1998,7 +1964,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setIsStoreSheetOpen(true)}
-                      className="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-sm rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <Store className="w-3.5 h-3.5" />
                       <span>Đổi chi nhánh khác</span>
@@ -2007,7 +1973,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setIsMapModalOpen(true)}
-                      className="px-3.5 py-2 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-2 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-sm rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Chỉnh pin trên bản đồ</span>
@@ -2030,7 +1996,7 @@ export default function CheckoutPage() {
                   <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5 animate-in fade-in duration-200">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold">Địa chỉ nhận hàng nằm ngoài bán kính giao nhanh tiêu chuẩn:</p>
+                      <p className="text-[1.125em]">Địa chỉ nhận hàng nằm ngoài bán kính giao nhanh tiêu chuẩn:</p>
                       <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
                         Khoảng cách ước tính ~{currentStoreDistanceKm.toFixed(1)} km vượt quá bán kính phục vụ chuẩn ({selectedStore.delivery_radius_km || 10} km) của {selectedStore.name}. Quý khách vẫn có thể hoàn tất đặt đơn; nhân viên sẽ liên hệ để xác nhận thời gian &amp; cước vận chuyển phù hợp nhất.
                       </p>
@@ -2041,22 +2007,22 @@ export default function CheckoutPage() {
               {/* Cảnh báo thiếu hàng cho chi nhánh đang chọn */}
               {!isStockAvailable && selectedStore && (
                 <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 space-y-2 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2 font-bold text-red-900">
+                  <div className="flex items-center gap-2 text-red-900 text-[1.125em]">
                     <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
                     <span>{selectedStore.name} hiện không đủ hàng cho các món trong giỏ:</span>
                   </div>
                   <ul className="list-disc pl-5 space-y-0.5 text-[11px]">
                     {insufficientItems.map((it) => (
                       <li key={it.productId}>
-                        <strong>{it.productName}</strong>: cần {it.requested}, kho chỉ còn{' '}
-                        <span className="text-red-700 font-bold">{it.available}</span> chai
+                        <strong className="text-[1.125em]">{it.productName}</strong>: cần {it.requested}, kho chỉ còn{' '}
+                        <span className="text-red-700 text-[1.125em]">{it.available}</span> chai
                       </li>
                     ))}
                   </ul>
 
                   {alternativeStores.length > 0 ? (
                     <div className="pt-2 border-t border-red-200/60">
-                      <span className="font-semibold text-emerald-950 block mb-1.5 text-xs">
+                      <span className="text-emerald-950 block mb-1.5 text-sm">
                         Gợi ý các chi nhánh ĐỦ HÀNG cho cả giỏ:
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2067,9 +2033,9 @@ export default function CheckoutPage() {
                           >
                             <div className="truncate min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-emerald-900 block text-xs truncate">{alt.name}</span>
+                                <span className="text-emerald-900 block text-sm truncate">{alt.name}</span>
                                 {typeof alt.distanceKm === 'number' && (
-                                  <span className="text-[10px] text-emerald-800 font-semibold bg-emerald-100/90 px-1.5 py-0.2 rounded border border-emerald-300 shrink-0">
+                                  <span className="text-[11px] text-emerald-800 bg-emerald-100/90 px-1.5 py-0.2 rounded border border-emerald-300 shrink-0">
                                     ~ {alt.distanceKm} km
                                   </span>
                                 )}
@@ -2079,7 +2045,7 @@ export default function CheckoutPage() {
                             <button
                               type="button"
                               onClick={() => handleSelectStore(alt.code)}
-                              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs shrink-0 cursor-pointer transition-colors shadow-2xs"
+                              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-sm shrink-0 cursor-pointer transition-colors shadow-2xs"
                             >
                               Đổi sang kho này
                             </button>
@@ -2098,7 +2064,7 @@ export default function CheckoutPage() {
 
             {/* Payment Method - Tiền mặt khi nhận hàng (COD) */}
             <div className="pt-4 border-t border-border-light">
-              <h2 className="text-lg font-bold text-text-dark mb-3">
+              <h2 className="text-xl text-text-dark mb-3">
                 {language === 'en' ? 'Payment Method' : 'Phương thức thanh toán'}
               </h2>
               <div className="p-4 rounded-2xl border-2 border-emerald-600 bg-emerald-50/40 flex items-start gap-3.5">
@@ -2106,7 +2072,7 @@ export default function CheckoutPage() {
                   <Banknote className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="block font-bold text-sm text-text-dark">
+                  <span className="block text-base text-text-dark">
                     {language === 'en' ? 'Cash on Delivery (COD)' : 'Thanh toán tiền mặt khi nhận hàng (COD)'}
                   </span>
                   <span className="block text-xs text-text-muted mt-1 leading-relaxed">
@@ -2122,7 +2088,7 @@ export default function CheckoutPage() {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-2xl border border-border-light sticky top-[100px]">
-              <h2 className="text-lg font-bold text-text-dark mb-5">
+              <h2 className="text-xl text-text-dark mb-5">
                 {language === 'en' ? 'Order Summary' : 'Tóm tắt đơn hàng'}
               </h2>
 
@@ -2153,7 +2119,7 @@ export default function CheckoutPage() {
                           x{item.quantity}
                         </p>
                       </div>
-                      <p className="text-sm font-semibold text-text-dark whitespace-nowrap">
+                      <p className="text-base text-text-dark whitespace-nowrap">
                         {formatPrice(item.price * item.quantity)}đ
                       </p>
                     </div>
@@ -2179,10 +2145,10 @@ export default function CheckoutPage() {
                   </span>
                 </div>
                 <div className="border-t border-border-light pt-3 flex justify-between">
-                  <span className="font-bold text-text-dark text-base">
+                  <span className="text-text-dark text-lg">
                     {language === 'en' ? 'Total' : 'Tổng cộng'}
                   </span>
-                  <span className="font-bold text-green-primary text-xl">
+                  <span className="text-green-primary text-2xl">
                     {formatPrice(total)}đ
                   </span>
                 </div>
@@ -2196,7 +2162,7 @@ export default function CheckoutPage() {
                 </div>
               ) : !isStockAvailable ? (
                 <div className="mt-4 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                  <div className="flex items-center gap-1.5 text-amber-900 text-[1.125em]">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>Chi nhánh hiện chưa đủ số lượng</span>
                   </div>
@@ -2207,7 +2173,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => handleSelectStore(alternativeStores[0].code)}
-                      className="w-full mt-1 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg font-bold text-xs transition-colors cursor-pointer"
+                      className="w-full mt-1 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg text-sm transition-colors cursor-pointer"
                     >
                       Đổi sang {alternativeStores[0].name.slice(0, 20)}... (Đủ hàng)
                     </button>
@@ -2220,7 +2186,7 @@ export default function CheckoutPage() {
                 onClick={handleSubmit}
                 disabled={isSubmitting || !isStockAvailable || isStockChecking}
                 className={cn(
-                  "mt-5 w-full py-3.5 px-3 text-white font-bold rounded-xl transition-all text-sm flex items-center justify-center gap-2",
+                  "mt-5 w-full py-3.5 px-3 text-white rounded-xl transition-all text-base flex items-center justify-center gap-2",
                   isStockAvailable && !isStockChecking
                     ? "bg-green-primary hover:bg-green-dark active:scale-[0.98] cursor-pointer shadow-md hover:shadow-lg"
                     : "bg-amber-50/90 text-amber-950 cursor-not-allowed border border-amber-300 shadow-none opacity-90"
@@ -2233,7 +2199,7 @@ export default function CheckoutPage() {
                   </>
                 ) : !isStockAvailable ? (
                   <div className="flex flex-col items-center leading-tight gap-0.5">
-                    <span className="font-bold text-amber-950 text-sm">
+                    <span className="text-amber-950 text-base">
                       {language === 'en' ? 'Branch currently out of stock' : 'Chi nhánh tạm chưa đủ hàng'}
                     </span>
                     <span className="text-[11px] text-amber-800 font-normal">
@@ -2270,10 +2236,6 @@ export default function CheckoutPage() {
         selectedStoreCode={selectedStoreCode}
         onSelectStore={handleSelectStore}
         mode={fulfillmentMode}
-        onModeChange={(m) => {
-          setFulfillmentMode(m);
-          if (customerCoords) fetchStoreRecommendation(customerCoords, m);
-        }}
       />
     </div>
   );

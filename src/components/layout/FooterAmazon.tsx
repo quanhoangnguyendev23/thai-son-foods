@@ -42,7 +42,7 @@ function InstagramIcon({ className = 'w-5 h-5' }: { className?: string }) {
 
 const CATEGORY_ORDER = ['sua-hat', 'nuoc-giai-khat', 'tra-sua'];
 const linkCls = 'hover:text-corn hover:underline transition-colors py-1.5 inline-block';
-const headingCls = 'font-heading text-[15px] font-bold uppercase tracking-wider text-corn mb-3';
+const headingCls = 'font-heading text-[17px] uppercase tracking-wider text-corn mb-3';
 
 export default function FooterAmazon() {
   const { language, setLanguage } = useLanguage();
@@ -61,7 +61,7 @@ export default function FooterAmazon() {
       <button
         type="button"
         onClick={scrollToTop}
-        className="w-full flex items-center justify-center gap-1.5 bg-green-light hover:bg-[#33895B] py-3.5 text-[13px] font-semibold transition-colors cursor-pointer"
+        className="w-full flex items-center justify-center gap-1.5 bg-green-light hover:bg-emerald-600 py-3.5 text-[15px] transition-colors cursor-pointer"
       >
         <ChevronUp className="w-4 h-4" />
         {isEn ? 'Back to top' : 'Về đầu trang'}
@@ -166,21 +166,21 @@ export default function FooterAmazon() {
               {isEn
                 ? 'Free shipping in HCMC, Bien Hoa, Long Thanh on orders from '
                 : 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ '}
-              <span className="font-bold text-corn">{formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ</span>
+              <span className="text-corn text-[1.125em]">{formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* THANH ĐÁY: logo + ngôn ngữ + bản quyền */}
-      <div className="bg-[#11241C]">
+      <div className="bg-forest-800">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-6 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
           <Link href="/" className="bg-white px-3 py-1.5 rounded-xl shrink-0" aria-label="Thái Sơn Foods - Trang chủ">
             <span className="relative block h-9 w-32">
               <Image src="/images/logo-vien-trang.png" alt="Thái Sơn Foods - Món ngon quê Việt" fill sizes="128px" className="object-contain" />
             </span>
           </Link>
-          <div className="flex items-center gap-1 rounded-lg border border-white/25 p-1 text-[12px] font-bold">
+          <div className="flex items-center gap-1 rounded-lg border border-white/25 p-1 text-[13px]">
             {(['vi', 'en'] as const).map((lng) => (
               <button
                 key={lng}

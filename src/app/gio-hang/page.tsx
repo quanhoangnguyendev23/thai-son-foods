@@ -16,13 +16,10 @@ import {
   Minus,
   Plus,
   RotateCcw,
-  Sparkles,
   Store,
   ChevronLeft,
   ChevronRight,
   Check,
-  Flame,
-  Gift,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
@@ -178,12 +175,12 @@ export default function CartPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
                 <Store className="w-3 h-3 text-amber-600" />
                 <span>{language === 'en' ? 'CHECKOUT AISLE (12 ITEMS)' : 'LỐI VÀO QUẦY THU NGÂN • TIỆN TAY BỎ GIỎ (12 MÓN)'}</span>
               </span>
             </div>
-            <h2 id="checkout-shelf-heading" className="text-lg sm:text-xl font-extrabold text-gray-900 font-heading tracking-tight leading-snug">
+            <h2 id="checkout-shelf-heading" className="text-xl sm:text-2xl text-gray-900 font-heading tracking-tight leading-snug">
               {language === 'en'
                 ? 'Grab Before You Go – Refreshing Treats to Take Home'
                 : 'Tiện tay thêm vào giỏ – Mát lạnh mang về ngay!'}
@@ -251,11 +248,11 @@ export default function CartPage() {
                     {/* Huy hiệu trên ảnh */}
                     <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10">
                       {prod.isBestSeller ? (
-                        <span className="px-1.5 py-0.5 text-[8.5px] font-extrabold rounded bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
+                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
                           Hot
                         </span>
                       ) : prod.isNew ? (
-                        <span className="px-1.5 py-0.5 text-[8.5px] font-extrabold rounded bg-emerald-600 text-white shadow-xs">
+                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-600 text-white shadow-xs">
                           Mới
                         </span>
                       ) : null}
@@ -263,7 +260,7 @@ export default function CartPage() {
 
                     {inCartQty > 0 && (
                       <div className="absolute top-1 right-1 z-10">
-                        <span className="px-1.5 py-0.5 text-[8.5px] font-bold rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
+                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
                           x{inCartQty}
                         </span>
                       </div>
@@ -273,7 +270,7 @@ export default function CartPage() {
                   {/* Tên & quy cách gọn gàng */}
                   <Link
                     href={`/san-pham/${prod.slug}`}
-                    className="font-bold text-[11.5px] sm:text-xs text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-0.5"
+                    className="text-[12.5px] sm:text-sm text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-0.5"
                     title={prodName}
                   >
                     {prodName}
@@ -306,10 +303,10 @@ export default function CartPage() {
                       <>
                         <div className="flex flex-col">
                           <div className="flex items-baseline justify-between">
-                            <span className="text-xs sm:text-[13.5px] font-extrabold text-emerald-700 font-heading">
+                            <span className="text-sm sm:text-[15.5px] text-emerald-700 font-heading">
                               {formatPrice(effectiveVariant.price)}đ
                             </span>
-                            <span className="text-[9px] font-semibold text-gray-500">
+                            <span className="text-[10px] text-gray-500">
                               /{packLabel}
                             </span>
                           </div>
@@ -321,7 +318,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => handleQuickAddProduct(prod)}
-                          className={`w-full py-1.5 px-2 rounded-lg font-bold text-[10.5px] sm:text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                          className={`w-full py-1.5 px-2 rounded-lg text-[11.5px] sm:text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                             isJustAdded
                               ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                               : 'bg-emerald-50 hover:bg-emerald-700 text-emerald-800 hover:text-white border border-emerald-200/80 hover:border-emerald-700'
@@ -359,12 +356,11 @@ export default function CartPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-900 border border-rose-200/80 shadow-2xs">
-                <Flame className="w-3 h-3 text-rose-600" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] bg-rose-50 text-rose-900 border border-rose-200/80 shadow-2xs">
                 <span>{language === 'en' ? 'SPECIAL COMBOS (12 PACKS)' : 'KHU Ụ HÀNG KHUYẾN MÃI CUỐI QUẦY • MUA NHIỀU GIẢM SÂU (12 COMBO)'}</span>
               </span>
             </div>
-            <h2 id="checkout-combos-heading" className="text-lg sm:text-xl font-extrabold text-gray-900 font-heading tracking-tight leading-snug">
+            <h2 id="checkout-combos-heading" className="text-xl sm:text-2xl text-gray-900 font-heading tracking-tight leading-snug">
               {language === 'en'
                 ? 'Take-Home Bundles – Multiply Your Family Savings'
                 : 'Gói quà rinh về – Tiết kiệm gấp bội cho cả nhà'}
@@ -425,17 +421,17 @@ export default function CartPage() {
 
                     {/* Badges góc trên */}
                     <div className="absolute top-1 left-1 flex items-center gap-1 z-10">
-                      <span className="px-1.5 py-0.5 text-[8.5px] font-extrabold rounded bg-rose-600 text-white shadow-xs">
+                      <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-rose-600 text-white shadow-xs">
                         -{combo.discount}%
                       </span>
-                      <span className="px-1.5 py-0.5 text-[8px] font-bold rounded bg-gray-900/85 text-white backdrop-blur-xs">
+                      <span className="px-1.5 py-0.5 text-[9px] rounded bg-gray-900/85 text-white backdrop-blur-xs">
                         {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                       </span>
                     </div>
 
                     {comboInCartQty > 0 && (
                       <div className="absolute top-1 right-1 z-10">
-                        <span className="px-1.5 py-0.5 text-[8.5px] font-bold rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
+                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
                           x{comboInCartQty}
                         </span>
                       </div>
@@ -445,15 +441,14 @@ export default function CartPage() {
                   {/* Tiêu đề combo */}
                   <Link
                     href={`/combo/${combo.slug}`}
-                    className="font-bold text-xs sm:text-[12.5px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-1"
+                    className="text-sm sm:text-[14.5px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-1"
                     title={comboTitle}
                   >
                     {comboTitle}
                   </Link>
 
                   {/* Tag quyền lợi đặc quyền */}
-                  <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 truncate">
-                    <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
+                  <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 truncate">
                     <span className="truncate">
                       {language === 'en' ? 'Instant order eligible' : 'Đủ điều kiện đặt ngay'}
                     </span>
@@ -464,7 +459,7 @@ export default function CartPage() {
                 <div className="mt-auto pt-2 border-t border-gray-100 flex flex-col gap-1.5">
                   <div className="flex items-baseline justify-between">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xs sm:text-sm font-extrabold text-rose-600 font-heading">
+                      <span className="text-sm sm:text-base text-rose-600 font-heading">
                         {formatPrice(combo.salePrice)}đ
                       </span>
                       <span className="text-[10px] text-gray-400 line-through">
@@ -472,7 +467,7 @@ export default function CartPage() {
                       </span>
                     </div>
                     {savedMoney > 0 && (
-                      <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                      <span className="text-[10.5px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
                         -{formatPrice(savedMoney)}đ
                       </span>
                     )}
@@ -481,7 +476,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => handleQuickAddCombo(combo)}
-                    className={`w-full py-1.5 px-2.5 rounded-lg font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                    className={`w-full py-1.5 px-2.5 rounded-lg text-[12px] sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                       isJustAdded
                         ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                         : 'bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-emerald-900/10'
@@ -494,7 +489,6 @@ export default function CartPage() {
                       </>
                     ) : (
                       <>
-                        <Gift className="w-3.5 h-3.5" />
                         <span>
                           {comboInCartQty > 0
                             ? language === 'en'
@@ -519,13 +513,13 @@ export default function CartPage() {
   // Giao diện khi giỏ hàng trống
   if (items.length === 0) {
     return (
-      <div className="bg-[#FAF9F5]/70 min-h-screen py-12">
+      <div className="bg-ivory/70 min-h-screen py-12">
         <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10">
           <div className="max-w-md w-full mx-auto px-4 text-center mb-8">
             <div className="w-24 h-24 bg-emerald-50 border border-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xs">
               <ShoppingBag className="w-12 h-12 text-emerald-600/70" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 font-heading mb-2.5">
+            <h1 className="text-2xl sm:text-3xl text-gray-900 font-heading mb-2.5">
               {language === 'en' ? 'Your cart is empty' : 'Giỏ hàng của bạn đang trống'}
             </h1>
             <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-sm mx-auto">
@@ -535,7 +529,7 @@ export default function CartPage() {
             </p>
             <Link
               href="/#san-pham"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white font-bold rounded-2xl shadow-lg shadow-emerald-900/15 hover:shadow-xl hover:brightness-105 active:scale-95 transition-all text-sm"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-800 to-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-900/15 hover:shadow-xl hover:brightness-105 active:scale-95 transition-all text-base"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{language === 'en' ? 'Explore Full Catalog' : 'Khám phá tất cả sản phẩm'}</span>
@@ -550,7 +544,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-[#FAF9F5]/70 min-h-screen pb-16 pt-5">
+    <div className="bg-ivory/70 min-h-screen pb-16 pt-5">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10">
         {/* ─── 1. BREADCRUMB TINH TẾ ─── */}
         <nav aria-label="Breadcrumb" className="mb-4">
@@ -561,7 +555,7 @@ export default function CartPage() {
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900 font-semibold">
+            <li className="text-gray-900 text-[1.125em]">
               {language === 'en' ? 'Shopping Cart' : 'Giỏ hàng'}
             </li>
           </ol>
@@ -570,10 +564,10 @@ export default function CartPage() {
         {/* ─── 2. TIÊU ĐỀ TRANG & TIỆN ÍCH ─── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-2 border-b border-gray-200/60">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 font-heading tracking-tight">
+            <h1 className="text-2xl sm:text-3xl text-gray-900 font-heading tracking-tight">
               {language === 'en' ? 'Your Shopping Cart' : 'Giỏ hàng của bạn'}
             </h1>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-100 text-emerald-800 border border-emerald-200">
               {language === 'en'
                 ? `${totalQuantity} ${totalQuantity === 1 ? 'item' : 'items'}`
                 : `${totalQuantity} sản phẩm`}
@@ -582,7 +576,7 @@ export default function CartPage() {
 
           <Link
             href="/#san-pham"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-700 hover:text-emerald-800 transition-colors self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 text-sm sm:text-base text-emerald-700 hover:text-emerald-800 transition-colors self-start sm:self-auto"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{language === 'en' ? 'Continue Shopping' : 'Tiếp tục mua hàng'}</span>
@@ -596,20 +590,20 @@ export default function CartPage() {
             {/* THANH MIỄN PHÍ VẬN CHUYỂN NỔI BẬT */}
             <div className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-xs">
               <div className="flex items-center justify-between gap-3 mb-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2 font-bold text-gray-900">
+                <div className="flex items-center gap-2 text-gray-900 text-[1.125em]">
                   <Truck className="w-4 h-4 text-emerald-600 shrink-0" />
                   {remainingForFreeShip <= 0 ? (
                     <span className="text-emerald-700">
                       {language === 'en'
-                        ? '🎉 Congratulations! Your order qualifies for FREE SHIPPING!'
-                        : '🎉 Chúc mừng! Đơn hàng của bạn đã được MIỄN PHÍ VẬN CHUYỂN!'}
+                        ? 'Congratulations! Your order qualifies for FREE SHIPPING!'
+                        : 'Chúc mừng! Đơn hàng của bạn đã được MIỄN PHÍ VẬN CHUYỂN!'}
                     </span>
                   ) : (
                     <span>
                       {language === 'en' ? (
                         <>
                           Add{' '}
-                          <span className="text-emerald-700 font-extrabold">
+                          <span className="text-emerald-700 text-[1.125em]">
                             {formatPrice(remainingForFreeShip)}đ
                           </span>{' '}
                           more for <span className="text-emerald-800 underline">Nationwide Free Shipping</span>
@@ -617,7 +611,7 @@ export default function CartPage() {
                       ) : (
                         <>
                           Mua thêm{' '}
-                          <span className="text-emerald-700 font-extrabold">
+                          <span className="text-emerald-700 text-[1.125em]">
                             {formatPrice(remainingForFreeShip)}đ
                           </span>{' '}
                           để được nhận <span className="text-emerald-800 underline">Freeship toàn quốc</span>
@@ -626,7 +620,7 @@ export default function CartPage() {
                     </span>
                   )}
                 </div>
-                <span className="font-extrabold text-emerald-700 text-xs shrink-0">
+                <span className="text-emerald-700 text-sm shrink-0">
                   {Math.round(freeShipProgress)}%
                 </span>
               </div>
@@ -643,7 +637,7 @@ export default function CartPage() {
             {/* THẺ CHỨA TOÀN BỘ DANH SÁCH MÓN HÀNG */}
             <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
               {/* Tiêu đề bảng trên desktop */}
-              <div className="hidden md:grid grid-cols-[3.2fr_1fr_1.3fr_1.1fr_44px] gap-3 px-6 py-3.5 bg-gray-50/90 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <div className="hidden md:grid grid-cols-[3.2fr_1fr_1.3fr_1.1fr_44px] gap-3 px-6 py-3.5 bg-gray-50/90 border-b border-gray-100 text-sm text-gray-500 uppercase tracking-wider">
                 <span>{language === 'en' ? 'Product' : 'Sản phẩm'}</span>
                 <span className="text-center">{language === 'en' ? 'Unit Price' : 'Đơn giá'}</span>
                 <span className="text-center">{language === 'en' ? 'Quantity' : 'Số lượng'}</span>
@@ -686,13 +680,13 @@ export default function CartPage() {
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/san-pham/${item.slug}`}
-                            className="text-sm sm:text-[15px] font-bold text-gray-900 hover:text-emerald-700 transition-colors leading-snug"
+                            className="text-base sm:text-[17px] text-gray-900 hover:text-emerald-700 transition-colors leading-snug"
                           >
                             {displayName}
                           </Link>
                           {displayUnit && (
                             <div className="mt-1">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200/60">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] bg-gray-100 text-gray-700 border border-gray-200/60">
                                 {language === 'en' ? `Spec: ${displayUnit}` : `Quy cách: ${displayUnit}`}
                               </span>
                             </div>
@@ -700,10 +694,10 @@ export default function CartPage() {
 
                           {/* Đơn giá trên mobile */}
                           <div className="flex items-center justify-between mt-2 md:hidden">
-                            <span className="text-xs font-bold text-gray-600">
+                            <span className="text-sm text-gray-600">
                               {formatPrice(item.price)}đ
                             </span>
-                            <span className="text-xs font-black text-emerald-800">
+                            <span className="text-sm text-emerald-800">
                               {language === 'en' ? 'Subtotal: ' : 'Thành tiền: '}
                               {formatPrice(item.price * item.quantity)}đ
                             </span>
@@ -712,7 +706,7 @@ export default function CartPage() {
                       </div>
 
                       {/* 2. Đơn giá (Desktop) */}
-                      <div className="hidden md:block text-center text-sm font-semibold text-gray-700">
+                      <div className="hidden md:block text-center text-base text-gray-700">
                         {formatPrice(item.price)}đ
                       </div>
 
@@ -750,7 +744,7 @@ export default function CartPage() {
                                     setQuantity(item.productId, Math.min(maxAllowed, val));
                                   }
                                 }}
-                                className="w-12 sm:w-14 text-center font-bold text-base sm:text-xs sm:text-sm text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="w-12 sm:w-14 text-center text-lg sm:text-sm sm:text-base text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 aria-label={language === 'en' ? 'Product quantity' : 'Số lượng sản phẩm'}
                               />
                               <button
@@ -769,7 +763,7 @@ export default function CartPage() {
                       })()}
 
                       {/* 4. Thành tiền (Desktop) */}
-                      <div className="hidden md:block text-right text-sm sm:text-base font-black text-emerald-800">
+                      <div className="hidden md:block text-right text-base sm:text-lg text-emerald-800">
                         {formatPrice(item.price * item.quantity)}đ
                       </div>
 
@@ -794,7 +788,7 @@ export default function CartPage() {
               <div className="px-6 py-4 bg-gray-50/60 border-t border-gray-100 flex items-center justify-between gap-4">
                 <Link
                   href="/#san-pham"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs sm:text-sm font-semibold text-gray-700 hover:text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50/40 transition-all shadow-2xs"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm sm:text-base text-gray-700 hover:text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50/40 transition-all shadow-2xs"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>{language === 'en' ? 'Continue shopping' : 'Tiếp tục chọn thêm món'}</span>
@@ -808,7 +802,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => setShowClearConfirm(false)}
-                      className="px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-200/70 rounded-lg transition-colors cursor-pointer"
+                      className="px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-200/70 rounded-lg transition-colors cursor-pointer"
                     >
                       {language === 'en' ? 'Cancel' : 'Hủy'}
                     </button>
@@ -818,7 +812,7 @@ export default function CartPage() {
                         clearCart();
                         setShowClearConfirm(false);
                       }}
-                      className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer shadow-xs"
+                      className="px-3 py-1.5 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer shadow-xs"
                     >
                       {language === 'en' ? 'Confirm clear' : 'Đồng ý xóa'}
                     </button>
@@ -842,7 +836,7 @@ export default function CartPage() {
             {/* ─── 1. KHỐI TÓM TẮT ĐƠN HÀNG (QUICK CHECKOUT SUMMARY) ─── */}
             <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
-                <div className="flex items-center gap-2 text-sm sm:text-base font-extrabold text-gray-900 font-heading">
+                <div className="flex items-center gap-2 text-base sm:text-lg text-gray-900 font-heading">
                   <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-700" />
                   <span>{language === 'en' ? 'Order Summary' : 'Tóm tắt đơn hàng'}</span>
                 </div>
@@ -857,21 +851,21 @@ export default function CartPage() {
               <div className="space-y-2.5 text-xs sm:text-sm">
                 <div className="flex justify-between items-center text-gray-600">
                   <span>{language === 'en' ? 'Items Subtotal:' : 'Tạm tính tiền hàng:'}</span>
-                  <span className="font-bold text-gray-900">{formatPrice(subtotal)}đ</span>
+                  <span className="text-gray-900 text-[1.125em]">{formatPrice(subtotal)}đ</span>
                 </div>
 
                 <div className="flex justify-between items-center text-gray-600">
                   <div className="flex items-center gap-1.5">
                     <span>{language === 'en' ? 'Shipping Fee:' : 'Phí vận chuyển:'}</span>
                     {shippingFee === 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px]">
                         FREESHIP
                       </span>
                     )}
                   </div>
-                  <span className="font-bold text-gray-900">
+                  <span className="text-gray-900 text-[1.125em]">
                     {shippingFee === 0 ? (
-                      <span className="text-emerald-700 font-extrabold">
+                      <span className="text-emerald-700 text-[1.125em]">
                         {language === 'en' ? 'Free' : 'Miễn phí'}
                       </span>
                     ) : (
@@ -883,14 +877,14 @@ export default function CartPage() {
                 {/* Đường kẻ đứt trang nhã */}
                 <div className="border-t border-dashed border-gray-200 my-1 pt-2.5 flex justify-between items-baseline">
                   <div>
-                    <span className="text-xs sm:text-sm font-extrabold text-gray-900 block">
+                    <span className="text-sm sm:text-base text-gray-900 block">
                       {language === 'en' ? 'Total Payment:' : 'Tổng thanh toán:'}
                     </span>
                     <span className="text-[10.5px] text-gray-400 font-normal">
                       {language === 'en' ? '(Taxes & shipping included)' : '(Đã gồm thuế & phí ship)'}
                     </span>
                   </div>
-                  <span className="text-xl sm:text-2xl font-black text-emerald-800">
+                  <span className="text-2xl sm:text-2xl text-emerald-800">
                     {formatPrice(total)}đ
                   </span>
                 </div>
@@ -899,25 +893,24 @@ export default function CartPage() {
               {/* Cảnh báo đơn hàng tối thiểu 120.000đ */}
               {!isEligibleToOrder ? (
                 <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                  <div className="flex items-center gap-1.5 text-amber-800 text-[1.125em]">
                     <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                     <span>{language === 'en' ? 'Min order is 120,000đ' : 'Mức đặt hàng tối thiểu 120.000đ'}</span>
                   </div>
                   <p className="text-amber-700 text-[11px] leading-relaxed">
                     {language === 'en' ? (
                       <>
-                        Add <strong className="text-amber-950 font-bold">{formatPrice(missingForMinOrder)}đ</strong> more to checkout.
+                        Add <strong className="text-amber-950 text-[1.125em]">{formatPrice(missingForMinOrder)}đ</strong> more to checkout.
                       </>
                     ) : (
                       <>
-                        Chọn thêm <strong className="text-amber-950 font-bold">{formatPrice(missingForMinOrder)}đ</strong> để tiếp tục thanh toán.
+                        Chọn thêm <strong className="text-amber-950 text-[1.125em]">{formatPrice(missingForMinOrder)}đ</strong> để tiếp tục thanh toán.
                       </>
                     )}
                   </p>
                 </div>
               ) : hasCombo && subtotal < MIN_ORDER_THRESHOLD ? (
-                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-1.5 font-semibold">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-800 flex items-center gap-1.5">
                   <span>
                     {language === 'en'
                       ? 'Combo included — Order eligible!'
@@ -930,7 +923,7 @@ export default function CartPage() {
               {isEligibleToOrder ? (
                 <Link
                   href="/thanh-toan"
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-800 via-[#1B5E3B] to-emerald-900 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:shadow-xl hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-800 via-forest-700 to-emerald-900 text-white text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:shadow-xl hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
                 >
                   <span>{language === 'en' ? 'Proceed to Checkout' : 'Tiến hành thanh toán'}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -939,7 +932,7 @@ export default function CartPage() {
                 <button
                   type="button"
                   disabled
-                  className="w-full py-3 rounded-xl bg-gray-200 text-gray-400 font-bold text-xs sm:text-sm cursor-not-allowed text-center"
+                  className="w-full py-3 rounded-xl bg-gray-200 text-gray-400 text-sm sm:text-base cursor-not-allowed text-center"
                 >
                   {language === 'en'
                     ? `Add ${formatPrice(missingForMinOrder)}đ more`
@@ -959,18 +952,18 @@ export default function CartPage() {
               {/* Header kệ siêu thị tiện lợi */}
               <div className="p-3.5 bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/70 border-b border-emerald-100/90">
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-white text-emerald-800 border border-emerald-200/90 shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11.5px] bg-white text-emerald-800 border border-emerald-200/90 shadow-2xs">
                     <Store className="w-3.5 h-3.5 text-emerald-700" />
                     <span>{language === 'en' ? 'Checkout Aisle' : 'Kệ trước quầy thu ngân'}</span>
                   </span>
-                  <span className="text-[11px] text-emerald-800 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                  <span className="text-[12px] text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60">
                     {activeImpulseTab === 'products'
                       ? (language === 'en' ? '12 fresh packs' : '12 lốc mát lạnh')
                       : (language === 'en' ? '12 family bundles' : '12 combo tiết kiệm')}
                   </span>
                 </div>
 
-                <h3 className="font-extrabold text-[14.5px] font-heading text-emerald-950 tracking-tight leading-snug">
+                <h3 className="text-[16.5px] font-heading text-emerald-950 tracking-tight leading-snug">
                   {language === 'en' ? 'Grab Before You Go' : 'Tiện tay bỏ giỏ trước khi về'}
                 </h3>
                 <p className="text-[11px] text-emerald-700/90 leading-normal mt-0.5">
@@ -984,26 +977,24 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => setActiveImpulseTab('products')}
-                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-1.5 px-2 rounded-lg text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeImpulseTab === 'products'
                         ? 'bg-white text-emerald-900 shadow-xs border border-emerald-200/60'
                         : 'text-emerald-800/80 hover:text-emerald-900 hover:bg-white/60'
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{language === 'en' ? '12 Packs' : '12 Lốc mát'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setActiveImpulseTab('combos')}
-                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-1.5 px-2 rounded-lg text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeImpulseTab === 'combos'
                         ? 'bg-white text-emerald-900 shadow-xs border border-emerald-200/60'
                         : 'text-emerald-800/80 hover:text-emerald-900 hover:bg-white/60'
                     }`}
                   >
-                    <Gift className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{language === 'en' ? '12 Combos' : '12 Combo hời'}</span>
                   </button>
                 </div>
@@ -1038,17 +1029,17 @@ export default function CartPage() {
                               className={`${isPoster ? 'object-cover' : 'object-contain p-1'} group-hover:scale-105 transition-transform duration-200`}
                             />
                             {prod.isBestSeller ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[7.5px] font-extrabold rounded bg-amber-500 text-white leading-tight">
+                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[8.5px] rounded bg-amber-500 text-ink-950 leading-tight">
                                 Hot
                               </span>
                             ) : prod.isNew ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[7.5px] font-extrabold rounded bg-emerald-600 text-white leading-tight">
+                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[8.5px] rounded bg-emerald-600 text-white leading-tight">
                                 Mới
                               </span>
                             ) : null}
 
                             {inCartQty > 0 && (
-                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[7.5px] font-bold rounded bg-emerald-800 text-white shadow-2xs">
+                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[8.5px] rounded bg-emerald-800 text-white shadow-2xs">
                                 x{inCartQty}
                               </span>
                             )}
@@ -1058,7 +1049,7 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0 pr-1">
                             <Link
                               href={`/san-pham/${prod.slug}`}
-                              className="font-bold text-xs sm:text-[13px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block"
+                              className="text-sm sm:text-[15px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block"
                               title={prodName}
                             >
                               {prodName}
@@ -1086,10 +1077,10 @@ export default function CartPage() {
                               return (
                                 <div className="flex flex-col mt-0.5">
                                   <div className="flex items-baseline gap-1">
-                                    <span className="text-xs sm:text-[12.5px] font-extrabold text-emerald-700 font-heading">
+                                    <span className="text-sm sm:text-[14.5px] text-emerald-700 font-heading">
                                       {formatPrice(effectiveVariant.price)}đ
                                     </span>
-                                    <span className="text-[9px] text-gray-500 font-semibold">
+                                    <span className="text-[10px] text-gray-500">
                                       /{packLabel}
                                     </span>
                                   </div>
@@ -1105,7 +1096,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickAddProduct(prod)}
-                            className={`shrink-0 py-1 px-2 sm:px-2.5 rounded-lg font-bold text-[10.5px] sm:text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                            className={`shrink-0 py-1 px-2 sm:px-2.5 rounded-lg text-[11.5px] sm:text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               isJustAdded
                                 ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                                 : 'bg-emerald-50 hover:bg-emerald-700 text-emerald-800 hover:text-white border border-emerald-200/80 hover:border-emerald-700'
@@ -1148,11 +1139,11 @@ export default function CartPage() {
                               sizes="56px"
                               className="object-cover group-hover:scale-105 transition-transform duration-200"
                             />
-                            <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[7.5px] font-extrabold rounded bg-rose-600 text-white leading-tight">
+                            <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[8.5px] rounded bg-rose-600 text-white leading-tight">
                               -{combo.discount}%
                             </span>
                             {comboInCartQty > 0 && (
-                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[7.5px] font-bold rounded bg-emerald-800 text-white shadow-2xs">
+                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[8.5px] rounded bg-emerald-800 text-white shadow-2xs">
                                 x{comboInCartQty}
                               </span>
                             )}
@@ -1162,7 +1153,7 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0 pr-1">
                             <Link
                               href={`/combo/${combo.slug}`}
-                              className="font-bold text-xs sm:text-[13px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block"
+                              className="text-sm sm:text-[15px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block"
                               title={comboTitle}
                             >
                               {comboTitle}
@@ -1172,13 +1163,13 @@ export default function CartPage() {
                                 {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                               </span>
                               {savedMoney > 0 && (
-                                <span className="text-[8.5px] font-bold text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-100">
+                                <span className="text-[9.5px] text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-100">
                                   -{formatPrice(savedMoney)}đ
                                 </span>
                               )}
                             </div>
                             <div className="flex items-baseline gap-1.5 mt-0.5">
-                              <span className="text-xs sm:text-[12.5px] font-extrabold text-rose-600 font-heading">
+                              <span className="text-sm sm:text-[14.5px] text-rose-600 font-heading">
                                 {formatPrice(combo.salePrice)}đ
                               </span>
                               <span className="text-[9.5px] text-gray-400 line-through">
@@ -1191,7 +1182,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickAddCombo(combo)}
-                            className={`shrink-0 py-1 px-2 sm:px-2.5 rounded-lg font-bold text-[10.5px] sm:text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                            className={`shrink-0 py-1 px-2 sm:px-2.5 rounded-lg text-[11.5px] sm:text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               isJustAdded
                                 ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                                 : 'bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-emerald-900/10'
@@ -1205,7 +1196,6 @@ export default function CartPage() {
                               </>
                             ) : (
                               <>
-                                <Gift className="w-3 h-3" />
                                 <span>{comboInCartQty > 0 ? (language === 'en' ? '+1' : '+1 nữa') : (language === 'en' ? '+ Rinh' : '+ Rinh')}</span>
                               </>
                             )}

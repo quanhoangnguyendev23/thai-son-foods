@@ -69,6 +69,16 @@ export default function RootLayout({
         className="font-body antialiased bg-ivory text-text-dark"
         style={{ fontFamily: 'var(--font-roboto), sans-serif' }}
       >
+        {/* Bộ lọc nâng điểm đen của video thành xanh rêu thương hiệu (áp bằng CSS: video { filter: url(#brand-black-lift) }) */}
+        <svg aria-hidden="true" focusable="false" width="0" height="0" style={{ position: 'absolute' }}>
+          <filter id="brand-black-lift" colorInterpolationFilters="sRGB">
+            <feComponentTransfer>
+              <feFuncR type="linear" slope="0.9059" intercept="0.0941" />
+              <feFuncG type="linear" slope="0.7333" intercept="0.2667" />
+              <feFuncB type="linear" slope="0.7569" intercept="0.2431" />
+            </feComponentTransfer>
+          </filter>
+        </svg>
         <LogoPreloader />
         <AppLayout>{children}</AppLayout>
       </body>

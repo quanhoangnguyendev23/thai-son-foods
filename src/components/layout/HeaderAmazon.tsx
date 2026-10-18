@@ -15,7 +15,6 @@ import {
   Headphones,
   Phone,
   Clock,
-  ShieldCheck,
   ChevronRight,
   ChevronDown,
   Globe,
@@ -79,7 +78,7 @@ const normalizeCategoryId = (id?: string) => (id || '').replace(/^cat-/, '');
 
 export default function HeaderAmazon() {
   const router = useRouter();
-  const { selectedBranch, openBranchModal } = useBranchStore();
+  const { selectedBranch, openBranchModal, fetchBranches } = useBranchStore();
   const { language, setLanguage, t } = useLanguage();
   const { user, openAuthModal, logout } = useUserAuth();
   const isEn = language === 'en';
@@ -117,11 +116,12 @@ export default function HeaderAmazon() {
 
   useEffect(() => {
     setIsMounted(true);
+    fetchBranches();
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [fetchBranches]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -217,7 +217,7 @@ export default function HeaderAmazon() {
     else openAuthModal('login');
   };
 
-  const branchName = selectedBranch?.name || 'Chi nhánh 1 (Tân Phú)';
+  const branchName = selectedBranch?.name || 'Cửa Hàng NH - Phú Thọ Hòa';
   const firstName = user?.fullName ? user.fullName.split(' ').slice(-1)[0] : '';
   const cartCount = isMounted ? totalQuantity : 0;
 
@@ -229,7 +229,7 @@ export default function HeaderAmazon() {
       <form
         onSubmit={handleSearchSubmit}
         role="search"
-        className="flex h-10 lg:h-11 w-full rounded-xl overflow-hidden bg-white ring-2 ring-transparent focus-within:ring-corn"
+        className="flex h-11 w-full rounded-xl overflow-hidden bg-white ring-2 ring-transparent focus-within:ring-corn"
       >
         <label className="sr-only" htmlFor={`home-search-category-${variant}`}>
           {isEn ? 'Search in category' : 'Tìm trong danh mục'}
@@ -282,7 +282,7 @@ export default function HeaderAmazon() {
       {/* Gợi ý sản phẩm (live search) */}
       {isSearchFocused && searchQuery.trim().length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[60]">
-          <div className="p-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between gap-2 text-xs font-bold text-gray-700">
+          <div className="p-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between gap-2 text-sm text-gray-700">
             <span className="truncate">
               {isEn ? 'Suggested products for' : 'Sản phẩm gợi ý cho'} &quot;{searchQuery}&quot;
             </span>
@@ -311,11 +311,11 @@ export default function HeaderAmazon() {
                       <Image src={item.thumbnail || '/images/logo-clean-1000.png'} alt={name} fill className="object-contain p-1" sizes="48px" />
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-green-primary leading-snug line-clamp-2">
+                      <span className="block text-sm sm:text-base text-gray-900 group-hover:text-green-primary leading-snug line-clamp-2">
                         {name}
                       </span>
                       <span className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs font-bold text-emerald-700">{formatPrice(price)} ₫</span>
+                        <span className="text-sm text-emerald-700">{formatPrice(price)} ₫</span>
                         <span className="text-[10px] text-gray-400">/{isEn ? `Pack of ${qty}` : `lốc ${qty} chai`}</span>
                       </span>
                     </span>
@@ -327,7 +327,7 @@ export default function HeaderAmazon() {
                 <button
                   type="button"
                   onClick={handleSearchSubmit}
-                  className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/70 text-green-primary text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                  className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/70 text-green-primary text-sm rounded-xl transition-colors cursor-pointer"
                 >
                   {isEn ? 'View all related products →' : 'Xem tất cả sản phẩm liên quan →'}
                 </button>
@@ -350,16 +350,16 @@ export default function HeaderAmazon() {
       title="Bấm để đổi chi nhánh nhận hàng"
       className={cn(
         'flex items-end gap-1 text-left rounded-md border border-transparent hover:border-white/70 cursor-pointer min-w-0',
-        compact ? 'px-0 py-0' : 'px-2 py-1.5'
+        compact ? "relative before:absolute before:-inset-y-3 before:inset-x-0 before:content-[''] px-0 py-0" : 'px-2 py-1.5'
       )}
     >
       <MapPin className="w-4 h-4 text-corn shrink-0 mb-0.5" aria-hidden />
       <span className="min-w-0 leading-tight">
         {!compact && <span className="block text-[11px] text-white/70">{isEn ? 'Delivering from' : 'Giao từ chi nhánh'}</span>}
-        <span className={cn('block font-bold text-white truncate', compact ? 'text-[12px]' : 'text-[13px] max-w-[170px]')}>
+        <span className={cn('block text-white truncate', compact ? 'text-[12px]' : 'text-[13px] max-w-[170px]')}>
           {compact && <span className="font-normal text-white/75">{isEn ? 'Delivering from ' : 'Giao từ '}</span>}
           {isMounted ? branchName : DELIVER_TO_PLACEHOLDER.guestHint}
-          {compact && <span className="ml-1 underline font-semibold text-corn">{isEn ? 'Change' : 'Đổi'}</span>}
+          {compact && <span className="ml-1 underline text-corn text-[1.125em]">{isEn ? 'Change' : 'Đổi'}</span>}
         </span>
       </span>
     </button>
@@ -368,25 +368,24 @@ export default function HeaderAmazon() {
   const userMenu = isUserOpen && user && (
     <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[60] text-left">
       <div className="px-4 py-2 border-b border-gray-100">
-        <p className="text-xs font-bold text-gray-900 line-clamp-1">{user.fullName}</p>
+        <p className="text-sm text-gray-900 line-clamp-1">{user.fullName}</p>
         <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
       </div>
-      <Link href="/tai-khoan?tab=orders" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-green-primary">
+      <Link href="/tai-khoan?tab=orders" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-green-primary">
         <ShoppingBag className="w-4 h-4 text-emerald-700" />
         {isEn ? 'My Orders' : 'Đơn hàng của tôi'}
       </Link>
-      <Link href="/tai-khoan?tab=profile" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-green-primary">
+      <Link href="/tai-khoan?tab=profile" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-green-primary">
         <User className="w-4 h-4 text-emerald-700" />
         {isEn ? 'Account Details' : 'Thông tin tài khoản'}
       </Link>
       {MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP && (
-        <Link href="/member" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-50">
-          <Crown className="w-4 h-4 text-amber-600" />
+        <Link href="/member" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-amber-800 hover:bg-amber-50">
           Thái Sơn Prime
         </Link>
       )}
       {MEMBERSHIP_CONFIG.ENABLE_SUBSCRIBE_SAVE && (
-        <Link href="/tai-khoan/dinh-ky" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50">
+        <Link href="/tai-khoan/dinh-ky" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-emerald-800 hover:bg-emerald-50">
           <RefreshCw className="w-4 h-4 text-emerald-600" />
           Lịch Giao Định Kỳ
         </Link>
@@ -398,7 +397,7 @@ export default function HeaderAmazon() {
             setIsUserOpen(false);
             logout();
           }}
-          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 text-left cursor-pointer"
+          className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           {isEn ? 'Log Out' : 'Đăng xuất'}
@@ -411,7 +410,7 @@ export default function HeaderAmazon() {
 
   return (
     <>
-      <header className={cn('sticky top-0 z-50 bg-[#11241C] text-white', isScrolled ? 'shadow-md' : '')}>
+      <header className={cn('sticky top-0 z-50 bg-green-primary text-white', isScrolled ? 'shadow-md' : '')}>
         {/* ── TẦNG 1 ── */}
         <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5">
           <div className="flex items-center gap-2 lg:gap-3 h-14 lg:h-16">
@@ -419,7 +418,7 @@ export default function HeaderAmazon() {
             <button
               type="button"
               onClick={() => setIsDrawerOpen(true)}
-              className={cn(navBtn, 'lg:hidden p-1.5 -ml-1')}
+              className={cn(navBtn, 'lg:hidden p-1.5 -ml-1 max-lg:min-h-11 max-lg:min-w-11 max-lg:justify-center')}
               aria-label={isEn ? 'Open menu' : 'Mở menu'}
               aria-expanded={isDrawerOpen}
             >
@@ -446,7 +445,7 @@ export default function HeaderAmazon() {
               <button
                 type="button"
                 onClick={() => setIsLangOpen((o) => !o)}
-                className={cn(navBtn, 'gap-1 px-2 py-2 text-[13px] font-bold')}
+                className={cn(navBtn, 'gap-1 px-2 py-2 text-[15px] max-lg:min-h-11')}
                 aria-label={t('changeLanguage')}
                 aria-expanded={isLangOpen}
                 title={t('changeLanguage')}
@@ -466,8 +465,8 @@ export default function HeaderAmazon() {
                         setIsLangOpen(false);
                       }}
                       className={cn(
-                        'w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-left cursor-pointer',
-                        language === lng ? 'bg-emerald-50 text-emerald-800 font-bold' : 'hover:bg-gray-50'
+                        'w-full flex items-center justify-between px-3 py-2 text-sm text-left cursor-pointer',
+                        language === lng ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-gray-50'
                       )}
                     >
                       <span className="flex items-center gap-2">
@@ -486,7 +485,7 @@ export default function HeaderAmazon() {
               <button
                 type="button"
                 onClick={() => (user ? setIsUserOpen((o) => !o) : openAuthModal('login'))}
-                className={cn(navBtn, 'gap-1.5 px-1.5 lg:px-2 py-1 text-left')}
+                className={cn(navBtn, 'gap-1.5 px-1.5 lg:px-2 py-1 text-left max-lg:min-h-11 max-lg:min-w-11 max-lg:justify-center')}
                 aria-label={user ? (isEn ? 'Account menu' : 'Menu tài khoản') : isEn ? 'Sign In / Register' : 'Đăng nhập / Đăng ký'}
                 aria-expanded={user ? isUserOpen : undefined}
               >
@@ -495,7 +494,7 @@ export default function HeaderAmazon() {
                   <span className="block text-[11px] text-white/70 max-w-[110px] truncate">
                     {user ? `${isEn ? 'Hello' : 'Xin chào'}, ${firstName}` : isEn ? 'Hello, sign in' : 'Xin chào, đăng nhập'}
                   </span>
-                  <span className="hidden lg:flex items-center gap-0.5 text-[13px] font-bold">
+                  <span className="hidden lg:flex items-center gap-0.5 text-[15px]">
                     {isEn ? 'Account' : 'Tài khoản'}
                     <ChevronDown className="w-3 h-3 text-white/70" />
                   </span>
@@ -511,14 +510,14 @@ export default function HeaderAmazon() {
               className={cn(navBtn, 'hidden xl:block px-2 py-1 text-left leading-tight')}
             >
               <span className="block text-[11px] text-white/70">{isEn ? 'Track' : 'Theo dõi'}</span>
-              <span className="block text-[13px] font-bold">{isEn ? 'Orders' : 'Đơn hàng'}</span>
+              <span className="block text-[15px]">{isEn ? 'Orders' : 'Đơn hàng'}</span>
             </button>
 
             {/* Giỏ hàng — giữ id cho hiệu ứng bay vào giỏ */}
             <Link
               href="/gio-hang"
               id="cart-target-header"
-              className={cn(navBtn, 'relative gap-1 px-1.5 lg:px-2 py-1 items-end')}
+              className={cn(navBtn, 'relative gap-1 px-1.5 lg:px-2 py-1 items-end max-lg:min-h-11 max-lg:min-w-11 max-lg:justify-center')}
               aria-label={isEn ? `Cart, ${cartCount} items` : `Giỏ hàng, ${cartCount} sản phẩm`}
               title={isEn ? 'Shopping Cart' : 'Giỏ hàng'}
             >
@@ -527,14 +526,14 @@ export default function HeaderAmazon() {
                 <span
                   key={`cart-badge-${cartCount}`}
                   className={cn(
-                    'absolute -top-1.5 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full text-[11px] font-black',
+                    'absolute -top-1.5 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full text-[12px]',
                     cartCount > 0 ? 'bg-corn text-text-dark animate-pulse-badge' : 'bg-white/20 text-white'
                   )}
                 >
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               </span>
-              <span className="hidden xl:block text-[13px] font-bold">{isEn ? 'Cart' : 'Giỏ hàng'}</span>
+              <span className="hidden xl:block text-[15px]">{isEn ? 'Cart' : 'Giỏ hàng'}</span>
             </Link>
           </div>
 
@@ -546,13 +545,13 @@ export default function HeaderAmazon() {
         <div className={cn('xl:hidden bg-green-dark px-3 sm:px-4 lg:px-5 py-1.5', isScrolled && 'hidden')}>{deliverTo(true)}</div>
 
         {/* ── TẦNG 2: THANH ĐIỀU HƯỚNG PHỤ ── */}
-        <div className={cn('bg-green-primary', isScrolled && 'max-lg:hidden')}>
-          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-10">
+        <div className={cn('bg-leaf-900', isScrolled && 'max-lg:hidden')}>
+          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-11 lg:h-10">
             <nav className="flex items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(true)}
-                className={cn(navBtn, 'hidden lg:flex gap-1.5 px-2 py-1 text-[13px] font-bold shrink-0')}
+                className={cn(navBtn, 'hidden lg:flex gap-1.5 px-2 py-1 text-[15px] shrink-0')}
                 aria-expanded={isDrawerOpen}
               >
                 <Menu className="w-5 h-5" />
@@ -560,7 +559,7 @@ export default function HeaderAmazon() {
               </button>
               {taskbagItems.map((item) => {
                 const Icon = item.icon;
-                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[13px] font-semibold whitespace-nowrap shrink-0');
+                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-11');
                 if (item.action === 'open-support') {
                   return (
                     <button key={item.id} type="button" onClick={() => setIsSupportModalOpen(true)} className={cls}>
@@ -574,14 +573,14 @@ export default function HeaderAmazon() {
                     <Icon className={cn('w-4 h-4', item.color)} />
                     {item.label}
                     {item.badge && (
-                      <span className="px-1.5 text-[9px] font-extrabold text-white bg-red-500 rounded-full animate-pulse">{item.badge}</span>
+                      <span className="px-1.5 text-[10px] text-white bg-red-500 rounded-full animate-pulse">{item.badge}</span>
                     )}
                   </Link>
                 );
               })}
               <span className="hidden md:block w-px h-5 bg-white/25 mx-1 shrink-0" aria-hidden />
               {categoryLinks.map((c) => (
-                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-[13px] whitespace-nowrap shrink-0')}>
+                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-[13px] whitespace-nowrap shrink-0 max-lg:min-h-11')}>
                   {c.label}
                 </Link>
               ))}
@@ -590,7 +589,6 @@ export default function HeaderAmazon() {
             {/* Cam kết + hotline (từ Header gốc & BranchTopBar) */}
             <div className="hidden xl:flex items-center gap-3 ml-auto text-[12px] text-white/85 shrink-0">
               <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-corn" />
                 {t('naturalIngredients')}
               </span>
               <span className="text-white/40">•</span>
@@ -599,9 +597,9 @@ export default function HeaderAmazon() {
                 {t('fastDelivery')}
               </span>
               <span className="text-white/40">•</span>
-              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 font-semibold hover:text-corn cursor-pointer">
+              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 hover:text-corn cursor-pointer text-[1.125em]">
                 <Headphones className="w-3.5 h-3.5 text-corn" />
-                {t('support247')}: <strong className="text-white">028 6291 5024</strong>
+                {t('support247')}: <strong className="text-white text-[1.125em]">028 6291 5024</strong>
               </button>
             </div>
           </div>
@@ -613,13 +611,13 @@ export default function HeaderAmazon() {
         <div className="fixed inset-0 z-[9990]" role="dialog" aria-modal="true" aria-label={isEn ? 'All categories' : 'Tất cả danh mục'}>
           <button
             type="button"
-            className="absolute inset-0 bg-black/60 cursor-default"
+            className="absolute inset-0 bg-ink-950/60 cursor-default"
             aria-label={t('close')}
             onClick={() => setIsDrawerOpen(false)}
           />
           <aside className="absolute left-0 top-0 bottom-0 w-[86%] max-w-[360px] bg-white shadow-2xl flex flex-col animate-[tsfDrawerIn_.22s_ease-out]">
             <style>{`@keyframes tsfDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
-            <div className="bg-[#11241C] text-white px-4 py-3.5 flex items-center justify-between gap-3">
+            <div className="bg-green-primary text-white px-4 py-3.5 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -630,10 +628,10 @@ export default function HeaderAmazon() {
                 }}
                 className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer"
               >
-                <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center font-bold shrink-0">
+                <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0 text-[1.125em]">
                   {user?.fullName ? user.fullName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
                 </span>
-                <span className="font-bold text-[15px] truncate">
+                <span className="text-[17px] truncate">
                   {user ? `${isEn ? 'Hello' : 'Xin chào'}, ${user.fullName}` : isEn ? 'Hello, sign in' : 'Xin chào, đăng nhập'}
                 </span>
               </button>
@@ -644,7 +642,7 @@ export default function HeaderAmazon() {
 
             <div className="flex-1 overflow-y-auto">
               <section className="px-4 py-4 border-b border-gray-200">
-                <h3 className="text-[15px] font-bold text-text-dark mb-3">{isEn ? 'Shop by category' : 'Mua theo danh mục'}</h3>
+                <h3 className="text-[17px] text-text-dark mb-3">{isEn ? 'Shop by category' : 'Mua theo danh mục'}</h3>
                 {/* Tái sử dụng nguyên CategorySidebar của trang chủ cũ (12 sản phẩm theo 3 nhóm, đồng bộ API) */}
                 <div onClick={(e) => (e.target as HTMLElement).closest('a') && setIsDrawerOpen(false)}>
                   <CategorySidebar />
@@ -652,10 +650,10 @@ export default function HeaderAmazon() {
               </section>
 
               <section className="px-2 py-3 border-b border-gray-200">
-                <h3 className="px-2 text-[15px] font-bold text-text-dark mb-1">{isEn ? 'Shortcuts' : 'Tiện ích'}</h3>
+                <h3 className="px-2 text-[17px] text-text-dark mb-1">{isEn ? 'Shortcuts' : 'Tiện ích'}</h3>
                 {taskbagItems.map((item) => {
                   const Icon = item.icon;
-                  const cls = 'w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[14px] font-semibold text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer';
+                  const cls = 'w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer';
                   if (item.action === 'open-support') {
                     return (
                       <button
@@ -676,13 +674,13 @@ export default function HeaderAmazon() {
                     <Link key={item.id} href={item.href} className={cls} onClick={() => setIsDrawerOpen(false)}>
                       <Icon className="w-4 h-4 text-green-primary" />
                       {item.label}
-                      {item.badge && <span className="ml-auto px-2 py-0.5 text-[10px] font-bold text-white bg-red-500 rounded-full">{item.badge}</span>}
+                      {item.badge && <span className="ml-auto px-2 py-0.5 text-[11px] text-white bg-red-500 rounded-full">{item.badge}</span>}
                     </Link>
                   );
                 })}
                 <button
                   type="button"
-                  className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[14px] font-semibold text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer"
                   onClick={() => {
                     setIsDrawerOpen(false);
                     openBranchModal();
@@ -696,14 +694,14 @@ export default function HeaderAmazon() {
               </section>
 
               <section className="px-2 py-3 border-b border-gray-200">
-                <h3 className="px-2 text-[15px] font-bold text-text-dark mb-1">{isEn ? 'Account' : 'Tài khoản'}</h3>
+                <h3 className="px-2 text-[17px] text-text-dark mb-1">{isEn ? 'Account' : 'Tài khoản'}</h3>
                 {user ? (
                   <>
-                    <Link href="/tai-khoan?tab=orders" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[14px] font-semibold text-text-body hover:bg-ivory">
+                    <Link href="/tai-khoan?tab=orders" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory">
                       <Package className="w-4 h-4 text-green-primary" />
                       {isEn ? 'My Orders' : 'Đơn hàng của tôi'}
                     </Link>
-                    <Link href="/tai-khoan?tab=profile" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[14px] font-semibold text-text-body hover:bg-ivory">
+                    <Link href="/tai-khoan?tab=profile" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory">
                       <User className="w-4 h-4 text-green-primary" />
                       {isEn ? 'Account Details' : 'Thông tin tài khoản'}
                     </Link>
@@ -713,7 +711,7 @@ export default function HeaderAmazon() {
                         setIsDrawerOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[14px] font-semibold text-red-600 hover:bg-red-50 text-left cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-red-600 hover:bg-red-50 text-left cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />
                       {isEn ? 'Log Out' : 'Đăng xuất'}
@@ -726,7 +724,7 @@ export default function HeaderAmazon() {
                       setIsDrawerOpen(false);
                       openAuthModal('login');
                     }}
-                    className="mx-2 mt-1 px-4 py-2.5 bg-green-primary hover:bg-green-dark text-white text-sm font-bold rounded-xl cursor-pointer"
+                    className="mx-2 mt-1 px-4 py-2.5 bg-green-primary hover:bg-green-dark text-white text-base rounded-xl cursor-pointer"
                   >
                     {isEn ? 'Sign In' : 'Đăng nhập'}
                   </button>
@@ -734,7 +732,7 @@ export default function HeaderAmazon() {
               </section>
 
               <section className="px-4 py-4 flex items-center justify-between">
-                <span className="text-[13px] font-semibold text-gray-600 flex items-center gap-1.5">
+                <span className="text-[15px] text-gray-600 flex items-center gap-1.5">
                   <Globe className="w-4 h-4 text-emerald-700" />
                   {t('changeLanguage')}
                 </span>
@@ -745,7 +743,7 @@ export default function HeaderAmazon() {
                       type="button"
                       onClick={() => setLanguage(lng)}
                       className={cn(
-                        'px-3 py-2 rounded-lg text-xs font-bold cursor-pointer',
+                        'px-3 py-2 rounded-lg text-sm cursor-pointer',
                         language === lng ? 'bg-white text-emerald-800 shadow-xs' : 'text-gray-500 hover:text-gray-800'
                       )}
                     >
@@ -763,7 +761,7 @@ export default function HeaderAmazon() {
       {isSupportModalOpen && isMounted && (
         <div
           onClick={() => setIsSupportModalOpen(false)}
-          className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fade-in-up"
+          className="fixed inset-0 z-[99999] bg-ink-950/60 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fade-in-up"
         >
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
@@ -772,7 +770,7 @@ export default function HeaderAmazon() {
                   <Headphones className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base leading-tight">{t('supportTitle')}</h3>
+                  <h3 className="text-gray-900 text-lg leading-tight">{t('supportTitle')}</h3>
                   <p className="text-[11px] text-gray-500">{t('supportSubtitle')}</p>
                 </div>
               </div>
@@ -791,11 +789,11 @@ export default function HeaderAmazon() {
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-gray-600">{t('hotlineConsult')}</div>
-                    <div className="text-base font-bold text-gray-900 group-hover:text-green-primary">028 6291 5024</div>
+                    <div className="text-sm text-gray-600">{t('hotlineConsult')}</div>
+                    <div className="text-lg text-gray-900 group-hover:text-green-primary">028 6291 5024</div>
                   </div>
                 </div>
-                <span className="text-xs font-bold text-white bg-green-primary px-3 py-1.5 rounded-xl shadow-2xs">{t('callNow')}</span>
+                <span className="text-sm text-white bg-green-primary px-3 py-1.5 rounded-xl shadow-2xs">{t('callNow')}</span>
               </a>
               <a
                 href="https://zalo.me/0903050568"
@@ -804,37 +802,36 @@ export default function HeaderAmazon() {
                 className="flex items-center justify-between p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 hover:bg-blue-100/70 transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#0068FF] text-white flex items-center justify-center shadow-xs font-bold text-xs">Zalo</div>
+                  <div className="w-10 h-10 rounded-full bg-[#0068FF] text-white flex items-center justify-center shadow-xs text-sm">Zalo</div>
                   <div>
-                    <div className="text-xs font-semibold text-gray-600">{t('zaloChat')}</div>
-                    <div className="text-sm font-bold text-gray-900 group-hover:text-[#0068FF]">Thái Sơn Foods Official</div>
+                    <div className="text-sm text-gray-600">{t('zaloChat')}</div>
+                    <div className="text-base text-gray-900 group-hover:text-[#0068FF]">Thái Sơn Foods Official</div>
                   </div>
                 </div>
-                <span className="text-xs font-bold text-[#0068FF] bg-white border border-blue-200 px-3 py-1.5 rounded-xl shadow-2xs">{t('chatImmediate')}</span>
+                <span className="text-sm text-[#0068FF] bg-white border border-blue-200 px-3 py-1.5 rounded-xl shadow-2xs">{t('chatImmediate')}</span>
               </a>
               <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 space-y-2 text-xs text-gray-600">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>
-                    <strong>{isEn ? 'Service hours:' : 'Thời gian phục vụ:'}</strong> {isEn ? '07:30 - 21:30 daily' : '07:30 - 21:30 hàng ngày'}
+                    <strong className="text-[1.125em]">{isEn ? 'Service hours:' : 'Thời gian phục vụ:'}</strong> {isEn ? '07:30 - 21:30 daily' : '07:30 - 21:30 hàng ngày'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>
-                    <strong>{isEn ? 'Delivery:' : 'Giao hàng:'}</strong> {isEn ? 'Express delivery in 2 hours in HCMC' : 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận'}
+                    <strong className="text-[1.125em]">{isEn ? 'Delivery:' : 'Giao hàng:'}</strong> {isEn ? 'Express delivery in 2 hours in HCMC' : 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>
-                    <strong>{isEn ? 'Returns:' : 'Đổi trả:'}</strong> {isEn ? '100% exchange if any issue' : 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào'}
+                    <strong className="text-[1.125em]">{isEn ? 'Returns:' : 'Đổi trả:'}</strong> {isEn ? '100% exchange if any issue' : 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào'}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setIsSupportModalOpen(false)}
-                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs cursor-pointer"
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm cursor-pointer"
               >
                 {t('close')}
               </button>

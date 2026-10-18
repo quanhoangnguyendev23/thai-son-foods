@@ -5,7 +5,6 @@ import {
   Star,
   CheckCircle2,
   ThumbsUp,
-  ShieldCheck,
   Edit3,
   X,
   Send,
@@ -27,7 +26,7 @@ const AVATAR_COLORS = [
   'bg-emerald-600 text-white',
   'bg-blue-600 text-white',
   'bg-amber-600 text-white',
-  'bg-purple-600 text-white',
+  'bg-leaf-600 text-white',
   'bg-teal-600 text-white',
   'bg-rose-600 text-white',
 ];
@@ -256,11 +255,11 @@ export default function ProductReviewsSection({
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* 1. SECTION HEADER */}
         <div className="text-center mb-10 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Star className="w-3.5 h-3.5 fill-[#FFA41C] text-[#FFA41C]" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm uppercase tracking-wider mb-2">
+            <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
             <span>ĐÁNH GIÁ TỪ KHÁCH HÀNG</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
+          <h2 className="text-2xl sm:text-3xl text-gray-900 mt-2">
             Khách Hàng Nói Gì Về Sản Phẩm?
           </h2>
           <p className="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
@@ -272,14 +271,14 @@ export default function ProductReviewsSection({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* ── CỘT TRÁI (TỔNG QUAN ĐÁNH GIÁ - 4 CỘT) ── */}
           <div className="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 lg:sticky lg:top-[168px] z-10">
-            <h3 className="font-bold text-gray-900 text-base">
+            <h3 className="text-gray-900 text-lg">
               Đánh giá chung
             </h3>
 
             {/* Điểm số trung bình hoặc trạng thái chưa có đánh giá */}
             {summary.totalReviews === 0 ? (
               <div className="py-2">
-                <p className="text-xl font-bold text-gray-800">Chưa có đánh giá</p>
+                <p className="text-2xl text-gray-800">Chưa có đánh giá</p>
                 <p className="text-xs text-gray-500 mt-1">
                   Hãy là người đầu tiên chia sẻ cảm nhận về {productName}!
                 </p>
@@ -287,7 +286,7 @@ export default function ProductReviewsSection({
             ) : (
               <div>
                 <div className="flex items-baseline gap-2 mb-1.5">
-                  <span className="text-4xl font-extrabold text-gray-900 font-heading">
+                  <span className="text-4xl text-gray-900 font-heading">
                     {summary.averageRating.toFixed(1)}
                   </span>
                   <span className="text-base text-gray-400 font-normal">/ 5.0</span>
@@ -297,7 +296,7 @@ export default function ProductReviewsSection({
                         key={s}
                         className={`w-4.5 h-4.5 ${
                           s <= Math.round(summary.averageRating)
-                            ? 'fill-[#FFA41C] text-[#FFA41C]'
+                            ? 'fill-amber-500 text-amber-500'
                             : 'fill-gray-200 text-gray-200'
                         }`}
                       />
@@ -320,7 +319,7 @@ export default function ProductReviewsSection({
                   </span>
                   <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden flex-1">
                     <div
-                      className="bg-[#FFA41C] h-2.5 rounded-full transition-all duration-500"
+                      className="bg-amber-500 h-2.5 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, Math.max(0, item.percentage))}%` }}
                     />
                   </div>
@@ -335,7 +334,7 @@ export default function ProductReviewsSection({
             <button
               type="button"
               onClick={handleOpenModal}
-              className="w-full py-3 px-4 rounded-xl bg-[#1B5E3B] hover:bg-[#14472D] text-white font-medium text-sm flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
             >
               <Edit3 className="w-4 h-4" />
               <span>Viết đánh giá của bạn</span>
@@ -354,7 +353,7 @@ export default function ProductReviewsSection({
                 }}
                 className={`px-4 py-2 text-xs transition-all cursor-pointer rounded-lg ${
                   selectedRating === null && !verifiedOnly
-                    ? 'bg-[#0F1111] text-white font-semibold'
+                    ? 'bg-ink-950 text-white'
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
@@ -369,7 +368,7 @@ export default function ProductReviewsSection({
                 }}
                 className={`px-4 py-2 text-xs transition-all cursor-pointer rounded-lg ${
                   selectedRating === 5 && !verifiedOnly
-                    ? 'bg-[#0F1111] text-white font-semibold'
+                    ? 'bg-ink-950 text-white'
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
@@ -384,7 +383,7 @@ export default function ProductReviewsSection({
                 }}
                 className={`px-4 py-2 text-xs transition-all cursor-pointer rounded-lg ${
                   selectedRating === 4 && !verifiedOnly
-                    ? 'bg-[#0F1111] text-white font-semibold'
+                    ? 'bg-ink-950 text-white'
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
@@ -399,7 +398,7 @@ export default function ProductReviewsSection({
                 }}
                 className={`px-4 py-2 text-xs transition-all cursor-pointer rounded-lg flex items-center gap-1.5 ${
                   verifiedOnly
-                    ? 'bg-[#0F1111] text-white font-semibold'
+                    ? 'bg-ink-950 text-white'
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
@@ -433,7 +432,7 @@ export default function ProductReviewsSection({
               ) : reviews.length === 0 ? (
                 <div className="border border-gray-200 rounded-2xl p-10 bg-white text-center text-gray-500 mt-6">
                   <MessageCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="font-semibold text-gray-700">
+                  <p className="text-gray-700 text-[1.125em]">
                     {summary.totalReviews === 0
                       ? 'Chưa có đánh giá nào cho sản phẩm này'
                       : 'Chưa có đánh giá nào phù hợp với bộ lọc'}
@@ -455,18 +454,18 @@ export default function ProductReviewsSection({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         {/* Avatar chữ cái đầu bo tròn 36px */}
-                        <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+                        <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center text-base shrink-0 shadow-xs">
                           {rev.customerName.charAt(0).toUpperCase()}
                         </div>
 
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-bold text-gray-900 text-sm">
+                            <span className="text-gray-900 text-base">
                               {rev.customerName}
                             </span>
 
                             {rev.isVerifiedBuyer && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[12px] border border-emerald-200">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 Đã mua hàng
                               </span>
@@ -482,14 +481,14 @@ export default function ProductReviewsSection({
                         </div>
                       </div>
 
-                      {/* 5 ngôi sao vàng #FFA41C bên phải */}
+                      {/* 5 ngôi sao vàng var(--color-amber-500) bên phải */}
                       <div className="flex items-center gap-0.5 shrink-0">
                         {[1, 2, 3, 4, 5].map((s) => (
                           <Star
                             key={s}
                             className={`w-4 h-4 ${
                               s <= rev.rating
-                                ? 'fill-[#FFA41C] text-[#FFA41C]'
+                                ? 'fill-amber-500 text-amber-500'
                                 : 'fill-gray-200 text-gray-200'
                             }`}
                           />
@@ -499,7 +498,7 @@ export default function ProductReviewsSection({
 
                     {/* Tiêu đề nhận xét in đậm */}
                     {rev.title && (
-                      <h4 className="font-bold text-gray-900 text-sm leading-snug">
+                      <h4 className="text-gray-900 text-base leading-snug">
                         {rev.title}
                       </h4>
                     )}
@@ -512,7 +511,7 @@ export default function ProductReviewsSection({
                     {/* Phản hồi từ CSKH Thái Sơn Foods (nếu có) */}
                     {rev.adminReply && (
                       <div className="bg-gray-50 border-l-4 border-emerald-600 p-3 rounded-r-xl text-xs">
-                        <div className="flex items-center gap-1.5 font-bold text-emerald-800 mb-1">
+                        <div className="flex items-center gap-1.5 text-emerald-800 mb-1 text-[1.125em]">
                           <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                           Phản hồi từ Thái Sơn Foods
                         </div>
@@ -537,7 +536,6 @@ export default function ProductReviewsSection({
                       </button>
 
                       <div className="inline-flex items-center gap-1 text-xs text-gray-400 font-normal">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Thái Sơn Foods bảo chứng</span>
                       </div>
                     </div>
@@ -577,7 +575,7 @@ export default function ProductReviewsSection({
 
       {/* ── MODAL VIẾT ĐÁNH GIÁ CỦA BẠN ── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             {/* Nút đóng */}
             <button
@@ -592,7 +590,7 @@ export default function ProductReviewsSection({
               <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center mb-2">
                 <Edit3 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 font-heading">
+              <h3 className="text-2xl text-gray-900 font-heading">
                 Viết Đánh Giá Của Bạn
               </h3>
               <p className="text-xs text-gray-500 mt-1">
@@ -603,7 +601,7 @@ export default function ProductReviewsSection({
             <form onSubmit={handleSubmitReview} className="space-y-4">
               {/* Chọn số sao */}
               <div className="text-center pb-2">
-                <label className="block text-xs font-semibold text-gray-700 mb-2">
+                <label className="block text-sm text-gray-700 mb-2">
                   Chất lượng sản phẩm
                 </label>
                 <div className="flex items-center justify-center gap-2">
@@ -626,7 +624,7 @@ export default function ProductReviewsSection({
                     </button>
                   ))}
                 </div>
-                <p className="text-xs font-bold text-amber-600 mt-1">
+                <p className="text-sm text-amber-600 mt-1">
                   {formRating === 5 && 'Tuyệt vời — Rất hài lòng!'}
                   {formRating === 4 && 'Hài lòng — Vị ngon vừa vặn'}
                   {formRating === 3 && 'Bình thường — Cần cải thiện'}
@@ -638,7 +636,7 @@ export default function ProductReviewsSection({
               {/* Họ tên & Số điện thoại */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm text-gray-700 mb-1">
                     Họ và tên <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -652,7 +650,7 @@ export default function ProductReviewsSection({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  <label className="block text-sm text-gray-700 mb-1">
                     Số điện thoại (Nhận huy hiệu Đã mua)
                   </label>
                   <input
@@ -667,7 +665,7 @@ export default function ProductReviewsSection({
 
               {/* Phân loại quy cách */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   Quy cách đã trải nghiệm
                 </label>
                 <select
@@ -684,7 +682,7 @@ export default function ProductReviewsSection({
 
               {/* Tiêu đề đánh giá */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   Tiêu đề đánh giá <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -699,7 +697,7 @@ export default function ProductReviewsSection({
 
               {/* Nội dung nhận xét */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-sm text-gray-700 mb-1">
                   Nội dung nhận xét chi tiết <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -715,7 +713,7 @@ export default function ProductReviewsSection({
               {/* Thông báo kết quả */}
               {submitMessage && (
                 <div
-                  className={`p-3 rounded-xl text-xs font-semibold ${
+                  className={`p-3 rounded-xl text-sm ${
                     submitMessage.isError
                       ? 'bg-rose-50 text-rose-700 border border-rose-200'
                       : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -730,7 +728,7 @@ export default function ProductReviewsSection({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-sm uppercase tracking-wider transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                   {isSubmitting ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá Của Bạn'}

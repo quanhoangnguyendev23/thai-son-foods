@@ -30,7 +30,7 @@ export default function OrderSuccessModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -41,18 +41,18 @@ export default function OrderSuccessModal({
           <CheckCircle2 className="w-10 h-10 text-green-primary" />
         </div>
 
-        <h3 className="text-2xl font-bold text-text-dark font-heading mb-2">
+        <h3 className="text-2xl text-text-dark font-heading mb-2">
           {language === 'en' ? 'Order Placed Successfully!' : 'Đặt hàng thành công!'}
         </h3>
 
         <p className="text-sm text-text-muted mb-6">
           {language === 'en' ? (
             <>
-              Thank you <span className="font-semibold text-text-dark">{customerName}</span> for choosing Thai Son Foods. We will contact you shortly to confirm your order.
+              Thank you <span className="text-text-dark text-[1.125em]">{customerName}</span> for choosing Thai Son Foods. We will contact you shortly to confirm your order.
             </>
           ) : (
             <>
-              Cảm ơn <span className="font-semibold text-text-dark">{customerName}</span> đã tin tưởng và sử dụng sản phẩm của Thái Sơn Foods. Mình sẽ liên hệ xác nhận đơn hàng cho bạn sớm nhất.
+              Cảm ơn <span className="text-text-dark text-[1.125em]">{customerName}</span> đã tin tưởng và sử dụng sản phẩm của Thái Sơn Foods. Mình sẽ liên hệ xác nhận đơn hàng cho bạn sớm nhất.
             </>
           )}
         </p>
@@ -63,7 +63,7 @@ export default function OrderSuccessModal({
               {language === 'en' ? 'Order Code' : 'Mã đơn hàng'}
             </span>
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-sm font-bold text-green-primary">{orderId}</span>
+              <span className="font-mono text-base text-green-primary">{orderId}</span>
               <button
                 type="button"
                 onClick={handleCopy}
@@ -88,7 +88,7 @@ export default function OrderSuccessModal({
             <span className="text-xs text-text-muted">
               {language === 'en' ? 'Total Payment' : 'Tổng thanh toán'}
             </span>
-            <span className="text-base font-bold text-green-primary">{formatPrice(total)}đ</span>
+            <span className="text-lg text-green-primary">{formatPrice(total)}đ</span>
           </div>
         </div>
 
@@ -99,7 +99,7 @@ export default function OrderSuccessModal({
               <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-900">
+              <p className="text-sm text-gray-900">
                 {language === 'en' ? 'Review Your Purchase' : 'Đánh giá sản phẩm vừa mua'}
               </p>
               <p className="text-[11px] text-gray-500">
@@ -110,7 +110,7 @@ export default function OrderSuccessModal({
           <Link
             href="/#danh-gia"
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shrink-0 transition-colors shadow-xs"
+            className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-ink-950 text-sm shrink-0 transition-colors shadow-xs"
           >
             {language === 'en' ? 'Review' : 'Đánh giá'}
           </Link>
@@ -120,14 +120,14 @@ export default function OrderSuccessModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 px-4 border border-border rounded-xl text-sm font-semibold text-text-dark hover:bg-ivory-dark transition-colors"
+            className="flex-1 py-2.5 px-4 border border-border rounded-xl text-base text-text-dark hover:bg-ivory-dark transition-colors"
           >
             {language === 'en' ? 'Close' : 'Đóng'}
           </button>
           <Link
             href="/#san-pham"
             onClick={onClose}
-            className="flex-1 py-2.5 px-4 bg-green-primary text-white rounded-xl text-sm font-semibold hover:bg-green-dark transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 px-4 bg-green-primary text-white rounded-xl text-base hover:bg-green-dark transition-colors flex items-center justify-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
             {language === 'en' ? 'Continue Shopping' : 'Tiếp tục mua sắm'}

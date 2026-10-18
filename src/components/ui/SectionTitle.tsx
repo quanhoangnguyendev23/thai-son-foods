@@ -97,15 +97,12 @@ export default function SectionTitle({
           >
             <span
               className={cn(
-                'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold shadow-2xs transition-transform duration-200 group-hover:-translate-y-0.5',
+                'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] sm:text-sm shadow-2xs transition-transform duration-200 group-hover:-translate-y-0.5',
                 isCombo
                   ? 'bg-amber-50 text-amber-900 border border-amber-200/90'
                   : 'bg-emerald-50 text-emerald-900 border border-emerald-200/80'
               )}
             >
-              <span className={cn('text-xs leading-none', isCombo ? 'text-amber-500' : 'text-emerald-600')}>
-                ✦
-              </span>
               <span>{badge}</span>
             </span>
           </motion.div>
@@ -123,37 +120,10 @@ export default function SectionTitle({
           className="relative inline-flex flex-col items-start"
         >
           <div className="flex items-center flex-wrap">
-            <h2 className="text-[27px] sm:text-[33px] md:text-[36px] lg:text-[40px] font-bold text-[#183B30] font-heading tracking-tight leading-[1.15] text-left">
+            <h2 className="text-[27px] sm:text-[33px] md:text-[36px] lg:text-[40px] text-forest-900 font-heading tracking-tight leading-[1.15] text-left">
               {renderTitleWithHighlight(title, variant, highlightWord)}
             </h2>
 
-            {/* Chi tiết playful: 2-3 chấm tròn nhỏ hữu cơ xuất hiện sau heading 250ms */}
-            <motion.span
-              initial={{ scale: 0.5, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{
-                duration: 0.45,
-                delay: 0.25,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="inline-flex items-center gap-1.5 ml-2.5 sm:ml-3 align-middle select-none pointer-events-none"
-              aria-hidden="true"
-            >
-              {isCombo ? (
-                <>
-                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 opacity-90 transition-transform duration-300 group-hover:scale-125" />
-                  <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500 opacity-80 transition-transform duration-300 group-hover:scale-110" />
-                  <span className="text-amber-500 text-xs sm:text-sm font-bold opacity-85 transition-transform duration-300 group-hover:rotate-12">✦</span>
-                </>
-              ) : (
-                <>
-                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 opacity-80 transition-transform duration-300 group-hover:scale-125" />
-                  <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 opacity-85 transition-transform duration-300 group-hover:scale-110" />
-                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-300 opacity-70 transition-transform duration-300 group-hover:scale-125" />
-                </>
-              )}
-            </motion.span>
           </div>
 
           {/* Nét cong mềm mại (Curved Organic Brush Accent) dưới chân heading */}
@@ -179,14 +149,14 @@ export default function SectionTitle({
               >
                 <path
                   d="M2 7C35 2.5 85 1.5 158 5.5"
-                  stroke="#F59E0B"
+                  stroke="var(--color-amber-600)"
                   strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeOpacity="0.85"
                 />
                 <path
                   d="M20 8.5C65 4.5 115 4 145 6.5"
-                  stroke="#FBBF24"
+                  stroke="var(--color-amber-500)"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeOpacity="0.6"
@@ -201,14 +171,14 @@ export default function SectionTitle({
               >
                 <path
                   d="M2 7.5C40 2.5 90 2 158 6"
-                  stroke="#16A34A"
+                  stroke="var(--color-emerald-600)"
                   strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeOpacity="0.75"
                 />
                 <path
                   d="M15 8.5C55 5 105 4.5 140 7"
-                  stroke="#86EFAC"
+                  stroke="var(--color-emerald-300)"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeOpacity="0.6"
@@ -230,7 +200,7 @@ export default function SectionTitle({
       {viewAllLink && (
         <Link
           href={viewAllLink}
-          className="group/link flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-800 hover:text-emerald-950 transition-colors whitespace-nowrap pt-1 pb-1 shrink-0 cursor-pointer self-start sm:self-end"
+          className="group/link flex items-center gap-1.5 text-sm sm:text-base text-emerald-800 hover:text-emerald-950 transition-colors whitespace-nowrap pt-1 pb-1 shrink-0 cursor-pointer self-start sm:self-end"
         >
           <span>{viewAllText}</span>
           <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover/link:translate-x-1 text-emerald-700" />

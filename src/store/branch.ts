@@ -43,19 +43,19 @@ interface BranchState {
   initDefaultBranch: () => Promise<void>;
 }
 
-// Chi nhánh mặc định (Cửa hàng Vườn Lài - Tân Phú) nếu người dùng chưa chọn
+// Chi nhánh mặc định (Cửa hàng NH - Phú Thọ Hòa) nếu người dùng chưa chọn
 const DEFAULT_BRANCH: StoreBranch = {
   id: 'store_NH',
   code: 'NH',
-  name: 'Cửa Hàng Vườn Lài (Tân Phú)',
-  address: '298/4 Vườn Lài, P Phú Thọ Hòa, Quận Tân Phú, TP. HCM',
+  name: 'Cửa Hàng NH - Phú Thọ Hòa',
+  address: '298/4 Vườn Lài, P.Phú Thọ Hòa, TP.HCM',
   phone: '0911812425',
   province: 'Hồ Chí Minh',
   district: 'Tân Phú',
   ward: 'Phú Thọ Hòa',
   latitude: 10.7882898,
   longitude: 106.6251124,
-  mapUrl: 'https://maps.app.goo.gl/dPfkW2gVxy9k55TD7',
+  mapUrl: 'https://www.google.com/maps/search/?api=1&query=10.7882898,106.6251124',
 };
 
 export const useBranchStore = create<BranchState>()(
@@ -80,10 +80,11 @@ export const useBranchStore = create<BranchState>()(
           if (data?.success && Array.isArray(data.stores) && data.stores.length > 0) {
             set({ branches: data.stores });
             const current = get().selectedBranch;
-            if (!current || !data.stores.some((s: StoreBranch) => s.code === current.code)) {
-              const matched = data.stores.find((s: StoreBranch) => s.code === 'NH') || data.stores[0];
-              if (matched) set({ selectedBranch: matched });
-            }
+            const matched =
+              (current && data.stores.find((s: StoreBranch) => s.code === current.code)) ||
+              data.stores.find((s: StoreBranch) => s.code === 'NH') ||
+              data.stores[0];
+            if (matched) set({ selectedBranch: matched });
           }
         } catch {
           // im lặng fallback, giữ chi nhánh mặc định

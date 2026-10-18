@@ -123,24 +123,24 @@ export default function AdminRegisterPage() {
   const isFirstAdmin = hasAdmins === false;
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-forest-950 text-slate-100 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-sans selection:bg-emerald-500 selection:text-white">
       {/* Ambient background glow effects */}
       <div className="absolute top-1/4 -right-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
+      <div className="absolute bottom-1/4 -left-40 w-96 h-96 bg-leaf-600/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(var(--color-ink-900)_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
 
       {/* Main Container */}
       <div className="w-full max-w-lg relative z-10">
         {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 p-0.5 shadow-xl shadow-emerald-950/50 mb-3 ring-4 ring-emerald-500/20">
-            <div className="w-full h-full bg-[#0b1329] rounded-[14px] flex items-center justify-center">
-              <span className="font-black text-xl tracking-tighter bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
+            <div className="w-full h-full bg-forest-950 rounded-[14px] flex items-center justify-center">
+              <span className="text-2xl tracking-tighter bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
                 TSF
               </span>
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-1.5">
+          <h1 className="text-2xl sm:text-3xl tracking-tight text-white mb-1.5">
             {isFirstAdmin ? 'Khởi Tạo Super Admin' : 'Đăng Ký Tài Khoản Quản Trị'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400">
@@ -155,7 +155,7 @@ export default function AdminRegisterPage() {
           <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-amber-500/15 to-emerald-500/15 border border-amber-500/30 text-amber-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
             <Crown className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-300">Quyền Super Admin tự động kích hoạt</p>
+              <p className="text-amber-300 text-[1.125em]">Quyền Super Admin tự động kích hoạt</p>
               <p className="text-xs text-slate-300 mt-1">
                 Tài khoản đầu tiên được đăng ký sẽ tự động sở hữu toàn quyền quản trị cao nhất và không yêu cầu mã bảo mật.
               </p>
@@ -164,7 +164,7 @@ export default function AdminRegisterPage() {
         )}
 
         {/* Registration Card */}
-        <div className="bg-slate-900/85 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/80 relative">
+        <div className="bg-slate-900/85 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-ink-950/80 relative">
           {/* Card Header Status */}
           <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-800/80 text-xs">
             <div className="flex items-center gap-2 text-slate-400">
@@ -200,20 +200,20 @@ export default function AdminRegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-lg font-bold text-white">Cổng Đăng Ký Tự Do Đã Đóng</h2>
+                <h2 className="text-xl text-white">Cổng Đăng Ký Tự Do Đã Đóng</h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-sm mx-auto leading-relaxed">
                   Hệ thống quản trị Thái Sơn Foods đã được thiết lập. Nhằm đảm bảo an toàn và bảo mật thông tin, việc đăng ký tài khoản mới tự do đã bị vô hiệu hóa.
                 </p>
                 <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 max-w-sm mx-auto text-left space-y-1">
-                  <p className="font-semibold text-slate-300">📋 Nguyên tắc cấp phát tài khoản:</p>
-                  <p>• Mọi tài khoản <strong>Marketing</strong> hoặc <strong>Nhân viên cửa hàng</strong> đều phải do Quản trị viên cấp cao (Super Admin) tạo.</p>
+                  <p className="text-slate-300 text-[1.125em]">📋 Nguyên tắc cấp phát tài khoản:</p>
+                  <p>• Mọi tài khoản <strong className="text-[1.125em]">Marketing</strong> hoặc <strong className="text-[1.125em]">Nhân viên cửa hàng</strong> đều phải do Quản trị viên cấp cao (Super Admin) tạo.</p>
                   <p>• Vui lòng liên hệ Super Admin của công ty để được cấp tài khoản và phân quyền cửa hàng tương ứng.</p>
                 </div>
               </div>
 
               <Link
                 href="/admin/login"
-                className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl text-base bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 transition-all cursor-pointer"
               >
                 <span>Chuyển Đến Trang Đăng Nhập</span>
               </Link>
@@ -222,7 +222,7 @@ export default function AdminRegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Full Name */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              <label className="block text-sm uppercase tracking-wider text-slate-300 mb-1.5">
                 Họ và Tên
               </label>
               <div className="relative">
@@ -244,7 +244,7 @@ export default function AdminRegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Username */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-sm uppercase tracking-wider text-slate-300 mb-1.5">
                   Tên đăng nhập <span className="text-emerald-400">*</span>
                 </label>
                 <div className="relative">
@@ -265,7 +265,7 @@ export default function AdminRegisterPage() {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-sm uppercase tracking-wider text-slate-300 mb-1.5">
                   Email <span className="text-emerald-400">*</span>
                 </label>
                 <div className="relative">
@@ -289,7 +289,7 @@ export default function AdminRegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-sm uppercase tracking-wider text-slate-300 mb-1.5">
                   Mật khẩu <span className="text-emerald-400">*</span>
                 </label>
                 <div className="relative">
@@ -317,7 +317,7 @@ export default function AdminRegisterPage() {
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                <label className="block text-sm uppercase tracking-wider text-slate-300 mb-1.5">
                   Xác nhận mật khẩu <span className="text-emerald-400">*</span>
                 </label>
                 <div className="relative">
@@ -341,7 +341,7 @@ export default function AdminRegisterPage() {
             {!checkingInit && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  <label className="block text-sm uppercase tracking-wider text-slate-300">
                     Mã bảo mật đăng ký <span className="text-emerald-400">*</span>
                   </label>
                   <span className="text-[11px] text-slate-400">Cấu hình trên máy chủ</span>
@@ -370,7 +370,7 @@ export default function AdminRegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/60 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full mt-2 py-3 px-4 rounded-xl text-base bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/60 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -392,7 +392,7 @@ export default function AdminRegisterPage() {
             <span>Đã có tài khoản quản trị? </span>
             <Link
               href="/admin/login"
-              className="text-emerald-400 hover:text-emerald-300 font-semibold hover:underline ml-1"
+              className="text-emerald-400 hover:text-emerald-300 hover:underline ml-1 text-[1.125em]"
             >
               Đăng nhập ngay
             </Link>

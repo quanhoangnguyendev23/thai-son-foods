@@ -87,14 +87,14 @@ export default function LogoPreloader() {
                     src="/images/logo-outline.png"
                     alt="Thái Sơn Foods outline"
                     fill
-                    sizes="320px"
+                    sizes="480px"
                     className="object-contain"
                     priority
                   />
 
                   {/* Vệt sáng dẫn đầu nét vẽ chạy dọc mép */}
                   <motion.div
-                    className="absolute top-0 bottom-0 w-[3px] bg-gradient-to-b from-transparent via-[#1B5E3B] to-transparent shadow-[0_0_12px_#1B5E3B]"
+                    className="absolute top-0 bottom-0 w-[3px] bg-gradient-to-b from-transparent via-forest-700 to-transparent shadow-[0_0_12px_var(--color-forest-700)]"
                     initial={{ left: '0%' }}
                     animate={{ left: '100%' }}
                     transition={{
@@ -122,7 +122,7 @@ export default function LogoPreloader() {
                   src="/images/logo-clean-1000.png"
                   alt="Thái Sơn Foods - Món ngon quê Việt"
                   fill
-                  sizes="320px"
+                  sizes="480px"
                   className="object-contain drop-shadow-sm"
                   priority
                 />
@@ -139,14 +139,14 @@ export default function LogoPreloader() {
               transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
               className="mt-4 sm:mt-5 flex items-center gap-3"
             >
-              <span className="w-8 sm:w-12 h-[1px] bg-gradient-to-r from-transparent via-[#1B5E3B]/30 to-transparent inline-block" />
+              <span className="w-8 sm:w-12 h-[1px] bg-gradient-to-r from-transparent via-forest-700/30 to-transparent inline-block" />
               <span
-                className="text-base sm:text-lg md:text-xl italic font-medium tracking-wide text-[#1B5E3B]"
+                className="text-base sm:text-lg md:text-xl italic font-medium tracking-wide text-forest-700"
                 style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
               >
                 Uống một bữa ăn ngon lành
               </span>
-              <span className="w-8 sm:w-12 h-[1px] bg-gradient-to-r from-transparent via-[#1B5E3B]/30 to-transparent inline-block" />
+              <span className="w-8 sm:w-12 h-[1px] bg-gradient-to-r from-transparent via-forest-700/30 to-transparent inline-block" />
             </motion.div>
           </div>
 

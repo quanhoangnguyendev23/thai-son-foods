@@ -51,7 +51,7 @@ export default function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-xs ${isPageWithStickySidebar ? 'min-[1440px]:hidden' : ''}`}
+            className={`fixed inset-0 z-50 bg-ink-950/40 backdrop-blur-xs ${isPageWithStickySidebar ? 'min-[1440px]:hidden' : ''}`}
             onClick={closeCart}
           />
 
@@ -67,7 +67,7 @@ export default function CartDrawer() {
             <div className="flex items-center justify-between p-4 border-b border-border-light">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-green-primary" />
-                <h2 className="text-lg font-bold text-text-dark font-heading">
+                <h2 className="text-xl text-text-dark font-heading">
                   {language === 'en' ? 'Shopping Cart' : 'Giỏ hàng'} ({totalQuantity})
                 </h2>
               </div>
@@ -86,13 +86,13 @@ export default function CartDrawer() {
               <div className="flex items-center gap-1.5 text-emerald-900 truncate">
                 <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                 <span className="truncate">
-                  Kho: <strong className="font-semibold">{selectedBranch?.name || 'Chi nhánh'}</strong>
+                  Kho: <strong className="text-[1.125em]">{selectedBranch?.name || 'Chi nhánh'}</strong>
                 </span>
               </div>
               <button
                 type="button"
                 onClick={openBranchModal}
-                className="text-emerald-700 hover:text-emerald-900 font-bold underline shrink-0 ml-2 cursor-pointer"
+                className="text-emerald-700 hover:text-emerald-900 underline shrink-0 ml-2 cursor-pointer text-[1.125em]"
               >
                 Đổi
               </button>
@@ -103,13 +103,13 @@ export default function CartDrawer() {
               <div className="flex items-center justify-between text-xs text-text-dark mb-1.5">
                 <span>
                   {remainingForFreeShipping <= 0 ? (
-                    <span className="font-semibold text-green-primary">
-                      {language === 'en' ? '🎉 You have unlocked FREE SHIPPING!' : '🎉 Bạn được MIỄN PHÍ VẬN CHUYỂN!'}
+                    <span className="text-green-primary text-[1.125em]">
+                      {language === 'en' ? 'You have unlocked FREE SHIPPING!' : 'Bạn được MIỄN PHÍ VẬN CHUYỂN!'}
                     </span>
                   ) : (
                     <>
                       {language === 'en' ? 'Add ' : 'Mua thêm '}
-                      <span className="font-bold text-green-primary">
+                      <span className="text-green-primary text-[1.125em]">
                         {formatPrice(remainingForFreeShipping)}đ
                       </span>{' '}
                       {language === 'en' ? 'more for free shipping' : 'để được freeship'}
@@ -136,7 +136,7 @@ export default function CartDrawer() {
                 <div className="w-20 h-20 bg-ivory rounded-full flex items-center justify-center mb-4">
                   <ShoppingBag className="w-10 h-10 text-text-muted" />
                 </div>
-                <h3 className="text-lg font-bold text-text-dark font-heading mb-1">
+                <h3 className="text-xl text-text-dark font-heading mb-1">
                   {language === 'en' ? 'Your cart is empty' : 'Giỏ hàng của bạn đang trống'}
                 </h3>
                 <p className="text-sm text-text-muted mb-6">
@@ -176,7 +176,7 @@ export default function CartDrawer() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-text-dark leading-snug break-words">
+                      <h4 className="text-base text-text-dark leading-snug break-words">
                         {item.name}
                       </h4>
                       {item.variantName && (
@@ -184,7 +184,7 @@ export default function CartDrawer() {
                           {item.variantName}
                         </p>
                       )}
-                      <p className="text-sm font-bold text-green-primary mt-1">
+                      <p className="text-base text-green-primary mt-1">
                         {formatPrice(item.price)}đ
                       </p>
 
@@ -210,7 +210,7 @@ export default function CartDrawer() {
                               >
                                 <Minus className="w-3.5 h-3.5" />
                               </button>
-                              <span className="px-2.5 text-xs font-semibold text-text-dark min-w-[24px] text-center">
+                              <span className="px-2.5 text-sm text-text-dark min-w-[24px] text-center">
                                 {item.quantity}
                               </span>
                               <button
@@ -255,7 +255,7 @@ export default function CartDrawer() {
                 {/* Total */}
                 <div className="flex items-center justify-between text-base">
                   <span className="text-text-muted">{language === 'en' ? 'Subtotal:' : 'Tạm tính:'}</span>
-                  <span className="font-bold text-green-primary text-lg">
+                  <span className="text-green-primary text-xl">
                     {formatPrice(totalPrice)}đ
                   </span>
                 </div>
@@ -263,7 +263,7 @@ export default function CartDrawer() {
                 {/* Cảnh báo thiếu hàng nếu có */}
                 {!isAvailable && (
                   <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
-                    <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                    <div className="flex items-center gap-1.5 text-amber-900 text-[1.125em]">
                       <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                       <span>Chi nhánh hiện chưa đủ số lượng</span>
                     </div>
@@ -273,19 +273,19 @@ export default function CartDrawer() {
                     <ul className="list-disc pl-4 space-y-0.5 text-[11px]">
                       {insufficientItems.map((it) => (
                         <li key={it.productId}>
-                          <strong>{it.productName.slice(0, 30)}...</strong>: cần {it.requested}, kho còn {it.available}
+                          <strong className="text-[1.125em]">{it.productName.slice(0, 30)}...</strong>: cần {it.requested}, kho còn {it.available}
                         </li>
                       ))}
                     </ul>
                     {alternativeStores.length > 0 ? (
                       <div className="pt-1 border-t border-amber-200/70 flex items-center justify-between gap-1">
                         <span className="text-[11px] text-gray-700">
-                          Kho <strong>{alternativeStores[0].name.slice(0, 16)}</strong> đủ hàng
+                          Kho <strong className="text-[1.125em]">{alternativeStores[0].name.slice(0, 16)}</strong> đủ hàng
                         </span>
                         <button
                           type="button"
                           onClick={() => setSelectedBranch(alternativeStores[0] as any)}
-                          className="text-[11px] font-bold text-emerald-800 underline hover:text-emerald-900 cursor-pointer"
+                          className="text-[12px] text-emerald-800 underline hover:text-emerald-900 cursor-pointer"
                         >
                           Đổi kho này
                         </button>
@@ -294,7 +294,7 @@ export default function CartDrawer() {
                       <button
                         type="button"
                         onClick={openBranchModal}
-                        className="text-[11px] font-bold text-emerald-800 underline cursor-pointer block text-left"
+                        className="text-[12px] text-emerald-800 underline cursor-pointer block text-left"
                       >
                         Chọn chi nhánh khác còn hàng
                       </button>
@@ -308,7 +308,7 @@ export default function CartDrawer() {
                     <Link
                       href="/thanh-toan"
                       onClick={closeCart}
-                      className="w-full py-3 bg-green-primary text-white font-bold rounded-xl hover:bg-green-dark transition-all text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-98"
+                      className="w-full py-3 bg-green-primary text-white rounded-xl hover:bg-green-dark transition-all text-base flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-98"
                     >
                       <span>{language === 'en' ? 'Place Order' : 'Đặt hàng'}</span>
                       <ArrowRight className="w-4 h-4" />
@@ -317,9 +317,9 @@ export default function CartDrawer() {
                     <button
                       type="button"
                       disabled
-                      className="w-full py-2.5 px-2 bg-amber-50/90 text-amber-950 font-semibold rounded-xl text-xs flex flex-col items-center justify-center cursor-not-allowed border border-amber-300 text-center leading-tight gap-0.5 shadow-xs"
+                      className="w-full py-2.5 px-2 bg-amber-50/90 text-amber-950 rounded-xl text-sm flex flex-col items-center justify-center cursor-not-allowed border border-amber-300 text-center leading-tight gap-0.5 shadow-xs"
                     >
-                      <span className="font-bold text-amber-950 text-xs">
+                      <span className="text-amber-950 text-sm">
                         {language === 'en' ? 'Branch currently out of stock' : 'Chi nhánh tạm chưa đủ hàng'}
                       </span>
                       <span className="text-[10.5px] text-amber-800 font-normal">

@@ -205,7 +205,7 @@ export default function ProductGallery({
                 className={cn(
                   'relative w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all shrink-0 bg-white p-0.5 flex items-center justify-center cursor-pointer',
                   activeIndex === index
-                    ? 'border-[#1B5E3B] ring-2 ring-[#1B5E3B]/20 shadow-xs'
+                    ? 'border-forest-700 ring-2 ring-forest-700/20 shadow-xs'
                     : 'border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100'
                 )}
                 aria-label={`Xem ảnh ${index + 1}`}
@@ -220,7 +220,7 @@ export default function ProductGallery({
                         playsInline
                         preload="metadata"
                       />
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                      <div className="absolute inset-0 bg-ink-950/30 flex items-center justify-center pointer-events-none">
                         <PlayCircle className="w-5 h-5 text-white drop-shadow-md" />
                       </div>
                     </div>
@@ -283,8 +283,8 @@ export default function ProductGallery({
               </button>
             )}
 
-            {/* Huy hiệu số trang góc dưới 1/4 nền đen mờ bg-black/60 text-white text-xs px-2 py-0.5 rounded-full */}
-            <div className="absolute bottom-3 right-3 z-10 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full font-medium pointer-events-none">
+            {/* Huy hiệu số trang góc dưới 1/4 nền đen mờ bg-ink-950/60 text-white text-xs px-2 py-0.5 rounded-full */}
+            <div className="absolute bottom-3 right-3 z-10 bg-ink-950/60 text-white text-xs px-2 py-0.5 rounded-full font-medium pointer-events-none">
               {activeIndex + 1}/{displayImages.length}
             </div>
 
@@ -306,7 +306,7 @@ export default function ProductGallery({
                   muted
                   loop
                   playsInline
-                  className="absolute inset-0 w-full h-full object-contain bg-black/5"
+                  className="absolute inset-0 w-full h-full object-contain bg-ink-950/5"
                 />
               ) : (
                 <Image
@@ -331,7 +331,7 @@ export default function ProductGallery({
                   className={cn(
                     'relative w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all shrink-0 bg-white p-0.5 flex items-center justify-center cursor-pointer',
                     activeIndex === index
-                      ? 'border-[#1B5E3B] ring-2 ring-[#1B5E3B]/20 shadow-xs'
+                      ? 'border-forest-700 ring-2 ring-forest-700/20 shadow-xs'
                       : 'border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100'
                   )}
                   aria-label={`Xem ảnh ${index + 1}`}
@@ -346,7 +346,7 @@ export default function ProductGallery({
                           playsInline
                           preload="metadata"
                         />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 bg-ink-950/30 flex items-center justify-center pointer-events-none">
                           <PlayCircle className="w-4 h-4 text-white drop-shadow-md" />
                         </div>
                       </div>
@@ -369,18 +369,18 @@ export default function ProductGallery({
 
       {/* ── HÀNG TIỆN ÍCH DƯỚI ẢNH ── */}
       <div className="w-full mt-3 pt-2.5 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 px-1">
-        {/* Dòng trái: Nhấp vào ảnh để phóng to kèm icon kính lúp ZoomIn màu #666666 */}
+        {/* Dòng trái: Nhấp vào ảnh để phóng to kèm icon kính lúp ZoomIn màu var(--color-ink-600) */}
         <button
           onClick={() => !isVideo && setIsZoomOpen(true)}
-          className="inline-flex items-center gap-1.5 text-xs text-[#666666] hover:text-[#1B5E3B] font-normal transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs text-ink-600 hover:text-forest-700 font-normal transition-colors cursor-pointer"
         >
-          <ZoomIn className="w-3.5 h-3.5 text-[#666666]" />
+          <ZoomIn className="w-3.5 h-3.5 text-ink-600" />
           <span>Nhấp vào ảnh để phóng to</span>
         </button>
 
         {/* Cụm phải: Chia sẻ đến bạn bè của bạn: + 2 nút badge MXH (Facebook xanh #1877F2, Zalo xanh #0068FF) + Nút Sao chép viền xám */}
         <div className="flex items-center gap-2 relative">
-          <span className="text-xs text-[#666666] font-normal hidden sm:inline">
+          <span className="text-xs text-ink-600 font-normal hidden sm:inline">
             Chia sẻ đến bạn bè của bạn:
           </span>
 
@@ -400,7 +400,7 @@ export default function ProductGallery({
           {/* Zalo xanh #0068FF */}
           <button
             onClick={handleShareZalo}
-            className="h-6 px-2.5 rounded-full bg-[#0068FF] text-white flex items-center justify-center transition-transform hover:scale-105 cursor-pointer text-[11px] font-bold shadow-xs"
+            className="h-6 px-2.5 rounded-full bg-[#0068FF] text-white flex items-center justify-center transition-transform hover:scale-105 cursor-pointer text-[12px] shadow-xs"
             title="Chia sẻ qua Zalo"
             aria-label="Chia sẻ qua Zalo"
           >
@@ -440,7 +440,7 @@ export default function ProductGallery({
           <div className="flex items-center justify-between mb-2.5 px-0.5">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block" />
-              <span className="text-xs font-bold text-gray-900">
+              <span className="text-sm text-gray-900">
                 Sản phẩm cùng danh mục ({categoryProducts.length})
               </span>
             </div>
@@ -497,7 +497,7 @@ export default function ProductGallery({
                   </div>
 
                   {/* Tên vị bên dưới */}
-                  <span className="text-[11px] font-semibold text-gray-800 leading-tight line-clamp-1 w-full">
+                  <span className="text-[12px] text-gray-800 leading-tight line-clamp-1 w-full">
                     {shortFlavorName}
                   </span>
                   <span className="text-[10px] text-emerald-700 font-medium mt-0.5">
@@ -516,7 +516,7 @@ export default function ProductGallery({
       {isZoomOpen && mounted && createPortal(
         <div
           onClick={() => setIsZoomOpen(false)}
-          className="fixed inset-0 z-[99999] bg-black/92 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-fade-in-up select-none"
+          className="fixed inset-0 z-[99999] bg-ink-950/92 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-fade-in-up select-none"
         >
           {/* Close Button */}
           <button
@@ -588,7 +588,7 @@ export default function ProductGallery({
             onClick={(e) => e.stopPropagation()}
             className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur-md px-5 py-2 rounded-full text-white text-sm font-medium border border-white/10 flex items-center gap-2"
           >
-            <span className="text-orange-400 font-bold">{activeIndex + 1}</span>
+            <span className="text-orange-400 text-[1.125em]">{activeIndex + 1}</span>
             <span className="text-white/60">/</span>
             <span>{displayImages.length}</span>
             <span className="text-white/40">•</span>
@@ -602,7 +602,7 @@ export default function ProductGallery({
       {isShareModalOpen && mounted && createPortal(
         <div
           onClick={() => setIsShareModalOpen(false)}
-          className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fade-in-up"
+          className="fixed inset-0 z-[99999] bg-ink-950/60 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fade-in-up"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -611,11 +611,11 @@ export default function ProductGallery({
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#1B5E3B] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-forest-700 flex items-center justify-center">
                   <Share2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base leading-tight">
+                  <h3 className="text-gray-900 text-lg leading-tight">
                     {language === 'en' ? 'Share Product' : 'Chia sẻ sản phẩm'}
                   </h3>
                   <p className="text-[11px] text-gray-500">
@@ -633,7 +633,7 @@ export default function ProductGallery({
             </div>
 
             {/* Product Card Preview */}
-            <div className="p-4 bg-[#FAF9F5] border-b border-gray-100 flex items-center gap-3">
+            <div className="p-4 bg-ivory border-b border-gray-100 flex items-center gap-3">
               <div className="relative w-16 h-16 rounded-xl bg-white border border-gray-200/80 p-1 shrink-0 overflow-hidden flex items-center justify-center">
                 <Image
                   src={displayImages[0]?.url || activeImage.url}
@@ -644,14 +644,14 @@ export default function ProductGallery({
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full inline-block mb-1">
+                <span className="text-[11px] text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full inline-block mb-1">
                   Thái Sơn Foods
                 </span>
-                <h4 className="font-bold text-sm text-gray-900 leading-snug">
+                <h4 className="text-base text-gray-900 leading-snug">
                   {productName}
                 </h4>
                 {currentPrice && (
-                  <p className="text-xs font-bold text-emerald-700 mt-0.5">
+                  <p className="text-sm text-emerald-700 mt-0.5">
                     {formatPrice(currentPrice)} ₫
                   </p>
                 )}
@@ -662,7 +662,7 @@ export default function ProductGallery({
             <div className="p-5 space-y-4">
               {/* Social Channels Grid */}
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-2.5">
+                <label className="text-sm text-gray-700 block mb-2.5">
                   {language === 'en' ? 'Quick share via social media:' : 'Chia sẻ nhanh qua mạng xã hội:'}
                 </label>
                 <div className="grid grid-cols-4 gap-2.5">
@@ -676,7 +676,7 @@ export default function ProductGallery({
                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                       </svg>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-700">Facebook</span>
+                    <span className="text-[12px] text-gray-700">Facebook</span>
                   </button>
 
                   {/* Zalo */}
@@ -684,23 +684,23 @@ export default function ProductGallery({
                     onClick={handleShareZalo}
                     className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group cursor-pointer"
                   >
-                    <div className="w-10 h-10 rounded-full bg-[#0068FF] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform font-bold text-xs tracking-tighter">
+                    <div className="w-10 h-10 rounded-full bg-[#0068FF] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform text-sm tracking-tighter">
                       Zalo
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-700">Zalo</span>
+                    <span className="text-[12px] text-gray-700">Zalo</span>
                   </button>
 
                   {/* Messenger */}
                   <button
                     onClick={handleShareMessenger}
-                    className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50/50 transition-all group cursor-pointer"
+                    className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-gray-100 hover:border-leaf-200 hover:bg-leaf-50/50 transition-all group cursor-pointer"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#00C6FF] via-[#0078FF] to-[#A800FF] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-forest-400 via-emerald-400 to-leaf-500 text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
                       <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                         <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.455 5.518 3.735 7.208V22l3.39-1.86c.928.257 1.916.396 2.875.396 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.09 12.433l-2.766-2.95-5.398 2.95 5.938-6.302 2.836 2.95 5.328-2.95-5.938 6.302z" />
                       </svg>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-700">Messenger</span>
+                    <span className="text-[12px] text-gray-700">Messenger</span>
                   </button>
 
                   {/* Mã QR */}
@@ -716,7 +716,7 @@ export default function ProductGallery({
                     <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
                       <QrCode className="w-5 h-5" />
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-700">Mã QR</span>
+                    <span className="text-[12px] text-gray-700">Mã QR</span>
                   </button>
                 </div>
               </div>
@@ -731,7 +731,7 @@ export default function ProductGallery({
                       className="w-32 h-32 object-contain"
                     />
                   </div>
-                  <p className="text-xs font-semibold text-gray-800">
+                  <p className="text-sm text-gray-800">
                     Quét mã để xem chi tiết sản phẩm trên điện thoại
                   </p>
                   <p className="text-[11px] text-gray-500 mt-0.5">
@@ -742,7 +742,7 @@ export default function ProductGallery({
 
               {/* Copy Link Input */}
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1.5">
+                <label className="text-sm text-gray-700 block mb-1.5">
                   Hoặc sao chép đường link liên kết:
                 </label>
                 <div className="flex items-center gap-2">
@@ -755,10 +755,10 @@ export default function ProductGallery({
                   <button
                     onClick={() => copyToClipboard()}
                     className={cn(
-                      "px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs",
+                      "px-4 py-2.5 rounded-xl text-sm flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs",
                       copied
                         ? "bg-emerald-600 text-white"
-                        : "bg-[#1B5E3B] hover:bg-[#14482D] text-white"
+                        : "bg-forest-700 hover:bg-forest-800 text-white"
                     )}
                   >
                     {copied ? (
@@ -780,7 +780,7 @@ export default function ProductGallery({
               {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
                 <button
                   onClick={handleNativeShare}
-                  className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200/80 text-gray-800 font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200/80 text-gray-800 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <Smartphone className="w-4 h-4 text-gray-600" />
                   <span>Chia sẻ qua ứng dụng khác trên thiết bị (AirDrop, Tin nhắn...)</span>
