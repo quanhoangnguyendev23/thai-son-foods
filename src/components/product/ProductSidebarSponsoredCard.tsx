@@ -3,10 +3,12 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Info } from 'lucide-react';
+import { Star, Info, ShoppingBag } from 'lucide-react';
 import { products } from '@/data/products';
 import { Product } from '@/types';
 import { getPackLabel, useRandomSponsoredProduct } from '@/lib/sponsored-products';
+import { useCartStore } from '@/store/cart';
+import { useFlyToCart } from '@/context/FlyToCartContext';
 
 interface ProductSidebarSponsoredCardProps {
   currentProductId?: string;
@@ -41,6 +43,8 @@ export default function ProductSidebarSponsoredCard({
   hideUnverifiedStats = false,
   randomize = false,
 }: ProductSidebarSponsoredCardProps) {
+  const addItem = useCartStore((s) => s.addItem);
+  const { flyToCart } = useFlyToCart();
   const randomProduct = useRandomSponsoredProduct(currentProductId, 1, randomize);
 
   // Chọn sản phẩm Best Seller hoặc Đang Sale khác với sản phẩm hiện tại
@@ -70,6 +74,30 @@ export default function ProductSidebarSponsoredCard({
   const productLink = `/san-pham/${recommendedProduct.slug}`;
   const thumbnail = recommendedProduct.thumbnail || '/images/products/1200x900-sb1.jpg';
 
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    flyToCart({
+      startElement: e.currentTarget,
+      imageSrc: thumbnail,
+    });
+
+    const variantId = defaultPackVariant?.id || 'default-7chai';
+    const variantName = defaultPackVariant?.name || '7 chai';
+
+    addItem({
+      productId: `${recommendedProduct.id}-${variantId}`,
+      name: `${cleanName} (${variantName})`,
+      slug: recommendedProduct.slug,
+      price,
+      unit: packUnit,
+      thumbnail,
+      variantId,
+      variantName,
+    });
+  };
+
   return (
     <div className={`w-full space-y-3 sm:space-y-3.5 ${className}`}>
       {/* ── Box Prime Hội Viên (Ảnh 1): Hiển thị ở trên mục gợi ý sản phẩm tài trợ ("trên mục này") ── */}
@@ -91,16 +119,6 @@ export default function ProductSidebarSponsoredCard({
         <p className="text-xs sm:text-[13px] text-gray-900 leading-relaxed font-normal">
           Tận hưởng dịch vụ giao hàng nhanh chóng, miễn phí, ưu đãi độc quyền và các đặc quyền dinh dưỡng dành riêng cho hội viên.
         </p>
-
-        {/* Liên kết hành động dẫn sang trang Member Prime */}
-        <div className="mt-3">
-          <Link
-            href="/member"
-            className="text-xs sm:text-[13px] text-forest-700 hover:text-copper-600 hover:underline font-medium inline-block transition-colors"
-          >
-            Tham gia
-          </Link>
-        </div>
       </div>
 
       {/* ── Box quảng cáo gợi ý chuẩn Amazon Sponsored Product Card ── */}
@@ -167,8 +185,8 @@ export default function ProductSidebarSponsoredCard({
               </div>
               )}
 
-              {/* Hàng Giá & Huy hiệu Prime */}
-              <div className="flex items-baseline gap-2 flex-wrap mt-1.5">
+              {/* Hàng Giá & Huy hiệu Prime / Nút Thêm vào giỏ hàng */}
+              <div className="flex items-center gap-2 flex-wrap mt-1.5">
                 <span className="text-base sm:text-lg text-gray-900 leading-none">
                   {price.toLocaleString('vi-VN')}₫
                 </span>
@@ -179,11 +197,20 @@ export default function ProductSidebarSponsoredCard({
                 )}
                 {/* Huy hiệu Prime chuẩn Amazon */}
                 {!hideUnverifiedStats && (
-                <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter ml-auto">
+                <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter">
                   <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
                   <span className="text-forest-700 not-italic text-[12px] font-sans">prime</span>
                 </span>
                 )}
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="ml-auto relative shrink-0 w-8 h-8 flex items-center justify-center bg-leaf-900 text-white rounded-lg hover:bg-forest-700 transition-colors active:scale-95 cursor-pointer shadow-xs"
+                  aria-label={`Thêm ${cleanName} (${packUnit}) vào giỏ hàng`}
+                  title={`Thêm ${cleanName} (${packUnit}) vào giỏ hàng`}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                </button>
               </div>
 
               {/* Huy hiệu Ưu đãi / Subscribe & Save chuẩn Ahorra con Planea y ahorra */}

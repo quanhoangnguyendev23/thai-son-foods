@@ -68,7 +68,7 @@ export default function DangKyDoiTacPage() {
     const cleanPhone = phone.replace(/[\s\-\.]/g, '');
     const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
     if (!phoneRegex.test(cleanPhone)) {
-      setErrorMsg('Vui lòng nhập số điện thoại Việt Nam hợp lệ (VD: 0901234567).');
+      setErrorMsg('Vui lòng nhập số điện thoại Việt Nam hợp lệ (VD: 0123456789).');
       return;
     }
 
@@ -276,7 +276,7 @@ export default function DangKyDoiTacPage() {
                     <input
                       type="tel"
                       required
-                      placeholder="0901234567"
+                      placeholder="0123456789"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"

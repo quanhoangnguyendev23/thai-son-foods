@@ -372,7 +372,7 @@ export default function PartnerPortalPage() {
                 <input
                   type="tel"
                   required
-                  placeholder="0901234567"
+                  placeholder="0123456789"
                   value={loginPhone}
                   onChange={(e) => setLoginPhone(e.target.value)}
                   className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-emerald-600"

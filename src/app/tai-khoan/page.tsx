@@ -583,7 +583,7 @@ function AccountContent() {
                       onChange={(e) =>
                         setProfileForm({ ...profileForm, phone: e.target.value })
                       }
-                      placeholder="0912 345 678"
+                      placeholder="0123456789"
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                     />
                   </div>

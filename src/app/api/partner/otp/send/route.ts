@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
     if (!phoneRegex.test(cleanPhone)) {
       return NextResponse.json(
-        { success: false, error: 'Số điện thoại không đúng định dạng Việt Nam (VD: 0901234567)' },
+        { success: false, error: 'Số điện thoại không đúng định dạng Việt Nam (VD: 0123456789)' },
         { status: 400 }
       );
     }

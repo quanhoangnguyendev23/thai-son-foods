@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     const cleanPhone = phone.replace(/[\s\-\.]/g, '');
     if (!codConfig.PHONE_REGEX.test(cleanPhone)) {
       return NextResponse.json(
-        { success: false, error: 'Số điện thoại không hợp lệ. Vui lòng nhập SĐT Việt Nam (VD: 0901234567)' },
+        { success: false, error: 'Số điện thoại không hợp lệ. Vui lòng nhập SĐT Việt Nam (VD: 0123456789)' },
         { status: 400 }
       );
     }

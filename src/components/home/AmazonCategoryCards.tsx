@@ -75,7 +75,7 @@ function TileImage({ src, alt, sizes }: { src: string; alt: string; sizes: strin
       alt={alt}
       fill
       sizes={sizes}
-      className="object-contain p-1.5 transition-transform duration-300 group-hover:scale-105"
+      className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
       onError={() => setCurrent(MISSING_PRODUCT_IMAGE)}
     />
   );
@@ -326,7 +326,7 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
               src="/images/warehouse/1920x850-3.png"
               alt={language === 'en' ? 'Thai Son Foods customer care' : 'Thái Sơn Foods chăm sóc khách hàng'}
               fill
-              sizes="(max-width: 640px) 160vw, 700px"
+              sizes="(max-width: 640px) 82vw, 700px"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>

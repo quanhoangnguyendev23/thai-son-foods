@@ -2492,7 +2492,23 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-forest-950 text-slate-100 flex flex-col font-sans overflow-hidden [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_h4]:text-white">
+    <div
+      style={{ '--color-slate-400': '#e0ebe5' } as React.CSSProperties}
+      className="admin-theme fixed inset-0 z-[999] bg-forest-950 text-slate-100 flex flex-col font-sans overflow-hidden [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_h4]:text-white"
+    >
+      <style>{`
+        @layer utilities {
+          :where(.admin-theme) .text-slate-400 {
+            color: #e0ebe5;
+          }
+          :where(.admin-theme) .to-teal-400 {
+            --tw-gradient-to: #dee7e6;
+          }
+          :where(.admin-theme) .border-slate-800 {
+            border-color: #7ca250;
+          }
+        }
+      `}</style>
       {/* ==================== TOAST NOTIFICATION ==================== */}
       {toast && (
         <div className="fixed top-5 right-5 z-[1000] animate-in fade-in slide-in-from-top-4 duration-300">

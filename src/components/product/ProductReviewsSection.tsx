@@ -11,6 +11,7 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronUp,
+  ImagePlus,
 } from 'lucide-react';
 import { ReviewItem, ProductReviewSummary } from '@/types/reviews';
 import { useUserAuth } from '@/context/UserAuthContext';
@@ -19,6 +20,37 @@ interface ProductReviewsSectionProps {
   productId: string;
   productName?: string;
   className?: string;
+  /** Hiển thị khối "Hình ảnh từ khách hàng" ngay trong mục đánh giá */
+  showCustomerImages?: boolean;
+}
+
+const MAX_REVIEW_IMAGES = 3;
+
+/** Nén ảnh về JPEG (cạnh dài tối đa 1000px) và trả về data URL để lưu cùng đánh giá */
+function compressImageToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 1000;
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('canvas'));
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('load'));
+    };
+    img.src = url;
+  });
 }
 
 // Bảng màu avatar ngẫu nhiên theo tên
@@ -62,6 +94,7 @@ export default function ProductReviewsSection({
   productId,
   productName = 'Sản phẩm',
   className = '',
+  showCustomerImages = false,
 }: ProductReviewsSectionProps) {
   const { user } = useUserAuth();
 
@@ -95,8 +128,31 @@ export default function ProductReviewsSection({
   const [formVariant, setFormVariant] = useState('Lốc 7 chai (330ml)');
   const [formTitle, setFormTitle] = useState('');
   const [formComment, setFormComment] = useState('');
+  const [formImages, setFormImages] = useState<string[]>([]);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<{ text: string; isError?: boolean } | null>(null);
+
+  // Chọn ảnh: nén về JPEG tối đa 1000px rồi lưu dạng data URL
+  const handlePickImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    const room = MAX_REVIEW_IMAGES - formImages.length;
+    const next: string[] = [];
+    for (const file of files.slice(0, Math.max(0, room))) {
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+        setSubmitMessage({ text: 'Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.', isError: true });
+        continue;
+      }
+      try {
+        next.push(await compressImageToDataUrl(file));
+      } catch {
+        setSubmitMessage({ text: 'Không đọc được ảnh, vui lòng thử ảnh khác.', isError: true });
+      }
+    }
+    if (next.length > 0) setFormImages((prev) => [...prev, ...next].slice(0, MAX_REVIEW_IMAGES));
+  };
 
   // Tải tóm tắt đánh giá
   const fetchSummary = useCallback(async () => {
@@ -216,6 +272,7 @@ export default function ProductReviewsSection({
           rating: formRating,
           title: formTitle.trim(),
           comment: formComment.trim(),
+          images: formImages,
         }),
       });
 
@@ -234,6 +291,7 @@ export default function ProductReviewsSection({
           setIsModalOpen(false);
           setFormTitle('');
           setFormComment('');
+          setFormImages([]);
           setSubmitMessage(null);
         }, isPending ? 2500 : 1500);
       } else {
@@ -266,6 +324,45 @@ export default function ProductReviewsSection({
             100% đánh giá thực tế từ khách hàng đã mua và trải nghiệm tại Thái Sơn Foods.
           </p>
         </div>
+
+        {/* 1b. HÌNH ẢNH TỪ KHÁCH HÀNG (gộp vào mục Khách Hàng Nói Gì Về Sản Phẩm) */}
+        {showCustomerImages && (
+          <div className="mb-8">
+            <h3 className="text-lg text-gray-900 mb-3">Hình ảnh từ khách hàng</h3>
+            {reviews.some((r) => r.images && r.images.length > 0) ? (
+              <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {reviews.flatMap((r) => (r.images || []).map((src, i) => ({ src, key: `${r.id}-${i}`, name: r.customerName }))).map((it) => (
+                  <button type="button" key={it.key} onClick={() => setLightboxSrc(it.src)} className="shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={it.src} alt={`Ảnh của ${it.name}`} className="w-full h-full object-cover" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Chưa có ảnh từ khách hàng. Hãy đính kèm ảnh khi viết đánh giá của bạn!</p>
+            )}
+          </div>
+        )}
+
+        {lightboxSrc && (
+          <div
+            className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setLightboxSrc(null)}
+            role="dialog"
+            aria-label="Xem ảnh khách hàng"
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxSrc(null)}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 text-gray-800 flex items-center justify-center cursor-pointer"
+              aria-label="Đóng"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lightboxSrc} alt="Ảnh khách hàng" className="max-w-full max-h-full object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
+          </div>
+        )}
 
         {/* 2. BỐ CỤC 2 CỘT CHÍNH (GRID 12 CỘT) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -508,6 +605,18 @@ export default function ProductReviewsSection({
                       {rev.comment}
                     </p>
 
+                    {/* Ảnh khách hàng đính kèm */}
+                    {rev.images && rev.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {rev.images.map((src, i) => (
+                          <button type="button" key={i} onClick={() => setLightboxSrc(src)} className="block w-20 h-20 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt={`Ảnh của ${rev.customerName} ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Phản hồi từ CSKH Thái Sơn Foods (nếu có) */}
                     {rev.adminReply && (
                       <div className="bg-gray-50 border-l-4 border-emerald-600 p-3 rounded-r-xl text-xs">
@@ -657,7 +766,7 @@ export default function ProductReviewsSection({
                     type="tel"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
-                    placeholder="0901234567"
+                    placeholder="0123456789"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -708,6 +817,42 @@ export default function ProductReviewsSection({
                   placeholder="Chia sẻ cảm nhận chân thực về độ ngọt, mùi thơm, nhiệt độ giao lạnh và sự tiện lợi..."
                   className="w-full px-3 py-2 text-xs rounded-xl border border-gray-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 resize-none"
                 />
+              </div>
+
+              {/* Hình ảnh đính kèm (tối đa 3 ảnh) */}
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">
+                  Hình ảnh thực tế <span className="text-xs text-gray-400">(tối đa {MAX_REVIEW_IMAGES} ảnh, không bắt buộc)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {formImages.map((src, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={src} alt={`Ảnh đính kèm ${idx + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setFormImages((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center cursor-pointer"
+                        aria-label="Xóa ảnh"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {formImages.length < MAX_REVIEW_IMAGES && (
+                    <label className="w-20 h-20 rounded-lg border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 flex flex-col items-center justify-center gap-1 text-gray-400 text-[11px] cursor-pointer">
+                      <ImagePlus className="w-5 h-5" />
+                      <span>Thêm ảnh</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        className="hidden"
+                        onChange={handlePickImages}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               {/* Thông báo kết quả */}

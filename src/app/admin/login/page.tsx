@@ -102,7 +102,23 @@ function AdminLoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-forest-950 text-slate-100 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-sans selection:bg-emerald-500 selection:text-white">
+    <div
+      style={{ '--color-slate-400': '#e0ebe5' } as React.CSSProperties}
+      className="admin-theme min-h-screen bg-forest-950 text-slate-100 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden font-sans selection:bg-emerald-500 selection:text-white"
+    >
+      <style>{`
+        @layer utilities {
+          :where(.admin-theme) .text-slate-400 {
+            color: #e0ebe5;
+          }
+          :where(.admin-theme) .to-teal-400 {
+            --tw-gradient-to: #dee7e6;
+          }
+          :where(.admin-theme) .border-slate-800 {
+            border-color: #7ca250;
+          }
+        }
+      `}</style>
       {/* Ambient background glow effects */}
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-teal-600/15 rounded-full blur-[120px] pointer-events-none" />

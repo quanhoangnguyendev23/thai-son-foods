@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam hợp lệ (ví dụ: 0901234567 hoặc +84901234567)',
+            error: 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam hợp lệ (ví dụ: 0123456789 hoặc +84123456789)',
           },
           { status: 400 }
         );
@@ -179,7 +179,16 @@ export async function POST(req: NextRequest) {
       rating: numRating,
       title: cleanTitle,
       comment: cleanComment,
-      images: Array.isArray(images) ? images : [],
+      images: Array.isArray(images)
+        ? images
+            .filter(
+              (s: unknown): s is string =>
+                typeof s === 'string' &&
+                /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s) &&
+                s.length <= 400_000
+            )
+            .slice(0, 3)
+        : [],
       orderId,
     };
 

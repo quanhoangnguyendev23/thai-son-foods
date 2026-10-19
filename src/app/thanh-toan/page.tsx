@@ -1445,7 +1445,7 @@ export default function CheckoutPage() {
                     'w-full px-4 py-3 rounded-xl border bg-white text-text-dark text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-primary/30 focus:border-green-primary transition-colors',
                     errors.phone ? 'border-sale' : 'border-border'
                   )}
-                  placeholder="0912 345 678"
+                  placeholder="0123456789"
                 />
                 {errors.phone && (
                   <p className="mt-1 text-xs text-sale">{errors.phone}</p>
@@ -1637,8 +1637,8 @@ export default function CheckoutPage() {
                     )}
                     placeholder={
                       language === 'en'
-                        ? 'Ex: 159 Nguyen Thai Binh or 27 Van Chung...'
-                        : 'Ví dụ: 159 Nguyễn Thái Bình hoặc 27 Văn Chung...'
+                        ? 'Ex: 1 Pho Quang...'
+                        : 'Ví dụ: 1 Phổ Quang...'
                     }
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-400 pointer-events-none">

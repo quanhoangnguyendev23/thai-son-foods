@@ -841,7 +841,7 @@ export default function SubscribeSaveSection({
                             type="tel"
                             value={phoneInput}
                             onChange={(e) => setPhoneInput(e.target.value)}
-                            placeholder="VD: 0901234567"
+                            placeholder="VD: 0123456789"
                             className="flex-1 p-2.5 rounded-xl border border-gray-300 text-base"
                           />
                           <button

@@ -355,7 +355,7 @@ export default function AuthModal() {
                     type="tel"
                     value={registerForm.phone}
                     onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
-                    placeholder="0912 345 678"
+                    placeholder="0123456789"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <Phone className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />

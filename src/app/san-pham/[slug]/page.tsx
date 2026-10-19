@@ -24,7 +24,7 @@ import ProductDetailTabs from '@/components/product/ProductDetailTabs';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import RecentlyViewedProducts from '@/components/product/RecentlyViewedProducts';
 import ProductCompareTable from '@/components/product/ProductCompareTable';
-import { ProductQAPlaceholder, ReviewImagesPlaceholder, PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
+import { ProductQAPlaceholder, PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
 import { CUSTOMERS_ALSO_VIEWED_IDS } from '@/data/product-detail-placeholders';
@@ -341,10 +341,9 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <ProductQAPlaceholder />
         </div>
 
-        {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (ảnh khách hàng = placeholder; đánh giá = dữ liệu thật) */}
+        {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (ảnh khách hàng = placeholder, gộp trong mục; đánh giá = dữ liệu thật) */}
         <div className="border-t border-gray-200 bg-white" id="danh-gia-khach-hang">
-          <ReviewImagesPlaceholder />
-          <ProductReviewsSection productId={product.slug || product.id} productName={product.name} />
+          <ProductReviewsSection productId={product.slug || product.id} productName={product.name} showCustomerImages />
         </div>
 
         {/* ── KHÁCH HÀNG CŨNG XEM (PLACEHOLDER) ── */}

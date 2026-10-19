@@ -52,33 +52,50 @@ function DealTile({ combo }: { combo: Combo }) {
   return (
     <Link
       href={`/combo/${combo.slug}`}
-      className="group snap-start shrink-0 w-[46%] sm:w-[31%] md:w-[23.5%] lg:w-[15.8%] flex flex-col"
+      className="group snap-start shrink-0 w-[46%] sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%] flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
     >
-      <div className="relative aspect-square rounded-xl bg-ivory overflow-hidden border border-border">
+      <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-ivory">
         <Image
           src={src}
           alt={name}
           fill
-          sizes="(max-width: 640px) 45vw, 220px"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
           className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
           onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
         />
-      </div>
-      <div className="mt-2 flex items-center gap-2 flex-wrap">
         {combo.discount > 0 && (
-          <span className="px-1.5 py-0.5 rounded bg-sale text-white text-[12px]">-{combo.discount}%</span>
+          <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
+            <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-sale text-white rounded shadow-xs">
+              -{combo.discount}%
+            </span>
+          </div>
         )}
-        <span className="text-[12px] text-sale">{language === 'en' ? 'Combo deal' : 'Ưu đãi combo'}</span>
       </div>
-      <p className="mt-1 text-[15px] text-green-primary">
-        {formatPrice(combo.salePrice)}đ
-        {combo.originalPrice > combo.salePrice && (
-          <span className="ml-1.5 text-[11px] font-normal text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
-        )}
-      </p>
-      <p className="text-[12px] text-text-body leading-tight line-clamp-2 group-hover:text-green-primary" title={name}>
-        {name}
-      </p>
+      <div className="p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col justify-between">
+        <div>
+          <h3
+            className="text-[15px] sm:text-[15px] text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors line-clamp-2"
+            title={name}
+          >
+            {name}
+          </h3>
+        </div>
+        <div className="flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
+          <div className="flex flex-col">
+            <span className="text-base sm:text-[15px] text-green-primary">
+              {formatPrice(combo.salePrice)}đ
+            </span>
+            {combo.originalPrice > combo.salePrice && (
+              <span className="text-[10px] lg:text-[8.5px] text-text-muted font-normal line-through">
+                {formatPrice(combo.originalPrice)}đ
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] lg:text-[10px] text-sale font-medium">
+            {language === 'en' ? 'Combo deal' : 'Ưu đãi combo'}
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }
