@@ -112,3 +112,27 @@ Mã nguồn cục bộ hiện có 15 commit cải tiến đã build test thành 
 git push origin main
 ```
 Vercel sẽ tự động kích hoạt tiến trình Build & Deploy bản mới nhất trong vòng 1-2 phút!
+---
+
+## CHECKLIST GO-LIVE (làm theo thứ tự)
+
+**A. Bảo mật — trước khi push**
+- [ ] Đổi mật khẩu ứng dụng Gmail (SMTP) đã từng ghi trong tài liệu cũ.
+- [ ] Tạo mới `JWT_SECRET` (`openssl rand -base64 48`), `CRON_SECRET` (`openssl rand -hex 32`), `ADMIN_REGISTER_KEY`.
+- [ ] Đổi mật khẩu CSDL production (không dùng lại mật khẩu máy local).
+
+**B. Vercel**
+- [ ] Merge nhánh `golive-prep` vào `main`, push.
+- [ ] Storage → tạo **Postgres** và **Blob**, Connect vào dự án (tự sinh `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`).
+- [ ] Đặt đủ biến môi trường theo bảng ở mục IV (đặc biệt `JWT_SECRET`, `CRON_SECRET`, `NEXT_PUBLIC_APP_URL`, `SMTP_*`, `ENABLE_MOCK_OAUTH=false`).
+- [ ] Import dữ liệu: `node scripts/restore_to_cloud_db.mjs "<DATABASE_URL>"`.
+
+**C. Kiểm thử trên bản staging/preview**
+- [ ] Đăng nhập admin; mở Đơn hàng, Tồn kho, chuyển kho một đơn thử.
+- [ ] Tải ảnh sản phẩm từ admin → ảnh hiển thị (kiểm tra Blob).
+- [ ] Đặt 1 đơn COD thử → nhận email xác nhận; trừ/giữ tồn kho đúng.
+- [ ] Mở `/robots.txt`, `/sitemap.xml` (host phải là domain thật), `/test-email` phải bị chặn.
+- [ ] Trang chủ, chi tiết sản phẩm, chi tiết combo không còn nhãn "Bản mẫu".
+
+**D. Domain (làm sau cùng)**
+- [ ] Gắn domain ở Cloudflare/Vercel theo mục V; kiểm tra HTTPS.
