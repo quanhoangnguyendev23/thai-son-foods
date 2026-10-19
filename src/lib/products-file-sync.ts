@@ -24,6 +24,8 @@ export interface ProductSyncPayload {
  * đều đồng bộ ngay lập tức với các chỉnh sửa từ Admin.
  */
 export function syncProductToStaticFile(data: ProductSyncPayload): boolean {
+  // Ổ đĩa serverless (Vercel) chỉ đọc: bỏ qua, CSDL vẫn là nguồn dữ liệu chính
+  if (process.env.VERCEL) return false;
   try {
     const filePath = path.join(process.cwd(), 'src', 'data', 'products.ts');
     if (!fs.existsSync(filePath)) {

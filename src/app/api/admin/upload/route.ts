@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
+import { put } from '@vercel/blob';
 import { writeAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,17 @@ export const dynamic = 'force-dynamic';
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.mp4'] as const;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+
+// Lưu trữ: có BLOB_READ_WRITE_TOKEN → Vercel Blob (bắt buộc trên Vercel vì ổ đĩa serverless không bền);
+// không có → ghi vào public/uploads (máy chủ riêng / máy phát triển).
+const CONTENT_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.mp4': 'video/mp4',
+};
 
 function generateSecureFileName(ext: string): string {
   return `${Date.now()}_${crypto.randomBytes(6).toString('hex')}${ext}`;
@@ -109,8 +121,15 @@ export async function POST(request: Request) {
 
     // Target upload directory: public/uploads/[folderType]
     const cleanFolder = folderType.replace(/[^a-zA-Z0-9_-]/g, '') || 'general';
+    const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!blobToken && process.env.VERCEL) {
+      return NextResponse.json(
+        { success: false, error: 'Chưa cấu hình kho lưu ảnh (BLOB_READ_WRITE_TOKEN). Vui lòng tạo Vercel Blob Store và gắn vào dự án.' },
+        { status: 500 }
+      );
+    }
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', cleanFolder);
-    if (!fs.existsSync(uploadDir)) {
+    if (!blobToken && !fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
@@ -158,10 +177,20 @@ export async function POST(request: Request) {
 
       // 4. Bỏ hoàn toàn tên file gốc từ client, sinh tên ngẫu nhiên chống Path Traversal / Double Extension
       const safeName = generateSecureFileName(ext);
-      const filePath = path.join(uploadDir, safeName);
-      await fs.promises.writeFile(filePath, buffer);
-
-      const publicUrl = `/uploads/${cleanFolder}/${safeName}`;
+      let publicUrl: string;
+      if (blobToken) {
+        const blob = await put(`uploads/${cleanFolder}/${safeName}`, buffer, {
+          access: 'public',
+          contentType: CONTENT_TYPES[ext] || 'application/octet-stream',
+          addRandomSuffix: false,
+          token: blobToken,
+        });
+        publicUrl = blob.url;
+      } else {
+        const filePath = path.join(uploadDir, safeName);
+        await fs.promises.writeFile(filePath, buffer);
+        publicUrl = `/uploads/${cleanFolder}/${safeName}`;
+      }
       uploadedUrls.push({
         url: publicUrl,
         originalName: path.basename(file.name),

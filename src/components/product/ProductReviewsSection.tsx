@@ -506,7 +506,7 @@ export default function ProductReviewsSection({
 
             {/* Danh sách Review Cards (Hiển thị tĩnh 5 đánh giá, bấm Xem thêm để mở rộng) */}
             {(() => {
-              const INITIAL_COUNT = 5;
+              const INITIAL_COUNT = 2;
               const displayedReviews = showAll ? reviews : reviews.slice(0, INITIAL_COUNT);
               const hasMore = reviews.length > INITIAL_COUNT;
 

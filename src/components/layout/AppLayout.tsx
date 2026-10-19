@@ -27,6 +27,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Header/Footer biến thể Amazon CHỈ dùng cho trang chủ mới; mọi trang khác giữ Header/Footer gốc
   const useAmazonChrome = pathname === '/' && HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE;
+  // Trang chi tiết sản phẩm / combo dùng chung Header với trang chủ (Footer giữ nguyên)
+  const useAmazonHeader =
+    useAmazonChrome ||
+    (HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE && Boolean(pathname?.startsWith('/san-pham/') || pathname?.startsWith('/combo/')));
 
   return (
     <LanguageProvider>
@@ -36,7 +40,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <ReferralTracker />
           </Suspense>
           <div className="min-h-screen flex flex-col">
-            {useAmazonChrome ? <HeaderAmazon /> : <Header />}
+            {useAmazonHeader ? <HeaderAmazon /> : <Header />}
             <main className="min-h-screen flex-1">{children}</main>
             {useAmazonChrome ? <FooterAmazon /> : <Footer />}
             <AuthModal />

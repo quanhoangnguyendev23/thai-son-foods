@@ -10,6 +10,7 @@ import { MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
 import { useLanguage } from '@/context/LanguageContext';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { DEAL_COUNTDOWN_PLACEHOLDER } from '@/data/homepage-placeholders';
+import { SHOW_PLACEHOLDER_BLOCKS } from '@/data/product-detail-placeholders';
 
 function msUntilPlaceholderEnd(): number {
   const now = new Date();
@@ -120,9 +121,11 @@ export default function AmazonDealsRow({ combos }: { combos: Combo[] }) {
         <h2 className="font-heading text-xl md:text-2xl text-text-dark">
           {language === 'en' ? "Today's deals" : DEAL_COUNTDOWN_PLACEHOLDER.title}
         </h2>
-        <PlaceholderCountdown />
+        {SHOW_PLACEHOLDER_BLOCKS && <PlaceholderCountdown />}
         <PlaceholderBadge />
-        <span className="text-[11px] text-text-muted">{DEAL_COUNTDOWN_PLACEHOLDER.note}</span>
+        {SHOW_PLACEHOLDER_BLOCKS && (
+          <span className="text-[11px] text-text-muted">{DEAL_COUNTDOWN_PLACEHOLDER.note}</span>
+        )}
         <Link href="/#combo" className="relative before:absolute before:-inset-y-3 before:inset-x-0 before:content-[''] ml-auto text-[15px] text-green-primary hover:underline">
           {language === 'en' ? 'See all deals' : 'Xem tất cả ưu đãi'}
         </Link>

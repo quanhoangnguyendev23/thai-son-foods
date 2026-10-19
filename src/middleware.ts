@@ -107,6 +107,32 @@ export async function middleware(req: NextRequest) {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // GIAI ĐOẠN 2: CTV/Đại lý & Duyệt chi trả chưa mở sử dụng — chặn trang và API quản trị tương ứng.
+  // Bật lại bằng biến môi trường ENABLE_PHASE2_ADMIN=true.
+  // ═══════════════════════════════════════════════════════════════
+  // Trang/API thử email chỉ dùng ở môi trường phát triển
+  if (process.env.NODE_ENV === 'production' && /^\/(api\/)?test-email(\/|$)/.test(pathname)) {
+    return isApiRoute
+      ? new NextResponse(JSON.stringify({ success: false, error: 'Not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        })
+      : NextResponse.redirect(new URL('/', req.url));
+  }
+
+  if (process.env.ENABLE_PHASE2_ADMIN !== 'true') {
+    if (/^\/admin\/(partners|payouts)(\/|$)/.test(pathname)) {
+      return NextResponse.redirect(new URL('/admin', req.url));
+    }
+    if (/^\/api\/admin\/(partners|payouts)(\/|$)/.test(pathname)) {
+      return new NextResponse(JSON.stringify({ success: false, error: 'Chức năng thuộc giai đoạn 2, chưa mở sử dụng.', code: 'PHASE2_DISABLED' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store, private' },
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // -0.3. CHỐNG PAYLOAD BOMB (DoS bằng dung lượng body khổng lồ)
   // ═══════════════════════════════════════════════════════════════
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {

@@ -4,7 +4,7 @@ import { combos, getComboBySlug } from '@/data/combos';
 import { products } from '@/data/products';
 import ComboDetailView from '@/components/product/ComboDetailView';
 import ProductCombosSidebar from '@/components/product/ProductCombosSidebar';
-import ProductSection from '@/components/home/ProductSection';
+import ProductCarousel from '@/components/product/ProductCarousel';
 import ProductReviewsSection from '@/components/product/ProductReviewsSection';
 import ProductDescription from '@/components/product/ProductDescription';
 import ProductSponsoredBanner from '@/components/product/ProductSponsoredBanner';
@@ -182,43 +182,45 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
           initialStockDetails={initialStockDetails}
         />
 
-        {/* Hàng các sản phẩm bạn có thể thích */}
+        {/* ── CÁC SẢN PHẨM BẠN CÓ THỂ THÍCH (cùng bố cục trang chi tiết sản phẩm) ── */}
         <div className="border-t border-gray-200 bg-white">
-          <ProductSection
-            itemsPerRow={7}
+          <ProductCarousel
             title="Các sản phẩm bạn có thể thích"
-            showViewAll={false}
-            className="py-6 sm:py-8 lg:py-10"
+            subtitle="Các dòng thức uống khác của Thái Sơn Foods"
+            products={products.filter((p) => p.isActive !== false)}
           />
         </div>
 
-        {/* Các combo nổi bật đáng cân nhắc khác */}
+        {/* ── COMBO NỔI BẬT ── */}
         <div className="border-t border-gray-200 bg-white">
-          <div className="section-container max-sm:px-2.5 py-6 sm:py-8 lg:py-10 max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="section-container max-sm:px-2.5 py-8 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6">
             <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
           </div>
         </div>
 
-        {/* ── MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG (giống trang sản phẩm) ── */}
+        {/* ── BANNER SHOWCASE THƯƠNG HIỆU ── */}
+        <div className="border-t border-gray-200 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <ProductSponsoredBanner hideUnverifiedStats randomize />
+          </div>
+        </div>
+
+        {/* ── MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG ── */}
         <ProductDescription
           productName={combo.name}
           description={combo.description}
         />
 
-        {/* ── BANNER SHOWCASE THƯƠNG HIỆU & SẢN PHẨM (giống trang sản phẩm) ── */}
-        <div className="border-t border-gray-200 bg-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <ProductSponsoredBanner />
-          </div>
-        </div>
-
-        {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (SOCIAL PROOF & REVIEWS) */}
-        <div className="border-t border-gray-200 bg-white" id="danh-gia">
+        {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG */}
+        <div className="border-t border-gray-200 bg-white" id="danh-gia-khach-hang">
           <ProductReviewsSection
             productId={`combo:${combo.slug || combo.id}`}
             productName={combo.name}
+            showCustomerImages
           />
         </div>
+
+
       </div>
     </div>
   );

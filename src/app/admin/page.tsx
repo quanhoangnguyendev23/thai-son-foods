@@ -1072,6 +1072,22 @@ export default function AdminPage() {
     }
   };
 
+  // Nạp danh sách chi nhánh khi mở chi tiết đơn (storeList trước đây chỉ được nạp ở tab Tồn kho,
+  // nên ô chọn "Chuyển đơn sang chi nhánh khác" bị rỗng nếu chưa từng mở tab đó)
+  useEffect(() => {
+    if (!selectedOrder || storeList.length > 0) return;
+    let cancelled = false;
+    fetch('/api/admin/stores', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.success && Array.isArray(data.stores)) setStoreList(data.stores);
+      })
+      .catch((err) => console.error('Error loading stores for order transfer:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedOrder?.id, storeList.length]);
+
   // Đồng bộ nạp dữ liệu khi chuyển tab sang Users, Inventory, Banners, hoặc Audit
   useEffect(() => {
     if (activeTab === 'users' && hasPermission(currentUser, 'users.manage')) {
@@ -2931,32 +2947,34 @@ export default function AdminPage() {
                 </Link>
               )}
 
-              {/* PHÂN HỆ ĐỐI TÁC THÁI SƠN FOODS: CTV & ĐẠI LÝ */}
-              <Link
-                href="/admin/partners"
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
+              {/* GIAI ĐOẠN 2: CTV & Đại lý, Duyệt chi trả — làm mờ, chưa mở sử dụng ở giai đoạn 1 */}
+              <div
+                aria-disabled="true"
+                title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 opacity-45 cursor-not-allowed select-none"
               >
                 <div className="flex items-center gap-3">
-                  <Users className="w-4 h-4 text-emerald-400" />
+                  <Users className="w-4 h-4" />
                   <span>Đối tác CTV & Đại lý</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
-                  Partner
+                <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-400 border border-slate-700 font-mono">
+                  Giai đoạn 2
                 </span>
-              </Link>
+              </div>
 
-              <Link
-                href="/admin/payouts"
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
+              <div
+                aria-disabled="true"
+                title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 opacity-45 cursor-not-allowed select-none"
               >
                 <div className="flex items-center gap-3">
-                  <DollarSign className="w-4 h-4 text-amber-400" />
+                  <DollarSign className="w-4 h-4" />
                   <span>Duyệt chi trả (Payouts)</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
-                  Ví
+                <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-400 border border-slate-700 font-mono">
+                  Giai đoạn 2
                 </span>
-              </Link>
+              </div>
             </div>
 
             {/* Quick Summary Card */}

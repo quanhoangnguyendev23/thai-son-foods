@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
         if (item && item.address) {
           const addr = item.address;
           const rawProv = addr.city || addr.state || 'TP. Hồ Chí Minh';
-          let rawDist = addr.city_district || addr.county || addr.suburb || '';
+          const rawDist = addr.city_district || addr.county || addr.suburb || '';
           let rawWard = '';
 
           if (addr.suburb && /^(phường|xã|thị trấn)\s+/i.test(addr.suburb)) {

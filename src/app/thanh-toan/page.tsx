@@ -291,7 +291,9 @@ export default function CheckoutPage() {
   const [locationConfirmedBy, setLocationConfirmedBy] = useState<string | null>(null);
   // Ghim do khách tự chấm: các bước tự đoán tọa độ không được ghi đè
   const pinLockedRef = useRef(false);
-  pinLockedRef.current = locationConfirmed && locationConfirmedBy === 'USER_MAP_PIN';
+  useEffect(() => {
+    pinLockedRef.current = locationConfirmed && locationConfirmedBy === 'USER_MAP_PIN';
+  });
   // Địa chỉ do ghim điền vào: không bật gợi ý / không hiện khung xác định lại
   const pinAddressRef = useRef<string | null>(null);
   // Tọa độ geocode của địa chỉ gõ tay (chỉ dùng để cảnh báo lệch so với ghim)
@@ -912,13 +914,13 @@ export default function CheckoutPage() {
 
   // Tính phí vận chuyển theo config (hỗ trợ cả bậc khoảng cách km khi bật cấu hình hoặc theo đề xuất)
   const shippingInfo = calculateShippingFee(subtotal, currentStoreDistanceKm);
-  const calculatedShippingFee = useMemo(() => {
-    if (fulfillmentMode === 'pickup') return 0;
-    if (activeRecommendedItem && typeof activeRecommendedItem.shippingFee === 'number') {
-      return activeRecommendedItem.shippingFee;
-    }
-    return shippingInfo.fee;
-  }, [fulfillmentMode, activeRecommendedItem, shippingInfo.fee]);
+  // Phép tính nhẹ, không cần useMemo
+  const calculatedShippingFee =
+    fulfillmentMode === 'pickup'
+      ? 0
+      : activeRecommendedItem && typeof activeRecommendedItem.shippingFee === 'number'
+        ? activeRecommendedItem.shippingFee
+        : shippingInfo.fee;
 
   const shippingFee = calculatedShippingFee;
   const total = subtotal + shippingFee;

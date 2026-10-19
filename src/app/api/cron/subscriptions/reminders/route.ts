@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { pool, query } from '@/lib/db';
 
@@ -7,10 +8,15 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const cronSecret = process.env.CRON_SECRET || 'staging_test_cron_secret_1234567890';
-    const authHeader = req.headers.get('x-cron-secret') || req.nextUrl.searchParams.get('secret');
-
-    if (authHeader !== cronSecret) {
+    // Fail-closed: không có CRON_SECRET thì từ chối; không nhận secret qua query string (lộ trong log)
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      return NextResponse.json({ success: false, error: 'CRON_SECRET chưa được cấu hình' }, { status: 500 });
+    }
+    const bearer = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+    const provided = req.headers.get('x-cron-secret') || bearer;
+    const digest = (v: string) => crypto.createHash('sha256').update(v).digest();
+    if (!crypto.timingSafeEqual(digest(provided), digest(cronSecret))) {
       return NextResponse.json({ success: false, error: 'Unauthorized CRON execution' }, { status: 401 });
     }
 

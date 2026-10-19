@@ -35,7 +35,8 @@ export const pool = new Pool(
         connectionTimeoutMillis: 5000,
       }
     : {
-        connectionString: 'postgresql://postgres:Tsf%40123@127.0.0.1:5432/WebTSF?sslmode=disable',
+        // Không có cấu hình nào: chỉ dùng cho máy phát triển cục bộ (không kèm mật khẩu trong mã nguồn)
+        connectionString: 'postgresql://postgres@127.0.0.1:5432/WebTSF?sslmode=disable',
         max: poolMax,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 5000,

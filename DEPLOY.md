@@ -29,7 +29,7 @@ Tài liệu này hướng dẫn chi tiết quy trình đưa website Thái Sơn F
 1. Truy cập [supabase.com](https://supabase.com) và bấm **Start your project** (Đăng nhập qua GitHub).
 2. Tạo Project mới:
    - Name: `WebTSF-Production`
-   - Database Password: Tự đặt mật khẩu mạnh (ví dụ: `Tsf@2026SecureDb`)
+   - Database Password: Tự đặt mật khẩu mạnh (dùng mật khẩu mạnh, ngẫu nhiên, ≥ 20 ký tự)
    - Region: **Singapore (`ap-southeast-1`)**
 3. Vào **Project Settings** -> **Database** -> Mục **Connection string**, chọn tab **URI** (hoặc Transaction Pooler).
 4. Copy chuỗi kết nối dạng:
@@ -66,13 +66,17 @@ Vào **Settings** -> **Environment Variables** trên Vercel và đảm bảo có
 | `DATABASE_URL` | `postgresql://...` | Kết nối Cloud Database |
 | `NEXT_PUBLIC_APP_URL` | `https://shop.thaisonfoods.vn` | URL chính thức của website |
 | `JWT_SECRET` | Khóa bảo mật ngẫu nhiên dài >= 32 ký tự | Xác thực phiên đăng nhập |
-| `ADMIN_REGISTER_KEY` | `tsf@admin2026` | Khóa tạo tài khoản Super Admin ban đầu |
+| `ADMIN_REGISTER_KEY` | Chuỗi ngẫu nhiên mạnh (đặt riêng, không dùng lại) | Khóa tạo tài khoản Super Admin ban đầu |
 | `ENABLE_MOCK_OAUTH` | `false` | **Bắt buộc false** trên Production |
+| `CRON_SECRET` | Chuỗi ngẫu nhiên (`openssl rand -hex 32`) | Bắt buộc: bảo vệ các cron job (không có thì cron từ chối chạy) |
+| `BLOB_READ_WRITE_TOKEN` | Tự sinh khi tạo **Vercel Blob Store** (Storage → Create → Blob) rồi Connect vào dự án | Bắt buộc trên Vercel: nơi lưu ảnh/video admin tải lên (ổ đĩa serverless không bền) |
+| `NEXT_PUBLIC_SHOW_PLACEHOLDERS` | Không đặt (hoặc `false`) | Ẩn các khối "Bản mẫu" với khách. Chỉ đặt `true` khi demo nội bộ |
+| `ENABLE_PHASE2_ADMIN` | Không đặt (hoặc `false`) | Giữ khóa CTV/Đại lý & Duyệt chi trả (giai đoạn 2) |
 | `SMTP_HOST` | `smtp.gmail.com` | Máy chủ gửi email đơn hàng |
 | `SMTP_PORT` | `587` | Cổng SMTP |
-| `SMTP_USER` | `sbnts.gam2@gmail.com` | Email gửi tin |
-| `SMTP_PASS` | `vuja exnm aexa aejp` | Mật khẩu ứng dụng Gmail |
-| `EMAIL_FROM` | `Thái Sơn Foods <sbnts.gam2@gmail.com>` | Tiêu đề người gửi |
+| `SMTP_USER` | Email gửi tin của công ty | Email gửi tin |
+| `SMTP_PASS` | Mật khẩu ứng dụng (App Password) của email gửi — KHÔNG ghi vào tài liệu | Mật khẩu ứng dụng Gmail |
+| `EMAIL_FROM` | `Thái Sơn Foods <email-gui-tin@thaisonfoods.vn>` | Tiêu đề người gửi |
 
 ---
 

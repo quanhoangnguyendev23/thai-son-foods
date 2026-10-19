@@ -150,13 +150,13 @@ export default function HeaderAmazon() {
 
   const taskbagItems = useMemo(
     () => [
-      { id: 'deal-soc', label: t('dealHot'), href: '/#combo', icon: Flame, color: 'text-red-300', badge: 'HOT' },
+      { id: 'deal-soc', label: t('dealHot'), href: '/#combo', icon: Flame, color: 'text-corn', badge: 'HOT' },
       { id: 'ban-chay', label: t('bestSellers'), href: '/#san-pham', icon: Sparkles, color: 'text-corn' },
       ...(MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP
         ? [{ id: 'member-prime', label: 'Thái Sơn Prime', href: '/member', icon: Crown, color: 'text-corn', badge: 'HOT' }]
         : []),
-      { id: 'dich-vu', label: t('wholesaleService'), href: '/#kho-si', icon: Truck, color: 'text-emerald-200' },
-      { id: 'ho-tro', label: t('shoppingSupport'), href: '#ho-tro', action: 'open-support', icon: Headphones, color: 'text-emerald-200' },
+      { id: 'dich-vu', label: t('wholesaleService'), href: '/#kho-si', icon: Truck, color: 'text-leaf-300' },
+      { id: 'ho-tro', label: t('shoppingSupport'), href: '#ho-tro', action: 'open-support', icon: Headphones, color: 'text-leaf-300' },
     ],
     [t]
   );

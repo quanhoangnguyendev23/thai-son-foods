@@ -8,6 +8,12 @@
  *  - Khi triển khai thật (Giai đoạn 2/3), thay từng mục bằng API tương ứng và xoá khỏi file này.
  */
 
+/**
+ * CÔNG TẮC GO-LIVE: các khối "Bản mẫu" (đồng hồ deal, mã giảm giá, đã mua trong tháng, hỏi đáp, yêu thích, mua lại...)
+ * mặc định ẨN với khách hàng. Chỉ bật khi xem demo nội bộ: NEXT_PUBLIC_SHOW_PLACEHOLDERS=true.
+ */
+export const SHOW_PLACEHOLDER_BLOCKS = process.env.NEXT_PUBLIC_SHOW_PLACEHOLDERS === 'true';
+
 export const PLACEHOLDER_LABEL = 'Bản mẫu · chờ triển khai';
 
 // PLACEHOLDER: chờ triển khai — số lượt mua tháng trước (cần thống kê đơn hàng thật theo sản phẩm)

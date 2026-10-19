@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
-// Route manifest reload trigger for dealer module v3
+// Bí mật (JWT_SECRET, ADMIN_REGISTER_KEY, CRON_SECRET, DATABASE_URL, SMTP_*) chỉ được cấu hình qua biến môi trường.
+// KHÔNG đặt giá trị mặc định trong mã nguồn.
 
 const cspReportOnly = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://maps.google.com https://sp.zalo.me https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https://images.unsplash.com https://shop.thaisonfoods.vn https://lh3.googleusercontent.com https://api.qrserver.com https://*.google.com https://*.googleusercontent.com",
+  "img-src 'self' data: blob: https://images.unsplash.com https://shop.thaisonfoods.vn https://*.public.blob.vercel-storage.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://lh3.googleusercontent.com https://api.qrserver.com https://*.google.com https://*.googleusercontent.com",
   "connect-src 'self' https://maps.googleapis.com https://api.resend.com https://oauth2.googleapis.com https://graph.facebook.com",
   "frame-src 'self' https://www.google.com https://maps.google.com https://www.youtube.com https://sp.zalo.me",
   "object-src 'none'",
@@ -17,11 +18,8 @@ const cspReportOnly = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  env: {
-    JWT_SECRET: process.env.JWT_SECRET || '0e31a96ec44403acc9a885db4602f5099a1744ba5cbe2e37996d96c5a96d265f8b5ff265b2f19e0b9f3d67c86eec19fb',
-    ADMIN_REGISTER_KEY: process.env.ADMIN_REGISTER_KEY || 'tsf@admin2026',
-    CRON_SECRET: process.env.CRON_SECRET || 'staging_test_cron_secret_1234567890',
-  },
+  // Cho phép build kiểm tra song song với dev server (NEXT_DIST_DIR=.next-build)
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // Allow internal LAN IP access without cross-origin blocking
   allowedDevOrigins: [
     '137.107.16.94:3000',
@@ -44,6 +42,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
       },
     ],
   },

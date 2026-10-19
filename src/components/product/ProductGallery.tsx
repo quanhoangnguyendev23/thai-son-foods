@@ -384,10 +384,10 @@ export default function ProductGallery({
             Chia sẻ đến bạn bè của bạn:
           </span>
 
-          {/* Facebook xanh #1877F2 */}
+          {/* Facebook — cùng kiểu viền xám với nút Sao chép */}
           <button
             onClick={handleShareFacebook}
-            className="h-6 px-2 rounded-full bg-[#1877F2] text-white flex items-center gap-1 transition-transform hover:scale-105 cursor-pointer text-[11px] font-medium shadow-xs"
+            className="h-6 px-2 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1 transition-all cursor-pointer text-[11px] font-medium"
             title="Chia sẻ lên Facebook"
             aria-label="Chia sẻ lên Facebook"
           >
@@ -397,10 +397,10 @@ export default function ProductGallery({
             <span>Facebook</span>
           </button>
 
-          {/* Zalo xanh #0068FF */}
+          {/* Zalo — cùng kiểu viền xám với nút Sao chép */}
           <button
             onClick={handleShareZalo}
-            className="h-6 px-2.5 rounded-full bg-[#0068FF] text-white flex items-center justify-center transition-transform hover:scale-105 cursor-pointer text-[12px] shadow-xs"
+            className="h-6 px-2.5 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center justify-center transition-all cursor-pointer text-[11px] font-medium"
             title="Chia sẻ qua Zalo"
             aria-label="Chia sẻ qua Zalo"
           >

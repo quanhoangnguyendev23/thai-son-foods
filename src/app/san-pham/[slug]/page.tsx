@@ -24,10 +24,10 @@ import ProductDetailTabs from '@/components/product/ProductDetailTabs';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import RecentlyViewedProducts from '@/components/product/RecentlyViewedProducts';
 import ProductCompareTable from '@/components/product/ProductCompareTable';
-import { ProductQAPlaceholder, PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
+import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
-import { CUSTOMERS_ALSO_VIEWED_IDS } from '@/data/product-detail-placeholders';
+import { CUSTOMERS_ALSO_VIEWED_IDS, SHOW_PLACEHOLDER_BLOCKS } from '@/data/product-detail-placeholders';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
 
 export const dynamic = 'force-dynamic';
@@ -336,24 +336,21 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           hideEstimatedNutrition={Boolean(getProductDetailContent(product).nutrition)}
         />
 
-        {/* ── HỎI & ĐÁP (PLACEHOLDER) ── */}
-        <div className="border-t border-gray-200 bg-white">
-          <ProductQAPlaceholder />
-        </div>
-
         {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (ảnh khách hàng = placeholder, gộp trong mục; đánh giá = dữ liệu thật) */}
         <div className="border-t border-gray-200 bg-white" id="danh-gia-khach-hang">
           <ProductReviewsSection productId={product.slug || product.id} productName={product.name} showCustomerImages />
         </div>
 
-        {/* ── KHÁCH HÀNG CŨNG XEM (PLACEHOLDER) ── */}
-        <div className="border-t border-gray-200 bg-white">
-          <ProductCarousel
-            title="Khách hàng đã xem sản phẩm này cũng xem"
-            products={alsoViewedProducts}
-            action={<PlaceholderBadge />}
-          />
-        </div>
+        {/* ── KHÁCH HÀNG CŨNG XEM (PLACEHOLDER — chỉ hiện khi bật NEXT_PUBLIC_SHOW_PLACEHOLDERS) ── */}
+        {SHOW_PLACEHOLDER_BLOCKS && (
+          <div className="border-t border-gray-200 bg-white">
+            <ProductCarousel
+              title="Khách hàng đã xem sản phẩm này cũng xem"
+              products={alsoViewedProducts}
+              action={<PlaceholderBadge />}
+            />
+          </div>
+        )}
 
         {/* ── SẢN PHẨM ĐÃ XEM GẦN ĐÂY (lưu cục bộ trên trình duyệt) ── */}
         <RecentlyViewedProducts currentSlug={product.slug} />

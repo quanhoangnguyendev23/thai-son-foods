@@ -13,6 +13,7 @@ import { INVENTORY_CONFIG } from '@/config/inventory';
 import StorePromotionSidebar from '@/components/home/StorePromotionSidebar';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { BUY_AGAIN_PLACEHOLDER } from '@/data/homepage-placeholders';
+import { SHOW_PLACEHOLDER_BLOCKS } from '@/data/product-detail-placeholders';
 
 export interface HomeCategoryGroup {
   id: string;
@@ -315,7 +316,7 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
           <StorePromotionSidebar />
         </CardShell>
 
-        <BuyAgainPlaceholderCard />
+        {SHOW_PLACEHOLDER_BLOCKS && <BuyAgainPlaceholderCard />}
 
         <CardShell
           title={language === 'en' ? 'Why choose Thai Son Foods?' : 'Vì sao chọn Thái Sơn Foods?'}

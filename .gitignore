@@ -44,3 +44,9 @@ next-env.d.ts
 # database backups
 /backups/
 *.sql
+
+# Sao lưu cục bộ / tài nguyên thô — không đưa vào repo
+/_backup/
+/backups/
+/ảnh/
+/.next-build/

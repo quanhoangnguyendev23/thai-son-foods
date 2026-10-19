@@ -11,6 +11,7 @@ import {
   RETURN_POLICY_PLACEHOLDER,
   PRODUCT_QA_PLACEHOLDERS,
   REVIEW_IMAGE_PLACEHOLDER_COUNT,
+  SHOW_PLACEHOLDER_BLOCKS,
 } from '@/data/product-detail-placeholders';
 
 /**
@@ -19,11 +20,11 @@ import {
  * không gọi API, không lưu, không báo thành công.
  */
 
-export function PlaceholderBadge({ className }: { className?: string }) {
+function PlaceholderBadgeImpl({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded border border-dashed border-amber-400 bg-amber-50 px-1.5 py-px text-[10px] font-medium text-amber-800 whitespace-nowrap',
+        'inline-flex items-center rounded border border-dashed border-copper-400 bg-copper-50 px-1.5 py-px text-[10px] font-medium text-copper-800 whitespace-nowrap',
         className
       )}
       title="Khối giao diện mẫu, dữ liệu chưa phải dữ liệu thật"
@@ -34,7 +35,7 @@ export function PlaceholderBadge({ className }: { className?: string }) {
 }
 
 /** Dòng "đã mua trong tháng trước" cạnh đánh giá */
-export function MonthlySalesPlaceholder() {
+function MonthlySalesPlaceholderImpl() {
   return (
     <p className="flex items-center gap-2 flex-wrap text-[13px] text-gray-600">
       <span>{MONTHLY_SALES_PLACEHOLDER.text}</span>
@@ -44,7 +45,7 @@ export function MonthlySalesPlaceholder() {
 }
 
 /** Dòng mã giảm giá dưới khu vực giá */
-export function CouponPlaceholder() {
+function CouponPlaceholderImpl() {
   const [open, setOpen] = useState(false);
   return (
     <div className="rounded-lg border border-amber-200 bg-ivory px-3 py-2 text-xs text-ink-950">
@@ -71,7 +72,7 @@ export function CouponPlaceholder() {
 }
 
 /** "Giao đến" — chọn địa chỉ giao hàng (chỉ đổi hiển thị) */
-export function DeliveryAddressPlaceholder() {
+function DeliveryAddressPlaceholderImpl() {
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(DELIVERY_ADDRESS_PLACEHOLDERS[0]?.id);
@@ -124,7 +125,7 @@ export function DeliveryAddressPlaceholder() {
 }
 
 /** Chính sách đổi trả trong Buy Box */
-export function ReturnPolicyPlaceholder() {
+function ReturnPolicyPlaceholderImpl() {
   const [open, setOpen] = useState(false);
   return (
     <div className="text-xs text-gray-700">
@@ -148,7 +149,7 @@ export function ReturnPolicyPlaceholder() {
 }
 
 /** Nút "Lưu vào danh sách yêu thích" — chỉ đổi trạng thái hiển thị, không lưu */
-export function WishlistPlaceholderButton() {
+function WishlistPlaceholderButtonImpl() {
   const [saved, setSaved] = useState(false);
   return (
     <div className="space-y-1">
@@ -169,7 +170,7 @@ export function WishlistPlaceholderButton() {
 }
 
 /** Hỏi & đáp sản phẩm */
-export function ProductQAPlaceholder() {
+function ProductQAPlaceholderImpl() {
   const [keyword, setKeyword] = useState('');
   const [asking, setAsking] = useState(false);
   const [draft, setDraft] = useState('');
@@ -268,7 +269,7 @@ export function ProductQAPlaceholder() {
 }
 
 /** Ảnh từ khách hàng (đặt phía trên danh sách đánh giá) */
-export function ReviewImagesPlaceholder() {
+function ReviewImagesPlaceholderImpl() {
   return (
     <section className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-8" aria-labelledby="review-images-title">
       <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -292,4 +293,30 @@ export function ReviewImagesPlaceholder() {
       <p className="text-xs text-gray-500 mt-2">Hệ thống đánh giá hiện chưa hỗ trợ khách hàng đính kèm ảnh.</p>
     </section>
   );
+}
+
+// Khối mẫu chỉ hiển thị khi bật NEXT_PUBLIC_SHOW_PLACEHOLDERS=true (mặc định ẩn khi go-live)
+export function PlaceholderBadge(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <PlaceholderBadgeImpl {...(props as object)} /> : null;
+}
+export function MonthlySalesPlaceholder(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <MonthlySalesPlaceholderImpl {...(props as object)} /> : null;
+}
+export function CouponPlaceholder(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <CouponPlaceholderImpl {...(props as object)} /> : null;
+}
+export function DeliveryAddressPlaceholder(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <DeliveryAddressPlaceholderImpl {...(props as object)} /> : null;
+}
+export function ReturnPolicyPlaceholder(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <ReturnPolicyPlaceholderImpl {...(props as object)} /> : null;
+}
+export function WishlistPlaceholderButton(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <WishlistPlaceholderButtonImpl {...(props as object)} /> : null;
+}
+export function ProductQAPlaceholder(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <ProductQAPlaceholderImpl {...(props as object)} /> : null;
+}
+export function ReviewImagesPlaceholder(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <ReviewImagesPlaceholderImpl {...(props as object)} /> : null;
 }

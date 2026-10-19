@@ -67,8 +67,11 @@ export default function LocationConfirmMapModal({
   // Giá trị ban đầu chỉ đọc lúc mở popup; thay đổi props khi đang mở không được dựng lại bản đồ (làm nhảy ghim)
   const initialCoordsRef = useRef(initialCoords);
   const initialAddressRef = useRef(initialAddress);
-  initialCoordsRef.current = initialCoords;
-  initialAddressRef.current = initialAddress;
+  // Cập nhật ref sau khi render (không ghi ref trong lúc render); khai báo trước effect khởi tạo bản đồ để giữ thứ tự chạy
+  useEffect(() => {
+    initialCoordsRef.current = initialCoords;
+    initialAddressRef.current = initialAddress;
+  });
 
   // Khởi tạo bản đồ Leaflet
   useEffect(() => {
