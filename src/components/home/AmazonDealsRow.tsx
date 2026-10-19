@@ -45,7 +45,7 @@ function PlaceholderCountdown() {
   );
 }
 
-function DealTile({ combo }: { combo: Combo }) {
+function DealTile({ combo, className }: { combo: Combo; className?: string }) {
   const { language } = useLanguage();
   const [src, setSrc] = useState(combo.image || MISSING_PRODUCT_IMAGE);
   const name = (language === 'en' && combo.nameEn ? combo.nameEn : combo.name).split(',')[0].trim();
@@ -53,7 +53,7 @@ function DealTile({ combo }: { combo: Combo }) {
   return (
     <Link
       href={`/combo/${combo.slug}`}
-      className="group snap-start shrink-0 w-[46%] sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%] flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+      className={`group snap-start min-w-0 sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%] flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${className || ''}`}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-ivory">
         <Image
@@ -108,6 +108,7 @@ function DealTile({ combo }: { combo: Combo }) {
  */
 export default function AmazonDealsRow({ combos }: { combos: Combo[] }) {
   const { language } = useLanguage();
+  const [showAll, setShowAll] = useState(false);
   const deals = [...combos]
     .filter((c) => c.isActive !== false && c.discount > 0)
     .sort((a, b) => b.discount - a.discount)
@@ -130,11 +131,25 @@ export default function AmazonDealsRow({ combos }: { combos: Combo[] }) {
           {language === 'en' ? 'See all deals' : 'Xem tất cả ưu đãi'}
         </Link>
       </div>
-      <div className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {deals.map((c) => (
-          <DealTile key={c.id} combo={c} />
+      {/* Mobile: lưới 2 cột xếp dọc (4 thẻ đầu + Xem thêm); từ sm trở lên: dải cuộn ngang như cũ */}
+      <div className="grid grid-cols-2 gap-3 sm:flex md:gap-4 sm:overflow-x-auto sm:snap-x sm:snap-mandatory pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {deals.map((c, idx) => (
+          <DealTile key={c.id} combo={c} className={!showAll && idx >= 4 ? 'max-sm:hidden' : ''} />
         ))}
       </div>
+      {deals.length > 4 && (
+        <div className="sm:hidden pt-3 text-center">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-gray-300 bg-white text-sm text-ink-950 hover:bg-gray-50 cursor-pointer"
+          >
+            {showAll
+              ? language === 'en' ? 'Show less' : 'Thu gọn'
+              : language === 'en' ? `Show all ${deals.length} deals` : `Xem thêm ${deals.length - 4} ưu đãi`}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

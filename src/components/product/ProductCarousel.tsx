@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 import ProductCard from '@/components/product/ProductCard';
 
 interface ProductCarouselProps {
@@ -12,13 +13,27 @@ interface ProductCarouselProps {
   subtitle?: string;
   action?: React.ReactNode;
   className?: string;
+  /** Mobile (< sm): xếp lưới 2 cột theo chiều dọc thay vì trượt ngang; có nút Xem thêm */
+  mobileGrid?: boolean;
+  /** Số sản phẩm hiện ban đầu ở chế độ mobileGrid (mặc định 4) */
+  mobileInitialCount?: number;
 }
 
 /**
  * Dải sản phẩm cuộn ngang: nút trái/phải trên desktop, vuốt + scroll-snap trên cảm ứng.
  * Tái sử dụng ProductCard để thẻ đồng bộ với trang chủ (ảnh, tên, giá, nút thêm giỏ).
  */
-export default function ProductCarousel({ title, products, subtitle, action, className }: ProductCarouselProps) {
+export default function ProductCarousel({
+  title,
+  products,
+  subtitle,
+  action,
+  className,
+  mobileGrid = false,
+  mobileInitialCount = 4,
+}: ProductCarouselProps) {
+  const { language } = useLanguage();
+  const [expanded, setExpanded] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -62,18 +77,41 @@ export default function ProductCarousel({ title, products, subtitle, action, cla
       <div className="relative group/carousel">
         <div
           ref={trackRef}
-          className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className={cn(
+            'gap-3 md:gap-4 sm:overflow-x-auto sm:snap-x sm:snap-mandatory scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+            mobileGrid ? 'grid grid-cols-2 sm:flex' : 'flex overflow-x-auto snap-x snap-mandatory'
+          )}
         >
-          {products.map((p) => (
+          {products.map((p, idx) => (
             <div
               key={p.id}
-              className="snap-start shrink-0 w-[46%] sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%]"
+              className={cn(
+                'snap-start sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%]',
+                mobileGrid ? 'min-w-0' : 'shrink-0 w-[46%]',
+                mobileGrid && !expanded && idx >= mobileInitialCount && 'max-sm:hidden'
+              )}
             >
               {/* Bố cục compact + tên giới hạn 2 dòng để các thẻ đồng bộ chiều cao */}
               <ProductCard product={p} layout="compact" isHomepage />
             </div>
           ))}
         </div>
+
+        {mobileGrid && products.length > mobileInitialCount && (
+          <div className="sm:hidden pt-3 text-center">
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-gray-300 bg-white text-sm text-ink-950 hover:bg-gray-50 cursor-pointer"
+            >
+              {expanded
+                ? language === 'en' ? 'Show less' : 'Thu gọn'
+                : language === 'en'
+                  ? `Show ${products.length - mobileInitialCount} more`
+                  : `Xem thêm ${products.length - mobileInitialCount} sản phẩm`}
+            </button>
+          </div>
+        )}
 
         {canPrev && (
           <button

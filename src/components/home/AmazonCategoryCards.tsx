@@ -45,7 +45,7 @@ function CardShell({
   return (
     <div
       className={cn(
-        'shrink-0 w-[82%] min-[480px]:w-[60%] sm:w-auto snap-start bg-white rounded-2xl border border-border shadow-xs p-4 lg:p-5 flex flex-col',
+        'bg-white rounded-2xl border border-border shadow-xs p-4 lg:p-5 flex flex-col',
         className
       )}
     >
@@ -125,7 +125,7 @@ function SignInColumn() {
   const threshold = INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD;
 
   return (
-    <div className="shrink-0 w-[82%] min-[480px]:w-[60%] sm:w-auto snap-start flex flex-col gap-4 lg:gap-5">
+    <div className="flex flex-col gap-4 lg:gap-5">
       <div className="bg-white rounded-2xl border border-border shadow-xs p-4 lg:p-5">
         {user ? (
           <>
@@ -292,7 +292,7 @@ function BuyAgainPlaceholderCard() {
 export default function AmazonCategoryCards({ categories, combos }: AmazonCategoryCardsProps) {
   const { language } = useLanguage();
   const track =
-    'flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none pb-2 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
+    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5';
 
   return (
     <div className="space-y-4 lg:space-y-5">

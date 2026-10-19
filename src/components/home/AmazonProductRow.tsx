@@ -38,6 +38,7 @@ export default function AmazonProductRow({
         subtitle={isEn ? subtitleEn : subtitleVi}
         products={products}
         action={action}
+        mobileGrid
       />
     </div>
   );
