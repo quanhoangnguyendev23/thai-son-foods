@@ -8,10 +8,7 @@ import { calculateShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
 import { getUnitPrice, getVariantLabel } from '@/lib/product-detail';
 import QuantitySelector from '@/components/product/QuantitySelector';
 import { STORE_SALES_INFO } from '@/data/product-detail-content';
-import {
-  DeliveryAddressPlaceholder,
-  WishlistPlaceholderButton,
-} from '@/components/product/ProductPlaceholderBlocks';
+import { DeliveryAddressInfo, WishlistButton } from '@/components/product/ProductRealBlocks';
 
 export interface BuyBoxStock {
   isOutOfStock: boolean;
@@ -44,6 +41,9 @@ interface ProductBuyBoxProps {
   language?: string;
   /** Hiển thị các khối mẫu theo bố cục Amazon (địa chỉ giao, đổi trả, yêu thích) */
   showPlaceholders?: boolean;
+  /** Mã sản phẩm / combo dùng cho nút Yêu thích */
+  itemId?: string;
+  itemType?: 'product' | 'combo';
 }
 
 /**
@@ -70,6 +70,8 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
     certification,
     language = 'vi',
     showPlaceholders = true,
+    itemId,
+    itemType = 'product',
   },
   actionsRef
 ) {
@@ -103,7 +105,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
 
       {/* Giao hàng */}
       <div className="space-y-2 text-[13px] text-ink-950 border-t border-gray-100 pt-3">
-        {showPlaceholders && <DeliveryAddressPlaceholder />}
+        <DeliveryAddressInfo />
         <div className="flex items-start gap-2">
           <Truck className="w-4 h-4 text-green-primary shrink-0 mt-0.5" aria-hidden />
           <div className="leading-snug">
@@ -272,9 +274,9 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
         )}
       </ul>
 
-      {showPlaceholders && (
+      {itemId && (
         <div className="border-t border-gray-100 pt-3">
-          <WishlistPlaceholderButton />
+          <WishlistButton itemId={itemId} itemType={itemType} />
         </div>
       )}
     </div>

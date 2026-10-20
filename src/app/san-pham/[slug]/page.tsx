@@ -27,7 +27,8 @@ import ProductCompareTable from '@/components/product/ProductCompareTable';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
-import { CUSTOMERS_ALSO_VIEWED_IDS, SHOW_PLACEHOLDER_BLOCKS } from '@/data/product-detail-placeholders';
+import { getAlsoViewedIds } from '@/lib/product-stats';
+import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
 
 export const dynamic = 'force-dynamic';
@@ -195,9 +196,15 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   // Giao diện mới: sản phẩm cùng danh mục (chọn hương vị) và sản phẩm tương tự (carousel gợi ý)
   const siblingProducts = getSiblingProducts(product, products);
   const similarProducts = getSimilarProducts(product, products, 12);
-  // PLACEHOLDER: "Khách hàng cũng xem" — danh sách mẫu từ fixture, chờ dữ liệu hành vi thật
-  const alsoViewedProducts = CUSTOMERS_ALSO_VIEWED_IDS
-    .map((id) => products.find((p) => p.id === id && p.isActive))
+  // "Khách hàng cũng xem": dữ liệu THẬT từ lượt xem cùng phiên (bảng product_views); chưa đủ dữ liệu thì ẩn khối
+  let alsoViewedIds: string[] = [];
+  try {
+    alsoViewedIds = await getAlsoViewedIds(product.id, 12);
+  } catch (err) {
+    console.error('Không thể lấy gợi ý "khách cũng xem":', err);
+  }
+  const alsoViewedProducts = alsoViewedIds
+    .map((id) => products.find((p) => p.id === id && p.isActive !== false))
     .filter((p): p is Product => Boolean(p) && p!.id !== product.id);
 
   const reviewSummary = await getProductReviewSummary(product.slug || product.id);
@@ -342,13 +349,14 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <ProductReviewsSection productId={product.slug || product.id} productName={product.name} showCustomerImages />
         </div>
 
-        {/* ── KHÁCH HÀNG CŨNG XEM (PLACEHOLDER — chỉ hiện khi bật NEXT_PUBLIC_SHOW_PLACEHOLDERS) ── */}
-        {SHOW_PLACEHOLDER_BLOCKS && (
+        {/* ── KHÁCH HÀNG CŨNG XEM (dữ liệu thật; ẩn khi chưa đủ 3 sản phẩm gợi ý) ── */}
+        <ProductViewTracker productId={product.id} />
+        {alsoViewedProducts.length >= 3 && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel
               title="Khách hàng đã xem sản phẩm này cũng xem"
               products={alsoViewedProducts}
-              action={<PlaceholderBadge />}
+              mobileGrid
             />
           </div>
         )}

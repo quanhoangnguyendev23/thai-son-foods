@@ -12,7 +12,7 @@ vào Claude Code để triển khai phần còn thiếu.
 | 2 | Hội viên Thái Sơn Prime | `ENABLE_MEMBERSHIP` trong `src/config/membership.ts` | Tắt |
 | 3 | Chương trình Đối tác (CTV / Đại lý / Rút tiền) | `NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM=true` | Tắt |
 | 4 | Đăng nhập Google / Facebook | `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN=true` | Tắt |
-| 5 | Các khối "Bản mẫu" (deal đồng hồ, mã giảm giá, đã mua trong tháng, địa chỉ giao mẫu, yêu thích, Mua lại, Gợi ý cho bạn, Khách cũng xem) | `NEXT_PUBLIC_SHOW_PLACEHOLDERS=true` | Tắt |
+| 5 | Các khối "Bản mẫu" còn lại (deal đồng hồ, mã giảm giá, Mua lại, Gợi ý cho bạn) | `NEXT_PUBLIC_SHOW_PLACEHOLDERS=true` | Tắt |
 
 Ghi chú chung:
 - Biến `NEXT_PUBLIC_*` được nhúng lúc build → **đổi biến xong phải build/deploy lại**.
@@ -171,10 +171,15 @@ Việc cần làm:
 
 ## 5. CÁC KHỐI "BẢN MẪU" (CHƯA CÓ NGHIỆP VỤ THẬT)
 
+**Đã làm thật (không còn là bản mẫu):** "Giao đến" theo địa chỉ đã lưu của tài khoản, "đã được đặt trong 30 ngày qua"
+(từ đơn hàng thật, ẩn khi < 10), nút Yêu thích lưu theo tài khoản (tab "Yêu thích" ở `/tai-khoan`), và "Khách hàng đã xem
+sản phẩm này cũng xem" (từ bảng `product_views`, ẩn khi chưa đủ 3 sản phẩm gợi ý). Mã: `src/components/product/ProductRealBlocks.tsx`,
+`WishlistPanel.tsx`, `src/lib/product-stats.ts`, `src/app/api/products/{sales,view}`, `src/app/api/user/wishlist`.
+Bảng `wishlists`, `product_views` do `initDatabase()` tự tạo.
+
 **Hiện trạng:** cờ `SHOW_PLACEHOLDER_BLOCKS` (`src/data/product-detail-placeholders.ts`, đọc từ
 `NEXT_PUBLIC_SHOW_PLACEHOLDERS`) đang tắt. Khi tắt sẽ ẩn: nhãn "Bản mẫu · chờ triển khai", đồng hồ đếm ngược Deal
-trong ngày, "Hơn 200 sản phẩm đã được mua trong tháng trước", mã giảm giá mẫu, địa chỉ giao mẫu, nút "Thêm vào danh sách
-yêu thích", thẻ "Mua lại", khối "Gợi ý cho bạn" ở trang chủ, khối "Khách hàng đã xem sản phẩm này cũng xem".
+trong ngày, mã giảm giá mẫu, thẻ "Mua lại" và khối "Gợi ý cho bạn" ở trang chủ.
 Khối "Câu hỏi & trả lời" đã được **gỡ khỏi** trang sản phẩm và combo theo yêu cầu (component
 `ProductQAPlaceholder` vẫn còn trong `ProductPlaceholderBlocks.tsx` nhưng không trang nào gọi).
 
@@ -190,13 +195,10 @@ thư mục, sửa vi phẫu, không tái cấu trúc). Mỗi khối làm xong th
 Các khối cần làm thật lần này (xóa dòng không làm):
 - Deal trong ngày có thời hạn thật (bảng/cột thời gian bắt đầu-kết thúc cho combo, đồng hồ đếm ngược theo dữ liệu thật,
   tự ẩn khi hết hạn) — hiện đồng hồ chỉ minh họa (AmazonDealsRow.tsx, DEAL_COUNTDOWN_PLACEHOLDER).
-- "Đã mua trong tháng" lấy từ đơn hàng thật (đếm đơn hoàn tất 30 ngày gần nhất, ẩn nếu < ngưỡng).
 - Mã giảm giá thật (CouponPlaceholder): bảng mã, điều kiện, áp dụng ở giỏ hàng/thanh toán, kiểm tra ở server.
-- Danh sách yêu thích (WishlistPlaceholderButton): lưu theo tài khoản.
 - "Mua lại" ở trang chủ: lấy từ lịch sử đơn của khách đã đăng nhập.
-- "Gợi ý cho bạn" / "Khách cũng xem": thuật toán gợi ý dựa trên lịch sử xem/mua thật.
+- "Gợi ý cho bạn" ở trang chủ: thuật toán gợi ý dựa trên lịch sử xem/mua thật của từng khách.
 - Hỏi & đáp sản phẩm: cần quy trình duyệt nội dung, trả lời của CSKH, chống spam.
-- Địa chỉ giao hàng trên Buy Box: lấy từ địa chỉ/chi nhánh thật của khách.
 
 Yêu cầu: không hiển thị số liệu bịa; mọi dữ liệu lấy từ CSDL; kiểm tra quyền và validate ở server; mobile không trượt
 ngang; chạy npx tsc --noEmit, npx eslint src, npm test. Sau khi hoàn thiện khối nào thì khối đó không còn phụ thuộc

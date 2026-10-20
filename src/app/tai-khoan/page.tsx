@@ -21,8 +21,10 @@ import {
   Save,
   Star,
   MessageCircle,
+  Heart,
 } from 'lucide-react';
 import { useUserAuth } from '@/context/UserAuthContext';
+import WishlistPanel from '@/components/product/WishlistPanel';
 import { useLanguage } from '@/context/LanguageContext';
 import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 
@@ -76,7 +78,7 @@ function AccountContent() {
   const { user, isLoading, logout, updateProfile, openAuthModal } = useUserAuth();
   const { language } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'reviews'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'reviews' | 'wishlist'>('orders');
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [userReviews, setUserReviews] = useState<UserReviewRecord[]>([]);
@@ -103,6 +105,8 @@ function AccountContent() {
       setActiveTab('orders');
     } else if (tabParam === 'reviews') {
       setActiveTab('reviews');
+    } else if (tabParam === 'wishlist') {
+      setActiveTab('wishlist');
     }
   }, [searchParams]);
 
@@ -382,6 +386,21 @@ function AccountContent() {
               {userReviews.length}
             </span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('wishlist')}
+            className={cn(
+              'w-full flex items-center justify-between p-4 rounded-2xl text-base transition-all text-left cursor-pointer',
+              activeTab === 'wishlist'
+                ? 'bg-forest-700 text-white shadow-xs'
+                : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-100'
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <Heart className="w-5 h-5" />
+              <span>{language === 'en' ? 'Wishlist' : 'Yêu thích'}</span>
+            </div>
+          </button>
         </div>
 
         {/* Content Pane */}
@@ -514,7 +533,7 @@ function AccountContent() {
                 ))
               )}
             </div>
-          ) : (
+          ) : activeTab === 'profile' ? (
             /* TAB: PROFILE */
             <div className="bg-white rounded-3xl border border-gray-100 shadow-2xs p-6 md:p-8">
               <h2 className="text-xl text-gray-900 font-heading mb-1">
@@ -667,7 +686,9 @@ function AccountContent() {
                 </div>
               </form>
             </div>
-          )}
+          ) : null}
+
+          {activeTab === 'wishlist' && <WishlistPanel />}
 
           {/* TAB 3: ĐÁNH GIÁ CỦA TÔI */}
           {activeTab === 'reviews' && (

@@ -18,7 +18,8 @@ import ProductGallery from '@/components/product/ProductGallery';
 import ProductBuyBox from '@/components/product/ProductBuyBox';
 import ProductSponsoredMiniCard from '@/components/product/ProductSponsoredMiniCard';
 import ProductSidebarSponsoredCard from '@/components/product/ProductSidebarSponsoredCard';
-import { MonthlySalesPlaceholder, CouponPlaceholder } from '@/components/product/ProductPlaceholderBlocks';
+import { CouponPlaceholder } from '@/components/product/ProductPlaceholderBlocks';
+import { MonthlySalesInfo } from '@/components/product/ProductRealBlocks';
 
 interface ComboProductDetailItem {
   quantity: number;
@@ -410,7 +411,7 @@ export default function ComboDetailView({
               </span>
             </div>
 
-            <MonthlySalesPlaceholder />
+            <MonthlySalesInfo itemId={combo.id} itemType="combo" />
 
             {/* Nhãn thuộc tính */}
             <div className="flex flex-wrap gap-1.5">
@@ -533,6 +534,8 @@ export default function ComboDetailView({
                 expiryText={DEFAULT_PRODUCT_DETAIL.expiry}
                 certification={DEFAULT_PRODUCT_DETAIL.certification}
                 language={language}
+                itemId={combo.id}
+                itemType="combo"
               />
             )}
             <div className="hidden xl:block mt-4">

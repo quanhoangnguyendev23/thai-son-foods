@@ -28,7 +28,8 @@ import ProductBuyBox from '@/components/product/ProductBuyBox';
 import MobileBuyBar from '@/components/product/MobileBuyBar';
 import ProductSponsoredMiniCard from '@/components/product/ProductSponsoredMiniCard';
 import ProductSidebarSponsoredCard from '@/components/product/ProductSidebarSponsoredCard';
-import { MonthlySalesPlaceholder, CouponPlaceholder } from '@/components/product/ProductPlaceholderBlocks';
+import { CouponPlaceholder } from '@/components/product/ProductPlaceholderBlocks';
+import { MonthlySalesInfo } from '@/components/product/ProductRealBlocks';
 
 const VEGAN_PRODUCT_IDS = new Set([
   'sua-bap-nep',
@@ -395,7 +396,7 @@ export default function ProductMainSection({
             <span className="text-xs text-gray-500 font-mono">SKU: {product.sku}</span>
           </div>
 
-          {showPlaceholders && <MonthlySalesPlaceholder />}
+          <MonthlySalesInfo itemId={product.id} itemType="product" />
 
           {/* Nhãn thuộc tính có trong dữ liệu */}
           {(isVegan || product.isBestSeller || product.isNew) && (
@@ -529,6 +530,8 @@ export default function ProductMainSection({
             certification={detailContent.certification || DEFAULT_PRODUCT_DETAIL.certification}
             language={language}
             showPlaceholders={showPlaceholders}
+            itemId={product.id}
+            itemType="product"
           />
           {/* Khối hội viên + gợi ý được tài trợ (khối có sẵn của TSF) dưới Buy Box */}
           <div className="hidden xl:block mt-4">

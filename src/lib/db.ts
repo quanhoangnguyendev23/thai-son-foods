@@ -670,6 +670,24 @@ async function runInitDatabase() {
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS ranking_snapshot JSONB;
       CREATE INDEX IF NOT EXISTS idx_orders_lat_lng ON orders(latitude, longitude);
       CREATE INDEX IF NOT EXISTS idx_orders_recommended_store ON orders(recommended_store_id);
+
+      -- 11. Danh sách yêu thích theo tài khoản & lượt xem sản phẩm ẩn danh (gợi ý "khách cũng xem")
+      CREATE TABLE IF NOT EXISTS wishlists (
+        user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        item_type VARCHAR(10) NOT NULL CHECK (item_type IN ('product', 'combo')),
+        item_id VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, item_type, item_id)
+      );
+      CREATE TABLE IF NOT EXISTS product_views (
+        id BIGSERIAL PRIMARY KEY,
+        session_id VARCHAR(64) NOT NULL,
+        product_id VARCHAR(100) NOT NULL,
+        viewed_on DATE NOT NULL DEFAULT CURRENT_DATE,
+        UNIQUE (session_id, product_id, viewed_on)
+      );
+      CREATE INDEX IF NOT EXISTS idx_product_views_product ON product_views(product_id, viewed_on);
+      CREATE INDEX IF NOT EXISTS idx_product_views_session ON product_views(session_id, viewed_on);
     `);
 
     console.log('Database tables verified/created successfully!');
