@@ -1,13 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Scene1Game, { type FlameState } from './Scene1Game';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CẤU HÌNH NỘI DUNG — sửa ở đây (tên, lời, nhạc). Không cần đụng phần bên dưới.
    Trong lời văn: {TEN_NGUOI_NHAN} sẽ được thay bằng tên người nhận.
    ═══════════════════════════════════════════════════════════════════════════ */
-const TEN_NGUOI_NHAN = 'bạn';
+const TEN_NGUOI_NHAN = 'T';
 const TEN_NGUOI_GUI = 'một người bạn';
+/** Hiện dòng ký tên "— {TEN_NGUOI_GUI}" ở cảnh cuối (hiện đang ẩn). Đổi true để hiện lại. */
+const HIEN_DONG_KY_TEN = false;
 const NAM = '2010';
 /** Đường dẫn file nhạc (ví dụ '/music/2010.mp3'). Để trống = không có nhạc, không hiện nút nhạc. */
 const MUSIC_URL = '';
@@ -45,7 +48,7 @@ interface Scene {
   lines: string[];
   small?: boolean;
   big?: boolean;
-  textPos: 'bottom' | 'top';
+  textPos: 'bottom' | 'top' | 'high';
   heart: HeartCfg;
   spark?: boolean;
   veil: number;
@@ -63,7 +66,7 @@ const SCENES: Scene[] = [
     glow: 'none',
     lines: ['Chạm để thắp lửa'],
     small: true,
-    textPos: 'bottom',
+    textPos: 'high',
     heart: { scale: 0.05, alpha: 0, y: 0.34, period: 1.15, amp: 0.13, embers: 0, rate: 3 },
     spark: true,
     veil: 0,
@@ -74,7 +77,7 @@ const SCENES: Scene[] = [
     bg: NIGHT,
     ink: SUN_CREAM,
     glow: 'radial-gradient(ellipse 80% 45% at 50% 34%, rgba(255,59,98,0.16), transparent 70%)',
-    lines: ['Có một ngọn lửa nhỏ.', 'Nó chỉ sáng lên khi nghĩ đến bạn.'],
+    lines: ['Có một đốm lửa nhỏ,', 'nằm yên trong lồng ngực.', 'Không ai thấy. Nó vẫn thở.'],
     textPos: 'bottom',
     heart: { scale: 1, alpha: 1, y: 0.34, period: 1.15, amp: 0.13, embers: 1, rate: 3.2 },
     veil: 0,
@@ -86,7 +89,7 @@ const SCENES: Scene[] = [
     bg: NIGHT,
     ink: SUN_CREAM,
     glow: 'radial-gradient(ellipse 85% 48% at 50% 34%, rgba(255,179,71,0.18), transparent 70%)',
-    lines: ['{TEN_NGUOI_NHAN} ơi,', 'có những ngày mình chỉ cần một tia sáng nhỏ để đi tiếp.'],
+    lines: ['{TEN_NGUOI_NHAN} ơi,', 'có hôm gió lớn lắm,', 'lửa chao đi, chực tắt.', 'Nhưng nó chưa bao giờ tắt.'],
     textPos: 'bottom',
     heart: { scale: 1.06, alpha: 1, y: 0.34, period: 0.95, amp: 0.16, embers: 2.6, rate: 2 },
     veil: 0,
@@ -98,7 +101,7 @@ const SCENES: Scene[] = [
     bg: PINK_NIGHT,
     ink: SUN_CREAM,
     glow: 'radial-gradient(ellipse 90% 55% at 50% 40%, rgba(255,143,163,0.2), transparent 72%)',
-    lines: ['Trong mỗi người đều có một chiếc váy công chúa.', 'Dù ngoài kia gió có thổi thế nào.'],
+    lines: ['Mỗi lần chao đảo,', 'tàn lửa hóa thành lụa hồng,', 'khoác lên như áo công chúa.', 'Gió chỉ làm nó đẹp hơn.'],
     textPos: 'bottom',
     heart: { scale: 0.6, alpha: 0.7, y: 0.27, period: 1.3, amp: 0.08, embers: 0.5, rate: 1.6 },
     veil: 1,
@@ -109,7 +112,7 @@ const SCENES: Scene[] = [
     bg: PINK_NIGHT,
     ink: SUN_CREAM,
     glow: 'radial-gradient(ellipse 80% 45% at 50% 34%, rgba(255,143,163,0.14), transparent 70%)',
-    lines: ['Nếu hôm nay mệt,', 'cứ để trái tim đập chậm lại một chút.', 'Mình ở đây.'],
+    lines: ['Nếu hôm nay mệt,', 'cứ thở chậm lại thôi.', 'Lửa vẫn ấm. Mình ở đây.'],
     textPos: 'bottom',
     heart: { scale: 0.88, alpha: 0.88, y: 0.33, period: 2, amp: 0.055, embers: 0.2, rate: 1.4 },
     veil: 0.3,
@@ -120,7 +123,7 @@ const SCENES: Scene[] = [
     bg: DAWN_PINK,
     ink: PINK_NIGHT,
     glow: `linear-gradient(to top, rgba(255,210,122,0.9) 0%, rgba(255,210,122,0.35) 38%, rgba(255,210,122,0) 70%)`,
-    lines: ['Rồi mặt trời sẽ lên.'],
+    lines: ['Đêm nào rồi cũng qua.', 'Mặt trời đang lên.'],
     textPos: 'top',
     big: true,
     heart: { scale: 0.13, alpha: 0, y: 0.76, period: 1.15, amp: 0.1, embers: 0, rate: 0.9 },
@@ -132,7 +135,7 @@ const SCENES: Scene[] = [
     bg: SUN_CREAM,
     ink: PINK_NIGHT,
     glow: `radial-gradient(ellipse 90% 40% at 50% 22%, rgba(255,210,122,0.55), transparent 72%)`,
-    lines: ['Mong bạn sẽ nở mãi nụ cười,', 'tỏa nắng rạng ngời.'],
+    lines: ['Mong bạn luôn nở nụ cười.'],
     big: true,
     textPos: 'bottom',
     heart: { scale: 0.1, alpha: 0, y: 0.22, period: 1.15, amp: 0.1, embers: 0, rate: 1 },
@@ -292,6 +295,13 @@ export default function Story2010() {
   const eventsRef = useRef<Array<{ type: 'bloom' | 'burst'; x?: number; y?: number }>>([]);
   const pointerRef = useRef({ x: 0, y: 0, down: false, until: 0 });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Mini-game Cảnh 1: đốm lửa chia sẻ với canvas, quản lý mount/unmount
+  const flameRef = useRef<FlameState>({ active: false, x: 0, y: 0, flicker: 1, boost: 0 });
+  const [gameMounted, setGameMounted] = useState(true);
+  const [gameKey, setGameKey] = useState(0);
+  const [gameFailed, setGameFailed] = useState(false);
+  const gameFailedRef = useRef(false);
+  const prevSceneRef = useRef(0);
 
   const cfg = SCENES[scene];
   const lines = cfg.lines.map(fill);
@@ -381,6 +391,24 @@ export default function Story2010() {
     };
   }, [scene, armHint]);
 
+  /* ── Mini-game Cảnh 1: khởi tạo lại sạch khi quay về Cảnh 1; gỡ sau khi mờ dần khi sang cảnh khác ── */
+  useEffect(() => {
+    gameFailedRef.current = gameFailed;
+  }, [gameFailed]);
+  useEffect(() => {
+    const prev = prevSceneRef.current;
+    prevSceneRef.current = scene;
+    if (scene === 0) {
+      if (prev !== 0) {
+        setGameKey((k) => k + 1);
+        setGameMounted(true);
+      }
+      return;
+    }
+    const id = window.setTimeout(() => setGameMounted(false), 1100);
+    return () => window.clearTimeout(id);
+  }, [scene]);
+
   /* ── Điều hướng ── */
   const shownRef = useRef(0);
   useEffect(() => {
@@ -409,6 +437,8 @@ export default function Story2010() {
   /* ── Bàn phím (máy tính) ── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Cảnh 1 là mini-game: phím mũi tên/WASD dùng để di chuyển nhân vật, không chuyển cảnh
+      if (sceneRef.current === 0 && !gameFailedRef.current) return;
       if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
         if ((e.target as HTMLElement)?.tagName === 'BUTTON' && e.key !== 'ArrowRight') return;
         e.preventDefault();
@@ -458,6 +488,22 @@ export default function Story2010() {
       audioRef.current = null;
     };
   }, []);
+
+  /* ── Mini-game Cảnh 1: các callback ── */
+  const handleGameFirst = useCallback(() => {
+    if (!interactedRef.current) {
+      interactedRef.current = true;
+      startMusic();
+    }
+  }, [startMusic]);
+  const handleGameBurst = useCallback((x: number, y: number) => {
+    eventsRef.current.push({ type: 'burst', x, y });
+  }, []);
+  // Chạm lửa → sang Cảnh 2 bằng đúng cơ chế chuyển cảnh sẵn có (setScene → bloom trái tim)
+  const handleGameReach = useCallback(() => {
+    if (sceneRef.current === 0) setScene(1);
+  }, []);
+  const handleGameError = useCallback(() => setGameFailed(true), []);
 
   /* ── Chạm / vuốt ── */
   const downRef = useRef<{ x: number; y: number; id: number } | null>(null);
@@ -818,25 +864,31 @@ export default function Story2010() {
         ctx.globalAlpha = 1;
       }
 
-      // Tia lửa nhỏ như bật lửa vừa quẹt (cảnh 1)
+      // Tia lửa nhỏ như bật lửa vừa quẹt (cảnh 1) — vị trí do mini-game điều khiển (flameRef), mặc định giữa màn hình
       if (cur.spark > 0.02) {
+        const fs = flameRef.current;
+        const sx = fs.active ? fs.x : hc.x;
+        const sy = fs.active ? fs.y : hc.y;
+        const fk = fs.active ? fs.flicker : 1;
+        const bst = fs.active ? fs.boost : 0;
         ctx.globalCompositeOperation = 'lighter';
-        const fl = reduceMotion ? 0.8 : 0.65 + Math.random() * 0.35;
-        const base = 26 + (reduceMotion ? 0 : Math.sin(t * 9) * 3);
-        ctx.globalAlpha = cur.spark * fl;
-        ctx.drawImage(warmSprite, hc.x - base * 1.6, hc.y - base * 1.6 - 4, base * 3.2, base * 3.2);
-        ctx.globalAlpha = cur.spark * Math.min(1, fl + 0.2);
-        const core = 9 + (reduceMotion ? 0 : Math.random() * 4);
-        ctx.drawImage(warmSprite, hc.x - core, hc.y - core - 6, core * 2, core * 2);
+        const fl = reduceMotion ? 0.8 : 1 - Math.random() * 0.35 * fk;
+        const base = (26 + (reduceMotion ? 0 : Math.sin(t * 9) * 3 * fk)) * (1 + bst * 1.6);
+        ctx.globalAlpha = Math.min(1, cur.spark * fl);
+        ctx.drawImage(warmSprite, sx - base * 1.6, sy - base * 1.6 - 4, base * 3.2, base * 3.2);
+        ctx.globalAlpha = Math.min(1, cur.spark * Math.min(1, fl + 0.2));
+        const core = (9 + (reduceMotion ? 0 : Math.random() * 4)) * (1 + bst * 1.2);
+        ctx.drawImage(warmSprite, sx - core, sy - core - 6, core * 2, core * 2);
         // ngọn lửa nhỏ
+        const fz = 1 + bst * 0.9;
         ctx.beginPath();
-        const flick = reduceMotion ? 0 : Math.sin(t * 17) * 2;
-        ctx.moveTo(hc.x - 5, hc.y);
-        ctx.quadraticCurveTo(hc.x - 6 + flick, hc.y - 16, hc.x + flick * 0.5, hc.y - 26 - flick);
-        ctx.quadraticCurveTo(hc.x + 7 + flick, hc.y - 14, hc.x + 5, hc.y);
+        const flick = (reduceMotion ? 0 : Math.sin(t * 17) * 2) * fk;
+        ctx.moveTo(sx - 5 * fz, sy);
+        ctx.quadraticCurveTo(sx - 6 * fz + flick, sy - 16 * fz, sx + flick * 0.5, sy - (26 + flick) * fz);
+        ctx.quadraticCurveTo(sx + 7 * fz + flick, sy - 14 * fz, sx + 5 * fz, sy);
         ctx.closePath();
         ctx.fillStyle = 'rgb(255,205,110)';
-        ctx.globalAlpha = cur.spark * 0.85;
+        ctx.globalAlpha = Math.min(1, cur.spark * 0.85);
         ctx.fill();
         ctx.globalAlpha = 1;
       }
@@ -963,6 +1015,20 @@ export default function Story2010() {
         />
       </svg>
 
+      {/* Mini-game Cảnh 1 (nhân vật + lớp điều khiển); đặt trước lớp chữ để chữ luôn nằm trên */}
+      {gameMounted && !gameFailed && (
+        <Scene1Game
+          key={gameKey}
+          flameRef={flameRef}
+          active={scene === 0}
+          reduced={reduced}
+          onFirstInteract={handleGameFirst}
+          onBurst={handleGameBurst}
+          onReach={handleGameReach}
+          onImageError={handleGameError}
+        />
+      )}
+
       {/* Chữ: mỗi cảnh một khối, mờ chéo khi đổi cảnh */}
       {SCENES.map((s, i) => {
         const active = i === scene;
@@ -970,7 +1036,7 @@ export default function Story2010() {
         return (
           <div
             key={i}
-            className={`s10-text ${s.textPos === 'top' ? 's10-top' : 's10-bottom'}`}
+            className={`s10-text ${s.textPos === 'top' ? 's10-top' : s.textPos === 'high' ? 's10-high' : 's10-bottom'}`}
             style={{ opacity: active ? 1 : 0, color: s.ink }}
             aria-hidden={!active}
           >
@@ -988,7 +1054,7 @@ export default function Story2010() {
                 className="s10-sign"
                 style={{ opacity: active && shown >= ls.length ? 1 : 0, pointerEvents: active && shown >= ls.length ? 'auto' : 'none' }}
               >
-                <p className="s10-from">— {TEN_NGUOI_GUI}</p>
+                {HIEN_DONG_KY_TEN && <p className="s10-from">— {TEN_NGUOI_GUI}</p>}
                 <button
                   type="button"
                   className="s10-restart"
@@ -1106,6 +1172,7 @@ const CSS = `
 }
 .s10-bottom{ bottom:calc(env(safe-area-inset-bottom, 0px) + 9dvh); }
 .s10-top{ top:calc(env(safe-area-inset-top, 0px) + 17dvh); }
+.s10-high{ top:calc(env(safe-area-inset-top, 0px) + 8dvh); }
 .s10-line{
   margin:0; max-width:min(28ch, 100%); text-wrap:balance;
   font-family:'Playfair Display', var(--font-playfair), Georgia, serif; font-style:italic; font-weight:400;
@@ -1118,7 +1185,7 @@ const CSS = `
   font-family:'Be Vietnam Pro', system-ui, sans-serif; font-style:normal; font-weight:300;
   font-size:14px; letter-spacing:.22em; text-transform:uppercase; opacity:.8; text-shadow:none;
 }
-.s10-sign{ display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:6px; transition:opacity 1.1s ease .6s; }
+.s10-sign{ position:relative; z-index:8; display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:6px; transition:opacity 1.1s ease .6s; }
 .s10-from{ margin:0; font-family:'Be Vietnam Pro', system-ui, sans-serif; font-weight:300; font-size:15px; letter-spacing:.04em; opacity:.8; }
 .s10-restart{
   min-height:44px; min-width:44px; padding:0 22px; border-radius:999px; cursor:pointer;
