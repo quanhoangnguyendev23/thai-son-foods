@@ -9,7 +9,7 @@ import { useLanguage } from '@/context/LanguageContext';
 
 /**
  * Các khối DỮ LIỆU THẬT trên trang chi tiết sản phẩm / combo (thay cho khối "Bản mẫu"):
- *  - MonthlySalesInfo : số lượng đã đặt trong 30 ngày qua (từ đơn hàng thật)
+ *  - MonthlySalesInfo : tổng số đã bán (số bán ngoài website do admin nhập + đơn đặt trên web)
  *  - DeliveryAddressInfo : "Giao đến" theo địa chỉ đã lưu của tài khoản
  *  - WishlistButton : danh sách yêu thích lưu theo tài khoản
  *  - ProductViewTracker : ghi nhận lượt xem ẩn danh để gợi ý "khách cũng xem"
@@ -25,13 +25,22 @@ function roundDown(n: number): number {
   return Math.floor(n / 100) * 100;
 }
 
-export function MonthlySalesInfo({ itemId, itemType = 'product' }: { itemId: string; itemType?: ItemType }) {
+export function MonthlySalesInfo({
+  itemId,
+  itemType = 'product',
+  slug,
+}: {
+  itemId: string;
+  itemType?: ItemType;
+  slug?: string;
+}) {
   const { language } = useLanguage();
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/products/sales?itemId=${encodeURIComponent(itemId)}&itemType=${itemType}`)
+    const slugParam = slug ? `&slug=${encodeURIComponent(slug)}` : '';
+    fetch(`/api/products/sales?itemId=${encodeURIComponent(itemId)}&itemType=${itemType}${slugParam}`)
       .then((r) => r.json())
       .then((data) => {
         if (active && data.success) setCount(Number(data.count) || 0);
@@ -40,15 +49,15 @@ export function MonthlySalesInfo({ itemId, itemType = 'product' }: { itemId: str
     return () => {
       active = false;
     };
-  }, [itemId, itemType]);
+  }, [itemId, itemType, slug]);
 
   if (count === null || count < MIN_SALES_TO_SHOW) return null;
   const shown = roundDown(count).toLocaleString('vi-VN');
   return (
     <p className="text-[13px] text-gray-600">
       {language === 'en'
-        ? `${shown}+ ordered in the past 30 days`
-        : `Hơn ${shown} ${itemType === 'combo' ? 'combo' : 'sản phẩm'} đã được đặt trong 30 ngày qua`}
+        ? `${shown}+ sold`
+        : `Hơn ${shown} ${itemType === 'combo' ? 'combo' : 'sản phẩm'} đã được bán`}
     </p>
   );
 }

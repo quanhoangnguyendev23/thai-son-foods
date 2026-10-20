@@ -152,6 +152,7 @@ interface ProductVariant {
 }
 
 interface Product {
+  sold_offset?: number | null;
   id: string;
   slug: string;
   name: string;
@@ -233,6 +234,7 @@ interface ComboItem {
 }
 
 interface Combo {
+  sold_offset?: number | null;
   id: string;
   slug: string;
   name: string;
@@ -6788,6 +6790,24 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Số đã bán ở kênh ngoài website — hiển thị "Hơn N sản phẩm đã được bán" ở trang chi tiết */}
+              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                <p className="text-sm text-slate-300">Đã bán ngoài website (tổng cộng)</p>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={editingProduct.sold_offset ?? 0}
+                  onChange={(e) =>
+                    setEditingProduct({ ...editingProduct, sold_offset: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                  }
+                  className="w-full sm:w-64 bg-slate-950 border border-slate-700 text-sm text-white rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Nhập số lượng thật đã bán ở cửa hàng/đại lý/kênh khác. Website tự cộng thêm đơn đặt trên web và chỉ hiện khi tổng từ 10 trở lên.
+                </p>
+              </div>
+
               {/* Variants */}
               <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
@@ -7263,6 +7283,24 @@ export default function AdminPage() {
                     <span>Gói bán chạy 🔥</span>
                   </label>
                 </div>
+              </div>
+
+              {/* Số đã bán ở kênh ngoài website — hiển thị "Hơn N sản phẩm đã được bán" ở trang chi tiết */}
+              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
+                <p className="text-sm text-slate-300">Đã bán ngoài website (tổng cộng)</p>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={editingCombo.sold_offset ?? 0}
+                  onChange={(e) =>
+                    setEditingProduct({ ...editingCombo, sold_offset: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                  }
+                  className="w-full sm:w-64 bg-slate-950 border border-slate-700 text-sm text-white rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Nhập số lượng thật đã bán ở cửa hàng/đại lý/kênh khác. Website tự cộng thêm đơn đặt trên web và chỉ hiện khi tổng từ 10 trở lên.
+                </p>
               </div>
 
               {/* Modal Footer */}

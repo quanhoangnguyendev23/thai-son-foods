@@ -223,8 +223,8 @@ export async function POST(request: Request) {
     await client.query(
       `INSERT INTO combos (
         id, slug, name, description, original_price, sale_price,
-        total_items, discount, image, is_featured, is_best_seller, is_active, cost_price
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
+        total_items, discount, image, is_featured, is_best_seller, is_active, cost_price, sold_offset
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);`,
       [
         id,
         slug,
@@ -239,6 +239,7 @@ export async function POST(request: Request) {
         Boolean(is_best_seller),
         Boolean(is_active),
         costPriceVal,
+        Math.max(0, parseInt(body.sold_offset, 10) || 0),
       ]
     );
 
@@ -421,7 +422,11 @@ export async function PUT(request: Request) {
     }
     if (body.cost_price !== undefined && hasPermission(session, 'cost_price.edit')) {
       params.push(parseInt(body.cost_price, 10));
-      updates.push(`cost_price = $${params.length}`);
+      updates.push(`cost_price = ${params.length}`);
+    }
+    if (body.sold_offset !== undefined && body.sold_offset !== null && body.sold_offset !== '') {
+      params.push(Math.max(0, parseInt(body.sold_offset, 10) || 0));
+      updates.push(`sold_offset = ${params.length}`);
     }
 
     updates.push(`updated_at = CURRENT_TIMESTAMP`);

@@ -411,7 +411,7 @@ export default function ComboDetailView({
               </span>
             </div>
 
-            <MonthlySalesInfo itemId={combo.id} itemType="combo" />
+            <MonthlySalesInfo itemId={combo.id} itemType="combo" slug={combo.slug} />
 
             {/* Nhãn thuộc tính */}
             <div className="flex flex-wrap gap-1.5">

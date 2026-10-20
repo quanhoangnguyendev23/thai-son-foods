@@ -396,7 +396,7 @@ export default function ProductMainSection({
             <span className="text-xs text-gray-500 font-mono">SKU: {product.sku}</span>
           </div>
 
-          <MonthlySalesInfo itemId={product.id} itemType="product" />
+          <MonthlySalesInfo itemId={product.id} itemType="product" slug={product.slug} />
 
           {/* Nhãn thuộc tính có trong dữ liệu */}
           {(isVegan || product.isBestSeller || product.isNew) && (

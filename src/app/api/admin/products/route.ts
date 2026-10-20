@@ -209,8 +209,8 @@ export async function POST(request: Request) {
     const insertSql = `
       INSERT INTO products (
         id, slug, name, sku, short_description, description, price, unit, thumbnail,
-        category_id, is_featured, is_new, is_best_seller, is_active, cost_price
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        category_id, is_featured, is_new, is_best_seller, is_active, cost_price, sold_offset
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *;
     `;
 
@@ -230,6 +230,7 @@ export async function POST(request: Request) {
       Boolean(is_best_seller),
       Boolean(is_active),
       costPriceVal,
+      Math.max(0, parseInt(body.sold_offset, 10) || 0),
     ];
 
     const variantsError = validateVariantsInput(variants);
@@ -412,7 +413,8 @@ export async function PUT(request: Request) {
         is_new = COALESCE($11, is_new),
         is_best_seller = COALESCE($12, is_best_seller),
         is_active = COALESCE($13, is_active),
-        cost_price = COALESCE($14, cost_price)
+        cost_price = COALESCE($14, cost_price),
+        sold_offset = COALESCE($15, sold_offset)
       WHERE id = $1
       RETURNING *;
     `;
@@ -432,6 +434,9 @@ export async function PUT(request: Request) {
       is_best_seller !== undefined ? Boolean(is_best_seller) : null,
       is_active !== undefined ? Boolean(is_active) : null,
       body.cost_price !== undefined && hasPermission(session, 'cost_price.edit') ? parseInt(body.cost_price, 10) : null,
+      body.sold_offset !== undefined && body.sold_offset !== null && body.sold_offset !== ''
+        ? Math.max(0, parseInt(body.sold_offset, 10) || 0)
+        : null,
     ];
 
     const result = await query(updateSql, values);
