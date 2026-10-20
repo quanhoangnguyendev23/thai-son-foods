@@ -262,6 +262,8 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
         {isEn ? 'Compare with similar items' : 'So sánh với sản phẩm tương tự'}
       </h2>
 
+      {/* Bảng nhiều cột: trên mobile cần vuốt ngang — nhắc khách để không bỏ sót */}
+      <p className="sm:hidden text-xs text-gray-500 mb-2">{isEn ? 'Swipe sideways to compare more products →' : 'Vuốt ngang để so sánh thêm sản phẩm →'}</p>
       {/* relative: giữ các phần tử absolute (sr-only) trong khung cuộn, tránh tràn ngang trang */}
       <div className="relative overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
         <table

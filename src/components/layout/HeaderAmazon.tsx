@@ -546,8 +546,8 @@ export default function HeaderAmazon() {
 
         {/* ── TẦNG 2: THANH ĐIỀU HƯỚNG PHỤ ── */}
         <div className={cn('bg-leaf-900', isScrolled && 'max-lg:hidden')}>
-          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-11 lg:h-10">
-            <nav className="flex items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
+          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 min-h-11 py-0.5 lg:py-0 lg:h-10">
+            <nav className="grid grid-cols-2 w-full gap-x-1 md:flex md:flex-wrap md:w-auto lg:flex-nowrap items-center gap-0.5 lg:overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(true)}
@@ -559,7 +559,7 @@ export default function HeaderAmazon() {
               </button>
               {taskbagItems.map((item) => {
                 const Icon = item.icon;
-                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-11');
+                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-11 max-md:justify-center max-md:px-1 max-md:text-[14px]');
                 if (item.action === 'open-support') {
                   return (
                     <button key={item.id} type="button" onClick={() => setIsSupportModalOpen(true)} className={cls}>

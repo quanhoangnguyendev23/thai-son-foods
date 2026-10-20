@@ -76,7 +76,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
           <div
             role="tablist"
             aria-label={isEn ? 'Product information' : 'Thông tin sản phẩm'}
-            className="flex gap-1 overflow-x-auto border-b border-gray-200 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex gap-1 max-sm:flex-wrap sm:overflow-x-auto border-b border-gray-200 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {tabs.map((tab) => {
               const isActive = tab.key === active;

@@ -456,7 +456,7 @@ export default function ProductMainSection({
                 {isEn ? 'Flavor: ' : 'Hương vị: '}
                 <strong className="text-[1.125em]">{getShortProductName(product, language)}</strong>
               </p>
-              <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex flex-wrap gap-2 pb-1">
                 {siblingProducts.map((p) => {
                   const isCurrent = isSameProduct(p, product);
                   return (

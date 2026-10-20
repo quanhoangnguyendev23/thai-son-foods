@@ -40,7 +40,7 @@ export default function AmazonRecentlyViewed({ products }: { products: Product[]
   if (items && items.length > 0) {
     return (
       <div className="bg-white rounded-2xl border border-border shadow-xs">
-        <ProductCarousel title={title} products={items} />
+        <ProductCarousel title={title} products={items} mobileGrid />
       </div>
     );
   }

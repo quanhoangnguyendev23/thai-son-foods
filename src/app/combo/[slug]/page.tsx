@@ -188,6 +188,7 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
             title="Các sản phẩm bạn có thể thích"
             subtitle="Các dòng thức uống khác của Thái Sơn Foods"
             products={products.filter((p) => p.isActive !== false)}
+            mobileGrid
           />
         </div>
 

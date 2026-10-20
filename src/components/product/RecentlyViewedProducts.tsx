@@ -48,6 +48,7 @@ export default function RecentlyViewedProducts({ currentSlug }: { currentSlug: s
       <ProductCarousel
         title={language === 'en' ? 'Your recently viewed items' : 'Sản phẩm bạn đã xem gần đây'}
         products={items}
+        mobileGrid
       />
     </div>
   );

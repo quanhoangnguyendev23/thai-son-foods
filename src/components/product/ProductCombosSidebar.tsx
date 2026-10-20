@@ -27,6 +27,7 @@ export default function ProductCombosSidebar({
   const { language } = useLanguage();
   const { flyToCart } = useFlyToCart();
   const [comboList, setComboList] = useState<Combo[]>(combos);
+  const [showAllMobile, setShowAllMobile] = useState(false);
   const [addedId, setAddedId] = useState<string | null>(null);
   const maxDiscount = Math.max(...comboList.map((c) => c.discount || 0), 0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -140,7 +141,7 @@ export default function ProductCombosSidebar({
     return (
       <div
         key={combo.id}
-        className="shrink-0 snap-start w-[calc((100%-8px)/2)] sm:w-[calc((100%-16px)/3)] md:w-[calc((100%-36px)/4)] lg:w-[calc((100%-72px)/7)] self-stretch flex flex-col"
+        className={`snap-start max-sm:min-w-0 sm:shrink-0 sm:w-[calc((100%-16px)/3)] md:w-[calc((100%-36px)/4)] lg:w-[calc((100%-72px)/7)] self-stretch flex flex-col ${!showAllMobile && index >= 4 ? 'max-sm:hidden' : ''}`}
       >
         <article className="group h-full flex flex-col bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
           {/* Link toàn bộ phần trên thẻ đến trang chi tiết combo */}
@@ -394,11 +395,26 @@ export default function ProductCombosSidebar({
           <div
             ref={scrollRef}
             onScroll={checkScroll}
-            className="flex gap-2 sm:gap-3 lg:gap-3.5 overflow-x-auto scroll-smooth scrollbar-none py-2 px-0.5 snap-x snap-mandatory"
+            className="grid grid-cols-2 gap-2 sm:flex sm:gap-3 lg:gap-3.5 sm:overflow-x-auto scroll-smooth scrollbar-none py-2 px-0.5 sm:snap-x sm:snap-mandatory"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {comboList.map((combo, index) => renderHorizontalCard(combo, index))}
           </div>
+
+          {/* Mobile: lưới 2 cột xếp dọc, 4 combo đầu + nút Xem thêm */}
+          {comboList.length > 4 && (
+            <div className="sm:hidden pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => setShowAllMobile((v) => !v)}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-gray-300 bg-white text-sm text-ink-950 hover:bg-gray-50 cursor-pointer"
+              >
+                {showAllMobile
+                  ? (language === 'en' ? 'Show less' : 'Thu gọn')
+                  : (language === 'en' ? `Show ${comboList.length - 4} more combos` : `Xem thêm ${comboList.length - 4} combo`)}
+              </button>
+            </div>
+          )}
 
           {/* Mũi tên lướt sang phải */}
           {canScrollRight && (

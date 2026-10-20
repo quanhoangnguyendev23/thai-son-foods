@@ -295,6 +295,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             title="Các sản phẩm bạn có thể thích"
             subtitle={category ? `Cùng danh mục ${category.name} và các dòng thức uống khác của Thái Sơn Foods` : undefined}
             products={similarProducts}
+            mobileGrid
           />
         </div>
 

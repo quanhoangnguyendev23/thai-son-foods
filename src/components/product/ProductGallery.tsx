@@ -329,7 +329,7 @@ export default function ProductGallery({
                   key={image.id || index}
                   onClick={() => setActiveIndex(index)}
                   className={cn(
-                    'relative w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all shrink-0 bg-white p-0.5 flex items-center justify-center cursor-pointer',
+                    'relative w-14 sm:w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all shrink-0 bg-white p-0.5 flex items-center justify-center cursor-pointer',
                     activeIndex === index
                       ? 'border-forest-700 ring-2 ring-forest-700/20 shadow-xs'
                       : 'border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100'
