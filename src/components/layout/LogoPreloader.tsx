@@ -10,7 +10,7 @@ export default function LogoPreloader() {
   const [phase, setPhase] = useState<'drawing' | 'revealed' | 'exiting' | 'done'>('drawing');
 
   useEffect(() => {
-    if (pathname.startsWith('/admin')) return;
+    if (pathname.startsWith('/admin') || pathname === '/2010') return;
 
     // 1. Giai đoạn 1: Chữ & nét outline viền logo chạy từ trái sang phải (1.4s)
     const t1 = setTimeout(() => {
@@ -35,7 +35,7 @@ export default function LogoPreloader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') || pathname === '/2010') {
     return null;
   }
 

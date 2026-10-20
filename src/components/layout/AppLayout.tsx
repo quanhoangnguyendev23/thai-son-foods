@@ -25,6 +25,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return <>{children}</>;
   }
 
+  // Trang quà tặng riêng /2010: toàn màn hình, không header/footer của cửa hàng
+  if (pathname === '/2010') {
+    return <>{children}</>;
+  }
+
   // Header/Footer biến thể Amazon CHỈ dùng cho trang chủ mới; mọi trang khác giữ Header/Footer gốc
   const useAmazonChrome = pathname === '/' && HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE;
 
