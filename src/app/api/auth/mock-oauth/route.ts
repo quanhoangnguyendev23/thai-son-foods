@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS, getSafeAppOrigin } from '@/lib/auth';
+import { sanitizeReturnUrl } from '@/lib/oauth';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const provider = searchParams.get('provider') || 'google';
-  const returnUrl = searchParams.get('returnUrl') || '/tai-khoan';
+  const returnUrl = sanitizeReturnUrl(searchParams.get('returnUrl'));
 
   const isGoogle = provider === 'google';
   const providerTitle = isGoogle ? 'Google' : 'Facebook';

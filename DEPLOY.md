@@ -72,7 +72,9 @@ Vào **Settings** -> **Environment Variables** trên Vercel và đảm bảo có
 | `BLOB_READ_WRITE_TOKEN` | Tự sinh khi tạo **Vercel Blob Store** (Storage → Create → Blob) rồi Connect vào dự án | Bắt buộc trên Vercel: nơi lưu ảnh/video admin tải lên (ổ đĩa serverless không bền) |
 | `NEXT_PUBLIC_SHOW_PLACEHOLDERS` | Không đặt (hoặc `false`) | Ẩn các khối "Bản mẫu" với khách. Chỉ đặt `true` khi demo nội bộ |
 | `NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM` | Không đặt (hoặc `false`) | Giữ khóa chương trình CTV/Đại lý/Payouts (giai đoạn 2) |
-| `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN` | Không đặt (hoặc `false`) | Ẩn đăng nhập Google/Facebook cho đến khi cấu hình OAuth xong |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Từ Google Cloud Console (xem `docs/golive/BAT-LAI-CHUC-NANG.md` mục 4) | Đăng nhập Google; thiếu thì nút Google tự ẩn |
+| `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` | Từ Meta for Developers | Đăng nhập Facebook; thiếu thì nút Facebook tự ẩn |
+| `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN` | Không đặt (mặc định bật) | Đặt `false` để tắt hẳn đăng nhập mạng xã hội |
 | `SMTP_HOST` | `smtp.gmail.com` | Máy chủ gửi email đơn hàng |
 | `SMTP_PORT` | `587` | Cổng SMTP |
 | `SMTP_USER` | Email gửi tin của công ty | Email gửi tin |

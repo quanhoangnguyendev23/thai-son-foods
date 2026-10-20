@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import {
   X,
@@ -29,6 +29,35 @@ export default function AuthModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  // Lỗi đăng nhập mạng xã hội chờ hiển thị khi cửa sổ thực sự mở (tránh bị effect đặt lại xóa mất)
+  const pendingOAuthErrorRef = useRef('');
+
+  // Lỗi trả về từ luồng đăng nhập Google/Facebook (?error=...): hiện trong cửa sổ rồi xóa khỏi URL
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('error');
+    if (!code) return;
+    const isEn = language === 'en';
+    const messages: Record<string, [string, string]> = {
+      oauth_not_configured: ['Social sign-in is not available yet.', 'Đăng nhập bằng mạng xã hội chưa khả dụng.'],
+      oauth_cancelled: ['Sign-in was cancelled.', 'Bạn đã hủy đăng nhập.'],
+      oauth_state_invalid: ['Sign-in session expired. Please try again.', 'Phiên đăng nhập đã hết hạn, vui lòng thử lại.'],
+      google_email_unverified: ['Your Google email is not verified.', 'Email Google của bạn chưa được xác minh.'],
+      google_no_email: ['Google did not share your email.', 'Google không cung cấp email của bạn.'],
+      account_disabled: ['This account has been disabled.', 'Tài khoản này đã bị vô hiệu hóa.'],
+    };
+    const found = messages[code];
+    pendingOAuthErrorRef.current =
+      found
+        ? (isEn ? found[0] : found[1])
+        : isEn
+          ? 'Social sign-in failed. Please try again or use email.'
+          : 'Đăng nhập bằng mạng xã hội không thành công. Vui lòng thử lại hoặc dùng email.';
+    url.searchParams.delete('error');
+    window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [successMsg, setSuccessMsg] = useState('');
 
   // Form states
@@ -47,7 +76,12 @@ export default function AuthModal() {
 
   useEffect(() => {
     setActiveTab(authModalTab);
-    setErrorMsg('');
+    if (isAuthModalOpen && pendingOAuthErrorRef.current) {
+      setErrorMsg(pendingOAuthErrorRef.current);
+      pendingOAuthErrorRef.current = '';
+    } else {
+      setErrorMsg('');
+    }
     setSuccessMsg('');
   }, [authModalTab, isAuthModalOpen]);
 

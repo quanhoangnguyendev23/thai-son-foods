@@ -280,6 +280,12 @@ export async function getUserSession(): Promise<UserJWTPayload | null> {
  * Strictly prevents 0.0.0.0 internal binding addresses from leaking into browser redirects, which causes ERR_ADDRESS_INVALID.
  */
 export function getSafeAppOrigin(req: { headers: { get: (name: string) => string | null }; nextUrl?: { origin?: string } }): string {
+  // Production: dùng URL chính thức đã cấu hình (redirect_uri OAuth phải khớp tuyệt đối, không phụ thuộc header Host)
+  const configured = process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.NODE_ENV === 'production' && configured && !configured.includes('0.0.0.0')) {
+    return configured.replace(/\/+$/, '');
+  }
+
   const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
   const proto = req.headers.get('x-forwarded-proto') || 'http';
 

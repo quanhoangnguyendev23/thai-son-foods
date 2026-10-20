@@ -1,28 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS, getSafeAppOrigin } from '@/lib/auth';
+import { clearOAuthCookies, FACEBOOK_GRAPH_VERSION, verifyOAuthCallback } from '@/lib/oauth';
 
 export const dynamic = 'force-dynamic';
+
+function fail(origin: string, code: string) {
+  const res = NextResponse.redirect(`${origin}/?auth=login&error=${code}`);
+  clearOAuthCookies(res);
+  return res;
+}
 
 export async function GET(req: NextRequest) {
   const origin = getSafeAppOrigin(req);
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
-  const state = searchParams.get('state');
 
-  let returnUrl = '/tai-khoan';
-  if (state) {
-    try {
-      const parsed = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
-      if (parsed.returnUrl) returnUrl = parsed.returnUrl;
-    } catch {
-      // ignore
-    }
-  }
+  // Khách bấm "Hủy" / từ chối cấp quyền ở màn hình Facebook
+  if (searchParams.get('error')) return fail(origin, 'oauth_cancelled');
 
-  if (!code) {
-    return NextResponse.redirect(`${origin}/?auth=login&error=facebook_no_code`);
-  }
+  // Kiểm tra state khớp cookie → chống CSRF; returnUrl đã được làm sạch
+  const verified = verifyOAuthCallback(req, 'facebook', searchParams.get('state'));
+  if (!verified.ok) return fail(origin, 'oauth_state_invalid');
+  const returnUrl = verified.returnUrl;
+
+  if (!code) return fail(origin, 'facebook_no_code');
 
   try {
     await initDatabase();
@@ -30,12 +32,10 @@ export async function GET(req: NextRequest) {
     const fbClientSecret = process.env.FACEBOOK_CLIENT_SECRET;
     const redirectUri = `${origin}/api/auth/callback/facebook`;
 
-    if (!fbClientId || !fbClientSecret) {
-      return NextResponse.redirect(`${origin}/?auth=login&error=facebook_missing_credentials`);
-    }
+    if (!fbClientId || !fbClientSecret) return fail(origin, 'facebook_missing_credentials');
 
-    // 1. Exchange code for access token
-    const tokenUrl = new URL('https://graph.facebook.com/v19.0/oauth/access_token');
+    // 1. Đổi code lấy access token
+    const tokenUrl = new URL(`https://graph.facebook.com/${FACEBOOK_GRAPH_VERSION}/oauth/access_token`);
     tokenUrl.searchParams.set('client_id', fbClientId);
     tokenUrl.searchParams.set('client_secret', fbClientSecret);
     tokenUrl.searchParams.set('redirect_uri', redirectUri);
@@ -46,32 +46,35 @@ export async function GET(req: NextRequest) {
 
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error('Facebook token exchange error:', tokenData);
-      return NextResponse.redirect(`${origin}/?auth=login&error=facebook_token_failed`);
+      return fail(origin, 'facebook_token_failed');
     }
 
-    // 2. Fetch user profile from Facebook Graph API
-    const userUrl = new URL('https://graph.facebook.com/me');
+    // 2. Lấy hồ sơ từ Graph API
+    const userUrl = new URL(`https://graph.facebook.com/${FACEBOOK_GRAPH_VERSION}/me`);
     userUrl.searchParams.set('fields', 'id,name,email,picture.type(large)');
     userUrl.searchParams.set('access_token', tokenData.access_token);
 
     const userRes = await fetch(userUrl.toString());
     const profile = await userRes.json();
 
-    const fbId = profile.id;
-    const email = profile.email
-      ? profile.email.toLowerCase().trim()
-      : `fb_${fbId}@facebook.user`;
+    const fbId = profile.id ? String(profile.id) : '';
+    if (!fbId) return fail(origin, 'facebook_no_profile');
+
+    // Facebook không bắt buộc có email: nếu thiếu, dùng địa chỉ nội bộ theo ID (tài khoản vẫn đăng nhập được,
+    // nhưng không nhận được email đơn hàng cho đến khi khách bổ sung email trong hồ sơ)
+    const email = profile.email ? String(profile.email).toLowerCase().trim() : `fb_${fbId}@facebook.user`;
     const fullName = profile.name || `Facebook User ${fbId.slice(-4)}`;
     const avatarUrl = profile.picture?.data?.url || null;
 
-    // 3. Upsert into users table
+    // 3. Tạo mới / liên kết tài khoản theo email hoặc theo ID Facebook
     const existing = await query(
-      'SELECT id, full_name FROM users WHERE email = $1 OR (provider = $2 AND provider_id = $3) LIMIT 1;',
+      'SELECT id, is_active FROM users WHERE email = $1 OR (provider = $2 AND provider_id = $3) LIMIT 1;',
       [email, 'facebook', fbId]
     );
 
     let userId = '';
     if (existing.rows.length > 0) {
+      if (existing.rows[0].is_active === false) return fail(origin, 'account_disabled');
       userId = existing.rows[0].id;
       await query(
         `UPDATE users
@@ -92,7 +95,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 4. Sign JWT & set cookie
+    // 4. Ký JWT & đặt cookie đăng nhập
     const token = await signUserToken({
       id: userId,
       email,
@@ -101,10 +104,7 @@ export async function GET(req: NextRequest) {
       provider: 'facebook',
     });
 
-    const redirectTarget = new URL(returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`, origin);
-    const response = NextResponse.redirect(redirectTarget.toString());
-
-    const maxAgeSeconds = TOKEN_EXPIRY_DAYS * 24 * 60 * 60;
+    const response = NextResponse.redirect(new URL(returnUrl, origin).toString());
     response.cookies.set({
       name: USER_COOKIE_NAME,
       value: token,
@@ -112,12 +112,12 @@ export async function GET(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: maxAgeSeconds,
+      maxAge: TOKEN_EXPIRY_DAYS * 24 * 60 * 60,
     });
-
+    clearOAuthCookies(response);
     return response;
   } catch (error: any) {
     console.error('Facebook callback exception:', error);
-    return NextResponse.redirect(`${origin}/?auth=login&error=facebook_auth_exception`);
+    return fail(origin, 'facebook_auth_exception');
   }
 }

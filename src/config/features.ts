@@ -11,6 +11,9 @@ export const FEATURES = {
   /** Chương trình Đối tác: CTV/Đại lý, mã giới thiệu (?ref=), rút tiền/Payouts, trang /doi-tac, /dang-ky-doi-tac */
   PARTNER_PROGRAM: process.env.NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM === 'true',
 
-  /** Đăng nhập nhanh bằng Google / Facebook (cần GOOGLE_CLIENT_ID/SECRET, FACEBOOK_CLIENT_ID/SECRET) */
-  SOCIAL_LOGIN: process.env.NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN === 'true',
+  /**
+   * Đăng nhập nhanh bằng Google / Facebook. BẬT mặc định; từng nút chỉ hiện khi nhà cung cấp đó đã có khóa
+   * (GOOGLE_CLIENT_ID/SECRET, FACEBOOK_CLIENT_ID/SECRET). Tắt hẳn: NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN=false.
+   */
+  SOCIAL_LOGIN: process.env.NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN !== 'false',
 } as const;

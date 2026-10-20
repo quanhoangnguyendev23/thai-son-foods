@@ -11,7 +11,7 @@ vào Claude Code để triển khai phần còn thiếu.
 | 1 | Giao hàng định kỳ (Subscribe & Save) | `ENABLE_SUBSCRIBE_SAVE` trong `src/config/membership.ts` | Tắt |
 | 2 | Hội viên Thái Sơn Prime | `ENABLE_MEMBERSHIP` trong `src/config/membership.ts` | Tắt |
 | 3 | Chương trình Đối tác (CTV / Đại lý / Rút tiền) | `NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM=true` | Tắt |
-| 4 | Đăng nhập Google / Facebook | `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN=true` | Tắt |
+| 4 | Đăng nhập Google / Facebook | `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN=false` để tắt | **BẬT** (nút chỉ hiện khi có khóa) |
 | 5 | Các khối "Bản mẫu" còn lại (deal đồng hồ, mã giảm giá, Mua lại, Gợi ý cho bạn) | `NEXT_PUBLIC_SHOW_PLACEHOLDERS=true` | Tắt |
 
 Ghi chú chung:
@@ -140,31 +140,47 @@ Việc cần làm:
 
 ---
 
-## 4. ĐĂNG NHẬP GOOGLE / FACEBOOK
+## 4. ĐĂNG NHẬP GOOGLE / FACEBOOK — ĐÃ HOÀN THIỆN VÀ BẬT
 
-**Hiện trạng:** nút đăng nhập mạng xã hội trong `AuthModal.tsx` bị ẩn bởi `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN`.
-Mã đã có: `src/components/auth/SocialAuthButtons.tsx`, `src/app/api/auth/{google,facebook}/route.ts`.
-`/api/auth/mock-oauth` chỉ chạy ở môi trường dev (đã chặn ở production).
+**Hiện trạng:** luồng OAuth 2.0 (Authorization Code) đã hoàn thiện. Nút hiển thị trong cửa sổ đăng nhập **chỉ khi nhà cung cấp
+đó đã có khóa** (`GOOGLE_CLIENT_ID/SECRET`, `FACEBOOK_CLIENT_ID/SECRET`); thiếu khóa thì nút tự ẩn, không có nút "chết".
+Mã: `src/lib/oauth.ts`, `src/app/api/auth/{google,facebook,providers}`, `src/app/api/auth/callback/{google,facebook}`,
+`src/components/auth/SocialAuthButtons.tsx`. Kiểm thử: `tests/test_oauth_social_login.mjs` (30 kiểm thử, đã nằm trong `npm test`).
 
-**Cần chuẩn bị:** tạo ứng dụng OAuth ở Google Cloud Console và Meta for Developers; đặt biến
-`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` trên Vercel;
-khai báo Redirect URI theo domain thật; Facebook cần trang Chính sách quyền riêng tư và xác minh ứng dụng.
+**Bảo mật đã có:** state ngẫu nhiên lưu cookie httpOnly (chống CSRF đăng nhập), returnUrl chỉ nhận đường dẫn nội bộ
+(chống chuyển hướng ra ngoài), Google bắt buộc email đã xác minh, chặn tài khoản bị vô hiệu hóa, redirect_uri lấy từ
+`NEXT_PUBLIC_APP_URL` ở production, hiển thị lỗi thân thiện khi hủy/thất bại.
 
-**Prompt:**
+**Việc bạn phải làm để chạy thật (cần tài khoản của bạn):**
+
+1. **Google** — Google Cloud Console → APIs & Services:
+   - OAuth consent screen: loại External, điền tên ứng dụng, email hỗ trợ, logo; bấm **Publish app** (nếu để "Testing" chỉ
+     email thử mới đăng nhập được).
+   - Credentials → Create OAuth client ID → Web application. **Authorized redirect URIs** thêm đúng:
+     `https://<domain-thật>/api/auth/callback/google` (staging: `https://<link-staging>/api/auth/callback/google`;
+     chạy local: `http://localhost:3000/api/auth/callback/google`).
+   - Đặt `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` trên Vercel.
+2. **Facebook** — Meta for Developers → Create App → thêm sản phẩm **Facebook Login**:
+   - Valid OAuth Redirect URIs: `https://<domain-thật>/api/auth/callback/facebook`.
+   - Settings → Basic: điền **Privacy Policy URL** và **Data Deletion** (URL hướng dẫn hoặc callback xóa dữ liệu); đặt app ở
+     chế độ **Live**.
+   - Đặt `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` trên Vercel (và `FACEBOOK_GRAPH_VERSION` nếu Meta ngừng hỗ trợ bản
+     `v22.0`).
+3. Đặt `NEXT_PUBLIC_APP_URL` = domain chính thức (ví dụ `https://shop.thaisonfoods.vn`), build lại.
+
+**Chưa có trong mã (cần quyết định/nội dung từ doanh nghiệp):** trang **Chính sách quyền riêng tư** và hướng dẫn **xóa dữ
+liệu** (Facebook/Google yêu cầu URL này khi đưa app ra công khai). Khách Facebook không chia sẻ email sẽ có email nội bộ
+dạng `fb_<id>@facebook.user` (không nhận được email đơn hàng cho đến khi bổ sung email thật).
+
+**Prompt (khi cần mở rộng, ví dụ thêm Zalo/Apple hoặc trang quyền riêng tư):**
 ```
-Bật đăng nhập Google/Facebook cho Thái Sơn Foods, tuân thủ AGENTS.md (sửa vi phẫu).
-
-Bối cảnh: nút social trong src/components/auth/AuthModal.tsx đang ẩn bởi NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN
-(src/config/features.ts). Mã: src/components/auth/SocialAuthButtons.tsx, src/app/api/auth/{google,facebook}/route.ts.
-Tôi đã đặt các biến GOOGLE_CLIENT_ID/SECRET và FACEBOOK_CLIENT_ID/SECRET trên Vercel và khai báo Redirect URI:
-___ (điền domain).
-
-Việc cần làm:
-1. Rà soát luồng OAuth (state chống CSRF, kiểm tra email đã xác minh, gộp tài khoản theo email, xử lý lỗi/hủy cấp quyền).
-2. Đảm bảo mock-oauth KHÔNG chạy ở production; bổ sung CSP connect-src/frame-src nếu thiếu.
-3. Đặt NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN=true (staging trước), thử đăng nhập bằng cả hai nhà cung cấp, kiểm tra
-   chuyển về đúng trang (returnUrl) và tài khoản hiển thị đúng ở /tai-khoan.
-4. Chạy: npx tsc --noEmit, npx eslint src. Báo cáo file đã đổi và rủi ro. KHÔNG commit/push nếu tôi chưa yêu cầu.
+Mở rộng đăng nhập mạng xã hội của Thái Sơn Foods, tuân thủ AGENTS.md (sửa vi phẫu, không tái cấu trúc).
+Bối cảnh: đã có src/lib/oauth.ts (state, returnUrl an toàn, isProviderConfigured), route start + callback cho Google và
+Facebook, /api/auth/providers và SocialAuthButtons chỉ hiện nút của nhà cung cấp đã có khóa. Bài test
+tests/test_oauth_social_login.mjs phải tiếp tục đạt.
+Việc cần làm: ___ (ví dụ: thêm nhà cung cấp ___ theo cùng khuôn; tạo trang /chinh-sach-quyen-rieng và
+/xoa-du-lieu với nội dung tôi cung cấp; cho khách Facebook bổ sung email thật trong /tai-khoan).
+Yêu cầu: chạy npx tsc --noEmit, npx eslint src, npm test; báo cáo file đã đổi. KHÔNG commit/push nếu tôi chưa yêu cầu.
 ```
 
 ---

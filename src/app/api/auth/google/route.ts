@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSafeAppOrigin } from '@/lib/auth';
+import {
+  isMockOAuthEnabled,
+  isProviderConfigured,
+  newOAuthState,
+  sanitizeReturnUrl,
+  setOAuthCookies,
+} from '@/lib/oauth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const returnUrl = searchParams.get('returnUrl') || '/tai-khoan';
-
-  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const returnUrl = sanitizeReturnUrl(searchParams.get('returnUrl'));
   const origin = getSafeAppOrigin(req);
-  const redirectUri = `${origin}/api/auth/callback/google`;
 
-  // Nếu chưa cấu hình Client ID thực tế từ Google Cloud Console
-  if (!googleClientId || googleClientId.trim() === '' || googleClientId.includes('your_google_client_id')) {
-    if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_MOCK_OAUTH === 'true') {
+  // Chưa cấu hình Client ID/Secret thật từ Google Cloud Console
+  if (!isProviderConfigured('google')) {
+    if (isMockOAuthEnabled()) {
       const mockUrl = new URL('/api/auth/mock-oauth', origin);
       mockUrl.searchParams.set('provider', 'google');
       mockUrl.searchParams.set('returnUrl', returnUrl);
@@ -24,15 +28,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(errorUrl.toString());
   }
 
-  // Luồng OAuth 2.0 Google chính thức
-  const state = Buffer.from(JSON.stringify({ returnUrl })).toString('base64');
+  // Luồng OAuth 2.0 Google chính thức, state ngẫu nhiên chống CSRF
+  const state = newOAuthState();
   const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-  googleAuthUrl.searchParams.set('client_id', googleClientId);
-  googleAuthUrl.searchParams.set('redirect_uri', redirectUri);
+  googleAuthUrl.searchParams.set('client_id', process.env.GOOGLE_CLIENT_ID as string);
+  googleAuthUrl.searchParams.set('redirect_uri', `${origin}/api/auth/callback/google`);
   googleAuthUrl.searchParams.set('response_type', 'code');
   googleAuthUrl.searchParams.set('scope', 'openid email profile');
   googleAuthUrl.searchParams.set('state', state);
   googleAuthUrl.searchParams.set('prompt', 'select_account');
 
-  return NextResponse.redirect(googleAuthUrl.toString());
+  const res = NextResponse.redirect(googleAuthUrl.toString());
+  setOAuthCookies(res, 'google', state, returnUrl);
+  return res;
 }

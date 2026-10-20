@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSafeAppOrigin } from '@/lib/auth';
+import {
+  FACEBOOK_GRAPH_VERSION,
+  isMockOAuthEnabled,
+  isProviderConfigured,
+  newOAuthState,
+  sanitizeReturnUrl,
+  setOAuthCookies,
+} from '@/lib/oauth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const returnUrl = searchParams.get('returnUrl') || '/tai-khoan';
-
-  const fbClientId = process.env.FACEBOOK_CLIENT_ID;
+  const returnUrl = sanitizeReturnUrl(searchParams.get('returnUrl'));
   const origin = getSafeAppOrigin(req);
-  const redirectUri = `${origin}/api/auth/callback/facebook`;
 
-  // Nếu chưa cấu hình App ID từ Meta Developer
-  if (!fbClientId || fbClientId.trim() === '' || fbClientId.includes('your_facebook_client_id')) {
-    if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_MOCK_OAUTH === 'true') {
+  // Chưa cấu hình App ID/Secret thật từ Meta for Developers
+  if (!isProviderConfigured('facebook')) {
+    if (isMockOAuthEnabled()) {
       const mockUrl = new URL('/api/auth/mock-oauth', origin);
       mockUrl.searchParams.set('provider', 'facebook');
       mockUrl.searchParams.set('returnUrl', returnUrl);
@@ -24,13 +29,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(errorUrl.toString());
   }
 
-  // Luồng OAuth Facebook chính thức
-  const state = Buffer.from(JSON.stringify({ returnUrl })).toString('base64');
-  const fbAuthUrl = new URL('https://www.facebook.com/v19.0/dialog/oauth');
-  fbAuthUrl.searchParams.set('client_id', fbClientId);
-  fbAuthUrl.searchParams.set('redirect_uri', redirectUri);
+  // Luồng OAuth Facebook chính thức, state ngẫu nhiên chống CSRF
+  const state = newOAuthState();
+  const fbAuthUrl = new URL(`https://www.facebook.com/${FACEBOOK_GRAPH_VERSION}/dialog/oauth`);
+  fbAuthUrl.searchParams.set('client_id', process.env.FACEBOOK_CLIENT_ID as string);
+  fbAuthUrl.searchParams.set('redirect_uri', `${origin}/api/auth/callback/facebook`);
   fbAuthUrl.searchParams.set('state', state);
   fbAuthUrl.searchParams.set('scope', 'email,public_profile');
 
-  return NextResponse.redirect(fbAuthUrl.toString());
+  const res = NextResponse.redirect(fbAuthUrl.toString());
+  setOAuthCookies(res, 'facebook', state, returnUrl);
+  return res;
 }

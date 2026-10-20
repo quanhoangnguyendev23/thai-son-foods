@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "eslint",
-    "test": "npx tsx tests/test_subscribe_and_save_spec.mjs && npx tsx tests/phase2_membership_step2_test.mjs && npx tsx tests/phase3_member_fullstack_e2e_test.mjs && npx tsx tests/phase4_reviews_test.mjs && npx tsx tests/phase8_reviews_security_rbac_test.mjs && node tests/phase3_golive_revenue_inventory_test.mjs && node tests/phase4_5_golive_empty_dashboard_test.mjs",
+    "test": "npx tsx tests/test_subscribe_and_save_spec.mjs && npx tsx tests/phase2_membership_step2_test.mjs && npx tsx tests/phase3_member_fullstack_e2e_test.mjs && npx tsx tests/phase4_reviews_test.mjs && npx tsx tests/phase8_reviews_security_rbac_test.mjs && node tests/phase3_golive_revenue_inventory_test.mjs && node tests/phase4_5_golive_empty_dashboard_test.mjs && npx tsx tests/test_oauth_social_login.mjs",
     "purge-sample-data": "node scripts/purge_sample_data.mjs",
     "db:init": "node scripts/init_webtsf_db.mjs",
     "db:verify": "node scripts/verify_db.mjs",
