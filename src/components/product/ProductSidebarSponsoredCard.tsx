@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { MEMBERSHIP_CONFIG } from '@/config/membership';
 import { Star, Info, ShoppingBag } from 'lucide-react';
 import { products } from '@/data/products';
 import { Product } from '@/types';
@@ -101,25 +102,27 @@ export default function ProductSidebarSponsoredCard({
   return (
     <div className={`w-full space-y-3 sm:space-y-3.5 ${className}`}>
       {/* ── Box Prime Hội Viên (Ảnh 1): Hiển thị ở trên mục gợi ý sản phẩm tài trợ ("trên mục này") ── */}
-      <div className="relative bg-white rounded-lg border border-gray-200/90 p-3.5 sm:p-4 shadow-[0_1px_4px_rgba(34,84,76,0.03)] hover:shadow-[0_3px_12px_rgba(34,84,76,0.07)] transition-all duration-300">
-        {/* Logo Thương Hiệu Thái Sơn (thay thế cho logo Prime) */}
-        <Link href="/member" className="inline-block group mb-2.5">
-          <div className="relative w-28 h-8 sm:w-32 sm:h-9">
-            <Image
-              src="/images/logo-clean-1000.png"
-              alt="Thái Sơn Foods"
-              fill
-              sizes="130px"
-              className="object-contain object-left group-hover:scale-105 transition-transform duration-300"
-            />
-          </div>
-        </Link>
+      {MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP && (
+        <div className="relative bg-white rounded-lg border border-gray-200/90 p-3.5 sm:p-4 shadow-[0_1px_4px_rgba(34,84,76,0.03)] hover:shadow-[0_3px_12px_rgba(34,84,76,0.07)] transition-all duration-300">
+          {/* Logo Thương Hiệu Thái Sơn (thay thế cho logo Prime) */}
+          <Link href="/member" className="inline-block group mb-2.5">
+            <div className="relative w-28 h-8 sm:w-32 sm:h-9">
+              <Image
+                src="/images/logo-clean-1000.png"
+                alt="Thái Sơn Foods"
+                fill
+                sizes="130px"
+                className="object-contain object-left group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          </Link>
 
-        {/* Nội dung giới thiệu dịch vụ hội viên */}
-        <p className="text-xs sm:text-[13px] text-gray-900 leading-relaxed font-normal">
-          Tận hưởng dịch vụ giao hàng nhanh chóng, miễn phí, ưu đãi độc quyền và các đặc quyền dinh dưỡng dành riêng cho hội viên.
-        </p>
-      </div>
+          {/* Nội dung giới thiệu dịch vụ hội viên */}
+          <p className="text-xs sm:text-[13px] text-gray-900 leading-relaxed font-normal">
+            Tận hưởng dịch vụ giao hàng nhanh chóng, miễn phí, ưu đãi độc quyền và các đặc quyền dinh dưỡng dành riêng cho hội viên.
+          </p>
+        </div>
+      )}
 
       {/* ── Box quảng cáo gợi ý chuẩn Amazon Sponsored Product Card ── */}
       <div className={waitingRandom ? 'invisible' : undefined}>
@@ -196,7 +199,7 @@ export default function ProductSidebarSponsoredCard({
                   </span>
                 )}
                 {/* Huy hiệu Prime chuẩn Amazon */}
-                {!hideUnverifiedStats && (
+                {!hideUnverifiedStats && MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP && (
                 <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter">
                   <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
                   <span className="text-forest-700 not-italic text-[12px] font-sans">prime</span>

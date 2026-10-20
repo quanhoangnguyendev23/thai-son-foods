@@ -71,7 +71,8 @@ Vào **Settings** -> **Environment Variables** trên Vercel và đảm bảo có
 | `CRON_SECRET` | Chuỗi ngẫu nhiên (`openssl rand -hex 32`) | Bắt buộc: bảo vệ các cron job (không có thì cron từ chối chạy) |
 | `BLOB_READ_WRITE_TOKEN` | Tự sinh khi tạo **Vercel Blob Store** (Storage → Create → Blob) rồi Connect vào dự án | Bắt buộc trên Vercel: nơi lưu ảnh/video admin tải lên (ổ đĩa serverless không bền) |
 | `NEXT_PUBLIC_SHOW_PLACEHOLDERS` | Không đặt (hoặc `false`) | Ẩn các khối "Bản mẫu" với khách. Chỉ đặt `true` khi demo nội bộ |
-| `ENABLE_PHASE2_ADMIN` | Không đặt (hoặc `false`) | Giữ khóa CTV/Đại lý & Duyệt chi trả (giai đoạn 2) |
+| `NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM` | Không đặt (hoặc `false`) | Giữ khóa chương trình CTV/Đại lý/Payouts (giai đoạn 2) |
+| `NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN` | Không đặt (hoặc `false`) | Ẩn đăng nhập Google/Facebook cho đến khi cấu hình OAuth xong |
 | `SMTP_HOST` | `smtp.gmail.com` | Máy chủ gửi email đơn hàng |
 | `SMTP_PORT` | `587` | Cổng SMTP |
 | `SMTP_USER` | Email gửi tin của công ty | Email gửi tin |

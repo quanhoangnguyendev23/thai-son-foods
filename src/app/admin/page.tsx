@@ -61,6 +61,7 @@ import {
   Copy
 } from 'lucide-react';
 import { hasPermission, Role, Permission } from '@/lib/rbac';
+import { FEATURES } from '@/config/features';
 import { canDeleteOrder, canTransitionOrderStatus } from '@/lib/order-status';
 import { safeFetchJson } from '@/lib/utils';
 
@@ -2947,34 +2948,65 @@ export default function AdminPage() {
                 </Link>
               )}
 
-              {/* GIAI ĐOẠN 2: CTV & Đại lý, Duyệt chi trả — làm mờ, chưa mở sử dụng ở giai đoạn 1 */}
-              <div
-                aria-disabled="true"
-                title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 opacity-45 cursor-not-allowed select-none"
-              >
-                <div className="flex items-center gap-3">
-                  <Users className="w-4 h-4" />
-                  <span>Đối tác CTV & Đại lý</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-400 border border-slate-700 font-mono">
-                  Giai đoạn 2
-                </span>
-              </div>
+              {/* GIAI ĐOẠN 2: CTV & Đại lý, Duyệt chi trả — chỉ mở khi NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM=true */}
+              {FEATURES.PARTNER_PROGRAM ? (
+                <>
+                  <Link
+                    href="/admin/partners"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Users className="w-4 h-4 text-emerald-400" />
+                      <span>Đối tác CTV & Đại lý</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                      Partner
+                    </span>
+                  </Link>
+                  <Link
+                    href="/admin/payouts"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
+                  >
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="w-4 h-4 text-amber-400" />
+                      <span>Duyệt chi trả (Payouts)</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
+                      Ví
+                    </span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div
+                    aria-disabled="true"
+                    title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 opacity-45 cursor-not-allowed select-none"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Users className="w-4 h-4" />
+                      <span>Đối tác CTV & Đại lý</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-400 border border-slate-700 font-mono">
+                      Giai đoạn 2
+                    </span>
+                  </div>
 
-              <div
-                aria-disabled="true"
-                title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 opacity-45 cursor-not-allowed select-none"
-              >
-                <div className="flex items-center gap-3">
-                  <DollarSign className="w-4 h-4" />
-                  <span>Duyệt chi trả (Payouts)</span>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-400 border border-slate-700 font-mono">
-                  Giai đoạn 2
-                </span>
-              </div>
+                  <div
+                    aria-disabled="true"
+                    title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 opacity-45 cursor-not-allowed select-none"
+                  >
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="w-4 h-4" />
+                      <span>Duyệt chi trả (Payouts)</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-400 border border-slate-700 font-mono">
+                      Giai đoạn 2
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Quick Summary Card */}

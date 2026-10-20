@@ -15,6 +15,7 @@ import ComboShowcase from '@/components/home/ComboShowcase';
 import WarehouseSection from '@/components/home/WarehouseSection';
 import SubscribeSaveSection from '@/components/home/SubscribeSaveSection';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
+import { SHOW_PLACEHOLDER_BLOCKS } from '@/data/product-detail-placeholders';
 import { MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
 
 interface HomePageProps {
@@ -120,12 +121,14 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos }: Home
         <AmazonDealsRow combos={combos} />
 
         {/* 5. GỢI Ý CHO BẠN (PLACEHOLDER — chờ thuật toán gợi ý) */}
-        <AmazonProductRow
-          titleVi="Gợi ý cho bạn"
-          titleEn="Recommended for you"
-          products={recommended}
-          action={<PlaceholderBadge />}
-        />
+        {SHOW_PLACEHOLDER_BLOCKS && (
+          <AmazonProductRow
+            titleVi="Gợi ý cho bạn"
+            titleEn="Recommended for you"
+            products={recommended}
+            action={<PlaceholderBadge />}
+          />
+        )}
 
         {/* 6. MUA THEO DANH MỤC */}
         {categoryGroups.map((g) => (

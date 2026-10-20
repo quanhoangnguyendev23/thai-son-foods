@@ -19,6 +19,7 @@ import { useUserAuth } from '@/context/UserAuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { cn } from '@/lib/utils';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
+import { FEATURES } from '@/config/features';
 
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, authModalTab, login, register } = useUserAuth();
@@ -219,7 +220,9 @@ export default function AuthModal() {
         {/* Modal Body */}
         <div className="p-6">
           {/* Quick Social Logins */}
-          <SocialAuthButtons returnUrl={typeof window !== 'undefined' ? window.location.pathname : '/tai-khoan'} />
+          {FEATURES.SOCIAL_LOGIN && (
+            <SocialAuthButtons returnUrl={typeof window !== 'undefined' ? window.location.pathname : '/tai-khoan'} />
+          )}
 
           {/* Notifications */}
           {errorMsg && (

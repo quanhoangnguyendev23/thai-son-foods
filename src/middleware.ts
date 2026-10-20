@@ -107,8 +107,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // GIAI ĐOẠN 2: CTV/Đại lý & Duyệt chi trả chưa mở sử dụng — chặn trang và API quản trị tương ứng.
-  // Bật lại bằng biến môi trường ENABLE_PHASE2_ADMIN=true.
+  // GIAI ĐOẠN 2: chương trình Đối tác (CTV/Đại lý, Payouts) chưa mở — chặn trang và API tương ứng.
+  // Bật lại bằng biến môi trường NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM=true (xem src/config/features.ts).
   // ═══════════════════════════════════════════════════════════════
   // Trang/API thử email chỉ dùng ở môi trường phát triển
   if (process.env.NODE_ENV === 'production' && /^\/(api\/)?test-email(\/|$)/.test(pathname)) {
@@ -120,12 +120,17 @@ export async function middleware(req: NextRequest) {
       : NextResponse.redirect(new URL('/', req.url));
   }
 
-  if (process.env.ENABLE_PHASE2_ADMIN !== 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM !== 'true') {
+    // Trang public + trang admin của chương trình Đối tác → về trang chủ / admin
+    if (/^\/(doi-tac|dang-ky-doi-tac|dai-ly)(\/|$)/.test(pathname)) {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
     if (/^\/admin\/(partners|payouts)(\/|$)/.test(pathname)) {
       return NextResponse.redirect(new URL('/admin', req.url));
     }
-    if (/^\/api\/admin\/(partners|payouts)(\/|$)/.test(pathname)) {
-      return new NextResponse(JSON.stringify({ success: false, error: 'Chức năng thuộc giai đoạn 2, chưa mở sử dụng.', code: 'PHASE2_DISABLED' }), {
+    // API public + API admin của chương trình Đối tác → 404
+    if (/^\/api\/(partner|dealer|admin\/partners|admin\/payouts)(\/|$)/.test(pathname)) {
+      return new NextResponse(JSON.stringify({ success: false, error: 'Chức năng chưa mở sử dụng.', code: 'FEATURE_DISABLED' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store, private' },
       });
