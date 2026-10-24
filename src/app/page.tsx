@@ -109,7 +109,9 @@ async function getLiveProducts(): Promise<Product[]> {
 
         const activeImages = Array.isArray(row.images) && row.images.length > 0 ? row.images : [];
         const thumbFromImages = activeImages.find((img: any) => img.isThumbnail)?.url || activeImages[0]?.url;
-        const finalThumbnail = row.thumbnail || thumbFromImages || base.thumbnail;
+        // Ảnh gallery mới khai báo trong products.ts được ưu tiên hơn ảnh cũ lưu trong DB
+        const codeGalleryThumb = base.thumbnail?.startsWith('/images/products/gallery/') ? base.thumbnail : null;
+        const finalThumbnail = codeGalleryThumb || row.thumbnail || thumbFromImages || base.thumbnail;
 
         return {
           ...base,

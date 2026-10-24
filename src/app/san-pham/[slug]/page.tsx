@@ -101,7 +101,10 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
 
       const activeImages = Array.isArray(dbProd.images) && dbProd.images.length > 0 ? dbProd.images : [];
       const thumbFromImages = activeImages.find((img: any) => img.isThumbnail)?.url || activeImages[0]?.url;
-      const finalThumbnail = dbProd.thumbnail || thumbFromImages || fallback.thumbnail;
+      // Ảnh gallery mới khai báo trong products.ts được ưu tiên hơn ảnh cũ lưu trong DB
+      const codeGalleryThumb = fallback.thumbnail?.startsWith('/images/products/gallery/') ? fallback.thumbnail : null;
+      const hasCodeGallery = Array.isArray(fallback.images) && fallback.images.some((img) => img.url?.startsWith('/images/products/gallery/'));
+      const finalThumbnail = codeGalleryThumb || dbProd.thumbnail || thumbFromImages || fallback.thumbnail;
 
       return {
         ...fallback,
@@ -112,7 +115,7 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
         shortDescription: dbProd.short_description || fallback.shortDescription,
         description: dbProd.description || fallback.description,
         thumbnail: finalThumbnail,
-        images: activeImages.length > 0
+        images: (activeImages.length > 0 && !hasCodeGallery)
           ? activeImages.map((img: any) => ({
             id: img.id,
             url: img.url,
