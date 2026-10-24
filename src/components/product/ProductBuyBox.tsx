@@ -9,6 +9,7 @@ import { getUnitPrice, getVariantLabel } from '@/lib/product-detail';
 import QuantitySelector from '@/components/product/QuantitySelector';
 import { STORE_SALES_INFO } from '@/data/product-detail-content';
 import { DeliveryAddressInfo, WishlistButton } from '@/components/product/ProductRealBlocks';
+import { PreorderSchedulePlaceholder } from '@/components/product/ProductPlaceholderBlocks';
 
 export interface BuyBoxStock {
   isOutOfStock: boolean;
@@ -132,6 +133,9 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
         </div>
       </div>
 
+      {/* Chọn cách nhận hàng: giao hôm nay / đặt trước (bản mẫu, chỉ hiện khi bật cờ placeholder) */}
+      {showPlaceholders && <PreorderSchedulePlaceholder />}
+
       {/* Tồn kho */}
       <div className="text-[17px]" aria-live="polite">
         {stock.isOutOfStock ? (
@@ -201,8 +205,9 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             onClick={onAddToCart}
             disabled={!canAdd}
             className={cn(
-              'w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-colors',
+              'w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-all duration-200 motion-reduce:transition-none',
               'bg-corn hover:bg-corn-dark text-ink-950 border border-corn-dark/60 cursor-pointer',
+              'enabled:active:scale-[0.98]',
               'disabled:bg-gray-200 disabled:border-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed'
             )}
           >
@@ -214,8 +219,9 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             onClick={onBuyNow}
             disabled={!canAdd && stock.existingCartQty === 0}
             className={cn(
-              'w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-colors',
-              'bg-leaf-900 hover:bg-leaf-900 text-white cursor-pointer',
+              'w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-all duration-200 motion-reduce:transition-none',
+              'bg-leaf-900 hover:bg-forest-800 text-white cursor-pointer',
+              'enabled:active:scale-[0.98]',
               'disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed'
             )}
           >
@@ -242,7 +248,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
           <button
             type="button"
             onClick={onChangeBranch}
-            className="text-forest-700 hover:text-copper-600 hover:underline font-medium cursor-pointer inline-flex items-center gap-0.5"
+            className="text-copper-600 hover:text-copper-800 underline underline-offset-2 font-medium cursor-pointer inline-flex items-center gap-0.5"
           >
             <MapPin className="w-3 h-3" aria-hidden />
             {isEn ? 'Change' : 'Đổi'}

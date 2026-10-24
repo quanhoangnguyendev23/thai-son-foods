@@ -147,7 +147,7 @@ export default function Footer() {
                   href="https://www.facebook.com/suabapnepthaison"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all hover:scale-105"
+                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all "
                   aria-label="Facebook"
                 >
                   <FacebookIcon className="w-5 h-5" />
@@ -156,7 +156,7 @@ export default function Footer() {
                   href="https://www.youtube.com/channel/UCiyHE1-nGSmHRaFb-OgZfMA"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all hover:scale-105"
+                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all "
                   aria-label="YouTube"
                 >
                   <YoutubeIcon className="w-5 h-5" />
@@ -165,7 +165,7 @@ export default function Footer() {
                   href="https://instagram.com/suabapnepthaison"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all hover:scale-105"
+                  className="w-11 h-11 flex items-center justify-center bg-white/10 rounded-xl hover:bg-amber-500 hover:text-forest-950 transition-all "
                   aria-label="Instagram"
                 >
                   <InstagramIcon className="w-5 h-5" />

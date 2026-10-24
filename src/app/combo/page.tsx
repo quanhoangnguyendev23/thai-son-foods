@@ -471,7 +471,7 @@ function Combo01View() {
                       src={prod.thumbnail}
                       alt={prod.name}
                       fill
-                      className="object-contain p-2 group-hover:scale-105 transition-transform"
+                      className="object-contain p-2 transition-transform"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </div>
@@ -1085,7 +1085,7 @@ function Combo02View() {
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 group-hover:scale-105 transition-transform"
+                        className="object-contain p-1 transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1224,7 +1224,7 @@ function Combo02View() {
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 group-hover:scale-105 transition-transform"
+                        className="object-contain p-1 transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1340,7 +1340,7 @@ function Combo02View() {
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 group-hover:scale-105 transition-transform"
+                        className="object-contain p-1 transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1868,7 +1868,7 @@ function Combo05View() {
                         src={prod.thumbnail}
                         alt={prod.name}
                         fill
-                        className="object-contain p-1 group-hover:scale-105 transition-transform"
+                        className="object-contain p-1 transition-transform"
                         sizes="(max-width: 640px) 100vw, 25vw"
                       />
                     </div>
@@ -2020,7 +2020,7 @@ function Combo05View() {
                         src={prod.thumbnail}
                         alt={prod.name}
                         fill
-                        className="object-contain p-1 group-hover:scale-105 transition-transform"
+                        className="object-contain p-1 transition-transform"
                         sizes="(max-width: 640px) 100vw, 25vw"
                       />
                     </div>
@@ -2721,7 +2721,7 @@ function Combo06View() {
                       src={prod.thumbnail}
                       alt={prod.name}
                       fill
-                      className="object-contain p-1 group-hover:scale-105 transition-transform"
+                      className="object-contain p-1 transition-transform"
                       sizes="(max-width: 640px) 100vw, 25vw"
                     />
                   </div>

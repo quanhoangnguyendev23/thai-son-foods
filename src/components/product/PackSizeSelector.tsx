@@ -55,11 +55,11 @@ export default function PackSizeSelector({
               aria-checked={isSelected}
               onClick={() => onSelect(v.id)}
               className={cn(
-                'relative rounded-lg px-3 py-2.5 text-left transition-colors cursor-pointer min-h-[72px]',
+                'relative rounded-lg px-3 py-2.5 text-left transition-all duration-200 cursor-pointer min-h-[72px] active:scale-[0.98] motion-reduce:transition-none',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-green-primary/40',
                 isSelected
                   ? 'border-2 border-green-primary bg-green-primary/[0.04]'
-                  : 'border border-gray-300 bg-white hover:border-gray-500',
+                  : 'border border-gray-300 bg-white hover:border-green-primary/70 hover:bg-green-primary/[0.04]',
                 isUnavailable && !isSelected && 'border-dashed opacity-60'
               )}
             >

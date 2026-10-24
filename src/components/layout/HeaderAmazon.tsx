@@ -410,8 +410,10 @@ export default function HeaderAmazon() {
 
   return (
     <>
-      <header className={cn('sticky top-0 z-50 bg-green-primary text-white', isScrolled ? 'shadow-md' : '')}>
+      {/* Mobile/tablet: header dùng display:contents để chỉ TẦNG 1 dính trên cùng, các hàng phụ cuộn đi tự nhiên (không đổi chiều cao khi cuộn → hết giật). Từ lg: header dính như cũ. */}
+      <header className={cn('z-50 bg-green-primary text-white max-lg:contents lg:sticky lg:top-0', isScrolled ? 'shadow-md' : '')}>
         {/* ── TẦNG 1 ── */}
+        <div className={cn('max-lg:sticky max-lg:top-0 max-lg:z-50 max-lg:bg-green-primary', isScrolled && 'max-lg:shadow-md')}>
         <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5">
           <div className="flex items-center gap-2 lg:gap-3 h-14 lg:h-16">
             {/* Nút "Tất cả" (mobile/tablet) */}
@@ -540,12 +542,13 @@ export default function HeaderAmazon() {
           {/* Tìm kiếm (mobile/tablet) — luôn hiện, dễ dùng */}
           <div className="lg:hidden pb-2.5">{renderSearchForm('mobile')}</div>
         </div>
+        </div>
 
-        {/* Giao từ chi nhánh (mobile/tablet) — ẩn khi cuộn để header gọn */}
-        <div className={cn('xl:hidden bg-green-dark px-3 sm:px-4 lg:px-5 py-1.5', isScrolled && 'hidden')}>{deliverTo(true)}</div>
+        {/* Giao từ chi nhánh (mobile/tablet) — cuộn đi cùng nội dung, không ẩn bằng JS (tránh đổi chiều cao khi cuộn) */}
+        <div className="xl:hidden bg-green-dark px-3 sm:px-4 lg:px-5 py-1.5">{deliverTo(true)}</div>
 
         {/* ── TẦNG 2: THANH ĐIỀU HƯỚNG PHỤ ── */}
-        <div className={cn('bg-leaf-900', isScrolled && 'max-lg:hidden')}>
+        <div className="bg-leaf-900">
           <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 min-h-11 py-0.5 lg:py-0 lg:h-10">
             <nav className="grid grid-cols-2 w-full gap-x-1 md:flex md:flex-wrap md:w-auto lg:flex-nowrap items-center gap-0.5 lg:overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
               <button

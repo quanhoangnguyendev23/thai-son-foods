@@ -29,16 +29,33 @@ async function getHeroBanners(): Promise<Banner[]> {
         subtitle: r.subtitle || '',
         subtitleEn: r.subtitle_en || '',
         image: r.image,
+        mobileImage: r.mobile_image || undefined,
         link: r.link || '',
         alt: r.alt || r.title || 'Thái Sơn Foods',
         sortOrder: Number(r.sort_order) || 1,
         isActive: Boolean(r.is_active),
+        source: 'db' as const,
       }));
     }
   } catch (err) {
     console.error('Error fetching live hero banners:', err);
   }
   return defaultBanners;
+}
+
+// Tên danh mục do admin cấu hình (bảng categories) — dùng để hiển thị tiêu đề các hàng sản phẩm theo danh mục
+async function getLiveCategories(): Promise<Array<{ id: string; name: string; nameEn?: string }>> {
+  try {
+    const res = await query(`SELECT id, slug, name, name_en FROM categories ORDER BY created_at ASC`);
+    return res.rows.map((r: any) => ({
+      id: String(r.slug || r.id || '').replace(/^cat-/, ''),
+      name: r.name,
+      nameEn: r.name_en || undefined,
+    }));
+  } catch (err) {
+    console.error('Error fetching live categories:', err);
+    return [];
+  }
 }
 
 async function getLiveProducts(): Promise<Product[]> {
@@ -213,10 +230,11 @@ async function getLiveCombos(): Promise<Combo[]> {
 }
 
 export default async function HomeRoute() {
-  const [heroBanners, liveProducts, liveCombos] = await Promise.all([
+  const [heroBanners, liveProducts, liveCombos, liveCategories] = await Promise.all([
     getHeroBanners(),
     getLiveProducts(),
     getLiveCombos(),
+    getLiveCategories(),
   ]);
 
   // Cờ rollback: false = trang chủ cũ (HomePageLegacy), true = bố cục Amazon (HomePage). Xem ROLLBACK.md
@@ -224,5 +242,5 @@ export default async function HomeRoute() {
     return <HomePageLegacy heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} />;
   }
 
-  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} />;
+  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} liveCategories={liveCategories} />;
 }

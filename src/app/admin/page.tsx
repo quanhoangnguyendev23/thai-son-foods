@@ -64,6 +64,9 @@ import { hasPermission, Role, Permission } from '@/lib/rbac';
 import { FEATURES } from '@/config/features';
 import { canDeleteOrder, canTransitionOrderStatus } from '@/lib/order-status';
 import { safeFetchJson } from '@/lib/utils';
+import SheetInventoryPanel from './SheetInventoryPanel';
+import { banners as defaultHeroBanners } from '@/data/banners';
+import { HERO_PLACEHOLDER_SLIDES } from '@/data/homepage-placeholders';
 
 // ==================== INTERFACES ====================
 export interface AdminUser {
@@ -149,6 +152,8 @@ interface ProductVariant {
   quantity: number;
   price: number;
   unit: string;
+  /** Số chai thật trong 1 đơn vị bán (dùng để trừ kho) */
+  bottle_multiplier?: number;
 }
 
 interface Product {
@@ -271,19 +276,6 @@ export interface AdminBanner {
   created_at?: string;
 }
 
-export interface AdminBrandSlide {
-  id: string;
-  tag: string;
-  title: string;
-  description: string;
-  image: string;
-  cta_text: string;
-  cta_link: string;
-  sort_order: number;
-  is_active: boolean;
-  created_at?: string;
-}
-
 interface StatsData {
   summary: {
     total_orders: string | number;
@@ -371,14 +363,11 @@ export default function AdminPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState('');
 
-  // Banners & Brand Showcase Management
+  // Banners Management
   const [bannersList, setBannersList] = useState<AdminBanner[]>([]);
-  const [brandSlidesList, setBrandSlidesList] = useState<AdminBrandSlide[]>([]);
   const [bannersLoading, setBannersLoading] = useState(false);
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Partial<AdminBanner> | null>(null);
-  const [isSlideModalOpen, setIsSlideModalOpen] = useState(false);
-  const [editingSlide, setEditingSlide] = useState<Partial<AdminBrandSlide> | null>(null);
 
   // Authenticated Admin User
   const [currentUser, setCurrentUser] = useState<{
@@ -469,6 +458,8 @@ export default function AdminPage() {
   const [inventoryStockFilter, setInventoryStockFilter] = useState('ALL');
   const [editedStock, setEditedStock] = useState<Record<string, number>>({});
   const [inventorySaving, setInventorySaving] = useState(false);
+  // true khi tồn kho lấy từ Google Sheet (chỉ đọc): ẩn các nút nhập tay số lượng / nhập lô
+  const [inventorySheetMode, setInventorySheetMode] = useState(false);
 
   // Lịch sử biến động tồn kho & Chuyển chi nhánh đơn hàng
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLogItem[]>([]);
@@ -1056,20 +1047,17 @@ export default function AdminPage() {
     }
   };
 
-  // Fetch Banners and Brand Slides
+  // Fetch Banners
   const fetchBannersAndSlides = async () => {
     setBannersLoading(true);
     try {
-      const [banRes, sliRes] = await Promise.all([
-        fetch('/api/admin/banners', { cache: 'no-store' }),
-        fetch('/api/admin/brand-slides', { cache: 'no-store' }),
-      ]);
+      const banRes = await fetch('/api/admin/banners', { cache: 'no-store' });
       const banData = await banRes.json();
-      const sliData = await sliRes.json();
       if (banData.success) setBannersList(banData.data || []);
-      if (sliData.success) setBrandSlidesList(sliData.data || []);
+      else showToast(banData.error || 'Không tải được danh sách banner', 'error');
     } catch (err) {
-      console.error('Error fetching banners/slides:', err);
+      console.error('Error fetching banners:', err);
+      showToast('Lỗi kết nối khi tải banner', 'error');
     } finally {
       setBannersLoading(false);
     }
@@ -1123,13 +1111,13 @@ export default function AdminPage() {
   // Helper tải ảnh lên máy chủ qua /api/admin/upload
   const handleUploadImageFile = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: 'products' | 'combos' | 'banners' | 'slides'
+    type: 'products' | 'combos' | 'banners' | 'banners_mobile'
   ) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const formData = new FormData();
-    formData.append('folder', type === 'slides' ? 'banners' : type);
+    formData.append('folder', type === 'banners_mobile' ? 'banners' : type);
     for (let i = 0; i < files.length; i++) {
       formData.append('files', files[i]);
     }
@@ -1181,10 +1169,10 @@ export default function AdminPage() {
           setEditingBanner((prev: any) => ({ ...prev, image: uploadedUrls[0] }));
           showToast('Đã tải ảnh banner lên thành công!');
         }
-      } else if (type === 'slides') {
+      } else if (type === 'banners_mobile') {
         if (uploadedUrls.length > 0) {
-          setEditingSlide((prev: any) => ({ ...prev, image: uploadedUrls[0] }));
-          showToast('Đã tải ảnh slide lên thành công!');
+          setEditingBanner((prev: any) => ({ ...prev, mobile_image: uploadedUrls[0] }));
+          showToast('Đã tải ảnh điện thoại lên thành công!');
         }
       }
     } catch (err: any) {
@@ -1280,15 +1268,17 @@ export default function AdminPage() {
   };
 
   // Banner CRUD handlers
-  const handleOpenCreateBanner = () => {
+  const handleOpenCreateBanner = (placement: string = 'hero') => {
     setEditingBanner({
       title: '',
       subtitle: '',
       tag: '',
       image: '',
-      link: '/#san-pham',
-      placement: 'hero',
-      sort_order: bannersList.length + 1,
+      mobile_image: '',
+      alt: '',
+      link: placement === 'hero' ? '/#san-pham' : '',
+      placement,
+      sort_order: bannersList.filter((b) => b.placement === placement).length + 1,
       is_active: true,
     });
     setIsBannerModalOpen(true);
@@ -1360,42 +1350,42 @@ export default function AdminPage() {
       if (data.success) {
         showToast(`Đã ${!ban.is_active ? 'bật' : 'tắt'} hiển thị banner`);
         fetchBannersAndSlides();
+      } else {
+        showToast(data.error || 'Không thể đổi trạng thái banner', 'error');
       }
     } catch (err: any) {
       showToast('Lỗi: ' + err.message, 'error');
     }
   };
 
-  // Brand Slide CRUD Handlers
-  const handleOpenEditSlide = (slide: AdminBrandSlide) => {
-    setEditingSlide({ ...slide });
-    setIsSlideModalOpen(true);
-  };
-
-  const handleSaveSlide = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingSlide?.title || !editingSlide?.image) {
-      showToast('Vui lòng nhập tiêu đề và hình ảnh slide', 'error');
-      return;
-    }
+  // Đổi thứ tự hiển thị trong cùng một vị trí (hoán đổi rồi đánh lại số 1..n để không bị trùng thứ tự)
+  const handleMoveBanner = async (ban: AdminBanner, dir: -1 | 1) => {
+    const siblings = bannersList
+      .filter((b) => b.placement === ban.placement)
+      .sort((a, b) => a.sort_order - b.sort_order || String(a.created_at || '').localeCompare(String(b.created_at || '')));
+    const idx = siblings.findIndex((b) => b.id === ban.id);
+    const other = siblings[idx + dir];
+    if (idx < 0 || !other) return;
+    const reordered = [...siblings];
+    reordered[idx] = other;
+    reordered[idx + dir] = ban;
     setActionLoading(true);
     try {
-      const isUpdating = Boolean(editingSlide.id);
-      const url = '/api/admin/brand-slides';
-      const method = isUpdating ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingSlide),
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('Đã cập nhật slide thành công!');
-        setIsSlideModalOpen(false);
-        fetchBannersAndSlides();
+      const results = await Promise.all(
+        reordered.map((b, i) =>
+          fetch('/api/admin/banners', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: b.id, sort_order: i + 1 }),
+          }).then((r) => r.json())
+        )
+      );
+      if (results.some((r) => !r.success)) {
+        showToast(results.find((r) => !r.success)?.error || 'Không thể đổi thứ tự banner', 'error');
       } else {
-        showToast(data.error || 'Lỗi khi lưu slide', 'error');
+        showToast('Đã đổi thứ tự banner');
       }
+      fetchBannersAndSlides();
     } catch (err: any) {
       showToast('Lỗi: ' + err.message, 'error');
     } finally {
@@ -1942,8 +1932,8 @@ export default function AdminPage() {
       is_active: true,
     });
     setProductFormVariants([
-      { name: '1 chai', quantity: 1, price: 18000, unit: 'chai' },
-      { name: 'Lốc 6 chai', quantity: 6, price: 108000, unit: 'lốc' },
+      { name: '1 chai', quantity: 1, price: 18000, unit: 'chai', bottle_multiplier: 1 },
+      { name: '6 chai', quantity: 6, price: 108000, unit: 'lốc', bottle_multiplier: 6 },
     ]);
     setProductImages([]);
     setNewImageUrl('');
@@ -1952,7 +1942,17 @@ export default function AdminPage() {
 
   const handleOpenEditProduct = (prod: Product) => {
     setEditingProduct({ ...prod });
-    setProductFormVariants(prod.variants && prod.variants.length > 0 ? [...prod.variants] : []);
+    setProductFormVariants(
+      prod.variants && prod.variants.length > 0
+        ? prod.variants.map((v) => {
+            const qty = Number(v.quantity) || 1;
+            const mult = Number(v.bottle_multiplier) || 0;
+            // Lốc/thùng mà hệ số còn 1 (dữ liệu cũ chưa cấu hình) thì mặc định bằng số chai trong gói
+            const isPack = v.unit === 'lốc' || v.unit === 'thùng';
+            return { ...v, bottle_multiplier: mult > 1 || (!isPack && mult > 0) ? mult : qty };
+          })
+        : []
+    );
     const initialImages =
       Array.isArray((prod as any).images) && (prod as any).images.length > 0
         ? [...(prod as any).images]
@@ -2838,7 +2838,7 @@ export default function AdminPage() {
                     <span>Banner & Slider</span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-slate-800 text-amber-300 border border-slate-700">
-                    {bannersList.length + brandSlidesList.length}
+                    {bannersList.length}
                   </span>
                 </button>
               )}
@@ -4226,7 +4226,7 @@ export default function AdminPage() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB: BANNER & BRAND SLIDER MANAGEMENT */}
+          {/* TAB: BANNER MANAGEMENT */}
           {/* ======================================================== */}
           {activeTab === 'banners' && (
             <div className="space-y-6">
@@ -4234,13 +4234,13 @@ export default function AdminPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h1 className="text-2xl text-white tracking-tight flex items-center gap-2">
-                    <span>Quản Lý Banner & Thương Hiệu</span>
+                    <span>Quản Lý Banner</span>
                     <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-400 border border-slate-700">
-                      {bannersList.length} banner • {brandSlidesList.length} slide
+                      {bannersList.length} banner
                     </span>
                   </h1>
                   <p className="text-xs text-slate-400 mt-1">
-                    Cập nhật hình ảnh Hero banner trang chủ, Scroll showcase banner, và các slide Giới thiệu thương hiệu mà không cần sửa code
+                    Cập nhật hình ảnh Hero banner trang chủ và Scroll showcase banner mà không cần sửa code
                   </p>
                 </div>
 
@@ -4254,7 +4254,7 @@ export default function AdminPage() {
                     <span>Làm mới</span>
                   </button>
                   <button
-                    onClick={handleOpenCreateBanner}
+                    onClick={() => handleOpenCreateBanner()}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm bg-amber-600 hover:bg-amber-700 text-ink-950 shadow-lg shadow-amber-900/30 transition-all cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
@@ -4279,35 +4279,48 @@ export default function AdminPage() {
 
                 {bannersLoading ? (
                   <div className="p-8 text-center text-slate-400 text-xs">Đang tải danh sách banner...</div>
-                ) : bannersList.length === 0 ? (
-                  <div className="p-8 text-center border-2 border-dashed border-slate-800 rounded-xl text-slate-500 text-xs">
-                    Chưa có banner nào trong cơ sở dữ liệu. Bấm &quot;Thêm Banner Mới&quot; để tạo.
-                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {bannersList.map((ban) => (
+                  (() => {
+                    const sortBanners = (list: AdminBanner[]) =>
+                      [...list].sort((x, y) => x.sort_order - y.sort_order || String(x.created_at || '').localeCompare(String(y.created_at || '')));
+                    const groups = [
+                      {
+                        key: 'hero',
+                        title: 'Hero Banner — đầu trang chủ',
+                        hint: 'Ảnh lớn đầu trang chủ, tự chuyển slide. Hero chỉ hiển thị ảnh và liên kết khi bấm (chữ tiêu đề không hiện trên ảnh).',
+                        items: sortBanners(bannersList.filter((b) => b.placement === 'hero')),
+                      },
+                      {
+                        key: 'scroll',
+                        title: 'Banner Cuộn (Scroll Showcase)',
+                        hint: 'Khối toàn màn hình ghim khi cuộn trang chủ, mỗi banner là một cảnh (hiện cả nhãn, tiêu đề, phụ đề). Chỉ hiện khi có ít nhất 1 banner đang bật.',
+                        items: sortBanners(bannersList.filter((b) => b.placement === 'scroll')),
+                      },
+                      {
+                        key: 'other',
+                        title: 'Vị trí khác (chưa hiển thị ở đâu trên website)',
+                        hint: 'Các banner đặt ở vị trí không có chỗ hiển thị. Hãy chuyển sang Hero hoặc Banner Cuộn nếu muốn dùng.',
+                        items: sortBanners(bannersList.filter((b) => b.placement !== 'hero' && b.placement !== 'scroll')),
+                      },
+                    ];
+                    const renderCard = (ban: AdminBanner, idx: number, total: number) => (
                       <div
                         key={ban.id}
                         className="rounded-xl bg-slate-950/80 border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all"
                       >
                         <div className="relative aspect-[16/9] w-full bg-slate-900 overflow-hidden">
                           {ban.image ? (
-                            <Image
-                              src={ban.image}
-                              alt={ban.alt || 'Banner'}
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
+                            <Image src={ban.image} alt={ban.alt || 'Banner'} fill className="object-cover" unoptimized />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-600 text-xs">
-                              Chưa có ảnh
-                            </div>
+                            <div className="w-full h-full flex items-center justify-center text-slate-600 text-xs">Chưa có ảnh</div>
                           )}
                           <div className="absolute top-2 left-2 flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-full text-[11px] uppercase tracking-wider bg-slate-900/90 text-amber-300 border border-slate-700">
-                              {ban.placement === 'hero' ? 'Hero Banner' : ban.placement === 'scroll' ? 'Scroll Showcase' : ban.placement}
+                            <span className="px-2 py-0.5 rounded-full text-[11px] tracking-wider bg-slate-900/90 text-amber-300 border border-slate-700">
+                              #{idx + 1}
                             </span>
+                            {ban.mobile_image && (
+                              <span className="px-2 py-0.5 rounded-full text-[11px] bg-slate-900/90 text-sky-300 border border-slate-700">Có ảnh điện thoại</span>
+                            )}
                           </div>
                           <div className="absolute top-2 right-2">
                             <span
@@ -4324,24 +4337,10 @@ export default function AdminPage() {
 
                         <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                           <div>
-                            {ban.tag && (
-                              <span className="text-[11px] text-emerald-400 uppercase tracking-wider">
-                                {ban.tag}
-                              </span>
-                            )}
-                            <h3 className="text-sm text-white line-clamp-1 mt-0.5">
-                              {ban.title || 'Không có tiêu đề'}
-                            </h3>
-                            {ban.subtitle && (
-                              <p className="text-[11px] text-slate-400 line-clamp-2 mt-1">
-                                {ban.subtitle}
-                              </p>
-                            )}
-                            {ban.link && (
-                              <p className="text-[10px] font-mono text-slate-500 truncate mt-1">
-                                Link: {ban.link}
-                              </p>
-                            )}
+                            {ban.tag && <span className="text-[11px] text-emerald-400 uppercase tracking-wider">{ban.tag}</span>}
+                            <h3 className="text-sm text-white line-clamp-1 mt-0.5">{ban.title || 'Không có tiêu đề'}</h3>
+                            {ban.subtitle && <p className="text-[11px] text-slate-400 line-clamp-2 mt-1">{ban.subtitle}</p>}
+                            {ban.link && <p className="text-[10px] font-mono text-slate-500 truncate mt-1">Link: {ban.link}</p>}
                           </div>
 
                           <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
@@ -4357,6 +4356,22 @@ export default function AdminPage() {
                             </button>
 
                             <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleMoveBanner(ban, -1)}
+                                disabled={idx === 0 || actionLoading}
+                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Đưa lên trước"
+                              >
+                                <ArrowUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleMoveBanner(ban, 1)}
+                                disabled={idx === total - 1 || actionLoading}
+                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Đưa xuống sau"
+                              >
+                                <ArrowDown className="w-3.5 h-3.5" />
+                              </button>
                               <button
                                 onClick={() => handleOpenEditBanner(ban)}
                                 className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors cursor-pointer"
@@ -4375,76 +4390,75 @@ export default function AdminPage() {
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+
+                    return (
+                      <div className="space-y-7">
+                        {groups
+                          .filter((g) => g.key !== 'other' || g.items.length > 0)
+                          .map((g) => {
+                            const activeCount = g.items.filter((b) => b.is_active).length;
+                            return (
+                              <div key={g.key} className="space-y-3">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                  <div>
+                                    <h3 className="text-sm text-white flex items-center gap-2 flex-wrap">
+                                      <span>{g.title}</span>
+                                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-amber-400 border border-slate-700">
+                                        {g.items.length} banner • {activeCount} đang bật
+                                      </span>
+                                    </h3>
+                                    <p className="text-[11px] text-slate-400 mt-0.5 max-w-3xl">{g.hint}</p>
+                                  </div>
+                                  {g.key !== 'other' && (
+                                    <button
+                                      onClick={() => handleOpenCreateBanner(g.key)}
+                                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-amber-600 hover:bg-amber-700 text-ink-950 transition-all cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                      <span>Thêm vào mục này</span>
+                                    </button>
+                                  )}
+                                </div>
+
+                                {g.items.length > 0 && (
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {g.items.map((ban, i) => renderCard(ban, i, g.items.length))}
+                                  </div>
+                                )}
+
+                                {g.key === 'hero' && activeCount === 0 && (
+                                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-800 space-y-3">
+                                    <p className="text-xs text-slate-400">
+                                      {g.items.length === 0
+                                        ? 'Chưa có banner Hero nào được cấu hình. Website đang dùng 2 banner mặc định trong mã nguồn (xem bên dưới).'
+                                        : 'Tất cả banner Hero đang tắt nên website tạm dùng 2 banner mặc định (xem bên dưới).'}{' '}
+                                      Thêm hoặc bật một banner Hero để thay thế hoàn toàn.
+                                    </p>
+                                    <div className="flex flex-wrap gap-3">
+                                      {[defaultHeroBanners[0], HERO_PLACEHOLDER_SLIDES[0]].filter(Boolean).map((d) => (
+                                        <div key={d.id} className="relative w-44 aspect-[16/9] rounded-lg overflow-hidden border border-slate-800 bg-slate-900">
+                                          <Image src={d.image} alt={d.alt} fill className="object-cover opacity-80" unoptimized />
+                                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-slate-900/90 text-[10px] text-slate-300">Mặc định</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {g.key === 'scroll' && activeCount === 0 && (
+                                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-800 text-xs text-slate-400">
+                                    Chưa có Banner Cuộn nào đang bật, nên khối này đang <strong className="text-slate-200">ẩn khỏi trang chủ</strong>.
+                                    Thêm ít nhất 1 banner để hiển thị.
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    );
+                  })()
                 )}
-              </div>
-
-              {/* SECTION 2: BRAND SHOWCASE SLIDES */}
-              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <div>
-                    <h2 className="text-base text-white flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      <span>Slide Giới Thiệu Thương Hiệu (Brand Showcase — &quot;Về Chúng Tôi&quot;)</span>
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      4 khối nội dung và hình ảnh thể hiện câu chuyện thương hiệu Thái Sơn Foods
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {brandSlidesList.map((slide) => (
-                    <div
-                      key={slide.id}
-                      className="rounded-xl bg-slate-950/80 border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all"
-                    >
-                      <div className="relative aspect-[3/4] w-full bg-slate-900 overflow-hidden">
-                        {slide.image ? (
-                          <Image
-                            src={slide.image}
-                            alt={slide.title}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-600 text-xs">
-                            Chưa có ảnh
-                          </div>
-                        )}
-                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[11px] bg-slate-900/90 text-amber-300 border border-slate-700">
-                          {slide.tag}
-                        </span>
-                      </div>
-
-                      <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-sm text-white whitespace-pre-line line-clamp-2">
-                            {slide.title}
-                          </h3>
-                          <p className="text-[11px] text-slate-400 line-clamp-3 mt-1.5">
-                            {slide.description}
-                          </p>
-                        </div>
-
-                        <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                          <span className="text-[10px] text-slate-500 font-mono">
-                            Nút: {slide.cta_text}
-                          </span>
-                          <button
-                            onClick={() => handleOpenEditSlide(slide)}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition-colors cursor-pointer"
-                          >
-                            <Edit className="w-3 h-3" />
-                            <span>Sửa</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           )}
@@ -5031,6 +5045,17 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* NGUỒN TỒN KHO: GOOGLE SHEET (chỉ đọc) - lô, hạn dùng, cập nhật ngay, tạm hết hàng */}
+              <SheetInventoryPanel
+                storeCode={selectedStoreCode}
+                canUpdate={hasPermission(currentUser, 'inventory.update_own_store')}
+                onModeResolved={setInventorySheetMode}
+                onSynced={() => {
+                  fetchInventory(selectedStoreCode);
+                  fetchInventoryLots(selectedStoreCode);
+                }}
+              />
+
               {/* THÔNG TIN & ĐỊA CHỈ CHI NHÁNH CỬA HÀNG */}
               {(() => {
                 const currentStore = storeList.find((s) => s.code === selectedStoreCode);
@@ -5342,6 +5367,9 @@ export default function AdminPage() {
 
                               {/* Nút Cập nhật duy nhất - Mở Pop-up nhập số lượng */}
                               <td className="py-3 px-4 text-right">
+                                {inventorySheetMode ? (
+                                  <span className="text-[11px] text-slate-500">Theo sheet</span>
+                                ) : (
                                 <button
                                   type="button"
                                   onClick={() => handleOpenStockModal(item)}
@@ -5350,6 +5378,7 @@ export default function AdminPage() {
                                   <Edit className="w-3.5 h-3.5" />
                                   <span>Cập nhật</span>
                                 </button>
+                                )}
                               </td>
                             </tr>
                           );
@@ -5386,7 +5415,7 @@ export default function AdminPage() {
                       <RefreshCw className={`w-3.5 h-3.5 ${lotsLoading ? 'animate-spin' : ''}`} />
                       <span>Làm mới</span>
                     </button>
-                    {(hasPermission(currentUser, 'inventory.update_own_store') || hasPermission(currentUser, 'dealer.manage')) && (
+                    {!inventorySheetMode && (hasPermission(currentUser, 'inventory.update_own_store') || hasPermission(currentUser, 'dealer.manage')) && (
                       <button
                         type="button"
                         onClick={() => setLotFormOpen((o) => !o)}
@@ -6817,7 +6846,7 @@ export default function AdminPage() {
                     onClick={() =>
                       setProductFormVariants([
                         ...productFormVariants,
-                        { name: 'Thùng 24 chai', quantity: 24, price: 432000, unit: 'thùng' },
+                        { name: '24 chai', quantity: 24, price: 432000, unit: 'thùng', bottle_multiplier: 24 },
                       ])
                     }
                     className="text-[12px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
@@ -6827,55 +6856,109 @@ export default function AdminPage() {
                   </button>
                 </div>
 
-                {productFormVariants.map((v, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={v.name}
-                      placeholder="Tên (VD: 6 chai)"
-                      onChange={(e) => {
-                        const next = [...productFormVariants];
-                        next[i].name = e.target.value;
-                        setProductFormVariants(next);
-                      }}
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white"
-                    />
-                    <input
-                      type="number"
-                      value={v.quantity}
-                      placeholder="Số lượng"
-                      onChange={(e) => {
-                        const next = [...productFormVariants];
-                        next[i].quantity = parseInt(e.target.value, 10);
-                        setProductFormVariants(next);
-                      }}
-                      className="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center"
-                    />
-                    <input
-                      type="number"
-                      value={v.price}
-                      placeholder="Giá tiền"
-                      disabled={!hasPermission(currentUser, 'products.manage_price')}
-                      onChange={(e) => {
-                        const next = [...productFormVariants];
-                        next[i].price = parseInt(e.target.value, 10);
-                        setProductFormVariants(next);
-                      }}
-                      className={`w-28 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white ${
-                        !hasPermission(currentUser, 'products.manage_price') ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setProductFormVariants(productFormVariants.filter((_, idx) => idx !== i))
-                      }
-                      className="p-1 text-rose-400 hover:bg-rose-950 rounded"
+                <p className="text-[11px] text-slate-500">
+                  Tên ghi dạng &quot;7 chai&quot;; đơn vị Lốc/Thùng sẽ tự ghép phía trước khi hiển thị (VD: Lốc 7 chai). &quot;Số chai quy đổi&quot; là số chai thật trong gói, dùng để trừ kho.
+                </p>
+
+                {productFormVariants.map((v, i) => {
+                  const updateVariant = (patch: Partial<ProductVariant>) =>
+                    setProductFormVariants((prev) =>
+                      prev.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+                    );
+                  const toInt = (raw: string) => {
+                    const n = parseInt(raw, 10);
+                    return Number.isFinite(n) && n > 0 ? n : 0;
+                  };
+                  const canEditVariantPrice = hasPermission(currentUser, 'products.manage_price');
+                  const unitOptions = ['chai', 'lốc', 'thùng'];
+                  if (v.unit && !unitOptions.includes(v.unit)) unitOptions.push(v.unit);
+                  const labelCls = 'block text-[10px] text-slate-500 mb-0.5';
+                  const fieldCls =
+                    'w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500';
+                  return (
+                    <div
+                      key={i}
+                      className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end p-2 rounded-lg bg-slate-900/40 border border-slate-800"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
+                      <div className="col-span-2 sm:col-span-3">
+                        <label className={labelCls}>Tên quy cách</label>
+                        <input
+                          type="text"
+                          value={v.name}
+                          placeholder="VD: 7 chai"
+                          onChange={(e) => updateVariant({ name: e.target.value })}
+                          className={fieldCls}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className={labelCls}>Đơn vị</label>
+                        <select
+                          value={v.unit || 'chai'}
+                          onChange={(e) => updateVariant({ unit: e.target.value })}
+                          className={fieldCls}
+                        >
+                          {unitOptions.map((u) => (
+                            <option key={u} value={u}>
+                              {u}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className={labelCls}>Số lượng</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={v.quantity || ''}
+                          placeholder="7"
+                          onChange={(e) => {
+                            const q = toInt(e.target.value);
+                            // Giữ hệ số chai khớp số lượng nếu trước đó đang bằng nhau
+                            const follow = !v.bottle_multiplier || v.bottle_multiplier === v.quantity;
+                            updateVariant(follow ? { quantity: q, bottle_multiplier: q } : { quantity: q });
+                          }}
+                          className={`${fieldCls} text-center`}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className={labelCls}>Số chai quy đổi</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={v.bottle_multiplier || ''}
+                          placeholder="7"
+                          onChange={(e) => updateVariant({ bottle_multiplier: toInt(e.target.value) })}
+                          className={`${fieldCls} text-center`}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className={labelCls}>Giá gói (VNĐ)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={v.price || ''}
+                          placeholder="126000"
+                          disabled={!canEditVariantPrice}
+                          title={canEditVariantPrice ? undefined : 'Bạn không có quyền sửa giá'}
+                          onChange={(e) => updateVariant({ price: toInt(e.target.value) })}
+                          className={`${fieldCls} ${!canEditVariantPrice ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                      <div className="sm:col-span-1 flex justify-end">
+                        <button
+                          type="button"
+                          aria-label="Xóa quy cách"
+                          onClick={() =>
+                            setProductFormVariants((prev) => prev.filter((_, idx) => idx !== i))
+                          }
+                          className="p-1.5 text-rose-400 hover:bg-rose-950 rounded"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Modal Footer */}
@@ -7355,15 +7438,24 @@ export default function AdminPage() {
                     onChange={(e) => setEditingBanner({ ...editingBanner, placement: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                   >
-                    <option value="hero">Hero Banner (Đầu trang chủ)</option>
-                    <option value="scroll">Scroll Showcase Banner (Cuộn giới thiệu sản phẩm)</option>
-                    <option value="promo">Khuyến mãi / Khác</option>
+                    <option value="hero">Hero Banner (đầu trang chủ)</option>
+                    <option value="scroll">Banner Cuộn (Scroll Showcase, toàn màn hình khi cuộn)</option>
+                    <option value="promo">Khuyến mãi / Khác (hiện chưa hiển thị ở đâu trên website)</option>
                   </select>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {editingBanner.placement === 'scroll'
+                      ? 'Mỗi banner là một cảnh; nhãn, tiêu đề và phụ đề sẽ hiện trên ảnh.'
+                      : editingBanner.placement === 'promo'
+                        ? 'Vị trí này chưa có chỗ hiển thị trên website.'
+                        : 'Hero chỉ hiển thị ảnh và đường dẫn khi bấm; chữ tiêu đề không hiện trên ảnh.'}
+                  </p>
                 </div>
 
                 {/* Tiêu đề */}
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">Tiêu đề Banner</label>
+                  <label className="block text-sm text-slate-300 mb-1">
+                    {editingBanner.placement === 'scroll' ? 'Tiêu đề (hiện trên ảnh)' : 'Tiêu đề (dùng làm mô tả ảnh, không hiện chữ trên Hero)'}
+                  </label>
                   <input
                     type="text"
                     value={editingBanner.title || ''}
@@ -7373,34 +7465,47 @@ export default function AdminPage() {
                   />
                 </div>
 
-                {/* Tag / Nhãn */}
+                {editingBanner.placement === 'scroll' && (
+                  <>
+                    <div>
+                      <label className="block text-sm text-slate-300 mb-1">Nhãn / Tag nhỏ (hiện trên ảnh và trên nút chỉ số)</label>
+                      <input
+                        type="text"
+                        value={editingBanner.tag || ''}
+                        onChange={(e) => setEditingBanner({ ...editingBanner, tag: e.target.value })}
+                        placeholder="Ví dụ: Bản sắc & Tự nhiên"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-300 mb-1">Mô tả / Phụ đề (hiện dưới tiêu đề)</label>
+                      <textarea
+                        rows={2}
+                        value={editingBanner.subtitle || ''}
+                        onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
+                        placeholder="Mô tả ngắn xuất hiện bên dưới tiêu đề..."
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Mô tả ảnh */}
                 <div>
-                  <label className="block text-sm text-slate-300 mb-1">Nhãn / Tag nhỏ</label>
+                  <label className="block text-sm text-slate-300 mb-1">Mô tả ảnh (alt) — để trống sẽ dùng tiêu đề</label>
                   <input
                     type="text"
-                    value={editingBanner.tag || ''}
-                    onChange={(e) => setEditingBanner({ ...editingBanner, tag: e.target.value })}
-                    placeholder="Ví dụ: Bản sắc & Tự nhiên"
+                    value={editingBanner.alt || ''}
+                    onChange={(e) => setEditingBanner({ ...editingBanner, alt: e.target.value })}
+                    placeholder="Mô tả ngắn nội dung ảnh (cho người khiếm thị và SEO)"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
-                {/* Phụ đề (Subtitle) */}
-                <div>
-                  <label className="block text-sm text-slate-300 mb-1">Mô tả / Phụ đề</label>
-                  <textarea
-                    rows={2}
-                    value={editingBanner.subtitle || ''}
-                    onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
-                    placeholder="Mô tả bổ sung xuất hiện bên dưới banner..."
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                {/* Hình ảnh */}
+                {/* Hình ảnh máy tính */}
                 <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-white">Hình Ảnh Banner *</label>
+                    <label className="text-sm text-white">Hình ảnh banner (máy tính) *</label>
                     <label className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm bg-amber-600 hover:bg-amber-700 text-ink-950 cursor-pointer transition-all">
                       <Upload className="w-3.5 h-3.5" />
                       <span>{uploadingImage ? 'Đang tải...' : 'Tải ảnh từ máy'}</span>
@@ -7413,7 +7518,11 @@ export default function AdminPage() {
                       />
                     </label>
                   </div>
-
+                  <p className="text-[11px] text-slate-500">
+                    {editingBanner.placement === 'scroll'
+                      ? 'Khuyến nghị 1920×1080 px (16:9), phủ toàn màn hình. JPG/PNG/WebP, tối đa 5MB.'
+                      : 'Khuyến nghị 1920×850 px (tỉ lệ ~2,26:1). JPG/PNG/WebP, tối đa 5MB.'}
+                  </p>
                   <input
                     type="text"
                     value={editingBanner.image || ''}
@@ -7421,19 +7530,49 @@ export default function AdminPage() {
                     placeholder="/images/banners/... hoặc https://..."
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 font-mono"
                   />
-
                   {editingBanner.image && (
-                    <div className="relative aspect-[16/9] w-full rounded-lg bg-slate-900 border border-slate-800 overflow-hidden">
-                      <Image
-                        src={editingBanner.image}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
+                    <div className={`relative w-full rounded-lg bg-slate-900 border border-slate-800 overflow-hidden ${editingBanner.placement === 'scroll' ? 'aspect-[16/9]' : 'aspect-[1920/850]'}`}>
+                      <Image src={editingBanner.image} alt="Preview" fill className="object-cover" unoptimized />
                     </div>
                   )}
                 </div>
+
+                {/* Hình ảnh điện thoại */}
+                {editingBanner.placement !== 'promo' && (
+                  <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm text-white">Hình ảnh điện thoại (tùy chọn)</label>
+                      <label className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 text-white cursor-pointer transition-all">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{uploadingImage ? 'Đang tải...' : 'Tải ảnh từ máy'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingImage}
+                          onChange={(e) => handleUploadImageFile(e, 'banners_mobile')}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      {editingBanner.placement === 'scroll'
+                        ? 'Khuyến nghị 1080×1920 px (dọc 9:16). Để trống sẽ dùng ảnh máy tính trên điện thoại.'
+                        : 'Khuyến nghị 1200×675 px (16:9). Để trống sẽ dùng ảnh máy tính trên điện thoại.'}
+                    </p>
+                    <input
+                      type="text"
+                      value={editingBanner.mobile_image || ''}
+                      onChange={(e) => setEditingBanner({ ...editingBanner, mobile_image: e.target.value })}
+                      placeholder="/images/banners/... hoặc https://... (không bắt buộc)"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                    {editingBanner.mobile_image && (
+                      <div className={`relative rounded-lg bg-slate-900 border border-slate-800 overflow-hidden ${editingBanner.placement === 'scroll' ? 'w-32 aspect-[9/16]' : 'w-full aspect-[16/9]'}`}>
+                        <Image src={editingBanner.mobile_image} alt="Preview điện thoại" fill className="object-cover" unoptimized />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Đường link liên kết */}
                 <div>
@@ -7489,151 +7628,6 @@ export default function AdminPage() {
                 >
                   {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   <span>{editingBanner.id ? 'Cập Nhật Banner' : 'Tạo Banner Mới'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ======================================================== */}
-      {/* MODAL: CHỈNH SỬA BRAND SLIDE */}
-      {/* ======================================================== */}
-      {isSlideModalOpen && editingSlide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="text-base text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Chỉnh Sửa Slide Thương Hiệu (Về Chúng Tôi)</span>
-              </h3>
-              <button
-                onClick={() => setIsSlideModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveSlide} className="p-5 space-y-4 overflow-y-auto flex-1">
-              <div className="space-y-3">
-                {/* Tag */}
-                <div>
-                  <label className="block text-sm text-slate-300 mb-1">Tag / Phân loại *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingSlide.tag || ''}
-                    onChange={(e) => setEditingSlide({ ...editingSlide, tag: e.target.value })}
-                    placeholder="Ví dụ: Nguyên liệu, Sản xuất, Hương vị, Gia đình"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                {/* Tiêu đề */}
-                <div>
-                  <label className="block text-sm text-slate-300 mb-1">Tiêu đề Slide *</label>
-                  <textarea
-                    rows={2}
-                    required
-                    value={editingSlide.title || ''}
-                    onChange={(e) => setEditingSlide({ ...editingSlide, title: e.target.value })}
-                    placeholder="Ví dụ: NGUYÊN LIỆU&#10;CHỌN LỌC"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                {/* Mô tả chi tiết */}
-                <div>
-                  <label className="block text-sm text-slate-300 mb-1">Nội dung câu chuyện *</label>
-                  <textarea
-                    rows={3}
-                    required
-                    value={editingSlide.description || ''}
-                    onChange={(e) => setEditingSlide({ ...editingSlide, description: e.target.value })}
-                    placeholder="Mô tả câu chuyện thương hiệu..."
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                {/* Hình ảnh Slide */}
-                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm text-white">Hình Ảnh Slide (Tỉ lệ 3:4 hoặc 490x740) *</label>
-                    <label className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm bg-amber-600 hover:bg-amber-700 text-ink-950 cursor-pointer transition-all">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{uploadingImage ? 'Đang tải...' : 'Tải ảnh từ máy'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={uploadingImage}
-                        onChange={(e) => handleUploadImageFile(e, 'slides')}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-
-                  <input
-                    type="text"
-                    required
-                    value={editingSlide.image || ''}
-                    onChange={(e) => setEditingSlide({ ...editingSlide, image: e.target.value })}
-                    placeholder="/images/banners/490x740-SGL.jpg"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 font-mono"
-                  />
-
-                  {editingSlide.image && (
-                    <div className="relative aspect-[3/4] max-w-[200px] mx-auto rounded-lg bg-slate-900 border border-slate-800 overflow-hidden">
-                      <Image
-                        src={editingSlide.image}
-                        alt="Preview Slide"
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* CTA Nút bấm & Liên kết */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm text-slate-300 mb-1">Chữ trên nút (CTA)</label>
-                    <input
-                      type="text"
-                      value={editingSlide.cta_text || 'Khám phá Thái Sơn'}
-                      onChange={(e) => setEditingSlide({ ...editingSlide, cta_text: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-slate-300 mb-1">Liên kết nút (Link)</label>
-                    <input
-                      type="text"
-                      value={editingSlide.cta_link || '/#san-pham'}
-                      onChange={(e) => setEditingSlide({ ...editingSlide, cta_link: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsSlideModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2 rounded-xl text-sm bg-amber-600 hover:bg-amber-700 text-ink-950 shadow-lg shadow-amber-900/30 transition-all cursor-pointer flex items-center gap-2"
-                >
-                  {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  <span>Lưu Thay Đổi</span>
                 </button>
               </div>
             </form>

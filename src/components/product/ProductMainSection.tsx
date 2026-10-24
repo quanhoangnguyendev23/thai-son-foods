@@ -352,7 +352,7 @@ export default function ProductMainSection({
         {/* ── VÙNG 2: THÔNG TIN MUA HÀNG CHÍNH ── */}
         <div className="min-w-0 md:col-start-2 md:row-start-1 xl:col-start-2 space-y-3">
           <Link
-            href="/#ve-chung-toi"
+            href="/"
             className="inline-block text-[13px] text-forest-700 hover:text-copper-600 hover:underline"
           >
             {isEn ? 'Visit the Thái Sơn Foods store' : 'Ghé thăm cửa hàng Thái Sơn Foods'}
@@ -467,12 +467,14 @@ export default function ProductMainSection({
                       aria-current={isCurrent ? 'page' : undefined}
                       title={getShortProductName(p, language)}
                       className={cn(
-                        'shrink-0 w-[76px] rounded-lg p-1 text-center transition-colors',
-                        isCurrent ? 'border-2 border-green-primary' : 'border border-gray-300 hover:border-gray-500'
+                        'group shrink-0 w-[76px] rounded-lg p-1 text-center transition-all duration-200 motion-reduce:transition-none',
+                        isCurrent
+                          ? 'border-2 border-green-primary'
+                          : 'border border-gray-300 hover:border-green-primary/70 hover:bg-green-primary/[0.04]'
                       )}
                     >
                       <span className="relative block w-full aspect-[4/3] rounded overflow-hidden bg-white">
-                        <Image src={getProductImage(p)} alt="" fill sizes="76px" className="object-contain" />
+                        <Image src={getProductImage(p)} alt="" fill sizes="76px" className="object-contain transition-transform duration-300 motion-reduce:transition-none" />
                       </span>
                       <span className="block text-[10.5px] leading-tight text-ink-950 mt-1 line-clamp-2 min-h-[2.4em]">
                         {getShortProductName(p, language)}

@@ -184,7 +184,7 @@ export default function ProductFeatureShowcase({
         </div>
 
         {/* 2. CARD CHỨA 2 BANNER XẾP CHỒNG (STACKED CARD) */}
-        <div className="bg-white rounded-2xl border border-gray-200/90 shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+        <div className="bg-white rounded-2xl border border-gray-200/90 shadow-md overflow-hidden transition-all duration-300">
           {/* Banner 1 (Phía trên): Banner chữ A - Hình ảnh thiết kế hoàn chỉnh */}
           <div className="relative w-full aspect-[1920/850] bg-ivory overflow-hidden group">
             <Image
@@ -192,7 +192,7 @@ export default function ProductFeatureShowcase({
               alt={banners.alt1 || `${product?.name || productName} - Thành phần từ thiên nhiên`}
               fill
               priority
-              className="object-cover object-center group-hover:scale-[1.01] transition-transform duration-500"
+              className="object-cover object-center transition-transform duration-500"
               sizes="(max-width: 1200px) 100vw, 1200px"
             />
           </div>
@@ -206,7 +206,7 @@ export default function ProductFeatureShowcase({
               src={banners.banner2}
               alt={banners.alt2 || `${product?.name || productName} - Đặc tính sản phẩm`}
               fill
-              className="object-cover object-center group-hover:scale-[1.01] transition-transform duration-500"
+              className="object-cover object-center transition-transform duration-500"
               sizes="(max-width: 1200px) 100vw, 1200px"
             />
           </div>

@@ -42,14 +42,14 @@ export default function ProductSponsoredBanner({
   return (
     <section className={`w-full py-4 sm:py-6 ${waitingRandom ? 'invisible' : ''} ${className}`}>
       {/* ── Khung Banner Chính Chuẩn Amazon Sponsored Brand Showcase ── */}
-      <div className="relative bg-white rounded-xl sm:rounded-2xl border border-gray-200/90 shadow-[0_1px_6px_rgba(34,84,76,0.03)] overflow-hidden transition-all duration-300 hover:shadow-[0_4px_16px_rgba(34,84,76,0.06)]">
+      <div className="relative bg-white rounded-xl sm:rounded-2xl border border-gray-200/90 shadow-[0_1px_6px_rgba(34,84,76,0.03)] overflow-hidden transition-all duration-300">
         <div className="flex flex-col md:flex-row items-stretch md:h-[220px] lg:h-[230px]">
           
           {/* CỘT 1 (Trái): Logo thương hiệu & Tagline (Refréscate • Recupérate • Revive style) */}
           <div className="w-full md:w-[22%] lg:w-[22%] p-5 sm:p-6 flex flex-col items-center justify-center text-center bg-white border-b md:border-b-0 md:border-r border-gray-100 shrink-0">
             <Link
               href="/#san-pham"
-              className="group flex flex-col items-center justify-center transition-transform hover:scale-105 duration-300"
+              className="group flex flex-col items-center justify-center transition-transform duration-300"
             >
               <div className="relative w-32 h-12 sm:w-36 sm:h-14 flex items-center justify-center">
                 <Image
@@ -84,7 +84,7 @@ export default function ProductSponsoredBanner({
               alt="Thưởng thức nước uống dinh dưỡng Thái Sơn Foods tươi ngon mát lành"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+              className="object-cover object-center transition-transform duration-700 ease-out"
               priority
             />
             {/* Lớp gradient nhẹ phủ chân ảnh tạo chiều sâu */}
@@ -108,7 +108,7 @@ export default function ProductSponsoredBanner({
                 alt={displayTitle}
                 fill
                 sizes="160px"
-                className="object-contain group-hover:scale-105 transition-transform duration-300"
+                className="object-contain transition-transform duration-300"
               />
             </div>
 

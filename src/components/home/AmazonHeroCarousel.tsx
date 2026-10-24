@@ -69,7 +69,30 @@ export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: Amazo
         {slides.map((banner, i) => {
           const active = i === index;
           const src = failed[banner.id] ? FALLBACK_BANNER : banner.image;
-          const img = (
+          const hasMobile = Boolean(banner.mobileImage) && !failed[banner.id];
+          const img = hasMobile ? (
+            // Có ảnh riêng cho điện thoại: ảnh ngang từ 640px trở lên, ảnh điện thoại bên dưới đó
+            <>
+              <Image
+                src={src}
+                alt={banner.alt || 'Thái Sơn Foods'}
+                fill
+                sizes="(max-width: 1500px) 100vw, 1500px"
+                className="hidden sm:block object-cover object-center"
+                loading="lazy"
+                onError={() => setFailed((f) => ({ ...f, [banner.id]: true }))}
+              />
+              <Image
+                src={banner.mobileImage as string}
+                alt={banner.alt || 'Thái Sơn Foods'}
+                fill
+                sizes="100vw"
+                className="sm:hidden object-cover object-center"
+                loading="lazy"
+                onError={() => setFailed((f) => ({ ...f, [banner.id]: true }))}
+              />
+            </>
+          ) : (
             <Image
               src={src}
               alt={banner.alt || 'Thái Sơn Foods'}

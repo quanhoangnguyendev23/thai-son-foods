@@ -1,6 +1,21 @@
 import { PoolClient } from 'pg';
 import { pool, query } from '@/lib/db';
 import { INVENTORY_CONFIG } from '@/config/inventory';
+import { isSheetInventoryMode } from '@/config/inventorySheet';
+
+/**
+ * Khi tồn kho lấy từ Google Sheet: đọc lại sheet nếu đã quá chu kỳ (không bao giờ ném lỗi, chờ tối đa vài giây).
+ * Bỏ qua khi đang ở trong một transaction của nơi gọi để không giữ khóa chờ lẫn nhau.
+ */
+async function refreshSheetInventoryIfNeeded(client?: PoolClient): Promise<void> {
+  if (client || !isSheetInventoryMode()) return;
+  try {
+    const mod = await import('@/lib/inventorySheet');
+    await mod.ensureFreshSheetInventory();
+  } catch (err) {
+    console.error('[Inventory] Không làm mới được tồn kho từ sheet (bỏ qua):', err);
+  }
+}
 
 // Định nghĩa lỗi thiếu tồn kho khả dụng
 export class InsufficientStockError extends Error {
@@ -773,6 +788,8 @@ export async function getAvailability(
   items: Array<{ productId?: string | null; product_id?: string | null; name?: string; quantity: number; unit?: string }>,
   client?: PoolClient
 ): Promise<AvailabilityResult> {
+  await refreshSheetInventoryIfNeeded(client);
+
   // Bóc tách toàn bộ sản phẩm thành từng chai
   const { expandedBottles } = await expandComboItems(items, client);
 
@@ -855,6 +872,8 @@ const CLEANUP_THROTTLE_MS = 60_000; // 60 giây
 export async function cleanupExpiredReservationsThrottled(
   client?: PoolClient
 ): Promise<{ cleaned: boolean; releasedReservationsCount?: number; cancelledOrdersCount?: number }> {
+  await refreshSheetInventoryIfNeeded(client);
+
   const now = Date.now();
   if (now - lastCleanupTimestamp < CLEANUP_THROTTLE_MS) {
     return { cleaned: false };
@@ -1133,6 +1152,8 @@ export async function confirmStock(
 
   const storeCode = order.store_code || targetStoreCode;
   let hadOversellClamped = false;
+  // Tồn kho lấy từ Google Sheet: kế toán tự trừ trong sheet, web chỉ nhả giữ chỗ (không trừ stock_quantity lần hai)
+  const sheetMode = isSheetInventoryMode();
 
   // 2. Lấy các reservation đang active của đơn hàng này
   const resSql = `
@@ -1154,7 +1175,7 @@ export async function confirmStock(
       const oldStock = Number(invOld.rows[0]?.stock_quantity) || 0;
       const oldReserved = Number(invOld.rows[0]?.reserved) || 0;
 
-      const isOversell = oldStock < r.quantity;
+      const isOversell = !sheetMode && oldStock < r.quantity;
       if (isOversell) {
         if (!options?.allowOversellClamped) {
           throw new InsufficientStockConfirmError(
@@ -1167,19 +1188,19 @@ export async function confirmStock(
 
       await client.query(
         `UPDATE store_inventory
-         SET stock_quantity = GREATEST(0, stock_quantity - $1),
+         SET stock_quantity = CASE WHEN $5::boolean THEN stock_quantity ELSE GREATEST(0, stock_quantity - $1) END,
              reserved = GREATEST(0, reserved - $1),
              updated_at = CURRENT_TIMESTAMP,
              updated_by = $2
          WHERE store_code = $3 AND product_id = $4;`,
-        [r.quantity, adminUsername, r.store_code, r.product_id]
+        [r.quantity, adminUsername, r.store_code, r.product_id, sheetMode]
       );
 
       await logInventoryChange(client, {
         storeCode: r.store_code,
         productId: r.product_id,
         oldStock,
-        newStock: Math.max(0, oldStock - r.quantity),
+        newStock: sheetMode ? oldStock : Math.max(0, oldStock - r.quantity),
         oldReserved,
         newReserved: Math.max(0, oldReserved - r.quantity),
         changeType: isOversell ? 'oversell_clamped' : 'order_confirmed',
@@ -1187,7 +1208,9 @@ export async function confirmStock(
         actor: adminUsername,
         note: isOversell
           ? `[CẢNH BÁO THIẾU HÀNG - OVERSELL] Đơn ${orderId}: Tồn kho thực tế (${oldStock}) < Số lượng xuất (${r.quantity}). Đã kẹp về 0 theo lệnh admin.`
-          : `Xác nhận đơn ${orderId} - Trừ kho ${r.quantity} chai`,
+          : sheetMode
+            ? `Xác nhận đơn ${orderId} - Nhả giữ chỗ ${r.quantity} chai (tồn lấy từ Google Sheet, kế toán trừ trực tiếp trong sheet)`
+            : `Xác nhận đơn ${orderId} - Trừ kho ${r.quantity} chai`,
       });
 
       await client.query(
@@ -1218,7 +1241,7 @@ export async function confirmStock(
     );
     const { expandedBottles } = await expandComboItems(itemsRes.rows, client);
 
-    for (const b of expandedBottles) {
+    for (const b of sheetMode ? [] : expandedBottles) {
       await client.query(
         `INSERT INTO store_inventory (id, store_code, product_id, stock_quantity, reserved, safety_stock, updated_by)
          VALUES ($1, $2, $3, 100, 0, 0, $4)
@@ -1314,6 +1337,8 @@ export async function releaseStock(
   }
 
   const order = orderRes.rows[0];
+  // Tồn kho lấy từ Google Sheet: web không tự cộng lại tồn vật lý (kế toán chỉnh trong sheet)
+  const sheetMode = isSheetInventoryMode();
 
   // Nếu đã trừ kho thật -> Hoàn lại stock_quantity
   if (order.inventory_deducted) {
@@ -1330,11 +1355,11 @@ export async function releaseStock(
       for (const r of resQuery.rows) {
         await client.query(
           `UPDATE store_inventory
-           SET stock_quantity = stock_quantity + $1,
+           SET stock_quantity = CASE WHEN $5::boolean THEN stock_quantity ELSE stock_quantity + $1 END,
                updated_at = CURRENT_TIMESTAMP,
                updated_by = $2
            WHERE store_code = $3 AND product_id = $4;`,
-          [r.quantity, adminUsername, r.store_code, r.product_id]
+          [r.quantity, adminUsername, r.store_code, r.product_id, sheetMode]
         );
 
         await client.query(
@@ -1364,7 +1389,7 @@ export async function releaseStock(
       );
       const { expandedBottles } = await expandComboItems(itemsRes.rows, client);
 
-      for (const b of expandedBottles) {
+      for (const b of sheetMode ? [] : expandedBottles) {
         await client.query(
           `UPDATE store_inventory
            SET stock_quantity = stock_quantity + $1,
@@ -1684,6 +1709,8 @@ export async function processOrderReturn(
   }
   const order = orderRes.rows[0];
   let restoredBottles = 0;
+  // Tồn kho lấy từ Google Sheet: hàng hoàn nhập lại do kế toán cập nhật trong sheet, web không tự cộng tồn
+  const sheetMode = isSheetInventoryMode();
 
   if (order.inventory_deducted) {
     const itemsRes = await client.query(
@@ -1702,11 +1729,11 @@ export async function processOrderReturn(
         const oldStock = Number(invOld.rows[0]?.stock_quantity) || 0;
         await client.query(
           `UPDATE store_inventory
-           SET stock_quantity = stock_quantity + $1,
+           SET stock_quantity = CASE WHEN $5::boolean THEN stock_quantity ELSE stock_quantity + $1 END,
                updated_at = CURRENT_TIMESTAMP,
                updated_by = $2
            WHERE store_code = $3 AND product_id = $4;`,
-          [b.bottleQuantity, params.actor, order.store_code, b.productId]
+          [b.bottleQuantity, params.actor, order.store_code, b.productId, sheetMode]
         );
         await client.query(
           `UPDATE products
@@ -1718,7 +1745,7 @@ export async function processOrderReturn(
           storeCode: order.store_code,
           productId: b.productId,
           oldStock,
-          newStock: oldStock + b.bottleQuantity,
+          newStock: sheetMode ? oldStock : oldStock + b.bottleQuantity,
           changeType: 'return_restocked',
           orderId,
           actor: params.actor,

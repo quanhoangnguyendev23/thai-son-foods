@@ -395,7 +395,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       {/* 2. Link gian hàng & SKU */}
       <div className="flex items-center justify-between text-sm flex-wrap gap-2 pb-1 border-b border-gray-100">
         <Link
-          href="/#ve-chung-toi"
+          href="/"
           className="text-forest-700 hover:text-copper-600 hover:underline text-sm font-medium transition-colors"
         >
           Ghé thăm cửa hàng Thái Sơn Foods

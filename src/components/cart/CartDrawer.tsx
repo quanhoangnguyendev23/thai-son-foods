@@ -35,6 +35,7 @@ export default function CartDrawer() {
   const {
     isAvailable,
     insufficientItems,
+    shortItems,
     alternativeStores,
     selectedBranch,
     setSelectedBranch,
@@ -187,6 +188,38 @@ export default function CartDrawer() {
                       <p className="text-base text-green-primary mt-1">
                         {formatPrice(item.price)}đ
                       </p>
+
+                      {/* Báo thiếu hàng ngay trên dòng món, kèm cách xử lý nhanh */}
+                      {(() => {
+                        const sh = shortItems.find((s) => s.productId === item.productId);
+                        if (!sh) return null;
+                        return (
+                          <div className="mt-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1.5 text-[11px] text-amber-900 leading-snug" role="status">
+                            <span>
+                              {sh.maxQuantity > 0
+                                ? (language === 'en' ? `Only ${sh.maxQuantity} left at this store.` : `Kho này chỉ còn ${sh.maxQuantity}.`)
+                                : (language === 'en' ? 'Out of stock at this store.' : 'Kho này tạm hết hàng.')}
+                            </span>{' '}
+                            {sh.maxQuantity > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.productId, sh.maxQuantity, item.variantId)}
+                                className="underline text-emerald-800 hover:text-emerald-900 cursor-pointer"
+                              >
+                                {language === 'en' ? `Reduce to ${sh.maxQuantity}` : `Giảm còn ${sh.maxQuantity}`}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => removeItem(item.productId, item.variantId)}
+                                className="underline text-emerald-800 hover:text-emerald-900 cursor-pointer"
+                              >
+                                {language === 'en' ? 'Remove' : 'Xóa khỏi giỏ'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* Quantity + Remove */}
                       <div className="flex items-center justify-between mt-2">

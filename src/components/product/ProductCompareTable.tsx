@@ -96,7 +96,7 @@ function CompareImage({ product, alt }: { product: Product; alt: string }) {
       alt={alt}
       fill
       sizes="160px"
-      className="object-contain transition-transform duration-300 group-hover:scale-[1.03]"
+      className="object-contain transition-transform duration-300"
       onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
     />
   );

@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/cleanup-reservations",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/sync-inventory",
+      "schedule": "30 22 * * *"
     }
   ]
 }

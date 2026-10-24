@@ -195,7 +195,12 @@ Bảng `wishlists`, `product_views` do `initDatabase()` tự tạo.
 
 **Hiện trạng:** cờ `SHOW_PLACEHOLDER_BLOCKS` (`src/data/product-detail-placeholders.ts`, đọc từ
 `NEXT_PUBLIC_SHOW_PLACEHOLDERS`) đang tắt. Khi tắt sẽ ẩn: nhãn "Bản mẫu · chờ triển khai", đồng hồ đếm ngược Deal
-trong ngày, mã giảm giá mẫu, thẻ "Mua lại" và khối "Gợi ý cho bạn" ở trang chủ.
+trong ngày, mã giảm giá mẫu, thẻ "Mua lại" và khối "Gợi ý cho bạn" ở trang chủ, và khối "Chọn cách nhận hàng"
+(Giao hôm nay / Đặt trước chọn ngày giao) trong khung mua hàng của trang sản phẩm và combo.
+Khối "Chọn cách nhận hàng" (`PreorderSchedulePlaceholder`, dữ liệu `PREORDER_PLACEHOLDER`) chỉ là giao diện minh họa:
+không gọi API, không đổi giỏ hàng/đơn hàng. Điều kiện để làm thật: doanh nghiệp chốt hạn mức nhận đơn theo ngày,
+giờ chốt đơn, công suất sản xuất/giao (phiếu `docs/golive/KHAO-SAT-DOANH-NGHIEP.docx`), sau đó thêm cột ngày giao
+trên đơn, bảng hạn mức theo ngày/chi nhánh và màn hình kế hoạch cho vận hành.
 Khối "Câu hỏi & trả lời" đã được **gỡ khỏi** trang sản phẩm và combo theo yêu cầu (component
 `ProductQAPlaceholder` vẫn còn trong `ProductPlaceholderBlocks.tsx` nhưng không trang nào gọi).
 
@@ -215,6 +220,8 @@ Các khối cần làm thật lần này (xóa dòng không làm):
 - "Mua lại" ở trang chủ: lấy từ lịch sử đơn của khách đã đăng nhập.
 - "Gợi ý cho bạn" ở trang chủ: thuật toán gợi ý dựa trên lịch sử xem/mua thật của từng khách.
 - Hỏi & đáp sản phẩm: cần quy trình duyệt nội dung, trả lời của CSKH, chống spam.
+- Đặt trước / chọn ngày giao (PreorderSchedulePlaceholder): hạn mức theo ngày, ngày giao lưu trên đơn, kiểm tra ở server
+  trong cùng giao dịch tạo đơn, nhả hạn mức khi hủy/đổi ngày, màn hình kế hoạch cho quản trị.
 
 Yêu cầu: không hiển thị số liệu bịa; mọi dữ liệu lấy từ CSDL; kiểm tra quyền và validate ở server; mobile không trượt
 ngang; chạy npx tsc --noEmit, npx eslint src, npm test. Sau khi hoàn thiện khối nào thì khối đó không còn phụ thuộc

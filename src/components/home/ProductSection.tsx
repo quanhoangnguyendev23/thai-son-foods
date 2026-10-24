@@ -130,7 +130,7 @@ export default function ProductSection({
             <button
               type="button"
               onClick={() => handleScroll('left')}
-              className="absolute -left-2 sm:-left-3.5 md:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white shadow-md hover:shadow-xl border border-gray-200/90 flex items-center justify-center text-gray-700 hover:text-white hover:bg-green-primary transition-all duration-200 cursor-pointer active:scale-90"
+              className="absolute -left-2 sm:-left-3.5 md:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white shadow-md border border-gray-200/90 flex items-center justify-center text-gray-700 hover:text-white hover:bg-green-primary transition-all duration-200 cursor-pointer active:scale-90"
               aria-label={language === 'en' ? 'Previous products' : 'Lướt sang trái xem sản phẩm trước'}
               title={language === 'en' ? 'Previous products' : 'Xem sản phẩm trước'}
             >
@@ -163,7 +163,7 @@ export default function ProductSection({
             <button
               type="button"
               onClick={() => handleScroll('right')}
-              className="absolute -right-2 sm:-right-3.5 md:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white shadow-md hover:shadow-xl border border-gray-200/90 flex items-center justify-center text-gray-700 hover:text-white hover:bg-green-primary transition-all duration-200 cursor-pointer active:scale-90"
+              className="absolute -right-2 sm:-right-3.5 md:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white shadow-md border border-gray-200/90 flex items-center justify-center text-gray-700 hover:text-white hover:bg-green-primary transition-all duration-200 cursor-pointer active:scale-90"
               aria-label={language === 'en' ? 'Next products' : 'Lướt sang phải xem thêm sản phẩm'}
               title={language === 'en' ? 'Next products' : 'Xem thêm sản phẩm'}
             >

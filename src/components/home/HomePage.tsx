@@ -22,6 +22,8 @@ interface HomePageProps {
   heroBanners: Banner[];
   liveProducts: Product[];
   liveCombos: Combo[];
+  /** Tên danh mục do admin cấu hình (ưu tiên hơn tên mặc định trong mã nguồn) */
+  liveCategories?: Array<{ id: string; name: string; nameEn?: string }>;
 }
 
 // Thứ tự danh mục giống CategorySidebar của trang chủ cũ
@@ -31,16 +33,20 @@ function normalizeCategoryId(id: string | undefined): string {
   return (id || '').replace(/^cat-/, '');
 }
 
-/** Banner hero thật trước; chỉ bù slide placeholder khi admin bật chưa đủ HERO_MIN_SLIDES banner */
+/** Banner hero thật trước. Khi admin đã bật ít nhất 1 banner thì hiển thị đúng những banner đó; chỉ bù slide mẫu khi chưa cấu hình gì */
 function buildHeroSlides(heroBanners: Banner[]): Banner[] {
   const real = heroBanners.filter((b) => Boolean(b.image));
+  if (real.some((b) => b.source === 'db')) return real;
   if (real.length >= HERO_MIN_SLIDES) return real;
   const used = new Set(real.map((b) => b.image));
   const fill = HERO_PLACEHOLDER_SLIDES.filter((b) => !used.has(b.image));
   return [...real, ...fill].slice(0, Math.max(HERO_MIN_SLIDES, real.length));
 }
 
-function buildCategoryGroups(products: Product[]): HomeCategoryGroup[] {
+function buildCategoryGroups(
+  products: Product[],
+  liveCategories: Array<{ id: string; name: string; nameEn?: string }> = []
+): HomeCategoryGroup[] {
   const ids = Array.from(new Set(products.map((p) => normalizeCategoryId(p.categoryId)).filter(Boolean)));
   ids.sort((a, b) => {
     const ia = CATEGORY_ORDER.indexOf(a);
@@ -48,12 +54,13 @@ function buildCategoryGroups(products: Product[]): HomeCategoryGroup[] {
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
   });
   return ids.map((id) => {
+    const live = liveCategories.find((c) => normalizeCategoryId(c.id) === id);
     const meta = catalogCategories.find((c) => c.id === id || c.slug === id);
     const sample = products.find((p) => normalizeCategoryId(p.categoryId) === id);
     return {
       id,
-      name: meta?.name || sample?.category_name || id,
-      nameEn: meta?.nameEn,
+      name: live?.name || meta?.name || sample?.category_name || id,
+      nameEn: live?.nameEn || meta?.nameEn,
       products: products.filter((p) => normalizeCategoryId(p.categoryId) === id),
     };
   });
@@ -84,14 +91,14 @@ function sortBestSellersFirst(products: Product[]): Product[] {
  * 10. Giao định kỳ (theo cờ MEMBERSHIP_CONFIG, như trang cũ)
  * "Về đầu trang" + footer nhiều cột nằm trong FooterAmazon.
  */
-export default function HomePage({ heroBanners, liveProducts, liveCombos }: HomePageProps) {
+export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCategories = [] }: HomePageProps) {
   const products = liveProducts.filter((p) => p.isActive !== false);
   // Combo thiếu ảnh → ảnh dự phòng (tránh src rỗng trong ComboShowcase / hiệu ứng bay vào giỏ)
   const combos = liveCombos
     .filter((c) => c.isActive !== false)
     .map((c) => ((c.image || '').trim() ? c : { ...c, image: MISSING_PRODUCT_IMAGE }));
   const heroSlides = buildHeroSlides(heroBanners);
-  const categoryGroups = buildCategoryGroups(products);
+  const categoryGroups = buildCategoryGroups(products, liveCategories);
   const recommended = RECOMMENDED_FOR_YOU_IDS
     .map((id) => products.find((p) => p.id === id))
     .filter((p): p is Product => Boolean(p));

@@ -145,8 +145,8 @@ export async function POST() {
       if (p.variants && p.variants.length > 0) {
         for (const v of p.variants) {
           await query(
-            `INSERT INTO product_variants (id, product_id, name, quantity, price, unit, volume)
-             VALUES ($1, $2, $3, $4, $5, $6, $7);`,
+            `INSERT INTO product_variants (id, product_id, name, quantity, price, unit, volume, bottle_multiplier)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
             [
               `var_${dbProdId}_${v.id}`,
               dbProdId,
@@ -155,6 +155,8 @@ export async function POST() {
               v.price,
               v.unit || 'chai',
               v.volume || null,
+              // Số chai thật trong gói (lốc/thùng) để trừ kho đúng; mặc định bằng số lượng
+              Math.max(1, Number(v.quantity) || 1),
             ]
           );
         }

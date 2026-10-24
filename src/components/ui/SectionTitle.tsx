@@ -56,7 +56,7 @@ function renderTitleWithHighlight(
         <span
           aria-hidden="true"
           className={cn(
-            'absolute -inset-x-1.5 -inset-y-0.5 -rotate-1 pointer-events-none -z-0 transition-transform duration-300 group-hover:scale-105',
+            'absolute -inset-x-1.5 -inset-y-0.5 -rotate-1 pointer-events-none -z-0 transition-transform duration-300 ',
             blobColor
           )}
         />
@@ -97,7 +97,7 @@ export default function SectionTitle({
           >
             <span
               className={cn(
-                'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] sm:text-sm shadow-2xs transition-transform duration-200 group-hover:-translate-y-0.5',
+                'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] sm:text-sm shadow-2xs transition-transform duration-200 ',
                 isCombo
                   ? 'bg-amber-50 text-amber-900 border border-amber-200/90'
                   : 'bg-emerald-50 text-emerald-900 border border-emerald-200/80'
@@ -137,7 +137,7 @@ export default function SectionTitle({
               ease: [0.22, 1, 0.36, 1],
             }}
             style={{ transformOrigin: 'left' }}
-            className="w-28 sm:w-36 md:w-44 mt-1 sm:mt-1.5 transition-transform duration-300 group-hover:translate-x-1"
+            className="w-28 sm:w-36 md:w-44 mt-1 sm:mt-1.5 transition-transform duration-300 "
             aria-hidden="true"
           >
             {isCombo ? (

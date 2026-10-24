@@ -229,7 +229,7 @@ export default function FrequentlyBoughtTogether({
                         alt={item.cleanName}
                         fill
                         sizes="180px"
-                        className="object-contain p-1 group-hover:scale-105 transition-transform duration-300"
+                        className="object-contain p-1 transition-transform duration-300"
                       />
                     </Link>
 

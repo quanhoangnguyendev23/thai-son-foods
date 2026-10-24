@@ -4,6 +4,7 @@ import { getAdminSession } from '@/lib/auth';
 import { hasPermission, getStoreScope } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { createOrUpdateInventoryLot } from '@/lib/partner/fefo';
+import { isSheetInventoryMode } from '@/config/inventorySheet';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,6 +99,14 @@ export async function POST(request: Request) {
     const canUpdateAll = hasPermission(session, 'inventory.view_all') && hasPermission(session, 'inventory.update_own_store');
     if (!hasPermission(session, 'inventory.update_own_store') && !hasPermission(session, 'dealer.manage')) {
       return NextResponse.json({ success: false, error: 'Bạn không có quyền nhập lô hàng mới', code: 'FORBIDDEN' }, { status: 403 });
+    }
+
+    // Tồn kho lấy từ Google Sheet: lô hàng do sheet quyết định, không nhập tay trên web
+    if (isSheetInventoryMode()) {
+      return NextResponse.json(
+        { success: false, error: 'Lô hàng đang lấy từ Google Sheet (theo ngày sản xuất/hạn dùng ở hai hàng đầu). Hãy cập nhật trong sheet.', code: 'SHEET_SOURCE' },
+        { status: 409 }
+      );
     }
 
     const body = await request.json();

@@ -351,7 +351,7 @@ export default function Header() {
                                 src={item.thumbnail}
                                 alt={language === 'en' && item.nameEn ? item.nameEn : item.name}
                                 fill
-                                className="object-contain group-hover:scale-105 transition-transform"
+                                className="object-contain transition-transform"
                                 sizes="48px"
                               />
                             </div>
@@ -420,7 +420,7 @@ export default function Header() {
                   aria-label={t('changeLanguage')}
                   title={t('changeLanguage')}
                 >
-                  <Globe className="w-3.5 h-3.5 text-emerald-700 group-hover:rotate-12 transition-transform" />
+                  <Globe className="w-3.5 h-3.5 text-emerald-700 transition-transform" />
                   <span className="text-[12px] sm:text-sm tracking-wider">
                     {language === 'vi' ? 'VI' : 'EN'}
                   </span>
@@ -488,7 +488,7 @@ export default function Header() {
                     aria-label={language === 'en' ? 'Sign In / Register' : 'Đăng nhập / Đăng ký'}
                     title={language === 'en' ? 'Sign In / Register' : 'Đăng nhập / Đăng ký'}
                   >
-                    <User className="w-3.5 h-3.5 text-emerald-700 group-hover:scale-110 transition-transform" />
+                    <User className="w-3.5 h-3.5 text-emerald-700 transition-transform" />
                     <span className="hidden md:inline text-[1.125em]">
                       {language === 'en' ? 'Sign In' : 'Đăng nhập'}
                     </span>
@@ -594,7 +594,7 @@ export default function Header() {
                 title={language === 'en' ? 'Shopping Cart' : 'Giỏ hàng'}
               >
                 <div className="relative flex items-center justify-center">
-                  <ShoppingBag className="w-3.5 h-3.5 text-emerald-700 group-hover:scale-110 transition-transform" />
+                  <ShoppingBag className="w-3.5 h-3.5 text-emerald-700 transition-transform" />
                   {/* Badge số lượng trên Mobile (< sm) */}
                   {isMounted && totalQuantity > 0 && (
                     <span

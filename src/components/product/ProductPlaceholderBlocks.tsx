@@ -1,7 +1,7 @@
 'use client';
 
-import { useId, useMemo, useState } from 'react';
-import { MapPin, Heart, RotateCcw, Search, MessageCircleQuestion, ImageIcon, ChevronDown } from 'lucide-react';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { MapPin, Heart, RotateCcw, Search, MessageCircleQuestion, ImageIcon, ChevronDown, CalendarDays, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   PLACEHOLDER_LABEL,
@@ -11,6 +11,7 @@ import {
   RETURN_POLICY_PLACEHOLDER,
   PRODUCT_QA_PLACEHOLDERS,
   REVIEW_IMAGE_PLACEHOLDER_COUNT,
+  PREORDER_PLACEHOLDER,
   SHOW_PLACEHOLDER_BLOCKS,
 } from '@/data/product-detail-placeholders';
 
@@ -295,6 +296,126 @@ function ReviewImagesPlaceholderImpl() {
   );
 }
 
+/** "Chọn cách nhận hàng": Giao hôm nay / Đặt trước (chọn ngày giao) — chỉ đổi trạng thái giao diện */
+const WEEKDAY_VI = ['CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+
+function PreorderSchedulePlaceholderImpl() {
+  const groupId = useId();
+  const [mode, setMode] = useState<'now' | 'preorder'>('now');
+  const [selectedOffset, setSelectedOffset] = useState<number | null>(null);
+  // Ngày chỉ tính ở trình duyệt sau khi tải xong để tránh lệch giữa server và client
+  const [baseDate, setBaseDate] = useState<Date | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBaseDate(new Date());
+  }, []);
+
+  const days = useMemo(
+    () =>
+      PREORDER_PLACEHOLDER.days.map((d) => {
+        let weekday = '';
+        let dateLabel = '';
+        if (baseDate) {
+          const dt = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + d.offset);
+          weekday = d.offset === 1 ? 'Ngày mai' : WEEKDAY_VI[dt.getDay()];
+          dateLabel = `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        }
+        const full = d.remaining <= 0;
+        const low = !full && d.remaining <= PREORDER_PLACEHOLDER.lowThreshold;
+        return { ...d, weekday, dateLabel, full, low };
+      }),
+    [baseDate]
+  );
+  const selected = days.find((d) => d.offset === selectedOffset) || null;
+
+  const modeBtn = (value: 'now' | 'preorder', label: string, hint: string) => {
+    const active = mode === value;
+    return (
+      <button
+        type="button"
+        role="radio"
+        aria-checked={active}
+        onClick={() => setMode(value)}
+        className={cn(
+          'min-w-0 rounded-lg border px-2.5 py-2 text-left transition-colors cursor-pointer',
+          active ? 'border-2 border-green-primary bg-white' : 'border-gray-300 bg-white hover:border-gray-500'
+        )}
+      >
+        <span className="block text-[13px] text-ink-950">{label}</span>
+        <span className="block text-[11px] leading-tight text-gray-600 mt-0.5">{hint}</span>
+      </button>
+    );
+  };
+
+  return (
+    <div className="rounded-lg border border-dashed border-copper-400 bg-ivory p-3 space-y-2.5 text-[13px]">
+      <div className="flex items-center gap-2 flex-wrap">
+        <CalendarDays className="w-4 h-4 text-gray-600 shrink-0" aria-hidden />
+        <strong className="text-[1.125em] text-ink-950">{PREORDER_PLACEHOLDER.title}</strong>
+        <PlaceholderBadge />
+      </div>
+
+      <div role="radiogroup" aria-label={PREORDER_PLACEHOLDER.title} className="grid grid-cols-2 gap-2">
+        {modeBtn('now', PREORDER_PLACEHOLDER.nowLabel, PREORDER_PLACEHOLDER.nowHint)}
+        {modeBtn('preorder', PREORDER_PLACEHOLDER.preorderLabel, PREORDER_PLACEHOLDER.preorderHint)}
+      </div>
+
+      {mode === 'preorder' && (
+        <div className="space-y-2">
+          <div role="radiogroup" aria-label="Chọn ngày giao" className="grid grid-cols-3 gap-2">
+            {days.map((d) => {
+              const active = selectedOffset === d.offset;
+              return (
+                <button
+                  key={`${groupId}-${d.offset}`}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  aria-disabled={d.full}
+                  disabled={d.full}
+                  onClick={() => setSelectedOffset(d.offset)}
+                  className={cn(
+                    'min-w-0 rounded-lg border px-1.5 py-2 text-center transition-colors',
+                    d.full
+                      ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : active
+                        ? 'border-2 border-green-primary bg-white cursor-pointer'
+                        : 'border-gray-300 bg-white hover:border-gray-500 cursor-pointer'
+                  )}
+                >
+                  <span className="block text-[12px] leading-tight">{d.weekday || '\u00A0'}</span>
+                  <span className="block text-[13px] leading-tight text-ink-950">{d.dateLabel || '\u00A0'}</span>
+                  <span
+                    className={cn(
+                      'block text-[11px] leading-tight mt-1',
+                      d.full ? 'text-gray-400' : d.low ? 'text-amber-700' : 'text-green-primary'
+                    )}
+                  >
+                    {d.full ? 'Đã đủ suất' : d.low ? `Còn ít (${d.remaining})` : `Còn ${d.remaining} suất`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="flex items-start gap-1.5 text-xs text-gray-700" aria-live="polite">
+            <Clock className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-px" aria-hidden />
+            <span>
+              {selected
+                ? `Giao ngày ${selected.weekday.toLowerCase()} ${selected.dateLabel}. `
+                : 'Chọn một ngày giao ở trên. '}
+              {PREORDER_PLACEHOLDER.cutOffText}
+            </span>
+          </p>
+          <p className="text-[11px] text-gray-500">{PREORDER_PLACEHOLDER.quotaNote}</p>
+        </div>
+      )}
+
+      <p className="text-[11px] text-gray-500">{PREORDER_PLACEHOLDER.footnote}</p>
+    </div>
+  );
+}
+
 // Khối mẫu chỉ hiển thị khi bật NEXT_PUBLIC_SHOW_PLACEHOLDERS=true (mặc định ẩn khi go-live)
 export function PlaceholderBadge(props: { className?: string }) {
   return SHOW_PLACEHOLDER_BLOCKS ? <PlaceholderBadgeImpl {...(props as object)} /> : null;
@@ -319,4 +440,7 @@ export function ProductQAPlaceholder(props: { className?: string }) {
 }
 export function ReviewImagesPlaceholder(props: { className?: string }) {
   return SHOW_PLACEHOLDER_BLOCKS ? <ReviewImagesPlaceholderImpl {...(props as object)} /> : null;
+}
+export function PreorderSchedulePlaceholder(props: { className?: string }) {
+  return SHOW_PLACEHOLDER_BLOCKS ? <PreorderSchedulePlaceholderImpl {...(props as object)} /> : null;
 }

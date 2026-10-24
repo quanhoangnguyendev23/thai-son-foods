@@ -25,7 +25,7 @@ export default function BranchTopBar() {
             <span className="text-emerald-400 group-hover:text-emerald-300 text-[12px] underline shrink-0 ml-1">
               Đổi
             </span>
-            <ChevronDown className="w-3 h-3 text-emerald-400 shrink-0 group-hover:translate-y-0.5 transition-transform" />
+            <ChevronDown className="w-3 h-3 text-emerald-400 shrink-0 transition-transform" />
           </button>
         </div>
 

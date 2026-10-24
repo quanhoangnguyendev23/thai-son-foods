@@ -11,6 +11,13 @@ export interface InsufficientItem {
   available: number;
 }
 
+/** Dòng giỏ hàng vượt số lượng bán được tại chi nhánh đang chọn (maxQuantity theo đơn vị gói/lốc của dòng đó) */
+export interface ShortItem {
+  productId: string;
+  requested: number;
+  maxQuantity: number;
+}
+
 export interface AlternativeStore {
   code: string;
   name: string;
@@ -28,11 +35,13 @@ export function useCartInventory() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [insufficientItems, setInsufficientItems] = useState<InsufficientItem[]>([]);
   const [alternativeStores, setAlternativeStores] = useState<AlternativeStore[]>([]);
+  const [shortItems, setShortItems] = useState<ShortItem[]>([]);
 
   useEffect(() => {
     if (items.length === 0) {
       setIsAvailable(true);
       setInsufficientItems([]);
+      setShortItems([]);
       setAlternativeStores([]);
       return;
     }
@@ -59,6 +68,7 @@ export function useCartInventory() {
         if (data.success) {
           setIsAvailable(data.isAvailable);
           setInsufficientItems(data.insufficientItems || []);
+          setShortItems(Array.isArray(data.shortItems) ? data.shortItems : []);
           setAlternativeStores(data.alternativeStores || []);
         }
       })
@@ -78,6 +88,7 @@ export function useCartInventory() {
     isChecking,
     isAvailable,
     insufficientItems,
+    shortItems,
     alternativeStores,
     selectedBranch,
     setSelectedBranch,

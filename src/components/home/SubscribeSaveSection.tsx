@@ -595,7 +595,7 @@ export default function SubscribeSaveSection({
               alt={language === 'en' ? item.nameEn : item.nameVi}
               fill
               sizes="(max-width: 1024px) 150px, 120px"
-              className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
+              className="object-contain w-full h-full transition-transform duration-300"
             />
           </div>
 

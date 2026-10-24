@@ -89,14 +89,14 @@ export default function ProductSponsoredMiniCard({
         {/* Ảnh sản phẩm bên trái (Tỉ lệ chuẩn Amazon) */}
         <Link
           href={productLink}
-          className="relative w-20 h-20 sm:w-24 sm:h-24 bg-ink-50 rounded-md border border-gray-100 shrink-0 overflow-hidden group p-1 flex items-center justify-center"
+          className="relative w-24 sm:w-28 aspect-[4/3] bg-ink-50 rounded-md border border-gray-100 shrink-0 overflow-hidden group"
         >
           <Image
             src={thumbnail}
             alt={recommendedProduct.name}
             fill
             sizes="110px"
-            className="object-contain p-1 group-hover:scale-105 transition-transform duration-300"
+            className="object-cover transition-transform duration-300"
           />
         </Link>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type MouseEvent as ReactMouseEvent } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,9 +35,15 @@ export default function ProductGallery({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showQrCode, setShowQrCode] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  // Kính lúp: rê chuột lên ảnh chính (chỉ thiết bị có chuột) để phóng to vùng đang trỏ
+  const [canHoverZoom, setCanHoverZoom] = useState(false);
+  const [lens, setLens] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      setCanHoverZoom(window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+    }
     if (typeof window !== 'undefined') {
       setShareUrl(window.location.href);
     }
@@ -55,14 +61,15 @@ export default function ProductGallery({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isZoomOpen, images.length]);
 
-  // Ràng buộc: tối đa 5 hình ảnh mô tả (Đảm bảo vị trí thumbnail thứ 3 luôn là Bảng Icon tiêu chuẩn chất lượng)
+  // Ràng buộc: tối đa 6 hình ảnh mô tả (Đảm bảo vị trí thumbnail thứ 3 luôn là Bảng Icon tiêu chuẩn chất lượng)
   const displayImages = (() => {
     const list: ProductImage[] = images.length > 0 ? [...images] : [
       { id: 'default', url: '/images/products/1200x900-sb1.jpg', alt: productName, sortOrder: 1 }
     ];
 
+    // Bộ ảnh mới (public/images/products/gallery, 6 ảnh theo thứ tự 1→6) đã đủ nội dung: không chèn thêm Bảng Icon
     const hasCertIcon = list.some(
-      (img) => img.url.includes('bang-icon') || img.url.includes('sua-bap-nep-3')
+      (img) => img.url.includes('bang-icon') || img.url.includes('sua-bap-nep-3') || img.url.includes('/products/gallery/')
     );
 
     if (!hasCertIcon) {
@@ -79,10 +86,19 @@ export default function ProductGallery({
       }
     }
 
-    return list.slice(0, 5);
+    return list.slice(0, 6);
   })();
 
   const activeImage = displayImages[activeIndex] || displayImages[0];
+
+  const LENS_ZOOM = 2.5;
+  const handleLensMove = (e: ReactMouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const x = Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100));
+    const y = Math.min(100, Math.max(0, ((e.clientY - r.top) / r.height) * 100));
+    setLens({ x, y });
+  };
 
   const copyToClipboard = async () => {
     const url = shareUrl || (typeof window !== 'undefined' ? window.location.href : '');
@@ -202,11 +218,12 @@ export default function ProductGallery({
               <button
                 key={image.id || index}
                 onClick={() => setActiveIndex(index)}
+                onMouseEnter={() => canHoverZoom && setActiveIndex(index)}
                 className={cn(
-                  'relative w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all shrink-0 bg-white p-0.5 flex items-center justify-center cursor-pointer',
+                  'relative w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all duration-200 shrink-0 bg-white cursor-pointer motion-reduce:transition-none',
                   activeIndex === index
                     ? 'border-forest-700 ring-2 ring-forest-700/20 shadow-xs'
-                    : 'border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100'
+                    : 'border-gray-200 opacity-80 hover:border-forest-700/60 hover:opacity-100 '
                 )}
                 aria-label={`Xem ảnh ${index + 1}`}
               >
@@ -229,7 +246,7 @@ export default function ProductGallery({
                       src={image.url}
                       alt={image.alt || productName}
                       fill
-                      className="object-contain p-0.5"
+                      className="object-cover"
                       sizes="64px"
                     />
                   )}
@@ -248,7 +265,7 @@ export default function ProductGallery({
                 e.stopPropagation();
                 handleNativeShare();
               }}
-              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow-sm border border-gray-200/80 flex items-center justify-center transition-all hover:scale-105 cursor-pointer backdrop-blur-xs"
+              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-700 shadow-sm border border-gray-200/80 flex items-center justify-center transition-all cursor-pointer backdrop-blur-xs"
               title="Chia sẻ sản phẩm"
               aria-label="Chia sẻ sản phẩm"
             >
@@ -262,7 +279,7 @@ export default function ProductGallery({
                   e.stopPropagation();
                   setActiveIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
                 }}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/70 hover:bg-white text-gray-800 shadow-md border border-gray-100 flex items-center justify-center transition-all opacity-80 group-hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-xs"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/70 hover:bg-white text-gray-800 shadow-md border border-gray-100 flex items-center justify-center transition-all opacity-80 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
                 aria-label="Ảnh trước"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -276,7 +293,7 @@ export default function ProductGallery({
                   e.stopPropagation();
                   setActiveIndex((prev) => (prev + 1) % displayImages.length);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/70 hover:bg-white text-gray-800 shadow-md border border-gray-100 flex items-center justify-center transition-all opacity-80 group-hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-xs"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/70 hover:bg-white text-gray-800 shadow-md border border-gray-100 flex items-center justify-center transition-all opacity-80 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
                 aria-label="Ảnh tiếp theo"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -292,9 +309,13 @@ export default function ProductGallery({
             <div
               data-product-main-image="true"
               onClick={() => !isVideo && setIsZoomOpen(true)}
+              onMouseEnter={canHoverZoom && !isVideo ? handleLensMove : undefined}
+              onMouseMove={canHoverZoom && !isVideo ? handleLensMove : undefined}
+              onMouseLeave={() => setLens(null)}
               className={cn(
-                "relative w-full h-full",
-                !isVideo && "cursor-zoom-in transition-transform duration-300 group-hover:scale-[1.02]"
+                "relative w-full h-full overflow-hidden",
+                !isVideo && "cursor-zoom-in",
+                !isVideo && !canHoverZoom && "transition-transform duration-300 group-hover:scale-[1.02]"
               )}
             >
               {isVideo ? (
@@ -313,8 +334,16 @@ export default function ProductGallery({
                   src={activeImage.url}
                   alt={activeImage.alt || productName}
                   fill
-                  className="object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 600px"
+                  className={cn(
+                    "object-contain transition-transform duration-200 ease-out",
+                    !canHoverZoom && "duration-300 group-hover:scale-[1.02]"
+                  )}
+                  style={
+                    canHoverZoom && lens
+                      ? { transform: `scale(${LENS_ZOOM})`, transformOrigin: `${lens.x}% ${lens.y}%` }
+                      : undefined
+                  }
+                  sizes="(max-width: 768px) 100vw, 1200px"
                   priority
                 />
               )}
@@ -329,7 +358,7 @@ export default function ProductGallery({
                   key={image.id || index}
                   onClick={() => setActiveIndex(index)}
                   className={cn(
-                    'relative w-14 sm:w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all shrink-0 bg-white p-0.5 flex items-center justify-center cursor-pointer',
+                    'relative w-14 sm:w-16 aspect-[4/3] rounded-lg overflow-hidden border transition-all shrink-0 bg-white cursor-pointer',
                     activeIndex === index
                       ? 'border-forest-700 ring-2 ring-forest-700/20 shadow-xs'
                       : 'border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100'
@@ -355,7 +384,7 @@ export default function ProductGallery({
                         src={image.url}
                         alt={image.alt || productName}
                         fill
-                        className="object-contain p-0.5"
+                        className="object-cover"
                         sizes="64px"
                       />
                     )}
@@ -391,20 +420,19 @@ export default function ProductGallery({
             title="Chia sẻ lên Facebook"
             aria-label="Chia sẻ lên Facebook"
           >
-            <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-            </svg>
+            <Image src="/images/icons/facebook.png" alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain" aria-hidden="true" />
             <span>Facebook</span>
           </button>
 
           {/* Zalo — cùng kiểu viền xám với nút Sao chép */}
           <button
             onClick={handleShareZalo}
-            className="h-6 px-2.5 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center justify-center transition-all cursor-pointer text-[11px] font-medium"
+            className="h-6 px-2 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1 transition-all cursor-pointer text-[11px] font-medium"
             title="Chia sẻ qua Zalo"
             aria-label="Chia sẻ qua Zalo"
           >
-            Zalo
+            <Image src="/images/icons/zalo.png" alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain" aria-hidden="true" />
+            <span>Zalo</span>
           </button>
 
           {/* Nút Sao chép viền xám (Copy link có toast thông báo "Đã sao chép") */}
@@ -486,7 +514,7 @@ export default function ProductGallery({
                   )}
 
                   {/* Khung ảnh thumbnail 4:3 khớp chuẩn ảnh 1200x900 */}
-                  <div className="relative w-full aspect-[4/3] rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform duration-200">
+                  <div className="relative w-full aspect-[4/3] rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center mb-1.5 transition-transform duration-200">
                     <Image
                       src={prod.thumbnail}
                       alt={prod.name}
@@ -671,10 +699,8 @@ export default function ProductGallery({
                     onClick={handleShareFacebook}
                     className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group cursor-pointer"
                   >
-                    <div className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
-                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                      </svg>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-xs transition-transform">
+                      <Image src="/images/icons/facebook.png" alt="" width={40} height={40} className="w-10 h-10 object-contain" aria-hidden="true" />
                     </div>
                     <span className="text-[12px] text-gray-700">Facebook</span>
                   </button>
@@ -684,8 +710,8 @@ export default function ProductGallery({
                     onClick={handleShareZalo}
                     className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group cursor-pointer"
                   >
-                    <div className="w-10 h-10 rounded-full bg-[#0068FF] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform text-sm tracking-tighter">
-                      Zalo
+                    <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-xs transition-transform">
+                      <Image src="/images/icons/zalo.png" alt="" width={24} height={24} className="w-6 h-6 object-contain" aria-hidden="true" />
                     </div>
                     <span className="text-[12px] text-gray-700">Zalo</span>
                   </button>
@@ -695,7 +721,7 @@ export default function ProductGallery({
                     onClick={handleShareMessenger}
                     className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-gray-100 hover:border-leaf-200 hover:bg-leaf-50/50 transition-all group cursor-pointer"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-forest-400 via-emerald-400 to-leaf-500 text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-forest-400 via-emerald-400 to-leaf-500 text-white flex items-center justify-center shadow-xs transition-transform">
                       <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                         <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.455 5.518 3.735 7.208V22l3.39-1.86c.928.257 1.916.396 2.875.396 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.09 12.433l-2.766-2.95-5.398 2.95 5.938-6.302 2.836 2.95 5.328-2.95-5.938 6.302z" />
                       </svg>
@@ -713,7 +739,7 @@ export default function ProductGallery({
                         : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
                     )}
                   >
-                    <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-xs transition-transform">
                       <QrCode className="w-5 h-5" />
                     </div>
                     <span className="text-[12px] text-gray-700">Mã QR</span>

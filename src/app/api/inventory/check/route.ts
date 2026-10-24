@@ -64,6 +64,18 @@ export async function POST(request: Request) {
 
     const lowCount = maxQuantity <= 10 && maxQuantity > 0 ? maxQuantity : null;
 
+    // Báo thiếu theo từng dòng giỏ (đơn vị = gói/lốc của chính dòng đó). Chỉ tính khi toàn giỏ chưa đủ hàng.
+    const shortItems: Array<{ productId: string; requested: number; maxQuantity: number }> = [];
+    if (!isAvailable) {
+      for (const it of items.slice(0, 30)) {
+        const pid = typeof it?.productId === 'string' ? it.productId.trim() : '';
+        if (!pid) continue;
+        const requested = Math.max(1, Number(it.quantity) || 1);
+        const itemMax = await getSellableQuantity(targetStoreCode, it);
+        if (itemMax < requested) shortItems.push({ productId: pid, requested, maxQuantity: itemMax });
+      }
+    }
+
     // Tính khoảng cách chi nhánh hiện tại nếu có tọa độ
     let currentStoreDistanceKm: number | null = null;
     if (customerCoords) {
@@ -204,6 +216,7 @@ export async function POST(request: Request) {
       maxQuantity, // số lượng tối đa có thể đặt
       lowCount, // chỉ trả số khi <= 10
       isAvailable,
+      shortItems, // Dòng giỏ vượt số lượng bán được tại chi nhánh (rỗng nếu đủ hàng)
       availableStock: maxQuantity, // Tương thích ngược cho các component hiện có
       alternativeStores, // Chỉ tên, địa chỉ, trạng thái và khoảng cách khi kho hiện tại thiếu hàng
       suggestedCloserStore, // Gợi ý chi nhánh gần hơn & còn đủ hàng (nếu có)

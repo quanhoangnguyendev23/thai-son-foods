@@ -3,6 +3,7 @@ import { query, pool } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission, getStoreScope } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { isSheetInventoryMode } from '@/config/inventorySheet';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,13 +83,21 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Tồn kho lấy từ Google Sheet: đọc lại sheet nếu đã quá chu kỳ trước khi trả số cho admin
+    const sheetMode = isSheetInventoryMode();
+    if (sheetMode) {
+      const { ensureFreshSheetInventory } = await import('@/lib/inventorySheet');
+      await ensureFreshSheetInventory();
+    }
+
     // Đảm bảo mỗi sản phẩm đều có 1 bản ghi tồn kho riêng cho cửa hàng này (không dùng chung)
+    // (chế độ sheet: bản ghi mới bắt đầu từ 0, số thật do sheet quyết định)
     await query(
       `INSERT INTO store_inventory (id, store_code, product_id, stock_quantity, updated_by)
-       SELECT 'inv_' || $1 || '_' || p.id, $1, p.id, 100, $1
+       SELECT 'inv_' || $1 || '_' || p.id, $1, p.id, $2::int, $1
        FROM products p
        ON CONFLICT (store_code, product_id) DO NOTHING;`,
-      [requestedStore]
+      [requestedStore, sheetMode ? 0 : 100]
     );
 
     const sql = `
@@ -166,6 +175,18 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Bạn không có quyền cập nhật tồn kho.', code: 'FORBIDDEN' },
         { status: 403 }
+      );
+    }
+
+    // Tồn kho lấy từ Google Sheet (chỉ đọc): không cho sửa số lượng trên web, kế toán sửa trực tiếp trong sheet
+    if (isSheetInventoryMode()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Tồn kho đang lấy từ Google Sheet. Hãy cập nhật số lượng trong sheet, web sẽ tự đọc lại (hoặc bấm "Cập nhật ngay").',
+          code: 'SHEET_SOURCE',
+        },
+        { status: 409 }
       );
     }
 

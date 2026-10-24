@@ -133,6 +133,12 @@ export interface Banner {
   mobileImage?: string;
   alt: string;
   link?: string;
+  /** Nội dung chữ (dùng cho Banner Cuộn) */
+  tag?: string;
+  title?: string;
+  subtitle?: string;
+  /** 'db' = banner do admin cấu hình; không có = banner mặc định/mẫu trong mã nguồn */
+  source?: 'db';
 }
 
 // ===== BRAND SHOWCASE TYPES =====

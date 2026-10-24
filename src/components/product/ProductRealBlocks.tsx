@@ -81,7 +81,7 @@ export function DeliveryAddressInfo() {
         {user && addressLine ? (
           <>
             <span className="text-ink-950">{addressLine}</span>{' '}
-            <Link href="/tai-khoan?tab=profile" className="text-forest-700 hover:text-copper-600 hover:underline">
+            <Link href="/tai-khoan?tab=profile" className="text-copper-600 font-medium underline underline-offset-2 hover:text-copper-800">
               {isEn ? 'Change' : 'Đổi'}
             </Link>
           </>

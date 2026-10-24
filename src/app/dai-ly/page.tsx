@@ -62,7 +62,7 @@ export default function DaiLyLandingPage() {
               <div className="flex flex-wrap gap-4 pt-2">
                 <Link
                   href="/dang-ky-doi-tac"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-[1.125em]"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] text-[1.125em]"
                 >
                   Đăng Ký CTV Miễn Phí (30 Giây)
                   <ArrowRight className="w-5 h-5" />
@@ -174,7 +174,7 @@ export default function DaiLyLandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Card CTV */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm transition-shadow relative">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm mb-4">
               <Users className="w-3.5 h-3.5" /> GIAI ĐOẠN 1
             </div>
@@ -397,7 +397,7 @@ export default function DaiLyLandingPage() {
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link
               href="/dang-ky-doi-tac"
-              className="px-8 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg transition-all hover:scale-105 text-[1.125em]"
+              className="px-8 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg transition-all text-[1.125em]"
             >
               Đăng Ký Làm Đối Tác Ngay
             </Link>

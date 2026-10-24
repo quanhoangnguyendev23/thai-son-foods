@@ -152,7 +152,7 @@ export default function StorePromotionSidebar() {
               key={badge.id}
               href={badge.href}
               style={{ animationDelay: badge.animDelay }}
-              className={`${badge.animClass} group relative overflow-hidden rounded-xl bg-gradient-to-br ${badge.bgGradient} p-2 text-white shadow-md border ${badge.borderColor} hover:scale-105 transition-transform`}
+              className={`${badge.animClass} group relative overflow-hidden rounded-xl bg-gradient-to-br ${badge.bgGradient} p-2 text-white shadow-md border ${badge.borderColor} transition-transform`}
             >
               <div className="flex items-center gap-1">
                 <Icon className={`w-3 h-3 ${badge.iconColor} shrink-0`} />

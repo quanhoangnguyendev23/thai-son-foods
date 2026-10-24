@@ -112,7 +112,7 @@ export default function ProductSidebarSponsoredCard({
                 alt="Thái Sơn Foods"
                 fill
                 sizes="130px"
-                className="object-contain object-left group-hover:scale-105 transition-transform duration-300"
+                className="object-contain object-left transition-transform duration-300"
               />
             </div>
           </Link>
@@ -137,7 +137,7 @@ export default function ProductSidebarSponsoredCard({
                   alt="Thái Sơn Foods"
                   fill
                   sizes="120px"
-                  className="object-contain object-left group-hover:scale-105 transition-transform duration-300"
+                  className="object-contain object-left transition-transform duration-300"
                 />
               </div>
 
@@ -148,7 +148,7 @@ export default function ProductSidebarSponsoredCard({
                   alt={cleanName}
                   fill
                   sizes="120px"
-                  className="object-contain p-0.5 group-hover:scale-105 transition-transform duration-300"
+                  className="object-contain p-0.5 transition-transform duration-300"
                 />
               </div>
             </div>

@@ -154,7 +154,7 @@ export default function FloatingCartWidget() {
 
           {/* Icon túi hàng + Badge đỏ nổi bật */}
           <div className="relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0 border border-white/20">
-            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:rotate-12 transition-transform" />
+            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-white transition-transform" />
             {isMounted && totalQuantity > 0 && (
               <motion.span
                 key={`badge-${totalQuantity}`}
@@ -183,7 +183,7 @@ export default function FloatingCartWidget() {
           </div>
 
           {/* Mũi tên trượt */}
-          <div className="relative z-10 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/10 flex items-center justify-center text-emerald-200 group-hover:text-white group-hover:translate-x-0.5 transition-all">
+          <div className="relative z-10 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/10 flex items-center justify-center text-emerald-200 group-hover:text-white transition-all">
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
         </Link>

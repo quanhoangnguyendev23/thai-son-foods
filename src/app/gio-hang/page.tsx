@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
 import { products } from '@/data/products';
 import { combos } from '@/data/combos';
+import { useCartInventory } from '@/hooks/useCartInventory';
 
 const MIN_ORDER_THRESHOLD = 120000;
 const FREE_SHIPPING_THRESHOLD = 200000;
@@ -47,6 +48,16 @@ export default function CartPage() {
     setQuantity,
     clearCart,
   } = useCartStore();
+
+  // Kiểm tra tồn kho ngay tại giỏ hàng để khách biết món nào thiếu trước khi sang bước thanh toán
+  const {
+    isAvailable: stockAvailable,
+    shortItems,
+    alternativeStores,
+    selectedBranch,
+    setSelectedBranch,
+    openBranchModal,
+  } = useCartInventory();
 
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
   const [activeImpulseTab, setActiveImpulseTab] = useState<'products' | 'combos'>('products');
@@ -242,7 +253,7 @@ export default function CartPage() {
                       sizes="180px"
                       className={`${
                         isPoster ? 'object-cover' : 'object-contain p-1.5'
-                      } group-hover:scale-105 transition-transform duration-200`}
+                      } transition-transform duration-200`}
                     />
 
                     {/* Huy hiệu trên ảnh */}
@@ -416,7 +427,7 @@ export default function CartPage() {
                       alt={combo.name}
                       fill
                       sizes="240px"
-                      className="object-cover group-hover:scale-105 transition-transform duration-200"
+                      className="object-cover transition-transform duration-200"
                     />
 
                     {/* Badges góc trên */}
@@ -634,6 +645,47 @@ export default function CartPage() {
               </div>
             </div>
 
+            {/* Cảnh báo thiếu hàng tại kho đang chọn (kèm cách xử lý) */}
+            {isMounted && !stockAvailable && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 space-y-2.5" role="alert">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[1.125em]">
+                      {language === 'en'
+                        ? `${selectedBranch?.name || 'The selected store'} does not have enough stock for this cart`
+                        : `Kho ${selectedBranch?.name || 'đang chọn'} chưa đủ số lượng cho giỏ hàng này`}
+                    </p>
+                    <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                      {language === 'en'
+                        ? 'Reduce the quantity of the highlighted items below, or switch to a store that has stock.'
+                        : 'Bạn có thể giảm số lượng ở món được đánh dấu bên dưới, hoặc đổi sang kho còn hàng để đặt ngay.'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 pl-6">
+                  {alternativeStores.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBranch(alternativeStores[0] as any)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs hover:bg-emerald-800 transition-colors cursor-pointer"
+                    >
+                      {language === 'en'
+                        ? `Switch to ${alternativeStores[0].name} (in stock)`
+                        : `Đổi sang ${alternativeStores[0].name} (đủ hàng)`}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={openBranchModal}
+                    className="px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-amber-900 text-xs hover:bg-amber-100/60 transition-colors cursor-pointer"
+                  >
+                    {language === 'en' ? 'Choose another store' : 'Chọn kho khác'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* THẺ CHỨA TOÀN BỘ DANH SÁCH MÓN HÀNG */}
             <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
               {/* Tiêu đề bảng trên desktop */}
@@ -672,7 +724,7 @@ export default function CartPage() {
                             src={item.thumbnail}
                             alt={displayName}
                             fill
-                            className="object-contain group-hover:scale-105 transition-transform duration-300"
+                            className="object-contain transition-transform duration-300"
                             sizes="80px"
                           />
                         </Link>
@@ -702,6 +754,38 @@ export default function CartPage() {
                               {formatPrice(item.price * item.quantity)}đ
                             </span>
                           </div>
+
+                          {/* Báo thiếu hàng ngay trên dòng món */}
+                          {isMounted && (() => {
+                            const sh = shortItems.find((s) => s.productId === item.productId);
+                            if (!sh) return null;
+                            return (
+                              <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1.5 text-xs text-amber-900 leading-snug" role="status">
+                                <span>
+                                  {sh.maxQuantity > 0
+                                    ? (language === 'en' ? `Only ${sh.maxQuantity} left at this store.` : `Kho này chỉ còn ${sh.maxQuantity}.`)
+                                    : (language === 'en' ? 'Out of stock at this store.' : 'Kho này tạm hết hàng.')}
+                                </span>{' '}
+                                {sh.maxQuantity > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setQuantity(item.productId, sh.maxQuantity)}
+                                    className="underline text-emerald-800 hover:text-emerald-900 cursor-pointer"
+                                  >
+                                    {language === 'en' ? `Reduce to ${sh.maxQuantity}` : `Giảm còn ${sh.maxQuantity}`}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItem(item.productId, item.variantId)}
+                                    className="underline text-emerald-800 hover:text-emerald-900 cursor-pointer"
+                                  >
+                                    {language === 'en' ? 'Remove' : 'Xóa khỏi giỏ'}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -920,7 +1004,17 @@ export default function CartPage() {
               ) : null}
 
               {/* Nút hành động thanh toán */}
-              {isEligibleToOrder ? (
+              {isEligibleToOrder && isMounted && !stockAvailable ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-3 px-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-sm text-center leading-snug cursor-not-allowed"
+                >
+                  {language === 'en'
+                    ? 'This store is short on stock. Please resolve the notice above'
+                    : 'Kho này chưa đủ hàng. Vui lòng xử lý cảnh báo phía trên'}
+                </button>
+              ) : isEligibleToOrder ? (
                 <Link
                   href="/thanh-toan"
                   className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-800 via-forest-700 to-emerald-900 text-white text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:shadow-xl hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
@@ -1004,8 +1098,11 @@ export default function CartPage() {
               <div className="p-2.5 space-y-1.5 max-h-[440px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200/90 divide-y divide-gray-100/80">
                 {activeImpulseTab === 'products'
                   ? shelfProducts.map((prod) => {
-                      const inCartItem = items.find((i) => i.productId === prod.id || i.productId?.startsWith(`${prod.id}-`));
-                      const inCartQty = inCartItem?.quantity || 0;
+                      // Cộng số lượng của mọi quy cách (lốc) của sản phẩm này đang có trong giỏ
+                      const inCartQty = items.reduce(
+                        (sum, i) => (i.productId === prod.id || i.productId?.startsWith(`${prod.id}-`) ? sum + i.quantity : sum),
+                        0
+                      );
                       const isJustAdded = !!addedIds[prod.id];
                       const isPoster =
                         prod.thumbnail.includes('620x930') ||
@@ -1017,29 +1114,33 @@ export default function CartPage() {
                       return (
                         <div
                           key={prod.id}
-                          className="pt-1.5 first:pt-0 flex items-center gap-2.5 group hover:bg-emerald-50/40 p-1 rounded-xl transition-colors"
+                          className="flex items-center gap-3 group hover:bg-emerald-50/40 p-2 rounded-xl transition-colors"
                         >
                           {/* Ảnh sản phẩm vuông vắn bo góc */}
-                          <div className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                          <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                             <Image
                               src={prod.thumbnail}
                               alt={prod.name}
                               fill
-                              sizes="56px"
-                              className={`${isPoster ? 'object-cover' : 'object-contain p-1'} group-hover:scale-105 transition-transform duration-200`}
+                              sizes="72px"
+                              className={`${isPoster ? 'object-cover' : 'object-contain p-1'} transition-transform duration-200`}
                             />
                             {prod.isBestSeller ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[8.5px] rounded bg-amber-500 text-ink-950 leading-tight">
+                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-amber-500 text-ink-950 leading-tight">
                                 Hot
                               </span>
                             ) : prod.isNew ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[8.5px] rounded bg-emerald-600 text-white leading-tight">
+                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-emerald-600 text-white leading-tight">
                                 Mới
                               </span>
                             ) : null}
 
                             {inCartQty > 0 && (
-                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[8.5px] rounded bg-emerald-800 text-white shadow-2xs">
+                              <span
+                                className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[10px] rounded bg-emerald-800 text-white shadow-2xs"
+                                title={language === 'en' ? `${inCartQty} in your cart` : `Đang có ${inCartQty} trong giỏ`}
+                                aria-label={language === 'en' ? `${inCartQty} in your cart` : `Đang có ${inCartQty} trong giỏ`}
+                              >
                                 x{inCartQty}
                               </span>
                             )}
@@ -1049,12 +1150,12 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0 pr-1">
                             <Link
                               href={`/san-pham/${prod.slug}`}
-                              className="text-sm sm:text-[15px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block"
+                              className="text-[14px] sm:text-[15px] text-gray-900 line-clamp-2 break-words group-hover:text-emerald-700 transition-colors leading-snug"
                               title={prodName}
                             >
                               {prodName}
                             </Link>
-                            <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">
+                            <p className="text-[11px] text-gray-500 truncate mt-0.5">
                               {prod.volume || '330ml'} • {language === 'en' ? 'Natural' : 'Tươi mát'}
                             </p>
                             {(() => {
@@ -1080,11 +1181,11 @@ export default function CartPage() {
                                     <span className="text-sm sm:text-[14.5px] text-emerald-700 font-heading">
                                       {formatPrice(effectiveVariant.price)}đ
                                     </span>
-                                    <span className="text-[10px] text-gray-500">
+                                    <span className="text-[11px] text-gray-500">
                                       /{packLabel}
                                     </span>
                                   </div>
-                                  <span className="text-[8px] text-gray-400">
+                                  <span className="text-[11px] text-gray-500">
                                     ~{formatPrice(prod.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                                   </span>
                                 </div>
@@ -1096,7 +1197,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickAddProduct(prod)}
-                            className={`shrink-0 py-1 px-2 sm:px-2.5 rounded-lg text-[11.5px] sm:text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                            className={`shrink-0 min-w-[84px] py-1.5 px-2 sm:px-2.5 rounded-lg text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               isJustAdded
                                 ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                                 : 'bg-emerald-50 hover:bg-emerald-700 text-emerald-800 hover:text-white border border-emerald-200/80 hover:border-emerald-700'
@@ -1111,7 +1212,7 @@ export default function CartPage() {
                             ) : (
                               <>
                                 <Plus className="w-3 h-3" />
-                                <span>{inCartQty > 0 ? (language === 'en' ? '+1 pack' : '+1 lốc') : (language === 'en' ? '+ Thêm lốc' : '+ Thêm lốc')}</span>
+                                <span>{inCartQty > 0 ? (language === 'en' ? '1 more pack' : '1 lốc nữa') : (language === 'en' ? 'Add pack' : 'Thêm lốc')}</span>
                               </>
                             )}
                           </button>
@@ -1128,22 +1229,26 @@ export default function CartPage() {
                       return (
                         <div
                           key={combo.id}
-                          className="pt-1.5 first:pt-0 flex items-center gap-2.5 group hover:bg-rose-50/30 p-1 rounded-xl transition-colors"
+                          className="flex items-center gap-3 group hover:bg-rose-50/30 p-2 rounded-xl transition-colors"
                         >
                           {/* Ảnh combo bo góc */}
-                          <div className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+                          <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
                             <Image
                               src={combo.image}
                               alt={combo.name}
                               fill
-                              sizes="56px"
-                              className="object-cover group-hover:scale-105 transition-transform duration-200"
+                              sizes="72px"
+                              className="object-cover transition-transform duration-200"
                             />
-                            <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[8.5px] rounded bg-rose-600 text-white leading-tight">
+                            <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-rose-600 text-white leading-tight">
                               -{combo.discount}%
                             </span>
                             {comboInCartQty > 0 && (
-                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[8.5px] rounded bg-emerald-800 text-white shadow-2xs">
+                              <span
+                                className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[10px] rounded bg-emerald-800 text-white shadow-2xs"
+                                title={language === 'en' ? `${comboInCartQty} in your cart` : `Đang có ${comboInCartQty} trong giỏ`}
+                                aria-label={language === 'en' ? `${comboInCartQty} in your cart` : `Đang có ${comboInCartQty} trong giỏ`}
+                              >
                                 x{comboInCartQty}
                               </span>
                             )}
@@ -1153,17 +1258,17 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0 pr-1">
                             <Link
                               href={`/combo/${combo.slug}`}
-                              className="text-sm sm:text-[15px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block"
+                              className="text-[14px] sm:text-[15px] text-gray-900 line-clamp-2 break-words group-hover:text-emerald-700 transition-colors leading-snug"
                               title={comboTitle}
                             >
                               {comboTitle}
                             </Link>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[10px] text-gray-500 font-medium">
+                              <span className="text-[11px] text-gray-500 font-medium">
                                 {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                               </span>
                               {savedMoney > 0 && (
-                                <span className="text-[9.5px] text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-100">
+                                <span className="text-[10.5px] text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-100">
                                   -{formatPrice(savedMoney)}đ
                                 </span>
                               )}
@@ -1172,7 +1277,7 @@ export default function CartPage() {
                               <span className="text-sm sm:text-[14.5px] text-rose-600 font-heading">
                                 {formatPrice(combo.salePrice)}đ
                               </span>
-                              <span className="text-[9.5px] text-gray-400 line-through">
+                              <span className="text-[11px] text-gray-400 line-through">
                                 {formatPrice(combo.originalPrice)}đ
                               </span>
                             </div>
@@ -1182,7 +1287,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickAddCombo(combo)}
-                            className={`shrink-0 py-1 px-2 sm:px-2.5 rounded-lg text-[11.5px] sm:text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                            className={`shrink-0 min-w-[84px] py-1.5 px-2 sm:px-2.5 rounded-lg text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               isJustAdded
                                 ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                                 : 'bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-emerald-900/10'

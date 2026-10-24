@@ -60,6 +60,59 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
     ? `Pack of ${defaultVariant.quantity}`
     : `lốc ${defaultVariant.name}`;
 
+  // Số lượng gói này đang có trong giỏ (hiện trên nút để khách biết đã thêm bao nhiêu, tránh bấm nhầm nhiều lần)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+  const cartQty = useCartStore(
+    (s) => s.items.find((i) => i.productId === `${product.id}-${defaultVariant.id}`)?.quantity ?? 0
+  );
+  const cartQtyBadge =
+    mounted && cartQty > 0 ? (
+      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-sale text-white text-[11px] leading-[18px] text-center shadow-sm pointer-events-none">
+        {cartQty > 99 ? '99+' : cartQty}
+      </span>
+    ) : null;
+
+  // Thông báo ngắn tại nút: số gói vừa thêm gần đây + nút Hoàn tác (thêm nhầm / bấm quá tay)
+  const [recentAdds, setRecentAdds] = useState(0);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    },
+    []
+  );
+  const handleUndoAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = `${product.id}-${defaultVariant.id}`;
+    const cart = useCartStore.getState();
+    const current = cart.items.find((i) => i.productId === id)?.quantity ?? 0;
+    if (current - recentAdds > 0) cart.setQuantity(id, current - recentAdds);
+    else cart.removeItem(id);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setRecentAdds(0);
+  };
+  const undoPill =
+    recentAdds > 0 ? (
+      <span
+        role="status"
+        className="absolute right-0 bottom-full mb-1.5 z-20 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-950 text-white text-[11px] pl-2.5 pr-1 py-1 shadow-lg"
+      >
+        <span>{language === 'en' ? `Added ${recentAdds}` : `Đã thêm ${recentAdds}`}</span>
+        <button
+          type="button"
+          onClick={handleUndoAdd}
+          className="rounded-full bg-white/20 hover:bg-white/30 px-2 py-0.5 cursor-pointer"
+        >
+          {language === 'en' ? 'Undo' : 'Hoàn tác'}
+        </button>
+      </span>
+    ) : null;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -86,7 +139,29 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
       variantId: defaultVariant.id,
       variantName: defaultVariant.name,
     });
+
+    setRecentAdds((n) => n + 1);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(() => setRecentAdds(0), 3500);
   };
+
+  // Ảnh hover: rê chuột vào thẻ sẽ chuyển sang ảnh thứ 2 của sản phẩm (ảnh đời sống) bằng hiệu ứng mờ dần
+  const hoverImgUrl = (() => {
+    const u = product.images && product.images.length > 1 ? product.images[1]?.url : '';
+    return u && u.startsWith('/') && !u.endsWith('.mp4') && u !== safeImgSrc ? u : '';
+  })();
+  const renderHoverImage = (sizes: string) =>
+    hoverImgUrl ? (
+      <Image
+        src={hoverImgUrl}
+        alt=""
+        aria-hidden
+        fill
+        sizes={sizes}
+        loading="lazy"
+        className="pointer-events-none object-cover opacity-0 scale-105 transition-[opacity,transform] duration-500 ease-out group-hover:opacity-100 group-hover:scale-100 motion-reduce:transition-none [@media(hover:none)]:hidden"
+      />
+    ) : null;
 
   // Xác định ảnh là poster full-bleed (620x930, 800x1200) hay ảnh chai/sản phẩm
   const isPoster =
@@ -103,7 +178,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
       <article ref={cardRef} className="group h-full flex flex-col">
         <Link
           href={`/san-pham/${product.slug}`}
-          className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+          className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
         >
           {/* Khung thẻ ảnh */}
           <div
@@ -125,6 +200,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
               loading="lazy"
             />
+            {renderHoverImage("(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw")}
 
             {/* Huy hiệu Bán chạy / Mới */}
             <div
@@ -158,7 +234,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               </h3>
             </div>
 
-            <div className="flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
+            <div className="relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
               <div className="flex flex-col">
                 <div className="text-base sm:text-[15px] text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
                   <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
@@ -171,6 +247,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
                 </span>
               </div>
 
+              {undoPill}
               <button
                 onClick={handleAddToCart}
                 className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center bg-leaf-900 text-white rounded-lg hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
@@ -178,6 +255,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
                 title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
               >
                 <ShoppingBag className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                {cartQtyBadge}
               </button>
             </div>
           </div>
@@ -192,7 +270,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
       <article ref={cardRef} className="group h-full flex flex-col">
         <Link
           href={`/san-pham/${product.slug}`}
-          className="flex flex-row h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+          className="flex flex-row h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
         >
           {/* 1 BÊN LÀ SẢN PHẨM (Khung ảnh) — Đồng bộ chuẩn tỷ lệ 4:3 (1200x900px) giống hệt hàng 3 sản phẩm */}
           <div
@@ -214,6 +292,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               sizes="(max-width: 640px) 50vw, 35vw"
               loading="lazy"
             />
+            {renderHoverImage("(max-width: 640px) 50vw, 35vw")}
 
             {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
             <div
@@ -247,7 +326,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               </h3>
             </div>
 
-            <div className="flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
+            <div className="relative flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
               <div className="flex flex-col">
                 <div className="text-base sm:text-lg md:text-xl text-leaf-900 flex flex-wrap items-baseline gap-x-1">
                   <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
@@ -260,6 +339,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
                 </span>
               </div>
 
+              {undoPill}
               <button
                 onClick={handleAddToCart}
                 className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-leaf-900 text-white rounded-lg sm:rounded-xl hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
@@ -267,6 +347,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
                 title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
               >
                 <ShoppingBag className="w-4 h-4 sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" />
+                {cartQtyBadge}
               </button>
             </div>
           </div>
@@ -280,7 +361,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
     <article className="group h-full flex flex-col">
       <Link
         href={`/san-pham/${product.slug}`}
-        className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+        className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
       >
         {/* Khung thẻ ảnh — Tỷ lệ chuẩn 4:3 khớp hoàn hảo với poster cánh đồng và chai đơn */}
         <div
@@ -302,6 +383,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             sizes="(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 25vw"
             loading="lazy"
           />
+          {renderHoverImage("(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 25vw")}
 
           {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
           <div
@@ -335,7 +417,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             </h3>
           </div>
 
-          <div className="flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
+          <div className="relative flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
             <div className="flex flex-col">
               <div className="text-base sm:text-lg md:text-xl text-leaf-900 flex flex-wrap items-baseline gap-x-1">
                 <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
@@ -348,6 +430,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               </span>
             </div>
 
+            {undoPill}
             <button
               onClick={handleAddToCart}
               className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-leaf-900 text-white rounded-lg sm:rounded-xl hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
@@ -355,6 +438,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
             >
               <ShoppingBag className="w-4 h-4 sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" />
+              {cartQtyBadge}
             </button>
           </div>
         </div>
