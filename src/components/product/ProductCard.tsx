@@ -170,7 +170,8 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
     product.thumbnail.includes('lifestyle') ||
     product.imageFit === 'cover';
 
-  const isBottle = !isPoster || product.thumbnail.endsWith('.png') || product.imageFit === 'contain';
+  // Khai báo imageFit của sản phẩm luôn được ưu tiên (không suy đoán theo đuôi .png, vì sẽ làm ảnh bị thu nhỏ/chừa viền so với các thẻ khác)
+  const isBottle = product.imageFit ? product.imageFit === 'contain' : !isPoster;
 
   // ─── BỐ CỤC COMPACT (Dành cho hàng 7 sản phẩm ở phần gợi ý trang chi tiết) ───
   if (layout === 'compact') {

@@ -1,0 +1,201 @@
+From 4eb24a3793d5c81f7305fcb6c508433a8a40eac6 Mon Sep 17 00:00:00 2001
+From: "Claude (PHA 1)" <dangnguyeni5ss@gmail.com>
+Date: Sun, 25 Oct 2026 13:55:41 +0700
+Subject: [PATCH 3/6] =?UTF-8?q?fix(V13):=20releaseStock=20ghi=20log=20khi?=
+ =?UTF-8?q?=20ho=C3=A0n=20t=E1=BB=93n=20c=E1=BB=A7a=20=C4=91=C6=A1n=20?=
+ =?UTF-8?q?=C4=91=C3=A3=20tr=E1=BB=AB=20kho?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Nhánh inventory_deducted = true (kể cả fallback đơn cũ không có reservation) trước đây cộng/giữ tồn mà
+không ghi inventory_logs, nên hủy đơn đã xác nhận không truy vết được. Nay ghi changeType 'order_cancelled'
+với tồn trước/sau thật (sheet mode: tồn vật lý không đổi, note nêu rõ). Dùng logInventoryChange an toàn
+(SAVEPOINT) của V12 nên lỗi log không làm hỏng việc hủy đơn.
+Test: tests/phase1_release_stock_log_test.mjs.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Rn2NhFMtfaiHCB3woGT3YV
+---
+ src/lib/inventory.ts                    | 43 ++++++++++++
+ tests/phase1_release_stock_log_test.mjs | 93 +++++++++++++++++++++++++
+ 2 files changed, 136 insertions(+)
+ create mode 100644 tests/phase1_release_stock_log_test.mjs
+
+diff --git a/src/lib/inventory.ts b/src/lib/inventory.ts
+index 7a0837e..0de451a 100644
+--- a/src/lib/inventory.ts
++++ b/src/lib/inventory.ts
+@@ -1366,6 +1366,14 @@ export async function releaseStock(
+ 
+     if (resQuery.rows.length > 0) {
+       for (const r of resQuery.rows) {
++        // Đọc tồn trước khi hoàn để ghi log (V13)
++        const invOldRestore = await client.query(
++          `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2;`,
++          [r.store_code, r.product_id]
++        );
++        const oldStockRestore = Number(invOldRestore.rows[0]?.stock_quantity) || 0;
++        const oldReservedRestore = Number(invOldRestore.rows[0]?.reserved) || 0;
++
+         await client.query(
+           `UPDATE store_inventory
+            SET stock_quantity = CASE WHEN $5::boolean THEN stock_quantity ELSE stock_quantity + $1 END,
+@@ -1375,6 +1383,21 @@ export async function releaseStock(
+           [r.quantity, adminUsername, r.store_code, r.product_id, sheetMode]
+         );
+ 
++        await logInventoryChange(client, {
++          storeCode: r.store_code,
++          productId: r.product_id,
++          oldStock: oldStockRestore,
++          newStock: sheetMode ? oldStockRestore : oldStockRestore + r.quantity,
++          oldReserved: oldReservedRestore,
++          newReserved: oldReservedRestore,
++          changeType: 'order_cancelled',
++          orderId,
++          actor: adminUsername,
++          note: sheetMode
++            ? `${reason} - Hoàn tồn ${r.quantity} chai (sheet mode: không cộng tồn vật lý, kế toán chỉnh trong sheet)`
++            : `${reason} - Hoàn tồn ${r.quantity} chai (đơn đã trừ kho)`,
++        });
++
+         await client.query(
+           `UPDATE stock_reservations
+            SET status = 'released',
+@@ -1403,6 +1426,13 @@ export async function releaseStock(
+       const { expandedBottles } = await expandComboItems(itemsRes.rows, client);
+ 
+       for (const b of sheetMode ? [] : expandedBottles) {
++        const invOldFb = await client.query(
++          `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2;`,
++          [order.store_code, b.productId]
++        );
++        const oldStockFb = Number(invOldFb.rows[0]?.stock_quantity) || 0;
++        const oldReservedFb = Number(invOldFb.rows[0]?.reserved) || 0;
++
+         await client.query(
+           `UPDATE store_inventory
+            SET stock_quantity = stock_quantity + $1,
+@@ -1412,6 +1442,19 @@ export async function releaseStock(
+           [b.bottleQuantity, adminUsername, order.store_code, b.productId]
+         );
+ 
++        await logInventoryChange(client, {
++          storeCode: order.store_code,
++          productId: b.productId,
++          oldStock: oldStockFb,
++          newStock: oldStockFb + b.bottleQuantity,
++          oldReserved: oldReservedFb,
++          newReserved: oldReservedFb,
++          changeType: 'order_cancelled',
++          orderId,
++          actor: adminUsername,
++          note: `${reason} - Hoàn tồn ${b.bottleQuantity} chai (đơn cũ không có giữ chỗ, đã trừ kho)`,
++        });
++
+         await client.query(
+           `UPDATE products
+            SET stock_quantity = (
+diff --git a/tests/phase1_release_stock_log_test.mjs b/tests/phase1_release_stock_log_test.mjs
+new file mode 100644
+index 0000000..196992d
+--- /dev/null
++++ b/tests/phase1_release_stock_log_test.mjs
+@@ -0,0 +1,93 @@
++/**
++ * PHA 1 / mục 3 — V13: releaseStock phải ghi log khi hoàn tồn của đơn ĐÃ trừ kho (nhánh inventory_deducted = true).
++ * Không dùng DB: FakePgClient. Chạy: npx tsx tests/phase1_release_stock_log_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++
++import assert from 'node:assert/strict';
++import { FakePgClient } from './helpers/fake_pg_client.mjs';
++
++const inv = await import('../src/lib/inventory.ts');
++const { pool } = await import('../src/lib/db.ts');
++pool.query = async () => ({ rows: [], rowCount: 0 });
++pool.connect = async () => { throw new Error('pool.connect bị chặn trong test'); };
++
++const results = [];
++async function test(name, fn) {
++  const prevSource = process.env.INVENTORY_SOURCE;
++  try { await fn(); results.push(true); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push(false); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++  finally { if (prevSource === undefined) delete process.env.INVENTORY_SOURCE; else process.env.INVENTORY_SOURCE = prevSource; }
++}
++
++// params của INSERT inventory_logs: [id, store, product, old_stock, new_stock, old_reserved, new_reserved, change_type, order_id, actor, note]
++function buildClient({ withConfirmedReservations = true, ...opts } = {}) {
++  const st = { stock: 100, reserved: 0 };
++  const c = new FakePgClient(opts);
++  c.st = st;
++  c.when(/FROM orders WHERE id = \$1 FOR UPDATE/, () => [{ id: 'ord1', status: 'CONFIRMED', store_code: 'NH', inventory_deducted: true }]);
++  c.when(/FROM stock_reservations WHERE order_id = \$1 AND status = 'confirmed'/, () =>
++    withConfirmedReservations ? [{ id: 'r1', store_code: 'NH', product_id: 'prod-sb-01', quantity: 14 }] : []);
++  c.when(/SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = \$1 AND product_id = \$2/, () => [{ stock_quantity: st.stock, reserved: st.reserved }]);
++  c.when(/UPDATE store_inventory SET stock_quantity = CASE WHEN \$5::boolean/, (p) => { if (!p[4]) st.stock += p[0]; });
++  c.when(/UPDATE store_inventory SET stock_quantity = stock_quantity \+ \$1/, (p) => { st.stock += p[0]; });
++  // fallback đơn cũ (không có reservation)
++  c.when(/FROM order_items WHERE order_id/, () => [{ productId: 'prod-sb-01', name: 'Sữa bắp nếp', quantity: 2, unit: 'Lốc 7 chai' }]);
++  c.when(/FROM combos WHERE id/, () => []);
++  c.when(/FROM products WHERE id = \$1/, () => [{ id: 'prod-sb-01', name: 'Sữa bắp nếp', price: 18000, unit: 'chai' }]);
++  c.when(/FROM product_variants WHERE id = \$1 OR id = \$2/, () => [{ bottle_multiplier: 7, quantity: 7 }]);
++  return c;
++}
++const restoreLogs = (c) => c.logRows.filter((p) => p[7] === 'order_cancelled');
++
++console.log('V13 — releaseStock ghi log khi hoàn tồn đơn đã trừ kho');
++
++await test('manual mode, có reservation confirmed: ghi log hoàn tồn với tồn trước/sau thật', async () => {
++  process.env.INVENTORY_SOURCE = 'manual';
++  const c = buildClient();
++  await c.query('BEGIN;');
++  const res = await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  assert.equal(res.action, 'restored_stock');
++  const logs = restoreLogs(c);
++  assert.equal(logs.length, 1, 'phải có đúng 1 log hoàn tồn');
++  assert.deepEqual([logs[0][1], logs[0][2], logs[0][3], logs[0][4]], ['NH', 'prod-sb-01', 100, 114]);
++  assert.equal(logs[0][9], 'qa_admin');
++  assert.match(logs[0][10], /Hoàn tồn 14 chai/);
++});
++
++await test('sheet mode: vẫn ghi log nhưng tồn vật lý không đổi (kế toán chỉnh trong sheet)', async () => {
++  delete process.env.INVENTORY_SOURCE;                   // mặc định = sheet
++  const c = buildClient();
++  await c.query('BEGIN;');
++  await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  const logs = restoreLogs(c);
++  assert.equal(logs.length, 1);
++  assert.deepEqual([logs[0][3], logs[0][4]], [100, 100]);
++  assert.equal(c.st.stock, 100);
++});
++
++await test('đơn cũ không có reservation (fallback), manual mode: cũng ghi log hoàn tồn', async () => {
++  process.env.INVENTORY_SOURCE = 'manual';
++  const c = buildClient({ withConfirmedReservations: false });
++  await c.query('BEGIN;');
++  await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  const logs = restoreLogs(c);
++  assert.equal(logs.length, 1);
++  assert.deepEqual([logs[0][2], logs[0][3], logs[0][4]], ['prod-sb-01', 100, 114]);
++});
++
++await test('lỗi ghi log hoàn tồn KHÔNG làm hỏng việc hủy đơn (dùng cách ghi log an toàn của V12)', async () => {
++  process.env.INVENTORY_SOURCE = 'manual';
++  const c = buildClient({ failInsertLog: () => true });
++  await c.query('BEGIN;');
++  const res = await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  assert.equal(res.success, true);
++  assert.equal(c.st.stock, 114, 'tồn vẫn được hoàn');
++  assert.ok(c.queries.some((q) => /INSERT INTO inventory_logs/i.test(q.sql)), 'phải có thử ghi log hoàn tồn');
++  const commit = await c.query('COMMIT;');
++  assert.equal(commit.command, 'COMMIT');
++});
++
++const failed = results.filter((x) => !x).length;
++console.log(`\nKẾT QUẢ: ${results.length - failed}/${results.length} đạt${failed ? `, ${failed} LỖI` : ''}`);
++process.exit(failed ? 1 : 0);
+-- 
+2.43.0
+

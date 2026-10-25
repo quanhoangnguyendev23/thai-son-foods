@@ -1,0 +1,94 @@
+From 156453d983b78968085311613d1ad66c3d8e207a Mon Sep 17 00:00:00 2001
+From: "Claude (PHA 1)" <dangnguyeni5ss@gmail.com>
+Date: Sun, 25 Oct 2026 13:54:58 +0700
+Subject: [PATCH 2/6] =?UTF-8?q?chore(N4):=20migration=20idempotent=20t?=
+ =?UTF-8?q?=E1=BA=A1o=20b=E1=BA=A3ng=20inventory=5Flogs=20(CH=C6=AFA=20CH?=
+ =?UTF-8?q?=E1=BA=A0Y)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Bảng inventory_logs chỉ có trong prisma/schema.prisma, không có DDL trong db.ts/scripts nên DB dựng mới
+thiếu bảng và mọi lần ghi log tồn kho lỗi. Thêm scripts/migrations/phase1_inventory_logs.sql
+(CREATE TABLE/INDEX IF NOT EXISTS, không DROP/DELETE/UPDATE). Không tự chạy; kèm câu kiểm tra to_regclass.
+Test tĩnh: tests/phase1_inventory_logs_migration_test.mjs. Đã chạy 2 lần liên tiếp trên Postgres 16 cục bộ
+dùng-một-lần: lần 2 chỉ NOTICE "already exists, skipping".
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Rn2NhFMtfaiHCB3woGT3YV
+---
+ .../phase1_inventory_logs_migration_test.mjs  | 62 +++++++++++++++++++
+ 1 file changed, 62 insertions(+)
+ create mode 100644 tests/phase1_inventory_logs_migration_test.mjs
+
+diff --git a/tests/phase1_inventory_logs_migration_test.mjs b/tests/phase1_inventory_logs_migration_test.mjs
+new file mode 100644
+index 0000000..8f522f1
+--- /dev/null
++++ b/tests/phase1_inventory_logs_migration_test.mjs
+@@ -0,0 +1,62 @@
++/**
++ * PHA 1 / mục 2 — N4: migration idempotent cho bảng inventory_logs.
++ * Kiểm tra TĨNH file SQL (không kết nối DB, không chạy migration):
++ *  - có CREATE TABLE IF NOT EXISTS inventory_logs và đủ cột mà lib/inventory.ts ghi vào
++ *  - mọi CREATE INDEX đều IF NOT EXISTS
++ *  - không có lệnh phá huỷ dữ liệu (DROP/TRUNCATE/DELETE/UPDATE/ALTER ... DROP)
++ * Chạy: npx tsx tests/phase1_inventory_logs_migration_test.mjs
++ */
++import fs from 'node:fs';
++import path from 'node:path';
++import assert from 'node:assert/strict';
++import { fileURLToPath } from 'node:url';
++
++const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
++const sqlPath = path.join(root, 'scripts/migrations/phase1_inventory_logs.sql');
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push(true); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push(false); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const readSql = () => fs.readFileSync(sqlPath, 'utf8');
++// Bỏ chú thích để không bắt nhầm từ khoá trong phần ghi chú
++const stripComments = (s) => s.replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
++
++console.log('N4 — migration inventory_logs');
++
++await test('file migration tồn tại', () => assert.ok(fs.existsSync(sqlPath), 'thiếu scripts/migrations/phase1_inventory_logs.sql'));
++
++await test('CREATE TABLE IF NOT EXISTS inventory_logs với đủ cột logInventoryChange ghi vào', () => {
++  const sql = stripComments(readSql());
++  assert.match(sql, /CREATE TABLE IF NOT EXISTS\s+inventory_logs\s*\(/i);
++  const insertCols = ['id', 'store_code', 'product_id', 'old_stock', 'new_stock', 'old_reserved', 'new_reserved',
++    'change_type', 'order_id', 'actor', 'note', 'created_at'];
++  for (const c of insertCols) assert.match(sql, new RegExp(`\\b${c}\\b`, 'i'), `thiếu cột ${c}`);
++  assert.match(sql, /\bid\b[^,]*PRIMARY KEY/i, 'id phải là PRIMARY KEY');
++});
++
++await test('cột trong migration khớp câu INSERT của lib/inventory.ts', () => {
++  const src = fs.readFileSync(path.join(root, 'src/lib/inventory.ts'), 'utf8');
++  const m = /INSERT INTO inventory_logs \(([\s\S]*?)\)\s*VALUES/.exec(src);
++  assert.ok(m, 'không tìm thấy câu INSERT inventory_logs');
++  const cols = m[1].split(',').map((s) => s.trim()).filter(Boolean);
++  const sql = stripComments(readSql());
++  for (const c of cols) assert.match(sql, new RegExp(`\\b${c}\\b`, 'i'), `migration thiếu cột ${c}`);
++});
++
++await test('mọi CREATE INDEX đều có IF NOT EXISTS', () => {
++  const sql = stripComments(readSql());
++  const idx = sql.match(/CREATE\s+(UNIQUE\s+)?INDEX\b[^;]*/gi) || [];
++  assert.ok(idx.length >= 1, 'nên có index');
++  for (const i of idx) assert.match(i, /IF NOT EXISTS/i, `index thiếu IF NOT EXISTS: ${i.slice(0, 60)}`);
++});
++
++await test('không có lệnh phá huỷ dữ liệu', () => {
++  const sql = stripComments(readSql());
++  assert.doesNotMatch(sql, /\b(DROP|TRUNCATE|DELETE\s+FROM|UPDATE\s+\w+\s+SET)\b/i);
++  assert.doesNotMatch(sql, /ALTER\s+TABLE[^;]*\bDROP\b/i);
++});
++
++const failed = results.filter((x) => !x).length;
++console.log(`\nKẾT QUẢ: ${results.length - failed}/${results.length} đạt${failed ? `, ${failed} LỖI` : ''}`);
++process.exit(failed ? 1 : 0);
+-- 
+2.43.0
+

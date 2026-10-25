@@ -41,6 +41,7 @@ import {
 } from '@/data/vietnam-addresses';
 import type { AutocompleteSuggestion } from '@/app/api/geo/autocomplete/route';
 import LocationConfirmMapModal from '@/components/checkout/LocationConfirmMapModal';
+import { SERVICE_AREA, isHcmProvince } from '@/config/service-area';
 import StoreRecommendationSheet from '@/components/checkout/StoreRecommendationSheet';
 import type { StoreRecommendationItem } from '@/lib/storeRecommender';
 
@@ -259,7 +260,7 @@ export default function CheckoutPage() {
   } | null>(null);
 
   // Chi nhánh phục vụ: MẶC ĐỊNH lấy từ chi nhánh đang chọn toàn site
-  const { selectedBranch, setSelectedBranch } = useBranchStore();
+  const { selectedBranch, setSelectedBranch, branchChosenManually } = useBranchStore();
   const [stores, setStores] = useState<any[]>([]);
   const [selectedStoreCode, setSelectedStoreCode] = useState<string>(
     selectedBranch?.code || 'NH'
@@ -354,11 +355,12 @@ export default function CheckoutPage() {
           });
 
           // Tự động gán chi nhánh tối ưu nếu người dùng chưa can thiệp thủ công
-          if (res.recommended && !wasOverridden) {
+          // Khách đã tự chọn chi nhánh (vd. D1 ở thanh trên) thì giữ nguyên, chỉ hiển thị đề xuất để khách cân nhắc
+          if (res.recommended && !wasOverridden && !branchChosenManually) {
             setSelectedStoreCode(res.recommended.code);
             const matched = stores.find((s) => s.code === res.recommended.code);
             if (matched) {
-              setSelectedBranch(matched);
+              setSelectedBranch(matched, 'auto');
             }
           }
         }
@@ -368,7 +370,7 @@ export default function CheckoutPage() {
         setIsLoadingRecommend(false);
       }
     },
-    [fulfillmentMode, items, wasOverridden, stores, setSelectedBranch]
+    [fulfillmentMode, items, wasOverridden, branchChosenManually, stores, setSelectedBranch]
   );
 
   // Tự động gọi API đề xuất khi có tọa độ GPS khách hàng hoặc khi đổi chế độ giao hàng
@@ -918,9 +920,7 @@ export default function CheckoutPage() {
   const calculatedShippingFee =
     fulfillmentMode === 'pickup'
       ? 0
-      : activeRecommendedItem && typeof activeRecommendedItem.shippingFee === 'number'
-        ? activeRecommendedItem.shippingFee
-        : shippingInfo.fee;
+      : shippingInfo.fee; // Cùng công thức với server (/api/orders) để tổng tiền khách thấy = tổng tiền lưu đơn; không dùng phí của bộ đề xuất chi nhánh vì có thể bỏ qua ngưỡng miễn phí
 
   const shippingFee = calculatedShippingFee;
   const total = subtotal + shippingFee;
@@ -952,6 +952,9 @@ export default function CheckoutPage() {
     }
     if (!form.province.trim()) {
       newErrors.province = language === 'en' ? 'Please enter province/city' : 'Vui lòng nhập tỉnh/thành phố';
+    }
+    else if (!isHcmProvince(form.province)) {
+      newErrors.province = language === 'en' ? SERVICE_AREA.MESSAGE_EN : SERVICE_AREA.MESSAGE_VI;
     }
     if (!form.district.trim()) {
       newErrors.district = language === 'en' ? 'Please enter district' : 'Vui lòng nhập quận/huyện';
@@ -1097,7 +1100,10 @@ export default function CheckoutPage() {
         phone: form.phone,
         email: form.email || user?.email,
         address: `${form.address}, ${form.ward}, ${form.district}, ${form.province}`,
-        total: total,
+        // Ưu tiên tổng do server tính và đã lưu vào đơn, tránh lệch với màn hình admin
+        total: Number.isFinite(Number(data?.total ?? data?.order?.total)) && Number(data?.total ?? data?.order?.total) > 0
+          ? Number(data?.total ?? data?.order?.total)
+          : total,
         paymentMethod:
           language === 'en'
             ? 'Cash on Delivery (COD)'
@@ -1119,95 +1125,88 @@ export default function CheckoutPage() {
   };
 
   if (isSubmitted && completedOrder) {
+    const en = language === 'en';
     return (
-      <div className="section-container py-12 md:py-20">
-        <div className="max-w-xl mx-auto bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-border-light text-center">
-          <div className="w-20 h-20 bg-green-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-green-primary" />
+      <div className="section-container py-6 md:py-10">
+        <div className="max-w-3xl mx-auto bg-white rounded-3xl p-5 md:p-7 shadow-sm border border-border-light">
+          {/* Đầu thẻ: biểu tượng + tiêu đề + mã đơn (gọn, nằm ngang) */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 shrink-0 bg-green-primary/10 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-green-primary" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl text-text-dark font-heading leading-tight">
+                {en ? 'Order Placed Successfully!' : 'Đặt hàng thành công!'}
+              </h1>
+              <p className="text-text-muted text-sm mt-0.5">
+                {en
+                  ? 'Thank you for choosing Thai Son Foods. Your order is being processed.'
+                  : 'Cảm ơn bạn đã chọn Thái Sơn Foods. Đơn hàng đang được tiếp nhận và xử lý.'}
+              </p>
+            </div>
           </div>
-          <span className="inline-block px-3 py-1 text-sm uppercase tracking-wider text-green-primary bg-green-primary/10 rounded-full mb-3">
-            {language === 'en' ? `Order #${orderCode}` : `Đơn hàng #${orderCode}`}
-          </span>
-          <h1 className="text-2xl md:text-3xl text-text-dark font-heading mb-3">
-            {language === 'en' ? 'Order Placed Successfully!' : 'Đặt hàng thành công!'}
-          </h1>
-          <p className="text-text-muted text-sm md:text-base mb-8">
-            {language === 'en' ? (
-              <>
-                Thank you for choosing <span className="text-green-primary text-[1.125em]">Thai Son Foods</span>. Your order is being received and processed quickly.
-              </>
-            ) : (
-              <>
-                Cảm ơn bạn đã tin tưởng chọn <span className="text-green-primary text-[1.125em]">Thái Sơn Foods</span>. Đơn hàng của bạn đang được tiếp nhận và xử lý nhanh chóng.
-              </>
-            )}
-          </p>
 
-          {/* Email Confirmation Notice Banner */}
-          {completedOrder.email && (
-            <div className="mb-6 p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-left text-xs text-emerald-950 flex items-start gap-2.5">
-              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-emerald-900 mb-0.5 text-[1.125em]">
-                  {language === 'en' ? 'Confirmation Email Sent!' : 'Đã gửi email xác nhận đến hộp thư!'}
-                </p>
-                <p className="text-emerald-800 text-[11px] leading-relaxed">
-                  {language === 'en'
-                    ? `Order details & fresh beverage care guide have been sent to ${completedOrder.email}.`
-                    : `Chi tiết từng món & cẩm nang bảo quản đồ uống tươi đã được gửi đến ${completedOrder.email}.`}
-                </p>
-              </div>
+          {/* Thông tin quan trọng nhất: mã đơn - tổng tiền - thanh toán */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="rounded-2xl bg-green-primary/10 px-4 py-3">
+              <p className="text-xs text-text-muted">{en ? 'Order code' : 'Mã đơn hàng'}</p>
+              <p className="text-lg text-green-primary tracking-wide">#{orderCode}</p>
             </div>
-          )}
+            <div className="rounded-2xl bg-green-primary/10 px-4 py-3">
+              <p className="text-xs text-text-muted">{en ? 'Total Payment' : 'Tổng thanh toán'}</p>
+              <p className="text-lg text-green-primary">{formatPrice(completedOrder.total)}đ</p>
+            </div>
+            <div className="rounded-2xl bg-green-primary/10 px-4 py-3">
+              <p className="text-xs text-text-muted">{en ? 'Payment Method' : 'Phương thức'}</p>
+              <p className="text-sm text-green-primary leading-snug">{completedOrder.paymentMethod}</p>
+            </div>
+          </div>
 
-          {/* Order Details Card */}
-          <div className="bg-ivory/60 rounded-2xl p-5 text-left text-sm space-y-3 mb-8 border border-border-light">
-            <div className="flex justify-between pb-2 border-b border-border-light">
-              <span className="text-text-muted">{language === 'en' ? 'Recipient:' : 'Người nhận:'}</span>
-              <span className="text-text-dark text-[1.125em]">{completedOrder.fullName}</span>
-            </div>
-            <div className="flex justify-between pb-2 border-b border-border-light">
-              <span className="text-text-muted">{language === 'en' ? 'Phone:' : 'Số điện thoại:'}</span>
-              <span className="text-text-dark text-[1.125em]">{completedOrder.phone}</span>
+          {/* Chi tiết nhận hàng: 2 cột trên màn hình lớn */}
+          <div className="bg-ivory/60 rounded-2xl p-4 text-sm border border-border-light grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 mb-4">
+            <div>
+              <p className="text-xs text-text-muted">{en ? 'Recipient' : 'Người nhận'}</p>
+              <p className="text-text-dark">{completedOrder.fullName} · {completedOrder.phone}</p>
             </div>
             {completedOrder.email && (
-              <div className="flex justify-between pb-2 border-b border-border-light">
-                <span className="text-text-muted">{language === 'en' ? 'Email:' : 'Email nhận tin:'}</span>
-                <span className="text-emerald-800 text-right text-[1.125em]">{completedOrder.email}</span>
+              <div className="min-w-0">
+                <p className="text-xs text-text-muted">{en ? 'Email' : 'Email nhận tin'}</p>
+                <p className="text-emerald-800 break-all">{completedOrder.email}</p>
               </div>
             )}
-            <div className="flex justify-between pb-2 border-b border-border-light">
-              <span className="text-text-muted">{language === 'en' ? 'Delivery Address:' : 'Địa chỉ giao:'}</span>
-              <span className="text-text-dark text-right max-w-[280px] text-[1.125em]">{completedOrder.address}</span>
+            <div>
+              <p className="text-xs text-text-muted">{en ? 'Delivery Address' : 'Địa chỉ giao'}</p>
+              <p className="text-text-dark">{completedOrder.address}</p>
             </div>
             {completedOrder.storeAddress && (
-              <div className="flex justify-between pb-2 border-b border-border-light">
-                <span className="text-text-muted">{language === 'en' ? 'Fulfillment Branch:' : 'Chi nhánh tiếp nhận:'}</span>
-                <span className="text-emerald-800 text-right max-w-[280px] text-[1.125em]">{completedOrder.storeAddress}</span>
+              <div>
+                <p className="text-xs text-text-muted">{en ? 'Fulfillment Branch' : 'Chi nhánh tiếp nhận'}</p>
+                <p className="text-emerald-800">{completedOrder.storeAddress}</p>
               </div>
             )}
-            <div className="flex justify-between pb-2 border-b border-border-light">
-              <span className="text-text-muted">{language === 'en' ? 'Payment Method:' : 'Phương thức:'}</span>
-              <span className="text-green-primary text-[1.125em]">{completedOrder.paymentMethod}</span>
-            </div>
-            <div className="flex justify-between pt-1 text-base">
-              <span className="text-text-dark text-[1.125em]">{language === 'en' ? 'Total Payment:' : 'Tổng thanh toán:'}</span>
-              <span className="text-green-primary text-xl">{formatPrice(completedOrder.total)}đ</span>
-            </div>
           </div>
+
+          {completedOrder.email && (
+            <p className="flex items-center gap-1.5 text-xs text-emerald-800 mb-4">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              {en
+                ? 'A confirmation email with order details has been sent.'
+                : 'Đã gửi email xác nhận kèm chi tiết đơn hàng đến hộp thư của bạn.'}
+            </p>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-green-primary text-white rounded-xl hover:bg-green-dark transition-colors text-base"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-green-primary text-white rounded-xl hover:bg-green-dark transition-colors text-base"
             >
-              {language === 'en' ? 'Back to Home' : 'Về trang chủ'}
+              {en ? 'Back to Home' : 'Về trang chủ'}
             </Link>
             <Link
               href="/#san-pham"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white border border-border text-text-dark rounded-xl hover:bg-ivory transition-colors text-base"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-white border border-border text-text-dark rounded-xl hover:bg-ivory transition-colors text-base"
             >
-              {language === 'en' ? 'Shop More Drinks' : 'Mua thêm thức uống'}
+              {en ? 'Shop More Drinks' : 'Mua thêm thức uống'}
             </Link>
           </div>
         </div>
@@ -1575,7 +1574,7 @@ export default function CheckoutPage() {
               <div
                 className={cn(
                   'sm:col-span-2 relative',
-                  showSuggestions && suggestions.length > 0 ? 'z-50' : 'z-10'
+                  showSuggestions && suggestions.length > 0 ? 'z-30' : 'z-10'
                 )}
                 ref={suggestionsRef}
               >
@@ -1657,7 +1656,7 @@ export default function CheckoutPage() {
 
                 {/* Dropdown Gợi ý từ Google Maps / OpenStreetMap / Tuyến đường GPS */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-[1050] bg-white rounded-2xl shadow-2xl border border-emerald-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-white rounded-2xl shadow-2xl border border-emerald-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
                     <div className="px-3.5 py-2 bg-emerald-50/80 flex items-center justify-between text-[12px] text-emerald-950 border-b border-emerald-100">
                       <span className="flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-emerald-600" />
@@ -2089,7 +2088,7 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-2xl border border-border-light sticky top-[100px]">
+            <div className="bg-white p-6 rounded-2xl border border-border-light sticky top-[170px] max-h-[calc(100vh-190px)] overflow-y-auto">
               <h2 className="text-xl text-text-dark mb-5">
                 {language === 'en' ? 'Order Summary' : 'Tóm tắt đơn hàng'}
               </h2>

@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { query, initDatabase, pool } from '@/lib/db';
 import { getUserSession } from '@/lib/auth';
+import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area';
 import { sendOrderEmail } from '@/lib/email/service';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 
@@ -46,6 +47,9 @@ export async function POST(request: Request) {
     const rawAddress = stripHtml(uncleanedAddress).slice(0, 255);
     const address = rawAddress || 'Địa chỉ liên hệ qua điện thoại';
     const province = stripHtml((body.province || customerObj.province || 'Đặt hàng nhanh').toString()).slice(0, 100);
+    if (!isHcmProvince(province)) {
+      return NextResponse.json({ success: false, error: SERVICE_AREA.MESSAGE_VI }, { status: 400 });
+    }
     const district = stripHtml((body.district || customerObj.district || '').toString()).slice(0, 100);
     const ward = stripHtml((body.ward || customerObj.ward || '').toString()).slice(0, 100);
     const rawNote = body.note || customerObj.note || (body.shippingAddress ? 'Đơn đặt hàng nhanh COD' : null);
@@ -239,7 +243,7 @@ export async function POST(request: Request) {
         }
       } else {
         const allStoresRes = await client.query(
-          `SELECT code, name, address, latitude, longitude FROM stores WHERE is_active = true ORDER BY code ASC;`
+          `SELECT code, name, address, latitude, longitude FROM stores s WHERE s.is_active = true AND ${hcmStoreSql('s')} ORDER BY code ASC;`
         );
         if (allStoresRes.rows.length > 0) {
           if (customerCoords) {

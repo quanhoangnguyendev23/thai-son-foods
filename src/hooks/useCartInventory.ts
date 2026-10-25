@@ -18,6 +18,11 @@ export interface ShortItem {
   maxQuantity: number;
 }
 
+export interface ItemLimit {
+  productId: string;
+  maxQuantity: number;
+}
+
 export interface AlternativeStore {
   code: string;
   name: string;
@@ -36,13 +41,18 @@ export function useCartInventory() {
   const [insufficientItems, setInsufficientItems] = useState<InsufficientItem[]>([]);
   const [alternativeStores, setAlternativeStores] = useState<AlternativeStore[]>([]);
   const [shortItems, setShortItems] = useState<ShortItem[]>([]);
+  const [itemLimits, setItemLimits] = useState<ItemLimit[]>([]);
+  // true khi không kiểm tra được tồn kho (lỗi mạng/DB) -> KHÔNG được mặc định "còn hàng"
+  const [checkFailed, setCheckFailed] = useState(false);
 
   useEffect(() => {
     if (items.length === 0) {
       setIsAvailable(true);
       setInsufficientItems([]);
       setShortItems([]);
+      setItemLimits([]);
       setAlternativeStores([]);
+      setCheckFailed(false);
       return;
     }
 
@@ -66,14 +76,19 @@ export function useCartInventory() {
       .then((data) => {
         if (!isMounted) return;
         if (data.success) {
+          setCheckFailed(false);
+          setItemLimits(Array.isArray(data.itemLimits) ? data.itemLimits : []);
           setIsAvailable(data.isAvailable);
           setInsufficientItems(data.insufficientItems || []);
           setShortItems(Array.isArray(data.shortItems) ? data.shortItems : []);
           setAlternativeStores(data.alternativeStores || []);
+        } else {
+          setCheckFailed(true);
         }
       })
       .catch((err) => {
         console.error('[useCartInventory] Error checking inventory:', err);
+        if (isMounted) setCheckFailed(true);
       })
       .finally(() => {
         if (isMounted) setIsChecking(false);
@@ -89,6 +104,8 @@ export function useCartInventory() {
     isAvailable,
     insufficientItems,
     shortItems,
+    itemLimits,
+    checkFailed,
     alternativeStores,
     selectedBranch,
     setSelectedBranch,

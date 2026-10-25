@@ -288,6 +288,16 @@ export function extractBottleMultiplier(rawId: string, unit?: string, name?: str
   const cleanName = (name || '').toLowerCase().trim();
   const textDesc = `${cleanUnit} ${cleanName}`;
 
+  // 0. Hậu tố ID biến thể do hệ thống sinh ("...-td-7chai", "...-lh-12chai") là nguồn đáng tin nhất.
+  //    Tên/đơn vị hiển thị có thể bị sửa tay trong admin (vd: dán cả câu mô tả "Lốc 10 chai ...") nên chỉ dùng làm dự phòng.
+  if (!cleanId.match(/^prod-[a-z0-9]+-\d+$/i) && !cleanId.match(/^prod-\d+$/i)) {
+    const idSuffix = cleanId.match(/[-_](\d+)chai$/i);
+    if (idSuffix) {
+      const num = parseInt(idSuffix[1], 10);
+      if (!isNaN(num) && num > 0 && num <= 1000) return num;
+    }
+  }
+
   // 1. Bắt mẫu số lượng từ text mô tả (unit và name): "7 chai", "12 chai", "Lốc 7", "Thùng 24", "Pack of 6", "6 lon"
   const matchChai = textDesc.match(/(\d+)\s*(chai|bottle)/i);
   if (matchChai) {
@@ -588,8 +598,10 @@ export async function expandComboItems(
         // Thử lấy bottle_multiplier từ bảng product_variants nếu có
         let dbMultiplier: number | null = null;
         try {
-          const pvSql = `SELECT bottle_multiplier, quantity FROM product_variants WHERE id = $1 LIMIT 1;`;
-          const pvRes = client ? await client.query(pvSql, [rawId]) : await query(pvSql, [rawId]);
+          // product_variants.id có dạng "var_<productId>_<variantId>"; rawId của giỏ hàng là "<productId>-<variantId>"
+          const variantKey = rawId.startsWith(`${prod.id}-`) ? `var_${prod.id}_${rawId.slice(prod.id.length + 1)}` : rawId;
+          const pvSql = `SELECT bottle_multiplier, quantity FROM product_variants WHERE id = $1 OR id = $2 LIMIT 1;`;
+          const pvRes = client ? await client.query(pvSql, [rawId, variantKey]) : await query(pvSql, [rawId, variantKey]);
           if (pvRes.rows.length > 0 && pvRes.rows[0].bottle_multiplier > 0) {
             dbMultiplier = Number(pvRes.rows[0].bottle_multiplier);
           }

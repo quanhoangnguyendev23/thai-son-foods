@@ -1,0 +1,1190 @@
+diff --git a/src/app/api/admin/inventory/combo-details/route.ts b/src/app/api/admin/inventory/combo-details/route.ts
+index 3d0685d..0289b6e 100644
+--- a/src/app/api/admin/inventory/combo-details/route.ts
++++ b/src/app/api/admin/inventory/combo-details/route.ts
+@@ -1,6 +1,6 @@
+ import { NextRequest, NextResponse } from 'next/server';
+ import { getAdminSession } from '@/lib/auth';
+-import { hasPermission } from '@/lib/rbac';
++import { hasPermission, getStoreScope } from '@/lib/rbac';
+ import { getComboStockDetails } from '@/lib/inventory';
+ 
+ export const dynamic = 'force-dynamic';
+@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
+     }
+ 
+     const { searchParams } = new URL(req.url);
+-    const storeCode = searchParams.get('storeCode') || 'NH';
++    // N1: STORE_STAFF chỉ được xem chi nhánh của mình (fail-closed nếu thiếu chi nhánh)
++    const storeCode = getStoreScope(session) || searchParams.get('storeCode') || 'NH';
+     const comboId = searchParams.get('comboId') || searchParams.get('slug') || '';
+ 
+     if (!comboId) {
+diff --git a/src/app/api/admin/inventory/route.ts b/src/app/api/admin/inventory/route.ts
+index 05bcde6..14ba357 100644
+--- a/src/app/api/admin/inventory/route.ts
++++ b/src/app/api/admin/inventory/route.ts
+@@ -90,15 +90,8 @@ export async function GET(req: NextRequest) {
+       await ensureFreshSheetInventory();
+     }
+ 
+-    // Đảm bảo mỗi sản phẩm đều có 1 bản ghi tồn kho riêng cho cửa hàng này (không dùng chung)
+-    // (chế độ sheet: bản ghi mới bắt đầu từ 0, số thật do sheet quyết định)
+-    await query(
+-      `INSERT INTO store_inventory (id, store_code, product_id, stock_quantity, updated_by)
+-       SELECT 'inv_' || $1 || '_' || p.id, $1, p.id, $2::int, $1
+-       FROM products p
+-       ON CONFLICT (store_code, product_id) DO NOTHING;`,
+-      [requestedStore, sheetMode ? 0 : 100]
+-    );
++    // V8: GET chỉ đọc — không còn tự INSERT bản ghi tồn kho. Sản phẩm chưa có dòng tồn hiển thị 0
++    // (COALESCE bên dưới); dòng được tạo khi sheet đồng bộ hoặc khi admin PUT cập nhật tồn.
+ 
+     const sql = `
+       SELECT 
+diff --git a/src/app/api/admin/orders/transfer/route.ts b/src/app/api/admin/orders/transfer/route.ts
+index 135d0b9..fa7fef8 100644
+--- a/src/app/api/admin/orders/transfer/route.ts
++++ b/src/app/api/admin/orders/transfer/route.ts
+@@ -9,6 +9,9 @@ import {
+   releaseStock,
+   logInventoryChange,
+   getAvailability,
++  getInventorySnapshot,
++  assertTransactionCommitted,
++  TransactionNotCommittedError,
+   InsufficientStockError,
+ } from '@/lib/inventory';
+ import { INVENTORY_CONFIG } from '@/config/inventory';
+@@ -121,6 +124,11 @@ export async function executeOrderTransfer(
+       };
+     }
+ 
++    // Chụp tồn/giữ chỗ TRƯỚC khi chuyển để ghi log đúng số liệu (V16)
++    const transferProductIds = Array.from(new Set(expandedBottles.map((b) => b.productId)));
++    const snapOldBefore = await getInventorySnapshot(client, currentStoreCode, transferProductIds);
++    const snapNewBefore = await getInventorySnapshot(client, targetStoreCode, transferProductIds);
++
+     // 5. Nhả reservation tại chi nhánh cũ (không hủy đơn, updateOrderStatus = false)
+     await releaseStock(
+       orderId,
+@@ -154,34 +162,50 @@ export async function executeOrderTransfer(
+       [targetStoreCode, newStoreAddress, transferNote, orderId]
+     );
+ 
+-    // 9. Ghi log chuyển chi nhánh cho từng mặt hàng (kho cũ và kho mới)
++    // 9. Ghi log chuyển chi nhánh cho từng mặt hàng (kho cũ và kho mới) với tồn/giữ chỗ trước-sau THẬT (V16)
++    const snapOldAfter = await getInventorySnapshot(client, currentStoreCode, transferProductIds);
++    const snapNewAfter = await getInventorySnapshot(client, targetStoreCode, transferProductIds);
++    const bottlesByProduct = new Map<string, number>();
+     for (const b of expandedBottles) {
++      bottlesByProduct.set(b.productId, (bottlesByProduct.get(b.productId) || 0) + b.bottleQuantity);
++    }
++    for (const [productId, bottleQuantity] of bottlesByProduct) {
++      const oldBefore = snapOldBefore.get(productId) || { stock: 0, reserved: 0 };
++      const oldAfter = snapOldAfter.get(productId) || oldBefore;
++      const newBefore = snapNewBefore.get(productId) || { stock: 0, reserved: 0 };
++      const newAfter = snapNewAfter.get(productId) || newBefore;
++
+       // Log kho chuyển đi
+       await logInventoryChange(client, {
+         storeCode: currentStoreCode,
+-        productId: b.productId,
+-        oldStock: 0,
+-        newStock: 0,
++        productId,
++        oldStock: oldBefore.stock,
++        newStock: oldAfter.stock,
++        oldReserved: oldBefore.reserved,
++        newReserved: oldAfter.reserved,
+         changeType: 'order_transferred_out',
+         orderId,
+         actor: actor.username,
+-        note: `Chuyển đơn ${order.order_code} sang kho ${targetStoreCode} (${b.bottleQuantity} chai)`,
++        note: `Chuyển đơn ${order.order_code} sang kho ${targetStoreCode} (${bottleQuantity} chai)`,
+       });
+ 
+       // Log kho tiếp nhận
+       await logInventoryChange(client, {
+         storeCode: targetStoreCode,
+-        productId: b.productId,
+-        oldStock: 0,
+-        newStock: 0,
++        productId,
++        oldStock: newBefore.stock,
++        newStock: newAfter.stock,
++        oldReserved: newBefore.reserved,
++        newReserved: newAfter.reserved,
+         changeType: 'order_transferred_in',
+         orderId,
+         actor: actor.username,
+-        note: `Tiếp nhận chuyển đơn ${order.order_code} từ kho ${currentStoreCode} sang ${targetStoreCode} (${b.bottleQuantity} chai)`,
++        note: `Tiếp nhận chuyển đơn ${order.order_code} từ kho ${currentStoreCode} sang ${targetStoreCode} (${bottleQuantity} chai)`,
+       });
+     }
+ 
+-    await client.query('COMMIT;');
++    // COMMIT thực chất là ROLLBACK (transaction đã aborted) thì KHÔNG được báo thành công (V12)
++    assertTransactionCommitted(await client.query('COMMIT;'), 'Chuyển chi nhánh');
+ 
+     if (actor.id) {
+       await writeAuditLog({
+@@ -216,6 +240,14 @@ export async function executeOrderTransfer(
+     } catch {
+       // ignore rollback err
+     }
++    if (txErr instanceof TransactionNotCommittedError) {
++      console.error('[OrderTransfer] COMMIT không được lưu:', txErr.message);
++      return {
++        success: false,
++        statusCode: 500,
++        error: 'Không thể hoàn tất chuyển chi nhánh: giao dịch bị hủy, dữ liệu không thay đổi. Vui lòng thử lại.',
++      };
++    }
+     if (txErr instanceof InsufficientStockError) {
+       const missingBottlesList = (txErr.insufficientItems || [])
+         .map((b) => `${b.productName} (cần ${b.requested}, khả dụng ${b.available})`)
+diff --git a/src/app/api/dealer/orders/route.ts b/src/app/api/dealer/orders/route.ts
+index ea7c86e..ea1814e 100644
+--- a/src/app/api/dealer/orders/route.ts
++++ b/src/app/api/dealer/orders/route.ts
+@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
+ import { query, pool } from '@/lib/db';
+ import { getPartnerSession } from '@/lib/partner/auth';
+ import { reserveStock, InsufficientStockError } from '@/lib/inventory';
+-import { INVENTORY_CONFIG } from '@/config/inventory';
++import { INVENTORY_CONFIG, calculateShippingFee, parseOrderQuantity } from '@/config/inventory';
++import { hcmStoreSql } from '@/config/service-area';
+ 
+ export const dynamic = 'force-dynamic';
+ 
+@@ -55,9 +56,29 @@ export async function POST(request: Request) {
+     const resolvedItems: any[] = [];
+     const stockItemsToReserve: any[] = [];
+ 
++    // V3: validate đầu vào đơn sỉ (không áp trần 1.000 chai cho đại lý — chờ quyết định nghiệp vụ)
++    if (rawItems.length > INVENTORY_CONFIG.ORDER_LIMITS.MAX_LINES) {
++      return NextResponse.json(
++        { success: false, error: `Đơn sỉ tối đa ${INVENTORY_CONFIG.ORDER_LIMITS.MAX_LINES} dòng sản phẩm.`, code: 'INVALID_ORDER_ITEMS' },
++        { status: 400 }
++      );
++    }
++    for (const item of rawItems) {
++      const pid = item && typeof item === 'object' ? (item.productId || item.id) : undefined;
++      const q = item && typeof item === 'object'
++        ? parseOrderQuantity(item.quantity, INVENTORY_CONFIG.ORDER_LIMITS.MAX_DEALER_LINE_QUANTITY)
++        : null;
++      if (typeof pid !== 'string' || q === null) {
++        return NextResponse.json(
++          { success: false, error: 'Danh sách sản phẩm hoặc số lượng không hợp lệ (số lượng phải là số nguyên dương).', code: 'INVALID_ORDER_ITEMS' },
++          { status: 400 }
++        );
++      }
++    }
++
+     for (const item of rawItems) {
+       const pId = item.productId || item.id;
+-      const qty = Math.max(1, Math.round(Number(item.quantity) || 1));
++      const qty = parseOrderQuantity(item.quantity, INVENTORY_CONFIG.ORDER_LIMITS.MAX_DEALER_LINE_QUANTITY) as number;
+ 
+       const prodRes = await query(`SELECT id, name, price FROM products WHERE id = $1 LIMIT 1;`, [pId]);
+       if (prodRes.rows.length === 0) {
+@@ -109,8 +130,20 @@ export async function POST(request: Request) {
+     const district = body.district || 'Quận 1';
+     const ward = body.ward || 'Phường Bến Nghé';
+     const note = body.note || `Đơn hàng sỉ đại lý (${tier.tier_name}) - Chiết khấu ${discountRate}%`;
+-    const targetStoreCode = body.storeCode || 'NH';
+-    const shippingFee = Math.round(Number(body.shippingFee) || 0);
++    // V10: storeCode phải là chi nhánh đang hoạt động trong vùng phục vụ (mặc định NH như cũ)
++    const targetStoreCode = typeof body.storeCode === 'string' && body.storeCode.trim() ? body.storeCode.trim() : 'NH';
++    const storeRes = await query(
++      `SELECT s.code FROM stores s WHERE s.code = $1 AND s.is_active = true AND ${hcmStoreSql('s')} LIMIT 1;`,
++      [targetStoreCode]
++    );
++    if (storeRes.rows.length === 0) {
++      return NextResponse.json(
++        { success: false, error: 'Chi nhánh nhận hàng không hợp lệ hoặc ngoài khu vực phục vụ.', code: 'INVALID_STORE' },
++        { status: 400 }
++      );
++    }
++    // V10: phí vận chuyển do server tính bằng cùng hàm với storefront (bỏ qua body.shippingFee)
++    const shippingFee = calculateShippingFee(wholesaleSubtotal, null).fee;
+     const finalTotal = wholesaleSubtotal + shippingFee;
+ 
+     const orderId = `ord_dl_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+diff --git a/src/app/api/inventory/check/route.ts b/src/app/api/inventory/check/route.ts
+index e9bdbb3..55b4d2c 100644
+--- a/src/app/api/inventory/check/route.ts
++++ b/src/app/api/inventory/check/route.ts
+@@ -7,15 +7,36 @@ import {
+   cleanupExpiredReservationsThrottled,
+ } from '@/lib/inventory';
+ import { hcmStoreSql } from '@/config/service-area';
++import { checkRequestRateLimit } from '@/lib/rateLimit';
+ import { calculateHaversineDistance, estimateCoordinatesFromAddress } from '@/lib/geo';
+ 
+ export const dynamic = 'force-dynamic';
+ 
++// V14: endpoint công khai, mỗi dòng giỏ kéo theo nhiều truy vấn → giới hạn số dòng và tần suất theo IP
++const MAX_CHECK_ITEMS = 30;
++const CHECK_RATE_LIMIT_PER_MIN = 120;
++
+ export async function POST(request: Request) {
+   try {
++    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
++    const rate = checkRequestRateLimit(`inv-check:ip:${ip}`, CHECK_RATE_LIMIT_PER_MIN, 60 * 1000);
++    if (rate.isBlocked) {
++      return NextResponse.json(
++        { success: false, error: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít giây.' },
++        { status: 429, headers: { 'Retry-After': String(rate.resetInSeconds) } }
++      );
++    }
++
+     const body = await request.json();
+     const { storeCode, items, lat, lng, latitude, longitude, province, district, address } = body;
+ 
++    if (Array.isArray(items) && items.length > MAX_CHECK_ITEMS) {
++      return NextResponse.json(
++        { success: false, error: `Giỏ hàng quá lớn để kiểm tra (tối đa ${MAX_CHECK_ITEMS} dòng).` },
++        { status: 400 }
++      );
++    }
++
+     // 0. Quét dọn reservation quá hạn (tự throttle 60s)
+     await cleanupExpiredReservationsThrottled();
+ 
+diff --git a/src/app/api/orders/route.ts b/src/app/api/orders/route.ts
+index 64d88fe..5b85ebf 100644
+--- a/src/app/api/orders/route.ts
++++ b/src/app/api/orders/route.ts
+@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
+ import { NextResponse } from 'next/server';
+ import { query, initDatabase, pool } from '@/lib/db';
+ import { getUserSession } from '@/lib/auth';
++import { INVENTORY_CONFIG as ORDER_CFG, parseOrderQuantity } from '@/config/inventory';
+ import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area';
+ import { sendOrderEmail } from '@/lib/email/service';
+ import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
+@@ -93,20 +94,42 @@ export async function POST(request: Request) {
+     const rankingSnapshot = body.rankingSnapshot ? JSON.stringify(body.rankingSnapshot) : null;
+ 
+     // 4. Chuẩn hóa phương thức & phí
++    // V4: KHÔNG đọc shippingFee/subtotal/total từ client — server tự tính ở bước 3-4 bên dưới.
+     const paymentMethod = body.paymentMethod || customerObj.paymentMethod || 'cod';
+-    const shippingFee = Math.round(Number(body.shippingFee) || 0);
+ 
+     // 5. Chuẩn hóa danh sách sản phẩm
+     const rawItems = Array.isArray(body.items) ? body.items : [];
+-    let itemsCalculatedSubtotal = 0;
++
++    // V3: validate đầu vào — số dòng, kiểu dữ liệu, số lượng nguyên dương hữu hạn, giá không âm/NaN/Infinity
++    const invalidItems = (error: string) =>
++      NextResponse.json({ success: false, error, code: 'INVALID_ORDER_ITEMS' }, { status: 400 });
++    if (rawItems.length > ORDER_CFG.ORDER_LIMITS.MAX_LINES) {
++      return invalidItems(`Đơn hàng tối đa ${ORDER_CFG.ORDER_LIMITS.MAX_LINES} dòng sản phẩm.`);
++    }
++    for (const item of rawItems) {
++      if (!item || typeof item !== 'object' || Array.isArray(item)) {
++        return invalidItems('Danh sách sản phẩm không hợp lệ.');
++      }
++      const pid = item.productId ?? item.id;
++      if (pid !== undefined && pid !== null && (typeof pid !== 'string' || pid.length > 100)) {
++        return invalidItems('Mã sản phẩm không hợp lệ.');
++      }
++      if (parseOrderQuantity(item.quantity, ORDER_CFG.ORDER_LIMITS.MAX_LINE_QUANTITY) === null) {
++        return invalidItems(`Số lượng sản phẩm phải là số nguyên từ 1 đến ${ORDER_CFG.ORDER_LIMITS.MAX_LINE_QUANTITY}.`);
++      }
++      if (item.price !== undefined && item.price !== null) {
++        const p = typeof item.price === 'number' || typeof item.price === 'string' ? Number(item.price) : NaN;
++        if (!Number.isFinite(p) || p < 0) return invalidItems('Giá sản phẩm không hợp lệ.');
++      }
++    }
++
+     const normalizedItems = rawItems.map((item: any) => {
+       const name = (item.name || item.productName || item.title || 'Sản phẩm').toString();
+       const price = Math.round(Number(item.price) || 0);
+-      const quantity = Math.max(1, Math.round(Number(item.quantity) || 1));
++      const quantity = parseOrderQuantity(item.quantity, ORDER_CFG.ORDER_LIMITS.MAX_LINE_QUANTITY) as number;
+       const unit = item.unit || 'Lốc';
+       const thumbnail = item.thumbnail || null;
+       const productId = item.productId || item.id || null;
+-      itemsCalculatedSubtotal += price * quantity;
+       return {
+         productId,
+         name,
+@@ -117,13 +140,6 @@ export async function POST(request: Request) {
+       };
+     });
+ 
+-    const subtotal = Math.round(
+-      Number(body.subtotal ?? (body.totalAmount ?? itemsCalculatedSubtotal)) || 0
+-    );
+-    const total = Math.round(
+-      Number(body.total ?? (subtotal + shippingFee)) || (subtotal + shippingFee)
+-    );
+-
+     if (!fullName || !phone) {
+       return NextResponse.json(
+         { success: false, error: 'Vui lòng cung cấp đầy đủ họ tên và số điện thoại!' },
+@@ -152,17 +168,7 @@ export async function POST(request: Request) {
+       );
+     }
+ 
+-    // V3: Kiểm tra giá trị đơn COD tối đa
+-    if (paymentMethod === 'cod' && total > codConfig.MAX_ORDER_VALUE) {
+-      return NextResponse.json(
+-        {
+-          success: false,
+-          error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng liên hệ hotline để đặt đơn lớn hoặc chọn phương thức thanh toán khác.`,
+-          maxValue: codConfig.MAX_ORDER_VALUE,
+-        },
+-        { status: 400 }
+-      );
+-    }
++    // V3: (đã chuyển xuống sau khi server tính serverTotal — không tin total của client)
+ 
+     // V4: Kiểm tra số đơn PENDING cùng SĐT (chống spam)
+     const pendingCheck = await query(
+@@ -338,12 +344,24 @@ export async function POST(request: Request) {
+       const serverShippingFee = shippingCalc.fee;
+       const serverTotal = serverCalculatedSubtotal + serverShippingFee;
+ 
++      // V4: Trần COD kiểm trên tổng do SERVER tính
++      if (paymentMethod === 'cod' && serverTotal > codConfig.MAX_ORDER_VALUE) {
++        return NextResponse.json(
++          {
++            success: false,
++            error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng liên hệ hotline để đặt đơn lớn hoặc chọn phương thức thanh toán khác.`,
++            maxValue: codConfig.MAX_ORDER_VALUE,
++          },
++          { status: 400 }
++        );
++      }
++
+       // 5. BÓC TÁCH COMBO VÀ CHUẨN BỊ ĐƠN HÀNG
+       const { expandedBottles, comboSnapshots } = await expandComboItems(revalidatedItems, client);
+ 
+       // RÀNG BUỘC SỐ LƯỢNG TỐI ĐA 1.000 CHAI TRÊN TOÀN BỘ ĐƠN HÀNG
+-      const totalBottlesInOrder = expandedBottles.reduce((sum: number, b: any) => sum + (Number(b.quantity) || 0), 0);
+-      if (totalBottlesInOrder > 1000) {
++      const totalBottlesInOrder = expandedBottles.reduce((sum: number, b: any) => sum + (Number(b.bottleQuantity) || 0), 0);
++      if (totalBottlesInOrder > ORDER_CFG.ORDER_LIMITS.MAX_BOTTLES_PER_ORDER) {
+         return NextResponse.json(
+           {
+             success: false,
+diff --git a/src/config/inventory.ts b/src/config/inventory.ts
+index 560d3d6..e4d766d 100644
+--- a/src/config/inventory.ts
++++ b/src/config/inventory.ts
+@@ -10,6 +10,15 @@ export const INVENTORY_CONFIG = {
+   // Ngưỡng cảnh báo sản phẩm sắp hết hàng tại chi nhánh
+   LOW_STOCK_THRESHOLD: 5,
+ 
++  // Giới hạn đầu vào khi tạo đơn (V3): số chai tối đa / đơn lẻ trên storefront, số dòng, số lượng mỗi dòng
++  ORDER_LIMITS: {
++    MAX_BOTTLES_PER_ORDER: 1000,
++    MAX_LINE_QUANTITY: 1000,
++    MAX_LINES: 100,
++    // Đơn sỉ đại lý: chỉ là chặn an toàn số học (không phải hạn mức nghiệp vụ)
++    MAX_DEALER_LINE_QUANTITY: 100_000,
++  },
++
+   // Chính sách chống lạm dụng COD
+   COD_VALIDATION: {
+     // Giá trị đơn COD tối đa (10 triệu - đơn lớn hơn cần xác nhận)
+@@ -55,6 +64,24 @@ export const INVENTORY_CONFIG = {
+  * Nếu chưa bật khoảng cách -> 30.000đ.
+  * Nếu bật khoảng cách -> tra cứu theo bậc km tương ứng.
+  */
++/**
++ * Chuẩn hóa số lượng từ client: thiếu (undefined/null) => 1 (giữ hành vi cũ);
++ * còn lại phải là số nguyên dương hữu hạn (number hoặc chuỗi số nguyên) và <= max. Sai => null.
++ */
++export function parseOrderQuantity(raw: unknown, max: number): number | null {
++  if (raw === undefined || raw === null) return 1;
++  let n: number;
++  if (typeof raw === 'number') {
++    n = raw;
++  } else if (typeof raw === 'string' && /^\s*\d{1,9}\s*$/.test(raw)) {
++    n = Number(raw.trim());
++  } else {
++    return null;
++  }
++  if (!Number.isSafeInteger(n) || n < 1 || n > max) return null;
++  return n;
++}
++
+ export function calculateShippingFee(
+   subtotal: number,
+   distanceKm?: number | null
+diff --git a/src/lib/inventory.ts b/src/lib/inventory.ts
+index 413850c..0de451a 100644
+--- a/src/lib/inventory.ts
++++ b/src/lib/inventory.ts
+@@ -1,4 +1,5 @@
+ import { PoolClient } from 'pg';
++import { randomBytes } from 'node:crypto';
+ import { pool, query } from '@/lib/db';
+ import { INVENTORY_CONFIG } from '@/config/inventory';
+ import { isSheetInventoryMode } from '@/config/inventorySheet';
+@@ -1365,6 +1366,14 @@ export async function releaseStock(
+ 
+     if (resQuery.rows.length > 0) {
+       for (const r of resQuery.rows) {
++        // Đọc tồn trước khi hoàn để ghi log (V13)
++        const invOldRestore = await client.query(
++          `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2;`,
++          [r.store_code, r.product_id]
++        );
++        const oldStockRestore = Number(invOldRestore.rows[0]?.stock_quantity) || 0;
++        const oldReservedRestore = Number(invOldRestore.rows[0]?.reserved) || 0;
++
+         await client.query(
+           `UPDATE store_inventory
+            SET stock_quantity = CASE WHEN $5::boolean THEN stock_quantity ELSE stock_quantity + $1 END,
+@@ -1374,6 +1383,21 @@ export async function releaseStock(
+           [r.quantity, adminUsername, r.store_code, r.product_id, sheetMode]
+         );
+ 
++        await logInventoryChange(client, {
++          storeCode: r.store_code,
++          productId: r.product_id,
++          oldStock: oldStockRestore,
++          newStock: sheetMode ? oldStockRestore : oldStockRestore + r.quantity,
++          oldReserved: oldReservedRestore,
++          newReserved: oldReservedRestore,
++          changeType: 'order_cancelled',
++          orderId,
++          actor: adminUsername,
++          note: sheetMode
++            ? `${reason} - Hoàn tồn ${r.quantity} chai (sheet mode: không cộng tồn vật lý, kế toán chỉnh trong sheet)`
++            : `${reason} - Hoàn tồn ${r.quantity} chai (đơn đã trừ kho)`,
++        });
++
+         await client.query(
+           `UPDATE stock_reservations
+            SET status = 'released',
+@@ -1402,6 +1426,13 @@ export async function releaseStock(
+       const { expandedBottles } = await expandComboItems(itemsRes.rows, client);
+ 
+       for (const b of sheetMode ? [] : expandedBottles) {
++        const invOldFb = await client.query(
++          `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2;`,
++          [order.store_code, b.productId]
++        );
++        const oldStockFb = Number(invOldFb.rows[0]?.stock_quantity) || 0;
++        const oldReservedFb = Number(invOldFb.rows[0]?.reserved) || 0;
++
+         await client.query(
+           `UPDATE store_inventory
+            SET stock_quantity = stock_quantity + $1,
+@@ -1411,6 +1442,19 @@ export async function releaseStock(
+           [b.bottleQuantity, adminUsername, order.store_code, b.productId]
+         );
+ 
++        await logInventoryChange(client, {
++          storeCode: order.store_code,
++          productId: b.productId,
++          oldStock: oldStockFb,
++          newStock: oldStockFb + b.bottleQuantity,
++          oldReserved: oldReservedFb,
++          newReserved: oldReservedFb,
++          changeType: 'order_cancelled',
++          orderId,
++          actor: adminUsername,
++          note: `${reason} - Hoàn tồn ${b.bottleQuantity} chai (đơn cũ không có giữ chỗ, đã trừ kho)`,
++        });
++
+         await client.query(
+           `UPDATE products
+            SET stock_quantity = (
+@@ -1644,8 +1688,11 @@ export async function cleanupExpiredReservations(externalClient?: PoolClient): P
+   }
+ }
+ 
++let inventoryLogSavepointSeq = 0;
++
+ /**
+- * Ghi log biến động tồn kho vào bảng inventory_logs
++ * Ghi log biến động tồn kho vào bảng inventory_logs.
++ * Trả về true nếu ghi được; false nếu lỗi (lỗi không làm hỏng transaction của nơi gọi).
+  */
+ export async function logInventoryChange(
+   client: PoolClient,
+@@ -1672,9 +1719,20 @@ export async function logInventoryChange(
+     actor: string;
+     note?: string | null;
+   }
+-) {
++): Promise<boolean> {
++  // ID <= 30 ký tự (an toàn với cột VARCHAR(30) nếu có), 40 bit ngẫu nhiên: không còn va chạm trong cùng 1 mili-giây (V12)
++  const logId = `invlog_${Date.now().toString(36)}_${randomBytes(5).toString('hex')}`;
++  // SAVEPOINT: lỗi ghi log (bảng thiếu, trùng khóa...) chỉ rollback riêng lệnh INSERT log, KHÔNG làm transaction
++  // của nơi gọi rơi vào trạng thái aborted (nếu không, lệnh kế tiếp lỗi 25P02 hoặc COMMIT âm thầm thành ROLLBACK).
++  const savepoint = `inv_log_sp_${++inventoryLogSavepointSeq}`;
++  let hasSavepoint = false;
++  try {
++    await client.query(`SAVEPOINT ${savepoint};`);
++    hasSavepoint = true;
++  } catch {
++    // Không ở trong transaction (25P01) hoặc transaction đã lỗi: ghi log trực tiếp, lỗi nếu có sẽ bị nuốt bên dưới
++  }
+   try {
+-    const logId = `invlog_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+     await client.query(
+       `INSERT INTO inventory_logs (
+         id, store_code, product_id, old_stock, new_stock, old_reserved, new_reserved, change_type, order_id, actor, note
+@@ -1693,9 +1751,68 @@ export async function logInventoryChange(
+         params.note || null,
+       ]
+     );
++    if (hasSavepoint) {
++      try {
++        await client.query(`RELEASE SAVEPOINT ${savepoint};`);
++      } catch {
++        // Bỏ qua: savepoint sẽ tự giải phóng khi COMMIT
++      }
++    }
++    return true;
+   } catch (err) {
+-    console.error('[InventoryLog] Error logging change:', err);
++    if (hasSavepoint) {
++      try {
++        await client.query(`ROLLBACK TO SAVEPOINT ${savepoint};`);
++        await client.query(`RELEASE SAVEPOINT ${savepoint};`);
++      } catch (rbErr) {
++        console.error('[InventoryLog] Không rollback được savepoint ghi log:', rbErr);
++      }
++    }
++    console.error(
++      `[InventoryLog] Không ghi được log (${params.changeType}, kho ${params.storeCode}, sp ${params.productId}, đơn ${params.orderId ?? '-'}); giao dịch chính được giữ nguyên:`,
++      err
++    );
++    return false;
++  }
++}
++
++/**
++ * Lỗi khi COMMIT không thực sự lưu dữ liệu (Postgres trả về command = 'ROLLBACK' thay vì 'COMMIT',
++ * xảy ra khi transaction đã ở trạng thái aborted nhưng nơi gọi nuốt lỗi).
++ */
++export class TransactionNotCommittedError extends Error {
++  constructor(label: string, command?: string) {
++    super(`${label}: giao dịch không được lưu (COMMIT trả về "${command ?? 'không rõ'}"). Dữ liệu không thay đổi.`);
++    this.name = 'TransactionNotCommittedError';
++  }
++}
++
++/** Gọi ngay sau `await client.query('COMMIT;')` để không báo "thành công" khi COMMIT thực chất là ROLLBACK. */
++export function assertTransactionCommitted(
++  result: { command?: string } | null | undefined,
++  label: string = 'Giao dịch'
++): void {
++  if (!result || result.command !== 'COMMIT') {
++    throw new TransactionNotCommittedError(label, result?.command);
++  }
++}
++
++/** Đọc nhanh tồn vật lý và đang giữ chỗ của một nhóm sản phẩm tại một kho (dùng để ghi log trước/sau). */
++export async function getInventorySnapshot(
++  client: PoolClient,
++  storeCode: string,
++  productIds: string[]
++): Promise<Map<string, { stock: number; reserved: number }>> {
++  const snap = new Map<string, { stock: number; reserved: number }>();
++  if (productIds.length === 0) return snap;
++  const res = await client.query(
++    `SELECT product_id, stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = ANY($2);`,
++    [storeCode, productIds]
++  );
++  for (const row of res.rows) {
++    snap.set(row.product_id, { stock: Number(row.stock_quantity) || 0, reserved: Number(row.reserved) || 0 });
+   }
++  return snap;
+ }
+ 
+ /**
+diff --git a/tests/helpers/next_headers_mock.mjs b/tests/helpers/next_headers_mock.mjs
+new file mode 100644
+index 0000000..a0bd773
+--- /dev/null
++++ b/tests/helpers/next_headers_mock.mjs
+@@ -0,0 +1,9 @@
++// Thay thế 'next/headers' trong test: cookie lấy từ globalThis.__TEST_COOKIES__ (không có => giống ngoài request scope).
++export async function cookies() {
++  const jar = globalThis.__TEST_COOKIES__;
++  if (!jar) throw new Error('cookies() ngoài request scope');
++  return { get: (name) => (jar[name] === undefined ? undefined : { name, value: jar[name] }) };
++}
++export async function headers() {
++  throw new Error('headers() ngoài request scope');
++}
+diff --git a/tests/helpers/next_headers_mock_hooks.mjs b/tests/helpers/next_headers_mock_hooks.mjs
+new file mode 100644
+index 0000000..ab371e8
+--- /dev/null
++++ b/tests/helpers/next_headers_mock_hooks.mjs
+@@ -0,0 +1,7 @@
++// Resolve hook: 'next/headers' -> tests/helpers/next_headers_mock.mjs
++export async function resolve(specifier, context, nextResolve) {
++  if (specifier === 'next/headers') {
++    return { url: new URL('./next_headers_mock.mjs', import.meta.url).href, shortCircuit: true };
++  }
++  return nextResolve(specifier, context);
++}
+diff --git a/tests/helpers/register_next_headers_mock.mjs b/tests/helpers/register_next_headers_mock.mjs
+new file mode 100644
+index 0000000..cff1399
+--- /dev/null
++++ b/tests/helpers/register_next_headers_mock.mjs
+@@ -0,0 +1,3 @@
++// Dùng: npx tsx --import ./tests/helpers/register_next_headers_mock.mjs tests/<file>.mjs
++import { register } from 'node:module';
++register('./next_headers_mock_hooks.mjs', import.meta.url);
+diff --git a/tests/phase1_admin_inventory_readonly_test.mjs b/tests/phase1_admin_inventory_readonly_test.mjs
+new file mode 100644
+index 0000000..45bbf02
+--- /dev/null
++++ b/tests/phase1_admin_inventory_readonly_test.mjs
+@@ -0,0 +1,117 @@
++/**
++ * PHA 1 / mục 6 — V8 + V14 + N1
++ *  V8:  GET /api/admin/inventory KHÔNG được ghi DB (trước đây INSERT ... ON CONFLICT DO NOTHING mỗi lần xem).
++ *  V14: POST /api/inventory/check giới hạn số dòng items và rate-limit theo IP.
++ *  N1:  GET /api/admin/inventory/combo-details dùng getStoreScope: STORE_STAFF chỉ xem chi nhánh của mình.
++ * Không chạm DB: pool.query / pool.connect là router SQL giả. Cần mock 'next/headers' ngoài request scope:
++ *   npx tsx --import ./tests/helpers/register_next_headers_mock.mjs tests/phase1_admin_inventory_readonly_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++process.env.INVENTORY_SOURCE = 'manual';          // tránh gọi Google Sheet qua mạng
++
++import assert from 'node:assert/strict';
++
++const { pool } = await import('../src/lib/db.ts');
++const { signAdminToken, ADMIN_COOKIE_NAME } = await import('../src/lib/auth.ts');
++const invAdmin = await import('../src/app/api/admin/inventory/route.ts');
++const comboDetails = await import('../src/app/api/admin/inventory/combo-details/route.ts');
++const check = await import('../src/app/api/inventory/check/route.ts');
++
++globalThis.__TEST_COOKIES__ = {};
++let mockActive = true;
++try { const { cookies } = await import('next/headers'); await cookies(); } catch { mockActive = false; }
++if (!mockActive) {
++  console.log('SKIP: chạy với --import ./tests/helpers/register_next_headers_mock.mjs (mock next/headers).');
++  process.exit(2);
++}
++
++let sqls = [];
++const ADMINS = {
++  adm_super: { id: 'adm_super', username: 'root', email: 'r@x.vn', full_name: 'Root', role: 'SUPER_ADMIN', store_code: null, is_active: true },
++  adm_staff: { id: 'adm_staff', username: 'staff7', email: 's@x.vn', full_name: 'Staff', role: 'STORE_STAFF', store_code: 'Q7', is_active: true },
++  adm_staff0: { id: 'adm_staff0', username: 'staff0', email: 's0@x.vn', full_name: 'Staff0', role: 'STORE_STAFF', store_code: null, is_active: true },
++};
++async function fakeQuery(sql, params = []) {
++  const s = String(sql).replace(/\s+/g, ' ').trim();
++  if (!/FROM admin_users/.test(s)) sqls.push(s);
++  if (/FROM admin_users/.test(s)) return { rows: ADMINS[params[0]] ? [ADMINS[params[0]]] : [], rowCount: 1 };
++  if (/FROM products WHERE id = \$1/.test(s)) return { rows: [{ id: params[0], name: 'Nước mắm', price: 4000, unit: 'Chai' }], rowCount: 1 };
++  return { rows: [], rowCount: 0 };
++}
++pool.query = fakeQuery;
++pool.connect = async () => ({ query: fakeQuery, release() {} });
++
++async function loginAs(id) {
++  const a = ADMINS[id];
++  globalThis.__TEST_COOKIES__ = {
++    [ADMIN_COOKIE_NAME]: await signAdminToken({ id: a.id, username: a.username, email: a.email, role: a.role }),
++  };
++}
++
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push([name, true]); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push([name, false]); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const origErr = console.error; console.error = process.env.TEST_DEBUG ? origErr : () => {};
++const writes = () => sqls.filter((s) => /^\s*(INSERT|UPDATE|DELETE|TRUNCATE|ALTER|CREATE|DROP)\b/i.test(s));
++
++console.log('V8 — GET admin/inventory không ghi');
++for (const who of ['adm_super', 'adm_staff']) {
++  await test(`GET (${who}) không phát sinh câu lệnh ghi nào`, async () => {
++    sqls = []; await loginAs(who);
++    const res = await invAdmin.GET(new Request('http://t/api/admin/inventory?storeCode=Q7'));
++    assert.equal(res.status, 200, JSON.stringify(await res.json()).slice(0, 160));
++    assert.deepEqual(writes(), [], 'GET đã ghi DB: ' + writes()[0]);
++  });
++}
++
++console.log('V14 — inventory/check');
++const post = (body, ip = '10.0.0.1') => check.POST(new Request('http://t/api/inventory/check', {
++  method: 'POST', headers: { 'x-forwarded-for': ip }, body: JSON.stringify(body) }));
++await test('items quá 30 dòng → 400 và không chạm DB', async () => {
++  sqls = [];
++  const items = Array.from({ length: 31 }, (_, i) => ({ productId: `p${i}`, quantity: 1 }));
++  const res = await post({ storeCode: 'NH', items }, '10.0.0.2');
++  assert.equal(res.status, 400);
++  assert.equal(sqls.length, 0, 'không được truy vấn DB khi đầu vào không hợp lệ');
++});
++await test('đúng 30 dòng → không bị chặn bởi giới hạn', async () => {
++  const items = Array.from({ length: 30 }, (_, i) => ({ productId: `p${i}`, quantity: 1 }));
++  const res = await post({ storeCode: 'NH', items }, '10.0.0.3');
++  assert.notEqual(res.status, 400); assert.notEqual(res.status, 429);
++});
++await test('vượt 120 request/phút từ cùng IP → 429; IP khác không bị ảnh hưởng', async () => {
++  let blockedAt = null;
++  for (let i = 1; i <= 130; i++) {
++    const res = await post({ items: [] }, '10.9.9.9');
++    if (res.status === 429) { blockedAt = i; break; }
++  }
++  assert.ok(blockedAt !== null && blockedAt <= 125, `không bị chặn (blockedAt=${blockedAt})`);
++  const other = await post({ items: [] }, '10.9.9.10');
++  assert.equal(other.status, 200);
++});
++
++console.log('N1 — combo-details theo getStoreScope');
++const getCombo = async (qs) => (await comboDetails.GET(new Request(`http://t/api/admin/inventory/combo-details?${qs}`))).json();
++await test('STORE_STAFF (Q7) xin storeCode=NH → chỉ nhận dữ liệu Q7', async () => {
++  await loginAs('adm_staff');
++  const r = await getCombo('storeCode=NH&comboId=prod-sb-01');
++  assert.equal(r.success, true, JSON.stringify(r).slice(0, 120));
++  assert.equal(r.data.storeCode, 'Q7');
++});
++await test('STORE_STAFF thiếu chi nhánh → fail-closed (không rơi về NH)', async () => {
++  await loginAs('adm_staff0');
++  const r = await getCombo('storeCode=NH&comboId=prod-sb-01');
++  assert.notEqual(r.data?.storeCode, 'NH');
++});
++await test('SUPER_ADMIN xin storeCode=NH → NH (giữ hành vi cũ)', async () => {
++  await loginAs('adm_super');
++  const r = await getCombo('storeCode=NH&comboId=prod-sb-01');
++  assert.equal(r.data.storeCode, 'NH');
++});
++
++console.error = origErr;
++const failed = results.filter(([, ok]) => !ok).length;
++console.log(`\n${results.length - failed}/${results.length} pass`);
++process.exit(failed ? 1 : 0);
+diff --git a/tests/phase1_inventory_logs_migration_test.mjs b/tests/phase1_inventory_logs_migration_test.mjs
+new file mode 100644
+index 0000000..8f522f1
+--- /dev/null
++++ b/tests/phase1_inventory_logs_migration_test.mjs
+@@ -0,0 +1,62 @@
++/**
++ * PHA 1 / mục 2 — N4: migration idempotent cho bảng inventory_logs.
++ * Kiểm tra TĨNH file SQL (không kết nối DB, không chạy migration):
++ *  - có CREATE TABLE IF NOT EXISTS inventory_logs và đủ cột mà lib/inventory.ts ghi vào
++ *  - mọi CREATE INDEX đều IF NOT EXISTS
++ *  - không có lệnh phá huỷ dữ liệu (DROP/TRUNCATE/DELETE/UPDATE/ALTER ... DROP)
++ * Chạy: npx tsx tests/phase1_inventory_logs_migration_test.mjs
++ */
++import fs from 'node:fs';
++import path from 'node:path';
++import assert from 'node:assert/strict';
++import { fileURLToPath } from 'node:url';
++
++const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
++const sqlPath = path.join(root, 'scripts/migrations/phase1_inventory_logs.sql');
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push(true); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push(false); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const readSql = () => fs.readFileSync(sqlPath, 'utf8');
++// Bỏ chú thích để không bắt nhầm từ khoá trong phần ghi chú
++const stripComments = (s) => s.replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
++
++console.log('N4 — migration inventory_logs');
++
++await test('file migration tồn tại', () => assert.ok(fs.existsSync(sqlPath), 'thiếu scripts/migrations/phase1_inventory_logs.sql'));
++
++await test('CREATE TABLE IF NOT EXISTS inventory_logs với đủ cột logInventoryChange ghi vào', () => {
++  const sql = stripComments(readSql());
++  assert.match(sql, /CREATE TABLE IF NOT EXISTS\s+inventory_logs\s*\(/i);
++  const insertCols = ['id', 'store_code', 'product_id', 'old_stock', 'new_stock', 'old_reserved', 'new_reserved',
++    'change_type', 'order_id', 'actor', 'note', 'created_at'];
++  for (const c of insertCols) assert.match(sql, new RegExp(`\\b${c}\\b`, 'i'), `thiếu cột ${c}`);
++  assert.match(sql, /\bid\b[^,]*PRIMARY KEY/i, 'id phải là PRIMARY KEY');
++});
++
++await test('cột trong migration khớp câu INSERT của lib/inventory.ts', () => {
++  const src = fs.readFileSync(path.join(root, 'src/lib/inventory.ts'), 'utf8');
++  const m = /INSERT INTO inventory_logs \(([\s\S]*?)\)\s*VALUES/.exec(src);
++  assert.ok(m, 'không tìm thấy câu INSERT inventory_logs');
++  const cols = m[1].split(',').map((s) => s.trim()).filter(Boolean);
++  const sql = stripComments(readSql());
++  for (const c of cols) assert.match(sql, new RegExp(`\\b${c}\\b`, 'i'), `migration thiếu cột ${c}`);
++});
++
++await test('mọi CREATE INDEX đều có IF NOT EXISTS', () => {
++  const sql = stripComments(readSql());
++  const idx = sql.match(/CREATE\s+(UNIQUE\s+)?INDEX\b[^;]*/gi) || [];
++  assert.ok(idx.length >= 1, 'nên có index');
++  for (const i of idx) assert.match(i, /IF NOT EXISTS/i, `index thiếu IF NOT EXISTS: ${i.slice(0, 60)}`);
++});
++
++await test('không có lệnh phá huỷ dữ liệu', () => {
++  const sql = stripComments(readSql());
++  assert.doesNotMatch(sql, /\b(DROP|TRUNCATE|DELETE\s+FROM|UPDATE\s+\w+\s+SET)\b/i);
++  assert.doesNotMatch(sql, /ALTER\s+TABLE[^;]*\bDROP\b/i);
++});
++
++const failed = results.filter((x) => !x).length;
++console.log(`\nKẾT QUẢ: ${results.length - failed}/${results.length} đạt${failed ? `, ${failed} LỖI` : ''}`);
++process.exit(failed ? 1 : 0);
+diff --git a/tests/phase1_order_quantity_validation_test.mjs b/tests/phase1_order_quantity_validation_test.mjs
+new file mode 100644
+index 0000000..8970252
+--- /dev/null
++++ b/tests/phase1_order_quantity_validation_test.mjs
+@@ -0,0 +1,123 @@
++/**
++ * PHA 1 / mục 5 — V3 + validate đầu vào tạo đơn
++ *  V3: trần 1.000 chai/đơn (storefront) phải THỰC SỰ chặn (trước đây đọc b.quantity — trường không tồn tại — nên không bao giờ chặn).
++ *  Validate: số lượng phải là số nguyên dương hữu hạn, có chặn trên; productId phải là chuỗi; giá không âm/không NaN/Infinity;
++ *  số dòng có giới hạn. Áp dụng cho storefront (/api/orders) và đại lý (/api/dealer/orders).
++ * Không chạm DB: pool.query / pool.connect là router SQL giả.
++ * Chạy: npx tsx tests/phase1_order_quantity_validation_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++
++import assert from 'node:assert/strict';
++
++const { pool } = await import('../src/lib/db.ts');
++const { signUserToken } = await import('../src/lib/auth.ts');
++const cfg = await import('../src/config/inventory.ts');
++const ordersRoute = await import('../src/app/api/orders/route.ts');
++const dealerRoute = await import('../src/app/api/dealer/orders/route.ts');
++
++let ctx;
++const resetCtx = () => { ctx = { inserts: [] }; };
++async function fakeQuery(sql, params = []) {
++  const s = String(sql).replace(/\s+/g, ' ').trim();
++  if (/FROM partner_profiles/.test(s)) {
++    return { rows: [{ id: 'pp1', userId: 'u1', partnerType: 'DEALER', lifecycleStatus: 'ACTIVE', phone: '0900000001',
++      fullName: 'Dai Ly', email: 'd@x.vn', tierId: 'tier_bronze' }], rowCount: 1 };
++  }
++  if (/FROM dealer_tiers/.test(s)) return { rows: [{ id: 'tier_bronze', tier_name: 'Đồng', tier_code: 'TIER_1', discount_rate: 15 }], rowCount: 1 };
++  if (/FROM products WHERE id = \$1/.test(s)) return { rows: [{ id: params[0], name: 'Nước mắm', price: 4000, unit: 'Chai' }], rowCount: 1 };
++  if (/FROM stores/.test(s) && /is_active/.test(s)) return { rows: [{ code: params[0] }], rowCount: 1 };
++  if (/FROM store_inventory/.test(s) && /FOR UPDATE/.test(s)) {
++    return { rows: (params[1] || []).map((id) => ({ product_id: id, stock_quantity: 1e9, reserved: 0, safety_stock: 0 })), rowCount: (params[1] || []).length };
++  }
++  if (/INSERT INTO orders/.test(s)) ctx.inserts.push(params);
++  return { rows: [], rowCount: 0 };
++}
++pool.query = fakeQuery;
++pool.connect = async () => ({ query: fakeQuery, release() {} });
++
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push([name, true]); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push([name, false]); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const origErr = console.error; console.error = process.env.TEST_DEBUG ? origErr : () => {};
++
++const line = (over = {}) => ({ productId: 'prod-sb-01', name: 'Nước mắm', price: 4000, quantity: 1, unit: 'Chai', ...over });
++async function postOrder(items) {
++  const body = { fullName: 'Khach Test', phone: '0912345678', address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
++    province: 'Hồ Chí Minh', paymentMethod: 'bank_transfer', items };
++  const res = await ordersRoute.POST(new Request('http://t/api/orders', { method: 'POST', body: JSON.stringify(body) }));
++  return { status: res.status, body: await res.json() };
++}
++const token = await signUserToken({ id: 'u1', email: 'd@x.vn', fullName: 'Dai Ly', phone: '0900000001' });
++async function postDealer(items) {
++  const res = await dealerRoute.POST(new Request('http://t/api/dealer/orders', {
++    method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify({ items }) }));
++  return { status: res.status, body: await res.json() };
++}
++const rejected = (r) => { assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 160)); assert.equal(ctx.inserts.length, 0, 'không được tạo đơn'); };
++
++console.log('V3 — trần 1.000 chai (storefront)');
++await test('2 dòng × 600 chai (tổng 1.200) → 400, không tạo đơn', async () => {
++  resetCtx();
++  rejected(await postOrder([line({ productId: 'prod-sb-01', quantity: 600 }), line({ productId: 'prod-sb-02', quantity: 600 })]));
++});
++await test('đúng 1.000 chai → không bị chặn bởi trần', async () => {
++  resetCtx();
++  const r = await postOrder([line({ quantity: 1000 })]);
++  assert.notEqual(r.body.code, 'INVALID_ORDER_ITEMS');
++  assert.ok(!/1\.000 chai/.test(String(r.body.error || '')), 'bị chặn oan ở đúng 1.000 chai');
++});
++
++console.log('Validate số lượng — storefront');
++for (const [label, q] of [['âm', -5], ['0', 0], ['thập phân 1.5', 1.5], ['chuỗi "abc"', 'abc'], ['chuỗi "Infinity"', 'Infinity'],
++  ['rất lớn 1e30', 1e30], ['mảng', [1]], ['object', {}], ['boolean', true], ['vượt trần dòng 1001', 1001]]) {
++  await test(`quantity ${label} → 400`, async () => { resetCtx(); rejected(await postOrder([line({ quantity: q })])); });
++}
++await test('quantity thiếu → vẫn mặc định 1 (giữ hành vi cũ)', async () => {
++  resetCtx();
++  const it = line(); delete it.quantity;
++  const r = await postOrder([it]);
++  assert.notEqual(r.body.code, 'INVALID_ORDER_ITEMS');
++});
++await test('quantity chuỗi số nguyên "3" → chấp nhận', async () => {
++  resetCtx();
++  const r = await postOrder([line({ quantity: '3' })]);
++  assert.notEqual(r.body.code, 'INVALID_ORDER_ITEMS');
++});
++
++console.log('Validate kiểu / giá / số dòng — storefront');
++await test('productId là số (không phải chuỗi) → 400 (không phải 500)', async () => { resetCtx(); rejected(await postOrder([line({ productId: 12345 })])); });
++await test('phần tử items là null → 400', async () => { resetCtx(); rejected(await postOrder([null])); });
++await test('price âm → 400', async () => { resetCtx(); rejected(await postOrder([line({ price: -1000 })])); });
++await test('price "Infinity" → 400', async () => { resetCtx(); rejected(await postOrder([line({ price: 'Infinity' })])); });
++await test(`quá ${cfg.INVENTORY_CONFIG.ORDER_LIMITS?.MAX_LINES} dòng → 400`, async () => {
++  resetCtx();
++  const many = Array.from({ length: (cfg.INVENTORY_CONFIG.ORDER_LIMITS?.MAX_LINES ?? 100) + 1 }, (_, i) => line({ productId: `prod-${i}` }));
++  rejected(await postOrder(many));
++});
++
++console.log('Validate số lượng — đại lý');
++await test('50 chai + dòng quantity âm → 400 (trước đây bị ép thành 1 và nhận đơn)', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 50 }), line({ productId: 'p2', quantity: -5 })]));
++});
++await test('50 chai + dòng quantity "abc" → 400', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 50 }), line({ productId: 'p2', quantity: 'abc' })]));
++});
++await test('50 chai + dòng quantity 1.5 → 400', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 50 }), line({ productId: 'p2', quantity: 1.5 })]));
++});
++await test('quantity 1e30 → 400 (không còn rơi xuống 409 tồn kho)', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 1e30 })]));
++});
++await test('đơn sỉ hợp lệ 50 chai vẫn tạo được', async () => {
++  resetCtx();
++  const r = await postDealer([line({ productId: 'p1', quantity: 50 })]);
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 160));
++});
++
++console.error = origErr;
++const failed = results.filter(([, ok]) => !ok).length;
++console.log(`\n${results.length - failed}/${results.length} pass`);
++process.exit(failed ? 1 : 0);
+diff --git a/tests/phase1_order_server_total_dealer_test.mjs b/tests/phase1_order_server_total_dealer_test.mjs
+new file mode 100644
+index 0000000..4d3dd28
+--- /dev/null
++++ b/tests/phase1_order_server_total_dealer_test.mjs
+@@ -0,0 +1,122 @@
++/**
++ * PHA 1 / mục 4 — V4 (phần còn lại) + V10
++ *  V4: trần COD phải kiểm trên total do SERVER tính, không phải `total` client gửi.
++ *  V10: đơn đại lý — storeCode phải thuộc danh sách chi nhánh hợp lệ (đang hoạt động, TP.HCM);
++ *       shippingFee do server tính bằng calculateShippingFee (cùng hàm storefront), bỏ qua giá trị client.
++ * Không chạm DB: pool.query / pool.connect bị thay bằng router SQL giả.
++ * Chạy: npx tsx tests/phase1_order_server_total_dealer_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++
++import assert from 'node:assert/strict';
++
++const { pool } = await import('../src/lib/db.ts');
++const { signUserToken } = await import('../src/lib/auth.ts');
++const { calculateShippingFee } = await import('../src/config/inventory.ts');
++const ordersRoute = await import('../src/app/api/orders/route.ts');
++const dealerRoute = await import('../src/app/api/dealer/orders/route.ts');
++
++// ── router SQL giả ──
++let ctx;
++function resetCtx(over = {}) {
++  ctx = { comboPrice: 11_000_000, productPrice: 4000, activeStores: ['NH', 'Q7'], inserts: [], sqls: [], ...over };
++}
++async function fakeQuery(sql, params = []) {
++  const s = String(sql).replace(/\s+/g, ' ').trim();
++  ctx.sqls.push(s);
++  if (/FROM partner_profiles/.test(s)) {
++    return { rows: [{ id: 'pp1', userId: 'u1', partnerType: 'DEALER', lifecycleStatus: 'ACTIVE', phone: '0900000001',
++      fullName: 'Dai Ly', email: 'd@x.vn', tierId: 'tier_bronze' }], rowCount: 1 };
++  }
++  if (/FROM dealer_tiers/.test(s)) return { rows: [{ id: 'tier_bronze', tier_name: 'Đồng', tier_code: 'TIER_1', discount_rate: 15 }], rowCount: 1 };
++  if (/FROM products WHERE id = \$1/.test(s)) return { rows: [{ id: params[0], name: 'Nước mắm', price: ctx.productPrice }], rowCount: 1 };
++  if (/FROM stores/.test(s) && /code = \$1/.test(s) && /is_active/.test(s)) {
++    return ctx.activeStores.includes(params[0]) ? { rows: [{ code: params[0] }], rowCount: 1 } : { rows: [], rowCount: 0 };
++  }
++  if (/FROM combos/.test(s)) return { rows: [{ name: 'Combo đắt', sale_price: ctx.comboPrice }], rowCount: 1 };
++  if (/FROM store_inventory/.test(s) && /FOR UPDATE/.test(s)) {
++    return { rows: (params[1] || []).map((id) => ({ product_id: id, stock_quantity: 1000, reserved: 0, safety_stock: 0 })), rowCount: (params[1] || []).length };
++  }
++  if (/INSERT INTO orders/.test(s)) ctx.inserts.push({ sql: s, params });
++  return { rows: [], rowCount: 0 };
++}
++pool.query = fakeQuery;
++pool.connect = async () => ({ query: fakeQuery, release() {} });
++
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push([name, true]); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push([name, false]); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const origErr = console.error; console.error = process.env.TEST_DEBUG ? origErr : () => {};
++
++async function postOrder(over = {}) {
++  const body = {
++    fullName: 'Khach Test', phone: '0912345678', address: '123 Nguyễn Huệ, Quận 1, TP.HCM', province: 'Hồ Chí Minh',
++    paymentMethod: 'cod', items: [{ productId: 'combo-big', name: 'Combo', price: 1, quantity: 1, unit: 'Combo' }],
++    ...over,
++  };
++  const res = await ordersRoute.POST(new Request('http://t/api/orders', { method: 'POST', body: JSON.stringify(body) }));
++  return { status: res.status, body: await res.json() };
++}
++const token = await signUserToken({ id: 'u1', email: 'd@x.vn', fullName: 'Dai Ly', phone: '0900000001' });
++async function postDealer(over = {}) {
++  const body = { items: [{ productId: 'p1', quantity: 50 }], ...over };
++  const res = await dealerRoute.POST(new Request('http://t/api/dealer/orders', {
++    method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) }));
++  return { status: res.status, body: await res.json() };
++}
++
++console.log('V4 — trần COD theo total server');
++await test('client gửi total nhỏ nhưng server tính > trần COD → 400', async () => {
++  resetCtx({ comboPrice: 11_000_000 });
++  const r = await postOrder({ total: 1000, subtotal: 1000, shippingFee: 0 });
++  assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 200));
++  assert.ok(r.body.maxValue, 'phải trả maxValue của trần COD');
++  assert.equal(ctx.inserts.length, 0, 'không được tạo đơn');
++});
++await test('client gửi total khổng lồ nhưng server tính nhỏ → KHÔNG bị chặn bởi trần COD', async () => {
++  resetCtx({ comboPrice: 100_000 });
++  const r = await postOrder({ total: 999_999_999 });
++  assert.ok(!(r.status === 400 && r.body.maxValue), 'bị chặn oan do total của client');
++});
++
++console.log('V10 — đơn đại lý');
++await test('storeCode không tồn tại / không hoạt động / ngoài HCM → 400, không tạo đơn', async () => {
++  resetCtx();
++  const r = await postDealer({ storeCode: 'ZZZ' });
++  assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts.length, 0);
++});
++await test('storeCode hợp lệ được chấp nhận và ghi vào đơn', async () => {
++  resetCtx();
++  const r = await postDealer({ storeCode: 'Q7', shippingFee: 0 });
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts[0].params[14], 'Q7');
++});
++await test('không gửi storeCode → mặc định NH (giữ hành vi cũ)', async () => {
++  resetCtx();
++  const r = await postDealer({});
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts[0].params[14], 'NH');
++});
++await test('shippingFee của client bị bỏ qua: server tính bằng calculateShippingFee', async () => {
++  resetCtx({ productPrice: 4000 });                       // 50 chai × 3.400 = 170.000 < ngưỡng free
++  const expected = calculateShippingFee(170_000, null).fee;
++  assert.ok(expected > 0, 'giả định test: đơn này phải có phí ship');
++  const r = await postDealer({ shippingFee: 0 });
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts[0].params[10], expected);
++  assert.equal(r.body.finalTotal, 170_000 + expected);
++});
++await test('shippingFee âm / quá lớn từ client không ảnh hưởng tổng', async () => {
++  resetCtx({ productPrice: 4000 });
++  const expected = calculateShippingFee(170_000, null).fee;
++  const r = await postDealer({ shippingFee: -150000 });
++  assert.equal(r.body.finalTotal, 170_000 + expected);
++});
++
++console.error = origErr;
++const failed = results.filter(([, ok]) => !ok).length;
++console.log(`\n${results.length - failed}/${results.length} pass`);
++process.exit(failed ? 1 : 0);
+diff --git a/tests/phase1_release_stock_log_test.mjs b/tests/phase1_release_stock_log_test.mjs
+new file mode 100644
+index 0000000..196992d
+--- /dev/null
++++ b/tests/phase1_release_stock_log_test.mjs
+@@ -0,0 +1,93 @@
++/**
++ * PHA 1 / mục 3 — V13: releaseStock phải ghi log khi hoàn tồn của đơn ĐÃ trừ kho (nhánh inventory_deducted = true).
++ * Không dùng DB: FakePgClient. Chạy: npx tsx tests/phase1_release_stock_log_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++
++import assert from 'node:assert/strict';
++import { FakePgClient } from './helpers/fake_pg_client.mjs';
++
++const inv = await import('../src/lib/inventory.ts');
++const { pool } = await import('../src/lib/db.ts');
++pool.query = async () => ({ rows: [], rowCount: 0 });
++pool.connect = async () => { throw new Error('pool.connect bị chặn trong test'); };
++
++const results = [];
++async function test(name, fn) {
++  const prevSource = process.env.INVENTORY_SOURCE;
++  try { await fn(); results.push(true); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push(false); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++  finally { if (prevSource === undefined) delete process.env.INVENTORY_SOURCE; else process.env.INVENTORY_SOURCE = prevSource; }
++}
++
++// params của INSERT inventory_logs: [id, store, product, old_stock, new_stock, old_reserved, new_reserved, change_type, order_id, actor, note]
++function buildClient({ withConfirmedReservations = true, ...opts } = {}) {
++  const st = { stock: 100, reserved: 0 };
++  const c = new FakePgClient(opts);
++  c.st = st;
++  c.when(/FROM orders WHERE id = \$1 FOR UPDATE/, () => [{ id: 'ord1', status: 'CONFIRMED', store_code: 'NH', inventory_deducted: true }]);
++  c.when(/FROM stock_reservations WHERE order_id = \$1 AND status = 'confirmed'/, () =>
++    withConfirmedReservations ? [{ id: 'r1', store_code: 'NH', product_id: 'prod-sb-01', quantity: 14 }] : []);
++  c.when(/SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = \$1 AND product_id = \$2/, () => [{ stock_quantity: st.stock, reserved: st.reserved }]);
++  c.when(/UPDATE store_inventory SET stock_quantity = CASE WHEN \$5::boolean/, (p) => { if (!p[4]) st.stock += p[0]; });
++  c.when(/UPDATE store_inventory SET stock_quantity = stock_quantity \+ \$1/, (p) => { st.stock += p[0]; });
++  // fallback đơn cũ (không có reservation)
++  c.when(/FROM order_items WHERE order_id/, () => [{ productId: 'prod-sb-01', name: 'Sữa bắp nếp', quantity: 2, unit: 'Lốc 7 chai' }]);
++  c.when(/FROM combos WHERE id/, () => []);
++  c.when(/FROM products WHERE id = \$1/, () => [{ id: 'prod-sb-01', name: 'Sữa bắp nếp', price: 18000, unit: 'chai' }]);
++  c.when(/FROM product_variants WHERE id = \$1 OR id = \$2/, () => [{ bottle_multiplier: 7, quantity: 7 }]);
++  return c;
++}
++const restoreLogs = (c) => c.logRows.filter((p) => p[7] === 'order_cancelled');
++
++console.log('V13 — releaseStock ghi log khi hoàn tồn đơn đã trừ kho');
++
++await test('manual mode, có reservation confirmed: ghi log hoàn tồn với tồn trước/sau thật', async () => {
++  process.env.INVENTORY_SOURCE = 'manual';
++  const c = buildClient();
++  await c.query('BEGIN;');
++  const res = await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  assert.equal(res.action, 'restored_stock');
++  const logs = restoreLogs(c);
++  assert.equal(logs.length, 1, 'phải có đúng 1 log hoàn tồn');
++  assert.deepEqual([logs[0][1], logs[0][2], logs[0][3], logs[0][4]], ['NH', 'prod-sb-01', 100, 114]);
++  assert.equal(logs[0][9], 'qa_admin');
++  assert.match(logs[0][10], /Hoàn tồn 14 chai/);
++});
++
++await test('sheet mode: vẫn ghi log nhưng tồn vật lý không đổi (kế toán chỉnh trong sheet)', async () => {
++  delete process.env.INVENTORY_SOURCE;                   // mặc định = sheet
++  const c = buildClient();
++  await c.query('BEGIN;');
++  await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  const logs = restoreLogs(c);
++  assert.equal(logs.length, 1);
++  assert.deepEqual([logs[0][3], logs[0][4]], [100, 100]);
++  assert.equal(c.st.stock, 100);
++});
++
++await test('đơn cũ không có reservation (fallback), manual mode: cũng ghi log hoàn tồn', async () => {
++  process.env.INVENTORY_SOURCE = 'manual';
++  const c = buildClient({ withConfirmedReservations: false });
++  await c.query('BEGIN;');
++  await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  const logs = restoreLogs(c);
++  assert.equal(logs.length, 1);
++  assert.deepEqual([logs[0][2], logs[0][3], logs[0][4]], ['prod-sb-01', 100, 114]);
++});
++
++await test('lỗi ghi log hoàn tồn KHÔNG làm hỏng việc hủy đơn (dùng cách ghi log an toàn của V12)', async () => {
++  process.env.INVENTORY_SOURCE = 'manual';
++  const c = buildClient({ failInsertLog: () => true });
++  await c.query('BEGIN;');
++  const res = await inv.releaseStock('ord1', c, 'Khách hủy', 'qa_admin', true);
++  assert.equal(res.success, true);
++  assert.equal(c.st.stock, 114, 'tồn vẫn được hoàn');
++  assert.ok(c.queries.some((q) => /INSERT INTO inventory_logs/i.test(q.sql)), 'phải có thử ghi log hoàn tồn');
++  const commit = await c.query('COMMIT;');
++  assert.equal(commit.command, 'COMMIT');
++});
++
++const failed = results.filter((x) => !x).length;
++console.log(`\nKẾT QUẢ: ${results.length - failed}/${results.length} đạt${failed ? `, ${failed} LỖI` : ''}`);
++process.exit(failed ? 1 : 0);

@@ -1,0 +1,248 @@
+From 1b23c64c657488fff36f90a30b0466380e336d8e Mon Sep 17 00:00:00 2001
+From: "Claude (PHA 1)" <dangnguyeni5ss@gmail.com>
+Date: Sun, 25 Oct 2026 13:54:21 +0700
+Subject: [PATCH 1/6] =?UTF-8?q?fix(V12,V16):=20logInventoryChange=20kh?=
+ =?UTF-8?q?=C3=B4ng=20l=C3=A0m=20h=E1=BB=8Fng=20transaction;=20chuy?=
+ =?UTF-8?q?=E1=BB=83n=20chi=20nh=C3=A1nh=20ghi=20log=20th=E1=BA=ADt?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+V12
+- logInventoryChange: bọc INSERT log trong SAVEPOINT (lỗi log chỉ rollback riêng lệnh log, transaction
+  của nơi gọi không bị aborted); trả về boolean; ID log = invlog_<base36 ts>_<10 hex ngẫu nhiên> (<=30 ký tự).
+- Thêm assertTransactionCommitted/TransactionNotCommittedError: transfer không còn báo thành công khi
+  COMMIT thực chất là ROLLBACK (Postgres trả command='ROLLBACK', không ném lỗi).
+V16
+- transfer: log order_transferred_out/in ghi tồn và giữ chỗ trước-sau thật (getInventorySnapshot),
+  gộp theo sản phẩm thay vì 0/0 cho từng dòng.
+Test: tests/phase1_inventory_log_tx_test.mjs (+ tests/helpers/fake_pg_client.mjs), không dùng DB.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Rn2NhFMtfaiHCB3woGT3YV
+---
+ src/app/api/admin/orders/transfer/route.ts | 52 +++++++++++---
+ src/lib/inventory.ts                       | 82 ++++++++++++++++++++--
+ 2 files changed, 120 insertions(+), 14 deletions(-)
+
+diff --git a/src/app/api/admin/orders/transfer/route.ts b/src/app/api/admin/orders/transfer/route.ts
+index 135d0b9..fa7fef8 100644
+--- a/src/app/api/admin/orders/transfer/route.ts
++++ b/src/app/api/admin/orders/transfer/route.ts
+@@ -9,6 +9,9 @@ import {
+   releaseStock,
+   logInventoryChange,
+   getAvailability,
++  getInventorySnapshot,
++  assertTransactionCommitted,
++  TransactionNotCommittedError,
+   InsufficientStockError,
+ } from '@/lib/inventory';
+ import { INVENTORY_CONFIG } from '@/config/inventory';
+@@ -121,6 +124,11 @@ export async function executeOrderTransfer(
+       };
+     }
+ 
++    // Chụp tồn/giữ chỗ TRƯỚC khi chuyển để ghi log đúng số liệu (V16)
++    const transferProductIds = Array.from(new Set(expandedBottles.map((b) => b.productId)));
++    const snapOldBefore = await getInventorySnapshot(client, currentStoreCode, transferProductIds);
++    const snapNewBefore = await getInventorySnapshot(client, targetStoreCode, transferProductIds);
++
+     // 5. Nhả reservation tại chi nhánh cũ (không hủy đơn, updateOrderStatus = false)
+     await releaseStock(
+       orderId,
+@@ -154,34 +162,50 @@ export async function executeOrderTransfer(
+       [targetStoreCode, newStoreAddress, transferNote, orderId]
+     );
+ 
+-    // 9. Ghi log chuyển chi nhánh cho từng mặt hàng (kho cũ và kho mới)
++    // 9. Ghi log chuyển chi nhánh cho từng mặt hàng (kho cũ và kho mới) với tồn/giữ chỗ trước-sau THẬT (V16)
++    const snapOldAfter = await getInventorySnapshot(client, currentStoreCode, transferProductIds);
++    const snapNewAfter = await getInventorySnapshot(client, targetStoreCode, transferProductIds);
++    const bottlesByProduct = new Map<string, number>();
+     for (const b of expandedBottles) {
++      bottlesByProduct.set(b.productId, (bottlesByProduct.get(b.productId) || 0) + b.bottleQuantity);
++    }
++    for (const [productId, bottleQuantity] of bottlesByProduct) {
++      const oldBefore = snapOldBefore.get(productId) || { stock: 0, reserved: 0 };
++      const oldAfter = snapOldAfter.get(productId) || oldBefore;
++      const newBefore = snapNewBefore.get(productId) || { stock: 0, reserved: 0 };
++      const newAfter = snapNewAfter.get(productId) || newBefore;
++
+       // Log kho chuyển đi
+       await logInventoryChange(client, {
+         storeCode: currentStoreCode,
+-        productId: b.productId,
+-        oldStock: 0,
+-        newStock: 0,
++        productId,
++        oldStock: oldBefore.stock,
++        newStock: oldAfter.stock,
++        oldReserved: oldBefore.reserved,
++        newReserved: oldAfter.reserved,
+         changeType: 'order_transferred_out',
+         orderId,
+         actor: actor.username,
+-        note: `Chuyển đơn ${order.order_code} sang kho ${targetStoreCode} (${b.bottleQuantity} chai)`,
++        note: `Chuyển đơn ${order.order_code} sang kho ${targetStoreCode} (${bottleQuantity} chai)`,
+       });
+ 
+       // Log kho tiếp nhận
+       await logInventoryChange(client, {
+         storeCode: targetStoreCode,
+-        productId: b.productId,
+-        oldStock: 0,
+-        newStock: 0,
++        productId,
++        oldStock: newBefore.stock,
++        newStock: newAfter.stock,
++        oldReserved: newBefore.reserved,
++        newReserved: newAfter.reserved,
+         changeType: 'order_transferred_in',
+         orderId,
+         actor: actor.username,
+-        note: `Tiếp nhận chuyển đơn ${order.order_code} từ kho ${currentStoreCode} sang ${targetStoreCode} (${b.bottleQuantity} chai)`,
++        note: `Tiếp nhận chuyển đơn ${order.order_code} từ kho ${currentStoreCode} sang ${targetStoreCode} (${bottleQuantity} chai)`,
+       });
+     }
+ 
+-    await client.query('COMMIT;');
++    // COMMIT thực chất là ROLLBACK (transaction đã aborted) thì KHÔNG được báo thành công (V12)
++    assertTransactionCommitted(await client.query('COMMIT;'), 'Chuyển chi nhánh');
+ 
+     if (actor.id) {
+       await writeAuditLog({
+@@ -216,6 +240,14 @@ export async function executeOrderTransfer(
+     } catch {
+       // ignore rollback err
+     }
++    if (txErr instanceof TransactionNotCommittedError) {
++      console.error('[OrderTransfer] COMMIT không được lưu:', txErr.message);
++      return {
++        success: false,
++        statusCode: 500,
++        error: 'Không thể hoàn tất chuyển chi nhánh: giao dịch bị hủy, dữ liệu không thay đổi. Vui lòng thử lại.',
++      };
++    }
+     if (txErr instanceof InsufficientStockError) {
+       const missingBottlesList = (txErr.insufficientItems || [])
+         .map((b) => `${b.productName} (cần ${b.requested}, khả dụng ${b.available})`)
+diff --git a/src/lib/inventory.ts b/src/lib/inventory.ts
+index 413850c..7a0837e 100644
+--- a/src/lib/inventory.ts
++++ b/src/lib/inventory.ts
+@@ -1,4 +1,5 @@
+ import { PoolClient } from 'pg';
++import { randomBytes } from 'node:crypto';
+ import { pool, query } from '@/lib/db';
+ import { INVENTORY_CONFIG } from '@/config/inventory';
+ import { isSheetInventoryMode } from '@/config/inventorySheet';
+@@ -1644,8 +1645,11 @@ export async function cleanupExpiredReservations(externalClient?: PoolClient): P
+   }
+ }
+ 
++let inventoryLogSavepointSeq = 0;
++
+ /**
+- * Ghi log biến động tồn kho vào bảng inventory_logs
++ * Ghi log biến động tồn kho vào bảng inventory_logs.
++ * Trả về true nếu ghi được; false nếu lỗi (lỗi không làm hỏng transaction của nơi gọi).
+  */
+ export async function logInventoryChange(
+   client: PoolClient,
+@@ -1672,9 +1676,20 @@ export async function logInventoryChange(
+     actor: string;
+     note?: string | null;
+   }
+-) {
++): Promise<boolean> {
++  // ID <= 30 ký tự (an toàn với cột VARCHAR(30) nếu có), 40 bit ngẫu nhiên: không còn va chạm trong cùng 1 mili-giây (V12)
++  const logId = `invlog_${Date.now().toString(36)}_${randomBytes(5).toString('hex')}`;
++  // SAVEPOINT: lỗi ghi log (bảng thiếu, trùng khóa...) chỉ rollback riêng lệnh INSERT log, KHÔNG làm transaction
++  // của nơi gọi rơi vào trạng thái aborted (nếu không, lệnh kế tiếp lỗi 25P02 hoặc COMMIT âm thầm thành ROLLBACK).
++  const savepoint = `inv_log_sp_${++inventoryLogSavepointSeq}`;
++  let hasSavepoint = false;
++  try {
++    await client.query(`SAVEPOINT ${savepoint};`);
++    hasSavepoint = true;
++  } catch {
++    // Không ở trong transaction (25P01) hoặc transaction đã lỗi: ghi log trực tiếp, lỗi nếu có sẽ bị nuốt bên dưới
++  }
+   try {
+-    const logId = `invlog_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+     await client.query(
+       `INSERT INTO inventory_logs (
+         id, store_code, product_id, old_stock, new_stock, old_reserved, new_reserved, change_type, order_id, actor, note
+@@ -1693,9 +1708,68 @@ export async function logInventoryChange(
+         params.note || null,
+       ]
+     );
++    if (hasSavepoint) {
++      try {
++        await client.query(`RELEASE SAVEPOINT ${savepoint};`);
++      } catch {
++        // Bỏ qua: savepoint sẽ tự giải phóng khi COMMIT
++      }
++    }
++    return true;
+   } catch (err) {
+-    console.error('[InventoryLog] Error logging change:', err);
++    if (hasSavepoint) {
++      try {
++        await client.query(`ROLLBACK TO SAVEPOINT ${savepoint};`);
++        await client.query(`RELEASE SAVEPOINT ${savepoint};`);
++      } catch (rbErr) {
++        console.error('[InventoryLog] Không rollback được savepoint ghi log:', rbErr);
++      }
++    }
++    console.error(
++      `[InventoryLog] Không ghi được log (${params.changeType}, kho ${params.storeCode}, sp ${params.productId}, đơn ${params.orderId ?? '-'}); giao dịch chính được giữ nguyên:`,
++      err
++    );
++    return false;
++  }
++}
++
++/**
++ * Lỗi khi COMMIT không thực sự lưu dữ liệu (Postgres trả về command = 'ROLLBACK' thay vì 'COMMIT',
++ * xảy ra khi transaction đã ở trạng thái aborted nhưng nơi gọi nuốt lỗi).
++ */
++export class TransactionNotCommittedError extends Error {
++  constructor(label: string, command?: string) {
++    super(`${label}: giao dịch không được lưu (COMMIT trả về "${command ?? 'không rõ'}"). Dữ liệu không thay đổi.`);
++    this.name = 'TransactionNotCommittedError';
++  }
++}
++
++/** Gọi ngay sau `await client.query('COMMIT;')` để không báo "thành công" khi COMMIT thực chất là ROLLBACK. */
++export function assertTransactionCommitted(
++  result: { command?: string } | null | undefined,
++  label: string = 'Giao dịch'
++): void {
++  if (!result || result.command !== 'COMMIT') {
++    throw new TransactionNotCommittedError(label, result?.command);
++  }
++}
++
++/** Đọc nhanh tồn vật lý và đang giữ chỗ của một nhóm sản phẩm tại một kho (dùng để ghi log trước/sau). */
++export async function getInventorySnapshot(
++  client: PoolClient,
++  storeCode: string,
++  productIds: string[]
++): Promise<Map<string, { stock: number; reserved: number }>> {
++  const snap = new Map<string, { stock: number; reserved: number }>();
++  if (productIds.length === 0) return snap;
++  const res = await client.query(
++    `SELECT product_id, stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = ANY($2);`,
++    [storeCode, productIds]
++  );
++  for (const row of res.rows) {
++    snap.set(row.product_id, { stock: Number(row.stock_quantity) || 0, reserved: Number(row.reserved) || 0 });
+   }
++  return snap;
+ }
+ 
+ /**
+-- 
+2.43.0
+

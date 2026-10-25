@@ -33,10 +33,12 @@ export interface StoreBranch {
 
 interface BranchState {
   selectedBranch: StoreBranch | null;
+  /** true khi khách TỰ chọn chi nhánh (thanh trên, popup, trang SP...) -> thanh toán không được tự đè bằng chi nhánh đề xuất */
+  branchChosenManually: boolean;
   branches: StoreBranch[];
   isBranchModalOpen: boolean;
   isLoading: boolean;
-  setSelectedBranch: (branch: StoreBranch) => void;
+  setSelectedBranch: (branch: StoreBranch, source?: 'manual' | 'auto') => void;
   openBranchModal: () => void;
   closeBranchModal: () => void;
   fetchBranches: () => Promise<void>;
@@ -62,12 +64,13 @@ export const useBranchStore = create<BranchState>()(
   persist(
     (set, get) => ({
       selectedBranch: DEFAULT_BRANCH,
+      branchChosenManually: false,
       branches: [],
       isBranchModalOpen: false,
       isLoading: false,
 
-      setSelectedBranch: (branch) => {
-        set({ selectedBranch: branch });
+      setSelectedBranch: (branch, source = 'manual') => {
+        set(source === 'auto' ? { selectedBranch: branch } : { selectedBranch: branch, branchChosenManually: true });
       },
 
       openBranchModal: () => set({ isBranchModalOpen: true }),
@@ -104,7 +107,7 @@ export const useBranchStore = create<BranchState>()(
     }),
     {
       name: 'tsf-selected-branch',
-      partialize: (state) => ({ selectedBranch: state.selectedBranch }),
+      partialize: (state) => ({ selectedBranch: state.selectedBranch, branchChosenManually: state.branchChosenManually }),
     }
   )
 );

@@ -1,0 +1,308 @@
+From d81f67aefc8a9c7022713275b186ea44743e8b60 Mon Sep 17 00:00:00 2001
+From: "Claude (PHA 1)" <dangnguyeni5ss@gmail.com>
+Date: Sun, 25 Oct 2026 14:01:23 +0700
+Subject: [PATCH 5/6] =?UTF-8?q?fix(V3):=20tr=E1=BA=A7n=201.000=20chai=20th?=
+ =?UTF-8?q?=E1=BB=B1c=20s=E1=BB=B1=20ch=E1=BA=B7n;=20validate=20s=E1=BB=91?=
+ =?UTF-8?q?=20l=C6=B0=E1=BB=A3ng/ki=E1=BB=83u/gi=C3=A1=20tr=C3=AAn=20?=
+ =?UTF-8?q?=C4=91=C6=B0=E1=BB=9Dng=20t=E1=BA=A1o=20=C4=91=C6=A1n=20storefr?=
+ =?UTF-8?q?ont=20v=C3=A0=20=C4=91=E1=BA=A1i=20l=C3=BD?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- cap 1.000 chai đọc b.quantity (không tồn tại) nên không bao giờ chặn → dùng bottleQuantity
+- parseOrderQuantity + INVENTORY_CONFIG.ORDER_LIMITS: số nguyên dương hữu hạn, có chặn trên, số dòng tối đa
+- productId phải là chuỗi, price không âm/NaN/Infinity, phần tử items phải là object
+- đại lý: không áp trần 1.000 chai (chờ quyết định), chỉ chặn an toàn số học 100.000/dòng
+- test: tests/phase1_order_quantity_validation_test.mjs (24 ca, mock DB)
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Rn2NhFMtfaiHCB3woGT3YV
+---
+ src/app/api/dealer/orders/route.ts            |  24 +++-
+ src/app/api/orders/route.ts                   |  31 ++++-
+ src/config/inventory.ts                       |  27 ++++
+ .../phase1_order_quantity_validation_test.mjs | 123 ++++++++++++++++++
+ 4 files changed, 200 insertions(+), 5 deletions(-)
+ create mode 100644 tests/phase1_order_quantity_validation_test.mjs
+
+diff --git a/src/app/api/dealer/orders/route.ts b/src/app/api/dealer/orders/route.ts
+index d38e6ca..ea1814e 100644
+--- a/src/app/api/dealer/orders/route.ts
++++ b/src/app/api/dealer/orders/route.ts
+@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
+ import { query, pool } from '@/lib/db';
+ import { getPartnerSession } from '@/lib/partner/auth';
+ import { reserveStock, InsufficientStockError } from '@/lib/inventory';
+-import { INVENTORY_CONFIG, calculateShippingFee } from '@/config/inventory';
++import { INVENTORY_CONFIG, calculateShippingFee, parseOrderQuantity } from '@/config/inventory';
+ import { hcmStoreSql } from '@/config/service-area';
+ 
+ export const dynamic = 'force-dynamic';
+@@ -56,9 +56,29 @@ export async function POST(request: Request) {
+     const resolvedItems: any[] = [];
+     const stockItemsToReserve: any[] = [];
+ 
++    // V3: validate đầu vào đơn sỉ (không áp trần 1.000 chai cho đại lý — chờ quyết định nghiệp vụ)
++    if (rawItems.length > INVENTORY_CONFIG.ORDER_LIMITS.MAX_LINES) {
++      return NextResponse.json(
++        { success: false, error: `Đơn sỉ tối đa ${INVENTORY_CONFIG.ORDER_LIMITS.MAX_LINES} dòng sản phẩm.`, code: 'INVALID_ORDER_ITEMS' },
++        { status: 400 }
++      );
++    }
++    for (const item of rawItems) {
++      const pid = item && typeof item === 'object' ? (item.productId || item.id) : undefined;
++      const q = item && typeof item === 'object'
++        ? parseOrderQuantity(item.quantity, INVENTORY_CONFIG.ORDER_LIMITS.MAX_DEALER_LINE_QUANTITY)
++        : null;
++      if (typeof pid !== 'string' || q === null) {
++        return NextResponse.json(
++          { success: false, error: 'Danh sách sản phẩm hoặc số lượng không hợp lệ (số lượng phải là số nguyên dương).', code: 'INVALID_ORDER_ITEMS' },
++          { status: 400 }
++        );
++      }
++    }
++
+     for (const item of rawItems) {
+       const pId = item.productId || item.id;
+-      const qty = Math.max(1, Math.round(Number(item.quantity) || 1));
++      const qty = parseOrderQuantity(item.quantity, INVENTORY_CONFIG.ORDER_LIMITS.MAX_DEALER_LINE_QUANTITY) as number;
+ 
+       const prodRes = await query(`SELECT id, name, price FROM products WHERE id = $1 LIMIT 1;`, [pId]);
+       if (prodRes.rows.length === 0) {
+diff --git a/src/app/api/orders/route.ts b/src/app/api/orders/route.ts
+index a5134cb..5b85ebf 100644
+--- a/src/app/api/orders/route.ts
++++ b/src/app/api/orders/route.ts
+@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
+ import { NextResponse } from 'next/server';
+ import { query, initDatabase, pool } from '@/lib/db';
+ import { getUserSession } from '@/lib/auth';
++import { INVENTORY_CONFIG as ORDER_CFG, parseOrderQuantity } from '@/config/inventory';
+ import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area';
+ import { sendOrderEmail } from '@/lib/email/service';
+ import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
+@@ -98,10 +99,34 @@ export async function POST(request: Request) {
+ 
+     // 5. Chuẩn hóa danh sách sản phẩm
+     const rawItems = Array.isArray(body.items) ? body.items : [];
++
++    // V3: validate đầu vào — số dòng, kiểu dữ liệu, số lượng nguyên dương hữu hạn, giá không âm/NaN/Infinity
++    const invalidItems = (error: string) =>
++      NextResponse.json({ success: false, error, code: 'INVALID_ORDER_ITEMS' }, { status: 400 });
++    if (rawItems.length > ORDER_CFG.ORDER_LIMITS.MAX_LINES) {
++      return invalidItems(`Đơn hàng tối đa ${ORDER_CFG.ORDER_LIMITS.MAX_LINES} dòng sản phẩm.`);
++    }
++    for (const item of rawItems) {
++      if (!item || typeof item !== 'object' || Array.isArray(item)) {
++        return invalidItems('Danh sách sản phẩm không hợp lệ.');
++      }
++      const pid = item.productId ?? item.id;
++      if (pid !== undefined && pid !== null && (typeof pid !== 'string' || pid.length > 100)) {
++        return invalidItems('Mã sản phẩm không hợp lệ.');
++      }
++      if (parseOrderQuantity(item.quantity, ORDER_CFG.ORDER_LIMITS.MAX_LINE_QUANTITY) === null) {
++        return invalidItems(`Số lượng sản phẩm phải là số nguyên từ 1 đến ${ORDER_CFG.ORDER_LIMITS.MAX_LINE_QUANTITY}.`);
++      }
++      if (item.price !== undefined && item.price !== null) {
++        const p = typeof item.price === 'number' || typeof item.price === 'string' ? Number(item.price) : NaN;
++        if (!Number.isFinite(p) || p < 0) return invalidItems('Giá sản phẩm không hợp lệ.');
++      }
++    }
++
+     const normalizedItems = rawItems.map((item: any) => {
+       const name = (item.name || item.productName || item.title || 'Sản phẩm').toString();
+       const price = Math.round(Number(item.price) || 0);
+-      const quantity = Math.max(1, Math.round(Number(item.quantity) || 1));
++      const quantity = parseOrderQuantity(item.quantity, ORDER_CFG.ORDER_LIMITS.MAX_LINE_QUANTITY) as number;
+       const unit = item.unit || 'Lốc';
+       const thumbnail = item.thumbnail || null;
+       const productId = item.productId || item.id || null;
+@@ -335,8 +360,8 @@ export async function POST(request: Request) {
+       const { expandedBottles, comboSnapshots } = await expandComboItems(revalidatedItems, client);
+ 
+       // RÀNG BUỘC SỐ LƯỢNG TỐI ĐA 1.000 CHAI TRÊN TOÀN BỘ ĐƠN HÀNG
+-      const totalBottlesInOrder = expandedBottles.reduce((sum: number, b: any) => sum + (Number(b.quantity) || 0), 0);
+-      if (totalBottlesInOrder > 1000) {
++      const totalBottlesInOrder = expandedBottles.reduce((sum: number, b: any) => sum + (Number(b.bottleQuantity) || 0), 0);
++      if (totalBottlesInOrder > ORDER_CFG.ORDER_LIMITS.MAX_BOTTLES_PER_ORDER) {
+         return NextResponse.json(
+           {
+             success: false,
+diff --git a/src/config/inventory.ts b/src/config/inventory.ts
+index 560d3d6..e4d766d 100644
+--- a/src/config/inventory.ts
++++ b/src/config/inventory.ts
+@@ -10,6 +10,15 @@ export const INVENTORY_CONFIG = {
+   // Ngưỡng cảnh báo sản phẩm sắp hết hàng tại chi nhánh
+   LOW_STOCK_THRESHOLD: 5,
+ 
++  // Giới hạn đầu vào khi tạo đơn (V3): số chai tối đa / đơn lẻ trên storefront, số dòng, số lượng mỗi dòng
++  ORDER_LIMITS: {
++    MAX_BOTTLES_PER_ORDER: 1000,
++    MAX_LINE_QUANTITY: 1000,
++    MAX_LINES: 100,
++    // Đơn sỉ đại lý: chỉ là chặn an toàn số học (không phải hạn mức nghiệp vụ)
++    MAX_DEALER_LINE_QUANTITY: 100_000,
++  },
++
+   // Chính sách chống lạm dụng COD
+   COD_VALIDATION: {
+     // Giá trị đơn COD tối đa (10 triệu - đơn lớn hơn cần xác nhận)
+@@ -55,6 +64,24 @@ export const INVENTORY_CONFIG = {
+  * Nếu chưa bật khoảng cách -> 30.000đ.
+  * Nếu bật khoảng cách -> tra cứu theo bậc km tương ứng.
+  */
++/**
++ * Chuẩn hóa số lượng từ client: thiếu (undefined/null) => 1 (giữ hành vi cũ);
++ * còn lại phải là số nguyên dương hữu hạn (number hoặc chuỗi số nguyên) và <= max. Sai => null.
++ */
++export function parseOrderQuantity(raw: unknown, max: number): number | null {
++  if (raw === undefined || raw === null) return 1;
++  let n: number;
++  if (typeof raw === 'number') {
++    n = raw;
++  } else if (typeof raw === 'string' && /^\s*\d{1,9}\s*$/.test(raw)) {
++    n = Number(raw.trim());
++  } else {
++    return null;
++  }
++  if (!Number.isSafeInteger(n) || n < 1 || n > max) return null;
++  return n;
++}
++
+ export function calculateShippingFee(
+   subtotal: number,
+   distanceKm?: number | null
+diff --git a/tests/phase1_order_quantity_validation_test.mjs b/tests/phase1_order_quantity_validation_test.mjs
+new file mode 100644
+index 0000000..8970252
+--- /dev/null
++++ b/tests/phase1_order_quantity_validation_test.mjs
+@@ -0,0 +1,123 @@
++/**
++ * PHA 1 / mục 5 — V3 + validate đầu vào tạo đơn
++ *  V3: trần 1.000 chai/đơn (storefront) phải THỰC SỰ chặn (trước đây đọc b.quantity — trường không tồn tại — nên không bao giờ chặn).
++ *  Validate: số lượng phải là số nguyên dương hữu hạn, có chặn trên; productId phải là chuỗi; giá không âm/không NaN/Infinity;
++ *  số dòng có giới hạn. Áp dụng cho storefront (/api/orders) và đại lý (/api/dealer/orders).
++ * Không chạm DB: pool.query / pool.connect là router SQL giả.
++ * Chạy: npx tsx tests/phase1_order_quantity_validation_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++
++import assert from 'node:assert/strict';
++
++const { pool } = await import('../src/lib/db.ts');
++const { signUserToken } = await import('../src/lib/auth.ts');
++const cfg = await import('../src/config/inventory.ts');
++const ordersRoute = await import('../src/app/api/orders/route.ts');
++const dealerRoute = await import('../src/app/api/dealer/orders/route.ts');
++
++let ctx;
++const resetCtx = () => { ctx = { inserts: [] }; };
++async function fakeQuery(sql, params = []) {
++  const s = String(sql).replace(/\s+/g, ' ').trim();
++  if (/FROM partner_profiles/.test(s)) {
++    return { rows: [{ id: 'pp1', userId: 'u1', partnerType: 'DEALER', lifecycleStatus: 'ACTIVE', phone: '0900000001',
++      fullName: 'Dai Ly', email: 'd@x.vn', tierId: 'tier_bronze' }], rowCount: 1 };
++  }
++  if (/FROM dealer_tiers/.test(s)) return { rows: [{ id: 'tier_bronze', tier_name: 'Đồng', tier_code: 'TIER_1', discount_rate: 15 }], rowCount: 1 };
++  if (/FROM products WHERE id = \$1/.test(s)) return { rows: [{ id: params[0], name: 'Nước mắm', price: 4000, unit: 'Chai' }], rowCount: 1 };
++  if (/FROM stores/.test(s) && /is_active/.test(s)) return { rows: [{ code: params[0] }], rowCount: 1 };
++  if (/FROM store_inventory/.test(s) && /FOR UPDATE/.test(s)) {
++    return { rows: (params[1] || []).map((id) => ({ product_id: id, stock_quantity: 1e9, reserved: 0, safety_stock: 0 })), rowCount: (params[1] || []).length };
++  }
++  if (/INSERT INTO orders/.test(s)) ctx.inserts.push(params);
++  return { rows: [], rowCount: 0 };
++}
++pool.query = fakeQuery;
++pool.connect = async () => ({ query: fakeQuery, release() {} });
++
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push([name, true]); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push([name, false]); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const origErr = console.error; console.error = process.env.TEST_DEBUG ? origErr : () => {};
++
++const line = (over = {}) => ({ productId: 'prod-sb-01', name: 'Nước mắm', price: 4000, quantity: 1, unit: 'Chai', ...over });
++async function postOrder(items) {
++  const body = { fullName: 'Khach Test', phone: '0912345678', address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
++    province: 'Hồ Chí Minh', paymentMethod: 'bank_transfer', items };
++  const res = await ordersRoute.POST(new Request('http://t/api/orders', { method: 'POST', body: JSON.stringify(body) }));
++  return { status: res.status, body: await res.json() };
++}
++const token = await signUserToken({ id: 'u1', email: 'd@x.vn', fullName: 'Dai Ly', phone: '0900000001' });
++async function postDealer(items) {
++  const res = await dealerRoute.POST(new Request('http://t/api/dealer/orders', {
++    method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify({ items }) }));
++  return { status: res.status, body: await res.json() };
++}
++const rejected = (r) => { assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 160)); assert.equal(ctx.inserts.length, 0, 'không được tạo đơn'); };
++
++console.log('V3 — trần 1.000 chai (storefront)');
++await test('2 dòng × 600 chai (tổng 1.200) → 400, không tạo đơn', async () => {
++  resetCtx();
++  rejected(await postOrder([line({ productId: 'prod-sb-01', quantity: 600 }), line({ productId: 'prod-sb-02', quantity: 600 })]));
++});
++await test('đúng 1.000 chai → không bị chặn bởi trần', async () => {
++  resetCtx();
++  const r = await postOrder([line({ quantity: 1000 })]);
++  assert.notEqual(r.body.code, 'INVALID_ORDER_ITEMS');
++  assert.ok(!/1\.000 chai/.test(String(r.body.error || '')), 'bị chặn oan ở đúng 1.000 chai');
++});
++
++console.log('Validate số lượng — storefront');
++for (const [label, q] of [['âm', -5], ['0', 0], ['thập phân 1.5', 1.5], ['chuỗi "abc"', 'abc'], ['chuỗi "Infinity"', 'Infinity'],
++  ['rất lớn 1e30', 1e30], ['mảng', [1]], ['object', {}], ['boolean', true], ['vượt trần dòng 1001', 1001]]) {
++  await test(`quantity ${label} → 400`, async () => { resetCtx(); rejected(await postOrder([line({ quantity: q })])); });
++}
++await test('quantity thiếu → vẫn mặc định 1 (giữ hành vi cũ)', async () => {
++  resetCtx();
++  const it = line(); delete it.quantity;
++  const r = await postOrder([it]);
++  assert.notEqual(r.body.code, 'INVALID_ORDER_ITEMS');
++});
++await test('quantity chuỗi số nguyên "3" → chấp nhận', async () => {
++  resetCtx();
++  const r = await postOrder([line({ quantity: '3' })]);
++  assert.notEqual(r.body.code, 'INVALID_ORDER_ITEMS');
++});
++
++console.log('Validate kiểu / giá / số dòng — storefront');
++await test('productId là số (không phải chuỗi) → 400 (không phải 500)', async () => { resetCtx(); rejected(await postOrder([line({ productId: 12345 })])); });
++await test('phần tử items là null → 400', async () => { resetCtx(); rejected(await postOrder([null])); });
++await test('price âm → 400', async () => { resetCtx(); rejected(await postOrder([line({ price: -1000 })])); });
++await test('price "Infinity" → 400', async () => { resetCtx(); rejected(await postOrder([line({ price: 'Infinity' })])); });
++await test(`quá ${cfg.INVENTORY_CONFIG.ORDER_LIMITS?.MAX_LINES} dòng → 400`, async () => {
++  resetCtx();
++  const many = Array.from({ length: (cfg.INVENTORY_CONFIG.ORDER_LIMITS?.MAX_LINES ?? 100) + 1 }, (_, i) => line({ productId: `prod-${i}` }));
++  rejected(await postOrder(many));
++});
++
++console.log('Validate số lượng — đại lý');
++await test('50 chai + dòng quantity âm → 400 (trước đây bị ép thành 1 và nhận đơn)', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 50 }), line({ productId: 'p2', quantity: -5 })]));
++});
++await test('50 chai + dòng quantity "abc" → 400', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 50 }), line({ productId: 'p2', quantity: 'abc' })]));
++});
++await test('50 chai + dòng quantity 1.5 → 400', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 50 }), line({ productId: 'p2', quantity: 1.5 })]));
++});
++await test('quantity 1e30 → 400 (không còn rơi xuống 409 tồn kho)', async () => {
++  resetCtx(); rejected(await postDealer([line({ productId: 'p1', quantity: 1e30 })]));
++});
++await test('đơn sỉ hợp lệ 50 chai vẫn tạo được', async () => {
++  resetCtx();
++  const r = await postDealer([line({ productId: 'p1', quantity: 50 })]);
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 160));
++});
++
++console.error = origErr;
++const failed = results.filter(([, ok]) => !ok).length;
++console.log(`\n${results.length - failed}/${results.length} pass`);
++process.exit(failed ? 1 : 0);
+-- 
+2.43.0
+

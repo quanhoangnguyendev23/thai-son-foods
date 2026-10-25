@@ -561,19 +561,16 @@ export default function HeaderAmazon() {
                 {isEn ? 'All' : 'Tất cả'}
               </button>
               {taskbagItems.map((item) => {
-                const Icon = item.icon;
                 const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-11 max-md:justify-center max-md:px-1 max-md:text-[14px]');
                 if (item.action === 'open-support') {
                   return (
                     <button key={item.id} type="button" onClick={() => setIsSupportModalOpen(true)} className={cls}>
-                      <Icon className={cn('w-4 h-4', item.color)} />
                       {item.label}
                     </button>
                   );
                 }
                 return (
                   <Link key={item.id} href={item.href} className={cls}>
-                    <Icon className={cn('w-4 h-4', item.color)} />
                     {item.label}
                     {item.badge && (
                       <span className="px-1.5 text-[10px] text-white bg-red-500 rounded-full animate-pulse">{item.badge}</span>

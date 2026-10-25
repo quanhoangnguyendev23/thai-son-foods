@@ -22,6 +22,8 @@ import {
   Star,
   MessageCircle,
   Heart,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useUserAuth } from '@/context/UserAuthContext';
 import WishlistPanel from '@/components/product/WishlistPanel';
@@ -72,6 +74,90 @@ interface UserReviewRecord {
   createdAt: string;
 }
 
+const PAGE_SIZE = 5;
+
+/** Dãy số trang rút gọn: 1 … 4 5 6 … 20 */
+function buildPageList(current: number, total: number): Array<number | 'gap'> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set<number>([1, total, current, current - 1, current + 1]);
+  const sorted = Array.from(pages).filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: Array<number | 'gap'> = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push('gap');
+    out.push(p);
+  });
+  return out;
+}
+
+function Pagination({
+  page,
+  totalItems,
+  onChange,
+  language,
+}: {
+  page: number;
+  totalItems: number;
+  onChange: (p: number) => void;
+  language: string;
+}) {
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  if (totalPages <= 1) return null;
+  const from = (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, totalItems);
+  const btn =
+    'min-w-9 h-9 px-2 inline-flex items-center justify-center rounded-xl border text-sm transition-colors cursor-pointer';
+  return (
+    <nav
+      className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2"
+      aria-label={language === 'en' ? 'Pagination' : 'Phân trang'}
+    >
+      <p className="text-xs text-gray-500">
+        {language === 'en' ? `Showing ${from}-${to} of ${totalItems}` : `Hiển thị ${from}-${to} / ${totalItems}`}
+      </p>
+      <div className="flex items-center gap-1.5 flex-wrap justify-center">
+        <button
+          type="button"
+          onClick={() => onChange(page - 1)}
+          disabled={page <= 1}
+          className={cn(btn, 'border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')}
+          aria-label={language === 'en' ? 'Previous page' : 'Trang trước'}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        {buildPageList(page, totalPages).map((p, i) =>
+          p === 'gap' ? (
+            <span key={`gap-${i}`} className="px-1 text-gray-400">…</span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              onClick={() => onChange(p)}
+              aria-current={p === page ? 'page' : undefined}
+              className={cn(
+                btn,
+                p === page
+                  ? 'bg-emerald-800 border-emerald-800 text-white'
+                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              {p}
+            </button>
+          )
+        )}
+        <button
+          type="button"
+          onClick={() => onChange(page + 1)}
+          disabled={page >= totalPages}
+          className={cn(btn, 'border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')}
+          aria-label={language === 'en' ? 'Next page' : 'Trang sau'}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </nav>
+  );
+}
+
 function AccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -81,6 +167,16 @@ function AccountContent() {
   const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'reviews' | 'wishlist'>('orders');
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [orderPage, setOrderPage] = useState(1);
+  const [reviewPage, setReviewPage] = useState(1);
+  const changeOrderPage = (p: number) => {
+    setOrderPage(p);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 300, behavior: 'smooth' });
+  };
+  const changeReviewPage = (p: number) => {
+    setReviewPage(p);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 300, behavior: 'smooth' });
+  };
   const [userReviews, setUserReviews] = useState<UserReviewRecord[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -446,7 +542,8 @@ function AccountContent() {
                   </Link>
                 </div>
               ) : (
-                orders.map((order) => (
+                <>
+                {orders.slice((Math.min(orderPage, Math.max(1, Math.ceil(orders.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(orderPage, Math.max(1, Math.ceil(orders.length / PAGE_SIZE))) * PAGE_SIZE).map((order) => (
                   <div
                     key={order.id}
                     className="bg-white rounded-3xl border border-gray-100 shadow-2xs p-5 md:p-6 transition-all hover:border-emerald-200"
@@ -530,7 +627,14 @@ function AccountContent() {
                       </div>
                     </div>
                   </div>
-                ))
+                ))}
+                <Pagination
+                  page={Math.min(orderPage, Math.max(1, Math.ceil(orders.length / PAGE_SIZE)))}
+                  totalItems={orders.length}
+                  onChange={changeOrderPage}
+                  language={language}
+                />
+                </>
               )}
             </div>
           ) : activeTab === 'profile' ? (
@@ -742,7 +846,7 @@ function AccountContent() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {userReviews.map((rev) => (
+                    {userReviews.slice((Math.min(reviewPage, Math.max(1, Math.ceil(userReviews.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(reviewPage, Math.max(1, Math.ceil(userReviews.length / PAGE_SIZE))) * PAGE_SIZE).map((rev) => (
                       <article
                         key={rev.id}
                         className="border border-gray-100 rounded-2xl p-5 bg-gray-50/40 hover:bg-white hover:border-gray-200 transition-all space-y-3"
@@ -817,6 +921,12 @@ function AccountContent() {
                         )}
                       </article>
                     ))}
+                    <Pagination
+                      page={Math.min(reviewPage, Math.max(1, Math.ceil(userReviews.length / PAGE_SIZE)))}
+                      totalItems={userReviews.length}
+                      onChange={changeReviewPage}
+                      language={language}
+                    />
                   </div>
                 )}
               </div>

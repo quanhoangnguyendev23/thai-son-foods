@@ -6,6 +6,7 @@ import {
   getSellableQuantity,
   cleanupExpiredReservationsThrottled,
 } from '@/lib/inventory';
+import { hcmStoreSql } from '@/config/service-area';
 import { calculateHaversineDistance, estimateCoordinatesFromAddress } from '@/lib/geo';
 
 export const dynamic = 'force-dynamic';
@@ -76,6 +77,14 @@ export async function POST(request: Request) {
       }
     }
 
+    // Giới hạn tối đa từng dòng (đơn vị gói/lốc của dòng đó) để UI chặn nút + / ô nhập ngay từ đầu
+    const itemLimits: Array<{ productId: string; maxQuantity: number }> = [];
+    for (const it of items.slice(0, 30)) {
+      const pid = typeof it?.productId === 'string' ? it.productId.trim() : '';
+      if (!pid) continue;
+      itemLimits.push({ productId: pid, maxQuantity: await getSellableQuantity(targetStoreCode, it) });
+    }
+
     // Tính khoảng cách chi nhánh hiện tại nếu có tọa độ
     let currentStoreDistanceKm: number | null = null;
     if (customerCoords) {
@@ -105,7 +114,7 @@ export async function POST(request: Request) {
 
     if (!isAvailable || status === 'out') {
       const storesRes = await query(
-        `SELECT code, name, address, phone, latitude, longitude FROM stores WHERE is_active = true AND code != $1 ORDER BY code ASC;`,
+        `SELECT code, name, address, phone, latitude, longitude FROM stores s WHERE s.is_active = true AND ${hcmStoreSql('s')} AND s.code != $1 ORDER BY s.code ASC;`,
         [targetStoreCode]
       );
 
@@ -158,8 +167,8 @@ export async function POST(request: Request) {
     if (customerCoords) {
       const otherStoresRes = await query(
         `SELECT code, name, address, phone, latitude, longitude
-         FROM stores
-         WHERE is_active = true AND code != $1 AND latitude IS NOT NULL AND longitude IS NOT NULL;`,
+         FROM stores s
+         WHERE s.is_active = true AND ${hcmStoreSql('s')} AND s.code != $1 AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL;`,
         [targetStoreCode]
       );
 
@@ -216,6 +225,7 @@ export async function POST(request: Request) {
       maxQuantity, // số lượng tối đa có thể đặt
       lowCount, // chỉ trả số khi <= 10
       isAvailable,
+      itemLimits, // Tối đa từng dòng giỏ tại chi nhánh (gói/lốc)
       shortItems, // Dòng giỏ vượt số lượng bán được tại chi nhánh (rỗng nếu đủ hàng)
       availableStock: maxQuantity, // Tương thích ngược cho các component hiện có
       alternativeStores, // Chỉ tên, địa chỉ, trạng thái và khoảng cách khi kho hiện tại thiếu hàng

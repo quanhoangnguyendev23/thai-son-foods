@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -27,11 +28,30 @@ export default function QuantitySelector({
 }: QuantitySelectorProps) {
   const { language } = useLanguage();
 
+  // Giữ chuỗi người dùng đang gõ để có thể xóa hết rồi nhập lại; chỉ kẹp về [min, max] khi rời ô hoặc vượt trần
+  const [draft, setDraft] = useState<string>(String(quantity));
+  useEffect(() => {
+    setDraft(String(quantity));
+  }, [quantity]);
+
+  const clamp = (v: number) => Math.min(max, Math.max(min, v));
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (!isNaN(val) && val >= min && val <= max && onChange) {
-      onChange(val);
+    const raw = e.target.value.replace(/[^\d]/g, '');
+    if (raw === '') {
+      setDraft('');
+      return;
     }
+    const val = clamp(parseInt(raw, 10));
+    setDraft(String(val));
+    if (onChange) onChange(val);
+  };
+
+  const handleBlur = () => {
+    const val = parseInt(draft, 10);
+    const fixed = isNaN(val) ? clamp(quantity) : clamp(val);
+    setDraft(String(fixed));
+    if (onChange && fixed !== quantity) onChange(fixed);
   };
 
   const sizes = {
@@ -66,8 +86,10 @@ export default function QuantitySelector({
       </button>
       <input
         type="number"
-        value={quantity}
+        value={draft}
         onChange={handleChange}
+        onBlur={handleBlur}
+        inputMode="numeric"
         min={min}
         max={max}
         className={cn(

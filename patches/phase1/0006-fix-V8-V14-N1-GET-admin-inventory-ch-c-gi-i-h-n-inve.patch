@@ -1,0 +1,280 @@
+From 3276493e5f52b17de74825b91205aeac202d2f67 Mon Sep 17 00:00:00 2001
+From: "Claude (PHA 1)" <dangnguyeni5ss@gmail.com>
+Date: Sun, 25 Oct 2026 14:04:20 +0700
+Subject: [PATCH 6/6] =?UTF-8?q?fix(V8,V14,N1):=20GET=20admin/inventory=20c?=
+ =?UTF-8?q?h=E1=BB=89=20=C4=91=E1=BB=8Dc;=20gi=E1=BB=9Bi=20h=E1=BA=A1n=20i?=
+ =?UTF-8?q?nventory/check;=20combo-details=20theo=20ph=E1=BA=A1m=20vi=20ch?=
+ =?UTF-8?q?i=20nh=C3=A1nh?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- V8: bỏ INSERT store_inventory trong GET admin/inventory (sản phẩm chưa có dòng hiển thị 0)
+- V14: inventory/check tối đa 30 dòng (400) và 120 request/phút/IP (429), kiểm tra trước mọi truy vấn DB
+- N1: combo-details dùng getStoreScope — STORE_STAFF luôn bị ép về chi nhánh của mình (fail-closed)
+- test: tests/phase1_admin_inventory_readonly_test.mjs (8 ca) + helper mock next/headers
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Rn2NhFMtfaiHCB3woGT3YV
+---
+ .../admin/inventory/combo-details/route.ts    |   5 +-
+ src/app/api/admin/inventory/route.ts          |  11 +-
+ src/app/api/inventory/check/route.ts          |  21 ++++
+ tests/helpers/next_headers_mock.mjs           |   9 ++
+ tests/helpers/next_headers_mock_hooks.mjs     |   7 ++
+ tests/helpers/register_next_headers_mock.mjs  |   3 +
+ .../phase1_admin_inventory_readonly_test.mjs  | 117 ++++++++++++++++++
+ 7 files changed, 162 insertions(+), 11 deletions(-)
+ create mode 100644 tests/helpers/next_headers_mock.mjs
+ create mode 100644 tests/helpers/next_headers_mock_hooks.mjs
+ create mode 100644 tests/helpers/register_next_headers_mock.mjs
+ create mode 100644 tests/phase1_admin_inventory_readonly_test.mjs
+
+diff --git a/src/app/api/admin/inventory/combo-details/route.ts b/src/app/api/admin/inventory/combo-details/route.ts
+index 3d0685d..0289b6e 100644
+--- a/src/app/api/admin/inventory/combo-details/route.ts
++++ b/src/app/api/admin/inventory/combo-details/route.ts
+@@ -1,6 +1,6 @@
+ import { NextRequest, NextResponse } from 'next/server';
+ import { getAdminSession } from '@/lib/auth';
+-import { hasPermission } from '@/lib/rbac';
++import { hasPermission, getStoreScope } from '@/lib/rbac';
+ import { getComboStockDetails } from '@/lib/inventory';
+ 
+ export const dynamic = 'force-dynamic';
+@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
+     }
+ 
+     const { searchParams } = new URL(req.url);
+-    const storeCode = searchParams.get('storeCode') || 'NH';
++    // N1: STORE_STAFF chỉ được xem chi nhánh của mình (fail-closed nếu thiếu chi nhánh)
++    const storeCode = getStoreScope(session) || searchParams.get('storeCode') || 'NH';
+     const comboId = searchParams.get('comboId') || searchParams.get('slug') || '';
+ 
+     if (!comboId) {
+diff --git a/src/app/api/admin/inventory/route.ts b/src/app/api/admin/inventory/route.ts
+index 05bcde6..14ba357 100644
+--- a/src/app/api/admin/inventory/route.ts
++++ b/src/app/api/admin/inventory/route.ts
+@@ -90,15 +90,8 @@ export async function GET(req: NextRequest) {
+       await ensureFreshSheetInventory();
+     }
+ 
+-    // Đảm bảo mỗi sản phẩm đều có 1 bản ghi tồn kho riêng cho cửa hàng này (không dùng chung)
+-    // (chế độ sheet: bản ghi mới bắt đầu từ 0, số thật do sheet quyết định)
+-    await query(
+-      `INSERT INTO store_inventory (id, store_code, product_id, stock_quantity, updated_by)
+-       SELECT 'inv_' || $1 || '_' || p.id, $1, p.id, $2::int, $1
+-       FROM products p
+-       ON CONFLICT (store_code, product_id) DO NOTHING;`,
+-      [requestedStore, sheetMode ? 0 : 100]
+-    );
++    // V8: GET chỉ đọc — không còn tự INSERT bản ghi tồn kho. Sản phẩm chưa có dòng tồn hiển thị 0
++    // (COALESCE bên dưới); dòng được tạo khi sheet đồng bộ hoặc khi admin PUT cập nhật tồn.
+ 
+     const sql = `
+       SELECT 
+diff --git a/src/app/api/inventory/check/route.ts b/src/app/api/inventory/check/route.ts
+index e9bdbb3..55b4d2c 100644
+--- a/src/app/api/inventory/check/route.ts
++++ b/src/app/api/inventory/check/route.ts
+@@ -7,15 +7,36 @@ import {
+   cleanupExpiredReservationsThrottled,
+ } from '@/lib/inventory';
+ import { hcmStoreSql } from '@/config/service-area';
++import { checkRequestRateLimit } from '@/lib/rateLimit';
+ import { calculateHaversineDistance, estimateCoordinatesFromAddress } from '@/lib/geo';
+ 
+ export const dynamic = 'force-dynamic';
+ 
++// V14: endpoint công khai, mỗi dòng giỏ kéo theo nhiều truy vấn → giới hạn số dòng và tần suất theo IP
++const MAX_CHECK_ITEMS = 30;
++const CHECK_RATE_LIMIT_PER_MIN = 120;
++
+ export async function POST(request: Request) {
+   try {
++    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
++    const rate = checkRequestRateLimit(`inv-check:ip:${ip}`, CHECK_RATE_LIMIT_PER_MIN, 60 * 1000);
++    if (rate.isBlocked) {
++      return NextResponse.json(
++        { success: false, error: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít giây.' },
++        { status: 429, headers: { 'Retry-After': String(rate.resetInSeconds) } }
++      );
++    }
++
+     const body = await request.json();
+     const { storeCode, items, lat, lng, latitude, longitude, province, district, address } = body;
+ 
++    if (Array.isArray(items) && items.length > MAX_CHECK_ITEMS) {
++      return NextResponse.json(
++        { success: false, error: `Giỏ hàng quá lớn để kiểm tra (tối đa ${MAX_CHECK_ITEMS} dòng).` },
++        { status: 400 }
++      );
++    }
++
+     // 0. Quét dọn reservation quá hạn (tự throttle 60s)
+     await cleanupExpiredReservationsThrottled();
+ 
+diff --git a/tests/helpers/next_headers_mock.mjs b/tests/helpers/next_headers_mock.mjs
+new file mode 100644
+index 0000000..a0bd773
+--- /dev/null
++++ b/tests/helpers/next_headers_mock.mjs
+@@ -0,0 +1,9 @@
++// Thay thế 'next/headers' trong test: cookie lấy từ globalThis.__TEST_COOKIES__ (không có => giống ngoài request scope).
++export async function cookies() {
++  const jar = globalThis.__TEST_COOKIES__;
++  if (!jar) throw new Error('cookies() ngoài request scope');
++  return { get: (name) => (jar[name] === undefined ? undefined : { name, value: jar[name] }) };
++}
++export async function headers() {
++  throw new Error('headers() ngoài request scope');
++}
+diff --git a/tests/helpers/next_headers_mock_hooks.mjs b/tests/helpers/next_headers_mock_hooks.mjs
+new file mode 100644
+index 0000000..ab371e8
+--- /dev/null
++++ b/tests/helpers/next_headers_mock_hooks.mjs
+@@ -0,0 +1,7 @@
++// Resolve hook: 'next/headers' -> tests/helpers/next_headers_mock.mjs
++export async function resolve(specifier, context, nextResolve) {
++  if (specifier === 'next/headers') {
++    return { url: new URL('./next_headers_mock.mjs', import.meta.url).href, shortCircuit: true };
++  }
++  return nextResolve(specifier, context);
++}
+diff --git a/tests/helpers/register_next_headers_mock.mjs b/tests/helpers/register_next_headers_mock.mjs
+new file mode 100644
+index 0000000..cff1399
+--- /dev/null
++++ b/tests/helpers/register_next_headers_mock.mjs
+@@ -0,0 +1,3 @@
++// Dùng: npx tsx --import ./tests/helpers/register_next_headers_mock.mjs tests/<file>.mjs
++import { register } from 'node:module';
++register('./next_headers_mock_hooks.mjs', import.meta.url);
+diff --git a/tests/phase1_admin_inventory_readonly_test.mjs b/tests/phase1_admin_inventory_readonly_test.mjs
+new file mode 100644
+index 0000000..45bbf02
+--- /dev/null
++++ b/tests/phase1_admin_inventory_readonly_test.mjs
+@@ -0,0 +1,117 @@
++/**
++ * PHA 1 / mục 6 — V8 + V14 + N1
++ *  V8:  GET /api/admin/inventory KHÔNG được ghi DB (trước đây INSERT ... ON CONFLICT DO NOTHING mỗi lần xem).
++ *  V14: POST /api/inventory/check giới hạn số dòng items và rate-limit theo IP.
++ *  N1:  GET /api/admin/inventory/combo-details dùng getStoreScope: STORE_STAFF chỉ xem chi nhánh của mình.
++ * Không chạm DB: pool.query / pool.connect là router SQL giả. Cần mock 'next/headers' ngoài request scope:
++ *   npx tsx --import ./tests/helpers/register_next_headers_mock.mjs tests/phase1_admin_inventory_readonly_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++process.env.INVENTORY_SOURCE = 'manual';          // tránh gọi Google Sheet qua mạng
++
++import assert from 'node:assert/strict';
++
++const { pool } = await import('../src/lib/db.ts');
++const { signAdminToken, ADMIN_COOKIE_NAME } = await import('../src/lib/auth.ts');
++const invAdmin = await import('../src/app/api/admin/inventory/route.ts');
++const comboDetails = await import('../src/app/api/admin/inventory/combo-details/route.ts');
++const check = await import('../src/app/api/inventory/check/route.ts');
++
++globalThis.__TEST_COOKIES__ = {};
++let mockActive = true;
++try { const { cookies } = await import('next/headers'); await cookies(); } catch { mockActive = false; }
++if (!mockActive) {
++  console.log('SKIP: chạy với --import ./tests/helpers/register_next_headers_mock.mjs (mock next/headers).');
++  process.exit(2);
++}
++
++let sqls = [];
++const ADMINS = {
++  adm_super: { id: 'adm_super', username: 'root', email: 'r@x.vn', full_name: 'Root', role: 'SUPER_ADMIN', store_code: null, is_active: true },
++  adm_staff: { id: 'adm_staff', username: 'staff7', email: 's@x.vn', full_name: 'Staff', role: 'STORE_STAFF', store_code: 'Q7', is_active: true },
++  adm_staff0: { id: 'adm_staff0', username: 'staff0', email: 's0@x.vn', full_name: 'Staff0', role: 'STORE_STAFF', store_code: null, is_active: true },
++};
++async function fakeQuery(sql, params = []) {
++  const s = String(sql).replace(/\s+/g, ' ').trim();
++  if (!/FROM admin_users/.test(s)) sqls.push(s);
++  if (/FROM admin_users/.test(s)) return { rows: ADMINS[params[0]] ? [ADMINS[params[0]]] : [], rowCount: 1 };
++  if (/FROM products WHERE id = \$1/.test(s)) return { rows: [{ id: params[0], name: 'Nước mắm', price: 4000, unit: 'Chai' }], rowCount: 1 };
++  return { rows: [], rowCount: 0 };
++}
++pool.query = fakeQuery;
++pool.connect = async () => ({ query: fakeQuery, release() {} });
++
++async function loginAs(id) {
++  const a = ADMINS[id];
++  globalThis.__TEST_COOKIES__ = {
++    [ADMIN_COOKIE_NAME]: await signAdminToken({ id: a.id, username: a.username, email: a.email, role: a.role }),
++  };
++}
++
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push([name, true]); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push([name, false]); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const origErr = console.error; console.error = process.env.TEST_DEBUG ? origErr : () => {};
++const writes = () => sqls.filter((s) => /^\s*(INSERT|UPDATE|DELETE|TRUNCATE|ALTER|CREATE|DROP)\b/i.test(s));
++
++console.log('V8 — GET admin/inventory không ghi');
++for (const who of ['adm_super', 'adm_staff']) {
++  await test(`GET (${who}) không phát sinh câu lệnh ghi nào`, async () => {
++    sqls = []; await loginAs(who);
++    const res = await invAdmin.GET(new Request('http://t/api/admin/inventory?storeCode=Q7'));
++    assert.equal(res.status, 200, JSON.stringify(await res.json()).slice(0, 160));
++    assert.deepEqual(writes(), [], 'GET đã ghi DB: ' + writes()[0]);
++  });
++}
++
++console.log('V14 — inventory/check');
++const post = (body, ip = '10.0.0.1') => check.POST(new Request('http://t/api/inventory/check', {
++  method: 'POST', headers: { 'x-forwarded-for': ip }, body: JSON.stringify(body) }));
++await test('items quá 30 dòng → 400 và không chạm DB', async () => {
++  sqls = [];
++  const items = Array.from({ length: 31 }, (_, i) => ({ productId: `p${i}`, quantity: 1 }));
++  const res = await post({ storeCode: 'NH', items }, '10.0.0.2');
++  assert.equal(res.status, 400);
++  assert.equal(sqls.length, 0, 'không được truy vấn DB khi đầu vào không hợp lệ');
++});
++await test('đúng 30 dòng → không bị chặn bởi giới hạn', async () => {
++  const items = Array.from({ length: 30 }, (_, i) => ({ productId: `p${i}`, quantity: 1 }));
++  const res = await post({ storeCode: 'NH', items }, '10.0.0.3');
++  assert.notEqual(res.status, 400); assert.notEqual(res.status, 429);
++});
++await test('vượt 120 request/phút từ cùng IP → 429; IP khác không bị ảnh hưởng', async () => {
++  let blockedAt = null;
++  for (let i = 1; i <= 130; i++) {
++    const res = await post({ items: [] }, '10.9.9.9');
++    if (res.status === 429) { blockedAt = i; break; }
++  }
++  assert.ok(blockedAt !== null && blockedAt <= 125, `không bị chặn (blockedAt=${blockedAt})`);
++  const other = await post({ items: [] }, '10.9.9.10');
++  assert.equal(other.status, 200);
++});
++
++console.log('N1 — combo-details theo getStoreScope');
++const getCombo = async (qs) => (await comboDetails.GET(new Request(`http://t/api/admin/inventory/combo-details?${qs}`))).json();
++await test('STORE_STAFF (Q7) xin storeCode=NH → chỉ nhận dữ liệu Q7', async () => {
++  await loginAs('adm_staff');
++  const r = await getCombo('storeCode=NH&comboId=prod-sb-01');
++  assert.equal(r.success, true, JSON.stringify(r).slice(0, 120));
++  assert.equal(r.data.storeCode, 'Q7');
++});
++await test('STORE_STAFF thiếu chi nhánh → fail-closed (không rơi về NH)', async () => {
++  await loginAs('adm_staff0');
++  const r = await getCombo('storeCode=NH&comboId=prod-sb-01');
++  assert.notEqual(r.data?.storeCode, 'NH');
++});
++await test('SUPER_ADMIN xin storeCode=NH → NH (giữ hành vi cũ)', async () => {
++  await loginAs('adm_super');
++  const r = await getCombo('storeCode=NH&comboId=prod-sb-01');
++  assert.equal(r.data.storeCode, 'NH');
++});
++
++console.error = origErr;
++const failed = results.filter(([, ok]) => !ok).length;
++console.log(`\n${results.length - failed}/${results.length} pass`);
++process.exit(failed ? 1 : 0);
+-- 
+2.43.0
+

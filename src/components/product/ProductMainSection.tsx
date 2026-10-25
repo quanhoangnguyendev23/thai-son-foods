@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import { useCartStore, getItemMaxQuantity } from '@/store/cart';
+import { useCartStore, getItemMaxQuantity, getItemBottleMultiplier } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useRouter } from 'next/navigation';
 import { Star, ChevronRight } from 'lucide-react';
@@ -214,8 +214,25 @@ export default function ProductMainSection({
   );
   const existingCartQty = currentCartItem?.quantity || 0;
 
-  // Số lượng tối đa có thể thêm vào giỏ hàng
-  const remainingCanAdd = Math.max(0, maxAvailableInBranch - existingCartQty);
+  // Tổng số CHAI của sản phẩm này đã nằm trong giỏ (mọi quy cách dùng chung một kho chai)
+  const bottlesInCartForProduct = cartItems.reduce((sum, it) => {
+    const sameProduct =
+      (!!product.slug && it.slug === product.slug) ||
+      it.productId === product.id ||
+      (it.productId || '').startsWith(`${product.id}-`);
+    return sameProduct ? sum + it.quantity * getItemBottleMultiplier(it) : sum;
+  }, 0);
+
+  // Số lượng tối đa có thể thêm vào giỏ hàng:
+  // - Khi biết tồn thực tế của chi nhánh: tính theo số chai còn lại sau khi trừ mọi quy cách đã có trong giỏ
+  // - Luôn không vượt trần quy tắc cho từng dòng
+  const remainingByRule = Math.max(0, maxPacksAllowedByRule - existingCartQty);
+  const remainingCanAdd = branchSellableBottles !== null
+    ? Math.min(
+        remainingByRule,
+        Math.max(0, Math.floor((branchSellableBottles - bottlesInCartForProduct) / bottleCount))
+      )
+    : remainingByRule;
 
   const isOutOfStock = branchSellableBottles !== null
     ? maxAvailableInBranch <= 0

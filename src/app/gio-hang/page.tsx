@@ -53,6 +53,8 @@ export default function CartPage() {
   const {
     isAvailable: stockAvailable,
     shortItems,
+    itemLimits,
+    checkFailed,
     alternativeStores,
     selectedBranch,
     setSelectedBranch,
@@ -246,6 +248,7 @@ export default function CartPage() {
                 <div>
                   {/* Ảnh sản phẩm thu nhỏ gọn gàng */}
                   <div className="relative h-28 sm:h-32 w-full rounded-lg overflow-hidden bg-gray-50/80 mb-2 border border-gray-100 flex items-center justify-center">
+                    {prod.thumbnail ? (
                     <Image
                       src={prod.thumbnail}
                       alt={prod.name}
@@ -255,6 +258,7 @@ export default function CartPage() {
                         isPoster ? 'object-cover' : 'object-contain p-1.5'
                       } transition-transform duration-200`}
                     />
+                    ) : null}
 
                     {/* Huy hiệu trên ảnh */}
                     <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10">
@@ -422,6 +426,7 @@ export default function CartPage() {
                 <div>
                   {/* Ảnh combo với badge giảm giá */}
                   <div className="relative h-28 sm:h-32 w-full rounded-lg overflow-hidden bg-gray-50 mb-2 border border-gray-100">
+                    {combo.image ? (
                     <Image
                       src={combo.image}
                       alt={combo.name}
@@ -429,6 +434,7 @@ export default function CartPage() {
                       sizes="240px"
                       className="object-cover transition-transform duration-200"
                     />
+                    ) : null}
 
                     {/* Badges góc trên */}
                     <div className="absolute top-1 left-1 flex items-center gap-1 z-10">
@@ -720,6 +726,7 @@ export default function CartPage() {
                           href={`/san-pham/${item.slug}`}
                           className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-ivory/70 border border-gray-200/80 shrink-0 p-1 flex items-center justify-center group"
                         >
+                          {item.thumbnail ? (
                           <Image
                             src={item.thumbnail}
                             alt={displayName}
@@ -727,6 +734,7 @@ export default function CartPage() {
                             className="object-contain transition-transform duration-300"
                             sizes="80px"
                           />
+                          ) : null}
                         </Link>
 
                         <div className="min-w-0 flex-1">
@@ -797,9 +805,12 @@ export default function CartPage() {
                       {/* 3. Bộ tăng giảm số lượng (Ràng buộc tối đa 1.000 chai) */}
                       {(() => {
                         const itemMultiplier = getItemBottleMultiplier(item);
-                        const maxAllowed = getItemMaxQuantity(item);
+                        const stockLimit = itemLimits.find((l) => l.productId === item.productId)?.maxQuantity;
+                        const ruleMax = getItemMaxQuantity(item);
+                        const maxAllowed = typeof stockLimit === 'number' ? Math.max(1, Math.min(ruleMax, stockLimit)) : ruleMax;
                         const totalBottles = item.quantity * itemMultiplier;
                         const isAtMax = item.quantity >= maxAllowed;
+                        const atStockLimit = typeof stockLimit === 'number' && stockLimit < ruleMax && item.quantity >= stockLimit;
 
                         return (
                           <div className="flex flex-col items-center justify-between md:justify-center mt-1 md:mt-0 gap-1">
@@ -837,7 +848,7 @@ export default function CartPage() {
                                 disabled={isAtMax}
                                 className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-emerald-800 hover:bg-white active:scale-95 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                 aria-label={language === 'en' ? 'Increase 1' : 'Tăng 1'}
-                                title={isAtMax ? (language === 'en' ? 'Reached 1,000 bottles limit' : 'Đã đạt giới hạn tối đa 1.000 chai') : undefined}
+                                title={isAtMax ? (atStockLimit ? (language === 'en' ? 'Reached the stock available at this store' : 'Đã đạt số lượng còn tại kho này') : (language === 'en' ? 'Reached 1,000 bottles limit' : 'Đã đạt giới hạn tối đa 1.000 chai')) : undefined}
                               >
                                 <Plus className="w-3.5 h-3.5" />
                               </button>
@@ -1004,7 +1015,17 @@ export default function CartPage() {
               ) : null}
 
               {/* Nút hành động thanh toán */}
-              {isEligibleToOrder && isMounted && !stockAvailable ? (
+              {isEligibleToOrder && isMounted && checkFailed ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-3 px-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-sm text-center leading-snug cursor-not-allowed"
+                >
+                  {language === 'en'
+                    ? 'Could not verify stock. Please reload and try again'
+                    : 'Chưa kiểm tra được tồn kho. Vui lòng tải lại trang và thử lại'}
+                </button>
+              ) : isEligibleToOrder && isMounted && !stockAvailable ? (
                 <button
                   type="button"
                   disabled
@@ -1118,6 +1139,7 @@ export default function CartPage() {
                         >
                           {/* Ảnh sản phẩm vuông vắn bo góc */}
                           <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                            {prod.thumbnail ? (
                             <Image
                               src={prod.thumbnail}
                               alt={prod.name}
@@ -1125,6 +1147,7 @@ export default function CartPage() {
                               sizes="72px"
                               className={`${isPoster ? 'object-cover' : 'object-contain p-1'} transition-transform duration-200`}
                             />
+                            ) : null}
                             {prod.isBestSeller ? (
                               <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-amber-500 text-ink-950 leading-tight">
                                 Hot
@@ -1233,6 +1256,7 @@ export default function CartPage() {
                         >
                           {/* Ảnh combo bo góc */}
                           <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+                            {combo.image ? (
                             <Image
                               src={combo.image}
                               alt={combo.name}
@@ -1240,6 +1264,7 @@ export default function CartPage() {
                               sizes="72px"
                               className="object-cover transition-transform duration-200"
                             />
+                            ) : null}
                             <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-rose-600 text-white leading-tight">
                               -{combo.discount}%
                             </span>

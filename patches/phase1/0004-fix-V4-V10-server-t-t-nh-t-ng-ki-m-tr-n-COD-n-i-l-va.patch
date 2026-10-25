@@ -1,0 +1,273 @@
+From d9cc6acc085f31ceb1a0b19c0c92cd9c46ab3a6e Mon Sep 17 00:00:00 2001
+From: "Claude (PHA 1)" <dangnguyeni5ss@gmail.com>
+Date: Sun, 25 Oct 2026 13:59:48 +0700
+Subject: [PATCH 4/6] =?UTF-8?q?fix(V4,V10):=20server=20t=E1=BB=B1=20t?=
+ =?UTF-8?q?=C3=ADnh=20t=E1=BB=95ng=20=C4=91=E1=BB=83=20ki=E1=BB=83m=20tr?=
+ =?UTF-8?q?=E1=BA=A7n=20COD;=20=C4=91=C6=A1n=20=C4=91=E1=BA=A1i=20l=C3=BD?=
+ =?UTF-8?q?=20validate=20storeCode=20v=C3=A0=20t=E1=BB=B1=20t=C3=ADnh=20ph?=
+ =?UTF-8?q?=C3=AD=20ship?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- orders: bỏ đọc shippingFee/subtotal/total từ client; trần COD kiểm trên serverTotal
+- dealer/orders: storeCode phải là chi nhánh đang hoạt động trong vùng phục vụ (mặc định NH),
+  shippingFee = calculateShippingFee(wholesaleSubtotal, null).fee (cùng hàm storefront)
+- Số tài khoản ngân hàng cứng ở dealer: KHÔNG sửa (chờ quyết định)
+- test: tests/phase1_order_server_total_dealer_test.mjs (7 ca, mock DB)
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Rn2NhFMtfaiHCB3woGT3YV
+---
+ src/app/api/dealer/orders/route.ts            |  19 ++-
+ src/app/api/orders/route.ts                   |  35 ++---
+ .../phase1_order_server_total_dealer_test.mjs | 122 ++++++++++++++++++
+ 3 files changed, 152 insertions(+), 24 deletions(-)
+ create mode 100644 tests/phase1_order_server_total_dealer_test.mjs
+
+diff --git a/src/app/api/dealer/orders/route.ts b/src/app/api/dealer/orders/route.ts
+index ea7c86e..d38e6ca 100644
+--- a/src/app/api/dealer/orders/route.ts
++++ b/src/app/api/dealer/orders/route.ts
+@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
+ import { query, pool } from '@/lib/db';
+ import { getPartnerSession } from '@/lib/partner/auth';
+ import { reserveStock, InsufficientStockError } from '@/lib/inventory';
+-import { INVENTORY_CONFIG } from '@/config/inventory';
++import { INVENTORY_CONFIG, calculateShippingFee } from '@/config/inventory';
++import { hcmStoreSql } from '@/config/service-area';
+ 
+ export const dynamic = 'force-dynamic';
+ 
+@@ -109,8 +110,20 @@ export async function POST(request: Request) {
+     const district = body.district || 'Quận 1';
+     const ward = body.ward || 'Phường Bến Nghé';
+     const note = body.note || `Đơn hàng sỉ đại lý (${tier.tier_name}) - Chiết khấu ${discountRate}%`;
+-    const targetStoreCode = body.storeCode || 'NH';
+-    const shippingFee = Math.round(Number(body.shippingFee) || 0);
++    // V10: storeCode phải là chi nhánh đang hoạt động trong vùng phục vụ (mặc định NH như cũ)
++    const targetStoreCode = typeof body.storeCode === 'string' && body.storeCode.trim() ? body.storeCode.trim() : 'NH';
++    const storeRes = await query(
++      `SELECT s.code FROM stores s WHERE s.code = $1 AND s.is_active = true AND ${hcmStoreSql('s')} LIMIT 1;`,
++      [targetStoreCode]
++    );
++    if (storeRes.rows.length === 0) {
++      return NextResponse.json(
++        { success: false, error: 'Chi nhánh nhận hàng không hợp lệ hoặc ngoài khu vực phục vụ.', code: 'INVALID_STORE' },
++        { status: 400 }
++      );
++    }
++    // V10: phí vận chuyển do server tính bằng cùng hàm với storefront (bỏ qua body.shippingFee)
++    const shippingFee = calculateShippingFee(wholesaleSubtotal, null).fee;
+     const finalTotal = wholesaleSubtotal + shippingFee;
+ 
+     const orderId = `ord_dl_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+diff --git a/src/app/api/orders/route.ts b/src/app/api/orders/route.ts
+index 64d88fe..a5134cb 100644
+--- a/src/app/api/orders/route.ts
++++ b/src/app/api/orders/route.ts
+@@ -93,12 +93,11 @@ export async function POST(request: Request) {
+     const rankingSnapshot = body.rankingSnapshot ? JSON.stringify(body.rankingSnapshot) : null;
+ 
+     // 4. Chuẩn hóa phương thức & phí
++    // V4: KHÔNG đọc shippingFee/subtotal/total từ client — server tự tính ở bước 3-4 bên dưới.
+     const paymentMethod = body.paymentMethod || customerObj.paymentMethod || 'cod';
+-    const shippingFee = Math.round(Number(body.shippingFee) || 0);
+ 
+     // 5. Chuẩn hóa danh sách sản phẩm
+     const rawItems = Array.isArray(body.items) ? body.items : [];
+-    let itemsCalculatedSubtotal = 0;
+     const normalizedItems = rawItems.map((item: any) => {
+       const name = (item.name || item.productName || item.title || 'Sản phẩm').toString();
+       const price = Math.round(Number(item.price) || 0);
+@@ -106,7 +105,6 @@ export async function POST(request: Request) {
+       const unit = item.unit || 'Lốc';
+       const thumbnail = item.thumbnail || null;
+       const productId = item.productId || item.id || null;
+-      itemsCalculatedSubtotal += price * quantity;
+       return {
+         productId,
+         name,
+@@ -117,13 +115,6 @@ export async function POST(request: Request) {
+       };
+     });
+ 
+-    const subtotal = Math.round(
+-      Number(body.subtotal ?? (body.totalAmount ?? itemsCalculatedSubtotal)) || 0
+-    );
+-    const total = Math.round(
+-      Number(body.total ?? (subtotal + shippingFee)) || (subtotal + shippingFee)
+-    );
+-
+     if (!fullName || !phone) {
+       return NextResponse.json(
+         { success: false, error: 'Vui lòng cung cấp đầy đủ họ tên và số điện thoại!' },
+@@ -152,17 +143,7 @@ export async function POST(request: Request) {
+       );
+     }
+ 
+-    // V3: Kiểm tra giá trị đơn COD tối đa
+-    if (paymentMethod === 'cod' && total > codConfig.MAX_ORDER_VALUE) {
+-      return NextResponse.json(
+-        {
+-          success: false,
+-          error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng liên hệ hotline để đặt đơn lớn hoặc chọn phương thức thanh toán khác.`,
+-          maxValue: codConfig.MAX_ORDER_VALUE,
+-        },
+-        { status: 400 }
+-      );
+-    }
++    // V3: (đã chuyển xuống sau khi server tính serverTotal — không tin total của client)
+ 
+     // V4: Kiểm tra số đơn PENDING cùng SĐT (chống spam)
+     const pendingCheck = await query(
+@@ -338,6 +319,18 @@ export async function POST(request: Request) {
+       const serverShippingFee = shippingCalc.fee;
+       const serverTotal = serverCalculatedSubtotal + serverShippingFee;
+ 
++      // V4: Trần COD kiểm trên tổng do SERVER tính
++      if (paymentMethod === 'cod' && serverTotal > codConfig.MAX_ORDER_VALUE) {
++        return NextResponse.json(
++          {
++            success: false,
++            error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng liên hệ hotline để đặt đơn lớn hoặc chọn phương thức thanh toán khác.`,
++            maxValue: codConfig.MAX_ORDER_VALUE,
++          },
++          { status: 400 }
++        );
++      }
++
+       // 5. BÓC TÁCH COMBO VÀ CHUẨN BỊ ĐƠN HÀNG
+       const { expandedBottles, comboSnapshots } = await expandComboItems(revalidatedItems, client);
+ 
+diff --git a/tests/phase1_order_server_total_dealer_test.mjs b/tests/phase1_order_server_total_dealer_test.mjs
+new file mode 100644
+index 0000000..4d3dd28
+--- /dev/null
++++ b/tests/phase1_order_server_total_dealer_test.mjs
+@@ -0,0 +1,122 @@
++/**
++ * PHA 1 / mục 4 — V4 (phần còn lại) + V10
++ *  V4: trần COD phải kiểm trên total do SERVER tính, không phải `total` client gửi.
++ *  V10: đơn đại lý — storeCode phải thuộc danh sách chi nhánh hợp lệ (đang hoạt động, TP.HCM);
++ *       shippingFee do server tính bằng calculateShippingFee (cùng hàm storefront), bỏ qua giá trị client.
++ * Không chạm DB: pool.query / pool.connect bị thay bằng router SQL giả.
++ * Chạy: npx tsx tests/phase1_order_server_total_dealer_test.mjs
++ */
++process.env.DATABASE_URL = 'postgresql://nobody@127.0.0.1:1/none';
++
++import assert from 'node:assert/strict';
++
++const { pool } = await import('../src/lib/db.ts');
++const { signUserToken } = await import('../src/lib/auth.ts');
++const { calculateShippingFee } = await import('../src/config/inventory.ts');
++const ordersRoute = await import('../src/app/api/orders/route.ts');
++const dealerRoute = await import('../src/app/api/dealer/orders/route.ts');
++
++// ── router SQL giả ──
++let ctx;
++function resetCtx(over = {}) {
++  ctx = { comboPrice: 11_000_000, productPrice: 4000, activeStores: ['NH', 'Q7'], inserts: [], sqls: [], ...over };
++}
++async function fakeQuery(sql, params = []) {
++  const s = String(sql).replace(/\s+/g, ' ').trim();
++  ctx.sqls.push(s);
++  if (/FROM partner_profiles/.test(s)) {
++    return { rows: [{ id: 'pp1', userId: 'u1', partnerType: 'DEALER', lifecycleStatus: 'ACTIVE', phone: '0900000001',
++      fullName: 'Dai Ly', email: 'd@x.vn', tierId: 'tier_bronze' }], rowCount: 1 };
++  }
++  if (/FROM dealer_tiers/.test(s)) return { rows: [{ id: 'tier_bronze', tier_name: 'Đồng', tier_code: 'TIER_1', discount_rate: 15 }], rowCount: 1 };
++  if (/FROM products WHERE id = \$1/.test(s)) return { rows: [{ id: params[0], name: 'Nước mắm', price: ctx.productPrice }], rowCount: 1 };
++  if (/FROM stores/.test(s) && /code = \$1/.test(s) && /is_active/.test(s)) {
++    return ctx.activeStores.includes(params[0]) ? { rows: [{ code: params[0] }], rowCount: 1 } : { rows: [], rowCount: 0 };
++  }
++  if (/FROM combos/.test(s)) return { rows: [{ name: 'Combo đắt', sale_price: ctx.comboPrice }], rowCount: 1 };
++  if (/FROM store_inventory/.test(s) && /FOR UPDATE/.test(s)) {
++    return { rows: (params[1] || []).map((id) => ({ product_id: id, stock_quantity: 1000, reserved: 0, safety_stock: 0 })), rowCount: (params[1] || []).length };
++  }
++  if (/INSERT INTO orders/.test(s)) ctx.inserts.push({ sql: s, params });
++  return { rows: [], rowCount: 0 };
++}
++pool.query = fakeQuery;
++pool.connect = async () => ({ query: fakeQuery, release() {} });
++
++const results = [];
++async function test(name, fn) {
++  try { await fn(); results.push([name, true]); console.log(`  ✓ ${name}`); }
++  catch (e) { results.push([name, false]); console.log(`  ✗ ${name}\n      ${String(e.message).split('\n')[0]}`); }
++}
++const origErr = console.error; console.error = process.env.TEST_DEBUG ? origErr : () => {};
++
++async function postOrder(over = {}) {
++  const body = {
++    fullName: 'Khach Test', phone: '0912345678', address: '123 Nguyễn Huệ, Quận 1, TP.HCM', province: 'Hồ Chí Minh',
++    paymentMethod: 'cod', items: [{ productId: 'combo-big', name: 'Combo', price: 1, quantity: 1, unit: 'Combo' }],
++    ...over,
++  };
++  const res = await ordersRoute.POST(new Request('http://t/api/orders', { method: 'POST', body: JSON.stringify(body) }));
++  return { status: res.status, body: await res.json() };
++}
++const token = await signUserToken({ id: 'u1', email: 'd@x.vn', fullName: 'Dai Ly', phone: '0900000001' });
++async function postDealer(over = {}) {
++  const body = { items: [{ productId: 'p1', quantity: 50 }], ...over };
++  const res = await dealerRoute.POST(new Request('http://t/api/dealer/orders', {
++    method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) }));
++  return { status: res.status, body: await res.json() };
++}
++
++console.log('V4 — trần COD theo total server');
++await test('client gửi total nhỏ nhưng server tính > trần COD → 400', async () => {
++  resetCtx({ comboPrice: 11_000_000 });
++  const r = await postOrder({ total: 1000, subtotal: 1000, shippingFee: 0 });
++  assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 200));
++  assert.ok(r.body.maxValue, 'phải trả maxValue của trần COD');
++  assert.equal(ctx.inserts.length, 0, 'không được tạo đơn');
++});
++await test('client gửi total khổng lồ nhưng server tính nhỏ → KHÔNG bị chặn bởi trần COD', async () => {
++  resetCtx({ comboPrice: 100_000 });
++  const r = await postOrder({ total: 999_999_999 });
++  assert.ok(!(r.status === 400 && r.body.maxValue), 'bị chặn oan do total của client');
++});
++
++console.log('V10 — đơn đại lý');
++await test('storeCode không tồn tại / không hoạt động / ngoài HCM → 400, không tạo đơn', async () => {
++  resetCtx();
++  const r = await postDealer({ storeCode: 'ZZZ' });
++  assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts.length, 0);
++});
++await test('storeCode hợp lệ được chấp nhận và ghi vào đơn', async () => {
++  resetCtx();
++  const r = await postDealer({ storeCode: 'Q7', shippingFee: 0 });
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts[0].params[14], 'Q7');
++});
++await test('không gửi storeCode → mặc định NH (giữ hành vi cũ)', async () => {
++  resetCtx();
++  const r = await postDealer({});
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts[0].params[14], 'NH');
++});
++await test('shippingFee của client bị bỏ qua: server tính bằng calculateShippingFee', async () => {
++  resetCtx({ productPrice: 4000 });                       // 50 chai × 3.400 = 170.000 < ngưỡng free
++  const expected = calculateShippingFee(170_000, null).fee;
++  assert.ok(expected > 0, 'giả định test: đơn này phải có phí ship');
++  const r = await postDealer({ shippingFee: 0 });
++  assert.equal(r.status, 200, JSON.stringify(r.body).slice(0, 200));
++  assert.equal(ctx.inserts[0].params[10], expected);
++  assert.equal(r.body.finalTotal, 170_000 + expected);
++});
++await test('shippingFee âm / quá lớn từ client không ảnh hưởng tổng', async () => {
++  resetCtx({ productPrice: 4000 });
++  const expected = calculateShippingFee(170_000, null).fee;
++  const r = await postDealer({ shippingFee: -150000 });
++  assert.equal(r.body.finalTotal, 170_000 + expected);
++});
++
++console.error = origErr;
++const failed = results.filter(([, ok]) => !ok).length;
++console.log(`\n${results.length - failed}/${results.length} pass`);
++process.exit(failed ? 1 : 0);
+-- 
+2.43.0
+

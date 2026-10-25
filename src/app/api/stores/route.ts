@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getSellableQuantity } from '@/lib/inventory';
 import { INVENTORY_CONFIG } from '@/config/inventory';
+import { hcmStoreSql } from '@/config/service-area';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
         s.opening_hours,
         s.holiday_overrides
       FROM stores s
-      WHERE s.is_active = true
+      WHERE s.is_active = true AND ${hcmStoreSql('s')}
     `;
     const params: any[] = [];
 

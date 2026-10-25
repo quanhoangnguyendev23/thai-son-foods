@@ -674,7 +674,6 @@ export default function Header() {
                 aria-label="Thanh tác vụ điều hướng"
               >
                 {taskbagItems.map((item) => {
-                  const Icon = item.icon;
                   if (item.action === 'open-support') {
                     return (
                       <button
@@ -683,7 +682,6 @@ export default function Header() {
                         onClick={() => setIsSupportModalOpen(true)}
                         className="flex items-center gap-1.5 px-3 py-3 md:py-1.5 rounded-lg text-sm md:text-base text-gray-700 hover:text-forest-700 hover:bg-emerald-50/80 transition-colors whitespace-nowrap cursor-pointer shrink-0"
                       >
-                        <Icon className={cn('w-4 h-4', item.color)} />
                         <span>{item.label}</span>
                       </button>
                     );
@@ -694,7 +692,6 @@ export default function Header() {
                       href={item.href}
                       className="flex items-center gap-1.5 px-3 py-3 md:py-1.5 rounded-lg text-sm md:text-base text-gray-700 hover:text-green-primary hover:bg-ivory-dark/60 transition-colors whitespace-nowrap shrink-0"
                     >
-                      <Icon className={cn('w-4 h-4', item.color)} />
                       <span>{item.label}</span>
                       {item.badge && (
                         <span className="px-1.5 py-0.2 text-[10px] text-white bg-red-500 rounded-full animate-pulse">

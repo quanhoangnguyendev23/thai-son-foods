@@ -36,6 +36,8 @@ export default function CartDrawer() {
     isAvailable,
     insufficientItems,
     shortItems,
+    itemLimits,
+    checkFailed,
     alternativeStores,
     selectedBranch,
     setSelectedBranch,
@@ -166,13 +168,13 @@ export default function CartDrawer() {
                   >
                     {/* Thumbnail */}
                     <div className="relative w-18 h-18 rounded-lg overflow-hidden bg-ivory shrink-0 border border-border-light">
-                      <Image
+                      {item.thumbnail ? (<Image
                         src={item.thumbnail}
                         alt={item.name}
                         fill
                         className="object-cover"
                         sizes="72px"
-                      />
+                      />) : null}
                     </div>
 
                     {/* Info */}
@@ -224,8 +226,11 @@ export default function CartDrawer() {
                       {/* Quantity + Remove */}
                       <div className="flex items-center justify-between mt-2">
                         {(() => {
-                          const maxAllowed = getItemMaxQuantity(item);
+                          const stockLimit = itemLimits.find((l) => l.productId === item.productId)?.maxQuantity;
+                          const ruleMax = getItemMaxQuantity(item);
+                          const maxAllowed = typeof stockLimit === 'number' ? Math.max(1, Math.min(ruleMax, stockLimit)) : ruleMax;
                           const isAtMax = item.quantity >= maxAllowed;
+                          const atStockLimit = typeof stockLimit === 'number' && stockLimit < ruleMax && item.quantity >= stockLimit;
 
                           return (
                             <div className="flex items-center border border-border rounded-lg overflow-hidden">
@@ -258,7 +263,7 @@ export default function CartDrawer() {
                                 disabled={isAtMax}
                                 className="p-1 text-text-muted hover:text-text-dark hover:bg-ivory transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                 aria-label={language === 'en' ? 'Increase quantity' : 'Tăng số lượng'}
-                                title={isAtMax ? (language === 'en' ? 'Reached 1,000 bottles limit' : 'Đã đạt giới hạn tối đa 1.000 chai') : undefined}
+                                title={isAtMax ? (atStockLimit ? (language === 'en' ? 'Reached the stock available at this store' : 'Đã đạt số lượng còn tại kho này') : (language === 'en' ? 'Reached 1,000 bottles limit' : 'Đã đạt giới hạn tối đa 1.000 chai')) : undefined}
                               >
                                 <Plus className="w-3.5 h-3.5" />
                               </button>
@@ -337,7 +342,7 @@ export default function CartDrawer() {
 
                 <div className="space-y-2 pt-1">
                   {/* Nút đặt hàng - chỉ cho phép bấm khi kho đủ hàng */}
-                  {isAvailable ? (
+                  {isAvailable && !checkFailed ? (
                     <Link
                       href="/thanh-toan"
                       onClick={closeCart}
