@@ -57,7 +57,7 @@ export async function syncStoreToDatabase() {
       CREATE TABLE IF NOT EXISTS product_variants (
         id VARCHAR(50) PRIMARY KEY,
         product_id VARCHAR(50) REFERENCES products(id) ON DELETE CASCADE,
-        name VARCHAR(100) NOT NULL,
+        name VARCHAR(255) NOT NULL,
         quantity INTEGER DEFAULT 1,
         price INTEGER NOT NULL,
         unit VARCHAR(50) DEFAULT 'chai',

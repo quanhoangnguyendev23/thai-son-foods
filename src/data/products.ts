@@ -40,10 +40,10 @@ export const products: Product[] = [
     isActive: true,
     isVegan: true,
     variants: [
-      { id: 'sb-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'sb-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'sb-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'sb-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'sb-7chai', name: 'Lốc 7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
+      { id: 'sb-10chai', name: 'Lốc 10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
+      { id: 'sb-12chai', name: 'Thùng 12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
+      { id: 'sb-15chai', name: 'Thùng 15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
     featureBanners: {
       banner1: '/images/banners/banner-feature-bap-01.jpg',
@@ -84,10 +84,10 @@ export const products: Product[] = [
     isActive: true,
     isVegan: true,
     variants: [
-      { id: 'shs-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'shs-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'shs-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'shs-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'shs-7chai', name: 'Lốc 7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
+      { id: 'shs-10chai', name: 'Lốc 10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
+      { id: 'shs-12chai', name: 'Thùng 12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
+      { id: 'shs-15chai', name: 'Thùng 15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
     featureBanners: {
       banner1: '/images/banners/banner-feature-shs-01.jpg',
@@ -128,10 +128,10 @@ export const products: Product[] = [
     isActive: true,
     isVegan: true,
     variants: [
-      { id: 'sgl-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'sgl-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'sgl-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'sgl-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'sgl-7chai', name: 'Lốc 7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
+      { id: 'sgl-10chai', name: 'Lốc 10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
+      { id: 'sgl-12chai', name: 'Thùng 12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
+      { id: 'sgl-15chai', name: 'Thùng 15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
     featureBanners: {
       banner1: '/images/banners/banner-feature-sgl-01.jpg',
@@ -175,7 +175,7 @@ export const products: Product[] = [
     isVegan: true,
     variants: [
       { id: 'ss-6chai', name: '6 chai', quantity: 6, price: 150000, unit: 'lốc', volume: '6 x 568ml' },
-      { id: 'ss-12chai', name: '12 chai', quantity: 12, price: 300000, unit: 'thùng', volume: '12 x 568ml' },
+      { id: 'ss-12chai', name: 'Thùng 12 chai', quantity: 12, price: 300000, unit: 'thùng', volume: '12 x 568ml' },
     ],
   },
   {
@@ -209,7 +209,7 @@ export const products: Product[] = [
     isVegan: true,
     variants: [
       { id: 'sl-6chai', name: '6 chai', quantity: 6, price: 150000, unit: 'lốc', volume: '6 x 568ml' },
-      { id: 'sl-12chai', name: '12 chai', quantity: 12, price: 300000, unit: 'thùng', volume: '12 x 568ml' },
+      { id: 'sl-12chai', name: 'Thùng 12 chai', quantity: 12, price: 300000, unit: 'thùng', volume: '12 x 568ml' },
     ],
   },
 
@@ -232,6 +232,7 @@ export const products: Product[] = [
     imageFit: 'cover',
     images: [
       { id: 'md-1', url: '/images/products/gallery/md-1.jpg', alt: 'Nha Đam Mủ Trôm Thái Sơn - Sản phẩm', sortOrder: 1 },
+      { id: 'md-2', url: '/images/products/gallery/md-2.jpg', alt: 'Nha Đam Mủ Trôm Thái Sơn - Hành vi sử dụng', sortOrder: 2 },
       { id: 'md-3', url: '/images/products/gallery/md-3.jpg', alt: 'Nha Đam Mủ Trôm Thái Sơn - Yếu tố tác động', sortOrder: 3 },
       { id: 'md-4', url: '/images/products/gallery/md-4.jpg', alt: 'Nha Đam Mủ Trôm Thái Sơn - Hiệu quả', sortOrder: 4 },
       { id: 'md-5', url: '/images/products/gallery/md-5.jpg', alt: 'Nha Đam Mủ Trôm Thái Sơn - Kế hoạch sử dụng', sortOrder: 5 },
@@ -243,10 +244,10 @@ export const products: Product[] = [
     isActive: true,
     isVegan: true,
     variants: [
-      { id: 'md-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'md-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'md-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'md-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'md-7chai', name: 'Lốc 7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
+      { id: 'md-10chai', name: 'Lốc 10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
+      { id: 'md-12chai', name: 'Thùng 12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
+      { id: 'md-15chai', name: 'Thùng 15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
     featureBanners: {
       banner1: '/images/banners/banner-feature-nd-01.jpg',
@@ -259,22 +260,23 @@ export const products: Product[] = [
   },
   {
     id: 'tao-do-hat-chia',
-    name: 'Hàng dùng thử Táo đỏ - Hạt chia Thái Sơn. Thức uống thanh lọc và giải nhiệt. Nước lá dứa, táo đỏ, hạt chia, kỷ tử, nấm tuyết. Sản phẩm đóng chai 330ml. Lốc 10 chai. Cân bằng nội tiết.',
+    name: "Hàng dùng thử Táo đỏ - Hạt chia Thái Sơn. Thức uống thanh lọc và giải nhiệt. Nước lá dứa, táo đỏ, hạt chia, kỷ tử, nấm tuyết. Sản phẩm đóng chai 330ml. Lốc 10 chai. Cân bằng nội tiết.",
     nameEn: 'Thai Son Foods Red Apple & Chia Seed Drink, Red Apple & Goji Berries, Convenient Drink, 330ml, Pack of 10',
     slug: 'tao-do-hat-chia-thai-son',
-    sku: 'TD-01',
+    sku: "TD-01",
     volume: '330ml',
-    shortDescription: 'Thức uống thanh mát kết hợp táo đỏ, hạt chia, kỷ tử và nấm tuyết, vị ngọt dịu, dễ uống và tiện lợi cho mỗi ngày.',
+    shortDescription: "Thức uống thanh mát kết hợp táo đỏ, hạt chia, kỷ tử và nấm tuyết, vị ngọt dịu, dễ uống và tiện lợi cho mỗi ngày.",
     shortDescriptionEn: 'Thai Son Red Apple Chia Seed combines sweet natural red apples and nutrient-packed chia seeds.',
-    description: 'Táo Đỏ Hạt Chia Thái Sơn kết hợp tinh hoa từ táo đỏ và hạt chia, mang đến thức uống giàu dinh dưỡng, bổ sung chất xơ và vitamin cho cơ thể. Thích hợp sử dụng mỗi ngày.',
+    description: "Táo Đỏ Hạt Chia Thái Sơn kết hợp tinh hoa từ táo đỏ và hạt chia, mang đến thức uống giàu dinh dưỡng, bổ sung chất xơ và vitamin cho cơ thể. Thích hợp sử dụng mỗi ngày.",
     price: 18000,
-    unit: '1 chai',
+    unit: "1 chai",
     unitEn: '1 bottle',
     categoryId: 'nuoc-giai-khat',
-    thumbnail: '/images/products/gallery/td-1.jpg',
+    thumbnail: "/images/products/gallery/td-1.jpg",
     imageFit: 'cover',
     images: [
       { id: 'td-1', url: '/images/products/gallery/td-1.jpg', alt: 'Táo Đỏ Hạt Chia Thái Sơn - Sản phẩm', sortOrder: 1 },
+      { id: 'td-2', url: '/images/products/gallery/td-2.jpg', alt: 'Táo Đỏ Hạt Chia Thái Sơn - Hành vi sử dụng', sortOrder: 2 },
       { id: 'td-3', url: '/images/products/gallery/td-3.jpg', alt: 'Táo Đỏ Hạt Chia Thái Sơn - Yếu tố tác động', sortOrder: 3 },
       { id: 'td-4', url: '/images/products/gallery/td-4.jpg', alt: 'Táo Đỏ Hạt Chia Thái Sơn - Hiệu quả', sortOrder: 4 },
       { id: 'td-5', url: '/images/products/gallery/td-5.jpg', alt: 'Táo Đỏ Hạt Chia Thái Sơn - Kế hoạch sử dụng', sortOrder: 5 },
@@ -286,10 +288,10 @@ export const products: Product[] = [
     isActive: true,
     isVegan: true,
     variants: [
-      { id: 'td-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'td-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'td-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'td-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'td-7chai', name: 'Lốc 7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
+      { id: 'td-10chai', name: 'Lốc 10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
+      { id: 'td-12chai', name: 'Thùng 12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
+      { id: 'td-15chai', name: 'Thùng 15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
     featureBanners: {
       banner1: '/images/banners/banner-feature-td-01.jpg',
@@ -318,6 +320,7 @@ export const products: Product[] = [
     imageFit: 'cover',
     images: [
       { id: 'lh-1', url: '/images/products/gallery/lh-1.jpg', alt: 'Sâm La Hán Hoa Cúc Thái Sơn - Sản phẩm', sortOrder: 1 },
+      { id: 'lh-2', url: '/images/products/gallery/lh-2.jpg', alt: 'Sâm La Hán Hoa Cúc Thái Sơn - Hành vi sử dụng', sortOrder: 2 },
       { id: 'lh-3', url: '/images/products/gallery/lh-3.jpg', alt: 'Sâm La Hán Hoa Cúc Thái Sơn - Yếu tố tác động', sortOrder: 3 },
       { id: 'lh-4', url: '/images/products/gallery/lh-4.jpg', alt: 'Sâm La Hán Hoa Cúc Thái Sơn - Hiệu quả', sortOrder: 4 },
       { id: 'lh-5', url: '/images/products/gallery/lh-5.jpg', alt: 'Sâm La Hán Hoa Cúc Thái Sơn - Kế hoạch sử dụng', sortOrder: 5 },
@@ -329,10 +332,10 @@ export const products: Product[] = [
     isActive: true,
     isVegan: true,
     variants: [
-      { id: 'lh-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'lh-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'lh-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'lh-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'lh-7chai', name: 'Lốc 7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
+      { id: 'lh-10chai', name: 'Lốc 10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
+      { id: 'lh-12chai', name: 'Thùng 12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
+      { id: 'lh-15chai', name: 'Thùng 15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
     featureBanners: {
       banner1: '/images/banners/banner-feature-lh-01.jpg',
@@ -374,10 +377,10 @@ export const products: Product[] = [
     isBestSeller: false,
     isActive: true,
     variants: [
-      { id: 'tsa-7chai', name: '7 chai', quantity: 7, price: 140000, unit: 'lốc', volume: '7 x 270ml' },
-      { id: 'tsa-10chai', name: '10 chai', quantity: 10, price: 200000, unit: 'lốc', volume: '10 x 270ml' },
-      { id: 'tsa-12chai', name: '12 chai', quantity: 12, price: 240000, unit: 'thùng', volume: '12 x 270ml' },
-      { id: 'tsa-15chai', name: '15 chai', quantity: 15, price: 300000, unit: 'thùng', volume: '15 x 270ml' },
+      { id: 'tsa-7chai', name: 'Lốc 7 chai', quantity: 7, price: 140000, unit: 'lốc', volume: '7 x 270ml' },
+      { id: 'tsa-10chai', name: 'Lốc 10 chai', quantity: 10, price: 200000, unit: 'lốc', volume: '10 x 270ml' },
+      { id: 'tsa-12chai', name: 'Thùng 12 chai', quantity: 12, price: 240000, unit: 'thùng', volume: '12 x 270ml' },
+      { id: 'tsa-15chai', name: 'Thùng 15 chai', quantity: 15, price: 300000, unit: 'thùng', volume: '15 x 270ml' },
     ],
   },
   {
@@ -409,10 +412,10 @@ export const products: Product[] = [
     isBestSeller: false,
     isActive: true,
     variants: [
-      { id: 'mac-7chai', name: '7 chai', quantity: 7, price: 140000, unit: 'lốc', volume: '7 x 270ml' },
-      { id: 'mac-10chai', name: '10 chai', quantity: 10, price: 200000, unit: 'lốc', volume: '10 x 270ml' },
-      { id: 'mac-12chai', name: '12 chai', quantity: 12, price: 240000, unit: 'thùng', volume: '12 x 270ml' },
-      { id: 'mac-15chai', name: '15 chai', quantity: 15, price: 300000, unit: 'thùng', volume: '15 x 270ml' },
+      { id: 'mac-7chai', name: 'Lốc 7 chai', quantity: 7, price: 140000, unit: 'lốc', volume: '7 x 270ml' },
+      { id: 'mac-10chai', name: 'Lốc 10 chai', quantity: 10, price: 200000, unit: 'lốc', volume: '10 x 270ml' },
+      { id: 'mac-12chai', name: 'Thùng 12 chai', quantity: 12, price: 240000, unit: 'thùng', volume: '12 x 270ml' },
+      { id: 'mac-15chai', name: 'Thùng 15 chai', quantity: 15, price: 300000, unit: 'thùng', volume: '15 x 270ml' },
     ],
   },
 
@@ -481,10 +484,10 @@ export const products: Product[] = [
     isBestSeller: false,
     isActive: true,
     variants: [
-      { id: 'txg-7chai', name: '7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
-      { id: 'txg-10chai', name: '10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
-      { id: 'txg-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
-      { id: 'txg-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
+      { id: 'txg-7chai', name: 'Lốc 7 chai', quantity: 7, price: 126000, unit: 'lốc', volume: '7 x 330ml' },
+      { id: 'txg-10chai', name: 'Lốc 10 chai', quantity: 10, price: 180000, unit: 'lốc', volume: '10 x 330ml' },
+      { id: 'txg-12chai', name: 'Thùng 12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
+      { id: 'txg-15chai', name: 'Thùng 15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
   },
 

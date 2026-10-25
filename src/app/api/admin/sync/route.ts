@@ -72,6 +72,9 @@ export async function POST() {
 
     console.log('Admin triggered synchronization from store website data to database...');
 
+    // 0. Đảm bảo cột tên biến thể đủ dài (trước đây VARCHAR(100) gây lỗi "value too long")
+    await query(`ALTER TABLE product_variants ALTER COLUMN name TYPE VARCHAR(255);`);
+
     // 1. Ensure categories
     const categoryMap: Record<string, string> = {
       'sua-hat': 'cat-sua-hat',
