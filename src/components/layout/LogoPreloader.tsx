@@ -5,6 +5,13 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Chỉ hiện ở lần truy cập đầu tiên trong phiên trình duyệt
+const SEEN_KEY = 'tsf-intro-seen';
+
+// Chạy ngay khi HTML được đọc (trước khi React chạy): đã xem trong phiên này hoặc bật "giảm chuyển động"
+// → thêm CSS ẩn lớp phủ, tránh chớp trắng khi tải lại trang. Chỉ chèn <style> vào <head>, không sửa thẻ React.
+const SKIP_SCRIPT = `try{if(sessionStorage.getItem('${SEEN_KEY}')||window.matchMedia('(prefers-reduced-motion: reduce)').matches){var s=document.createElement('style');s.textContent='[data-logo-preloader]{display:none!important}';document.head.appendChild(s)}}catch(e){}`;
+
 export default function LogoPreloader() {
   const pathname = usePathname();
   const [phase, setPhase] = useState<'drawing' | 'revealed' | 'exiting' | 'done'>('drawing');
@@ -12,20 +19,33 @@ export default function LogoPreloader() {
   useEffect(() => {
     if (pathname.startsWith('/admin') || pathname === '/2010') return;
 
-    // 1. Giai đoạn 1: Chữ & nét outline viền logo chạy từ trái sang phải (1.4s)
+    let skip = false;
+    try {
+      skip =
+        Boolean(sessionStorage.getItem(SEEN_KEY)) ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      sessionStorage.setItem(SEEN_KEY, '1');
+    } catch {
+      // sessionStorage bị chặn (chế độ riêng tư...) → vẫn hiện hiệu ứng ngắn
+    }
+    if (skip) {
+      // Lớp phủ đã bị CSS của SKIP_SCRIPT ẩn ngay từ đầu; gỡ khỏi DOM ở lượt kế tiếp
+      const t0 = setTimeout(() => setPhase('done'), 0);
+      return () => clearTimeout(t0);
+    }
+
+    // Tổng thời gian ~1,2s: chạy nét logo 0,55s → logo màu → mờ dần từ 0,9s → gỡ khỏi DOM ở 1,2s
     const t1 = setTimeout(() => {
       setPhase('revealed'); // Chuyển thành logo hoàn chỉnh đầy đủ màu sắc
-    }, 1450);
+    }, 550);
 
-    // 2. Giai đoạn 2: Giữ logo hoàn chỉnh trong 0.9s để người dùng chiêm ngưỡng, sau đó bắt đầu thoát
     const t2 = setTimeout(() => {
       setPhase('exiting'); // Bắt đầu làm mờ trang trắng để nhảy vào trang web
-    }, 2450);
+    }, 900);
 
-    // 3. Giai đoạn 3: Kết thúc animation và gỡ bỏ hoàn toàn khỏi DOM (sau 3.1s)
     const t3 = setTimeout(() => {
       setPhase('done');
-    }, 3100);
+    }, 1200);
 
     return () => {
       clearTimeout(t1);
@@ -40,21 +60,26 @@ export default function LogoPreloader() {
   }
 
   return (
+    <>
+    <script dangerouslySetInnerHTML={{ __html: SKIP_SCRIPT }} />
     <AnimatePresence>
       {phase !== 'done' && (
         <motion.div
           key="logo-preloader"
+          data-logo-preloader=""
           initial={{ opacity: 1 }}
           animate={{
             opacity: phase === 'exiting' ? 0 : 1,
             scale: phase === 'exiting' ? 1.04 : 1,
           }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center select-none overflow-hidden"
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center select-none overflow-hidden cursor-pointer"
           style={{
             pointerEvents: phase === 'exiting' ? 'none' : 'auto',
           }}
+          // Chạm/bấm bất kỳ đâu để vào trang ngay
+          onClick={() => setPhase('done')}
         >
           {/* Subtle background ambiance glow */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
@@ -63,7 +88,8 @@ export default function LogoPreloader() {
 
           <div className="relative z-10 flex flex-col items-center">
             {/* Logo Container */}
-            <div className="relative w-[280px] sm:w-[380px] md:w-[460px] aspect-[1000/342]">
+            {/* Không vượt bề ngang màn hình (360–390px) để không cắt chữ "Việt" */}
+            <div className="relative w-[min(280px,calc(100vw-48px))] sm:w-[380px] md:w-[460px] aspect-[1000/342]">
               {/* ─── LỚP 1: Nét vẽ Outline Logo đang chạy từ trái sang phải ─── */}
               <motion.div
                 className="absolute inset-0"
@@ -77,9 +103,10 @@ export default function LogoPreloader() {
                 <motion.div
                   className="relative w-full h-full"
                   initial={{ clipPath: 'inset(0% 100% 0% 0%)' }}
-                  animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
+                  // Mở rộng ra ngoài mép một chút để nét cuối (chữ "t") không bị cắt do làm tròn pixel
+                  animate={{ clipPath: 'inset(0% -4% 0% 0%)' }}
                   transition={{
-                    duration: 1.35,
+                    duration: 0.5,
                     ease: [0.25, 1, 0.5, 1],
                   }}
                 >
@@ -98,7 +125,7 @@ export default function LogoPreloader() {
                     initial={{ left: '0%' }}
                     animate={{ left: '100%' }}
                     transition={{
-                      duration: 1.35,
+                      duration: 0.5,
                       ease: [0.25, 1, 0.5, 1],
                     }}
                   />
@@ -161,5 +188,6 @@ export default function LogoPreloader() {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 }
