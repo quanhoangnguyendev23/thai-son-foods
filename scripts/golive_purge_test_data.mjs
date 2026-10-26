@@ -11,7 +11,9 @@
  *                            delete = xoá; hide = bỏ nhãn "Đã mua hàng" và đặt status = 'HIDDEN' (web chỉ hiện APPROVED)
  *   --confirm-db <tên_db>    đúng tên CSDL đang kết nối
  *   --i-have-backup          xác nhận đã có bản sao lưu (pg_dump) ngay trước khi chạy
- * Tuỳ chọn: --keep-feature-data  giữ dữ liệu Đối tác / Hội viên / Giao định kỳ (mặc định xoá vì các chức năng này đang tắt)
+ * Tuỳ chọn: --purge-disabled-features  XOÁ TOÀN BỘ dữ liệu Đối tác / Rút tiền / Giao định kỳ / Hội viên (các chức năng
+ *           đang tắt). Mặc định TẮT (giữ nguyên) vì chưa xác nhận đó đều là dữ liệu test. Lưu ý: hồ sơ đối tác gắn với
+ *           khách test vẫn tự xoá theo khách (khoá ngoại ON DELETE CASCADE).
  *
  * Sau khi dọn: tính lại store_inventory.reserved từ stock_reservations còn active và kiểm tra dòng mồ côi.
  *
@@ -22,7 +24,7 @@
 import pg from 'pg';
 
 function parseArgs(argv) {
-  const args = { apply: false, db: null, orders: null, reviews: null, confirmDb: null, backup: false, keepFeature: false, before: null };
+  const args = { apply: false, db: null, orders: null, reviews: null, confirmDb: null, backup: false, purgeFeature: false, before: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const [k, inline] = a.includes('=') ? [a.slice(0, a.indexOf('=')), a.slice(a.indexOf('=') + 1)] : [a, undefined];
@@ -35,7 +37,7 @@ function parseArgs(argv) {
     else if (k === '--confirm-db') args.confirmDb = val();
     else if (k === '--before') args.before = val();
     else if (k === '--i-have-backup') args.backup = true;
-    else if (k === '--keep-feature-data') args.keepFeature = true;
+    else if (k === '--purge-disabled-features') args.purgeFeature = true;
   }
   return args;
 }
@@ -92,11 +94,20 @@ async function plan(c, opts) {
   for (const t of ['wishlists', 'product_views']) {
     if (await tableExists(c, t)) add(t, 'XOÁ của khách test', await count(c, `SELECT count(*) n FROM ${t} WHERE user_id IN (SELECT id FROM _purge_users);`));
   }
-  const feature = ['order_attributions', 'partner_ledger', 'payout_requests', 'referral_clicks', 'partner_documents', 'partner_profiles',
-    'subscription_schedules', 'subscription_items', 'subscriptions', 'user_memberships', 'loyalty_point_ledger'];
-  for (const t of feature) {
+  add('partner_profiles', 'tự XOÁ theo khách test (khoá ngoại)', await count(c,
+    `SELECT count(*) n FROM partner_profiles WHERE user_id IN (SELECT id FROM _purge_users);`));
+  return rows;
+}
+
+const FEATURE_TABLES = ['order_attributions', 'partner_ledger', 'payout_requests', 'referral_clicks', 'partner_documents', 'partner_profiles',
+  'subscription_schedules', 'subscription_items', 'subscriptions', 'user_memberships', 'loyalty_point_ledger'];
+
+/** Dữ liệu của các chức năng đang tắt — chỉ xoá khi có --purge-disabled-features */
+async function featurePlan(c, purge) {
+  const rows = [];
+  for (const t of FEATURE_TABLES) {
     if (await tableExists(c, t)) {
-      add(t, opts.keepFeature ? 'giữ (--keep-feature-data)' : 'XOÁ toàn bộ (chức năng đang tắt)', await count(c, `SELECT count(*) n FROM ${t};`));
+      rows.push({ bang: t, viec: purge ? 'XOÁ toàn bộ' : 'GIỮ (mặc định)', so_dong: await count(c, `SELECT count(*) n FROM ${t};`) });
     }
   }
   return rows;
@@ -142,7 +153,7 @@ async function main() {
         await c.query('BEGIN');
         await buildSets(c, mode, before);
         console.log(`\n── Lựa chọn --orders ${mode}${mode === 'all' ? ` (đơn tạo trước ${before})` : ''} ──`);
-        console.table(await plan(c, { orders: mode, reviews: 'delete|hide', keepFeature: args.keepFeature }));
+        console.table(await plan(c, { orders: mode, reviews: 'delete|hide' }));
         if (mode === 'test') {
           const sample = await c.query(
             `SELECT o.order_code, o.full_name, o.status, o.created_at::date AS ngay FROM orders o JOIN _purge_orders p ON p.id = o.id ORDER BY o.created_at DESC LIMIT 8;`
@@ -159,6 +170,10 @@ async function main() {
         }
         await c.query('ROLLBACK');
       }
+      console.log(
+        `\n── Dữ liệu chức năng đang tắt (Đối tác, Rút tiền, Giao định kỳ, Hội viên) — ${args.purgeFeature ? 'SẼ XOÁ (--purge-disabled-features)' : 'mặc định GIỮ, chỉ xoá khi thêm --purge-disabled-features'} ──`
+      );
+      console.table(await featurePlan(c, args.purgeFeature));
       console.log('\n(DRY-RUN) Không ghi gì vào CSDL.');
       return;
     }
@@ -167,15 +182,15 @@ async function main() {
     try {
       await buildSets(c, args.orders, before);
       console.table(await plan(c, args));
+      console.table(await featurePlan(c, args.purgeFeature));
 
       const del = async (sql, params) => (await c.query(sql, params)).rowCount;
       const done = {};
       done.email_logs = await del(`DELETE FROM email_logs WHERE order_code IN (SELECT order_code FROM _purge_orders) OR recipient ~* '${TEST_TEXT}';`);
       done.inventory_logs = await del(`DELETE FROM inventory_logs WHERE order_id IN (SELECT id FROM _purge_orders);`);
       done.stock_reservations = await del(`DELETE FROM stock_reservations WHERE order_id IN (SELECT id FROM _purge_orders);`);
-      if (!args.keepFeature) {
-        for (const t of ['order_attributions', 'partner_ledger', 'payout_requests', 'referral_clicks', 'partner_documents', 'partner_profiles',
-          'subscription_schedules', 'subscription_items', 'subscriptions', 'user_memberships', 'loyalty_point_ledger']) {
+      if (args.purgeFeature) {
+        for (const t of FEATURE_TABLES) {
           if (await tableExists(c, t)) done[t] = await del(`DELETE FROM ${t};`);
         }
       }
