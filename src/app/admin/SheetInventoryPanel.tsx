@@ -478,7 +478,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
             {rows.length === 0 && (
               <tr>
                 <td colSpan={7} className="py-10 text-center text-slate-500">
-                  Chưa có dữ liệu. Bấm "Cập nhật ngay" để đọc sheet.
+                  Chưa có dữ liệu. Bấm &quot;Cập nhật ngay&quot; để đọc sheet.
                 </td>
               </tr>
             )}
