@@ -6,6 +6,7 @@ import { ChevronUp, Mail, MapPin, Phone, Truck } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUserAuth } from '@/context/UserAuthContext';
 import { INVENTORY_CONFIG } from '@/config/inventory';
+import { ENABLE_COMBOS } from '@/config/features';
 import { categories as catalogCategories } from '@/data/products';
 import { formatPrice } from '@/lib/utils';
 
@@ -100,9 +101,11 @@ export default function FooterAmazon() {
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link href="/#combo" className={linkCls}>{isEn ? 'Value combos' : 'Combo tiết kiệm'}</Link>
-              </li>
+              {ENABLE_COMBOS && (
+                <li>
+                  <Link href="/#combo" className={linkCls}>{isEn ? 'Value combos' : 'Combo tiết kiệm'}</Link>
+                </li>
+              )}
             </ul>
           </div>
 

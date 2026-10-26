@@ -12,6 +12,7 @@ import ProductSection from '@/components/home/ProductSection';
 import SubscribeSaveSection from '@/components/home/SubscribeSaveSection';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
 import { PRODUCT_DETAIL_CONFIG } from '@/config/product-detail';
+import { ENABLE_COMBOS } from '@/config/features';
 import ProductReviewsSection from '@/components/product/ProductReviewsSection';
 import ProductSponsoredBanner from '@/components/product/ProductSponsoredBanner';
 import ProductSidebarSponsoredCard from '@/components/product/ProductSidebarSponsoredCard';
@@ -315,11 +316,13 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         </div>
 
         {/* ── COMBO ── */}
-        <div className="border-t border-gray-200 bg-white">
-          <div className="section-container max-sm:px-2.5 py-8 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6">
-            <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
+        {ENABLE_COMBOS && (
+          <div className="border-t border-gray-200 bg-white">
+            <div className="section-container max-sm:px-2.5 py-8 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6">
+              <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── THÔNG TIN SẢN PHẨM (TAB) ── */}
         <div className="border-t border-gray-200 bg-white scroll-mt-[168px]" id="thong-tin-san-pham">
@@ -436,11 +439,13 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           />
         </div>
 
-        <div className="border-t border-gray-200 bg-white">
-          <div className="section-container max-sm:px-2.5 py-8 sm:py-10 md:py-12 max-w-7xl mx-auto px-4 sm:px-6">
-            <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
+        {ENABLE_COMBOS && (
+          <div className="border-t border-gray-200 bg-white">
+            <div className="section-container max-sm:px-2.5 py-8 sm:py-10 md:py-12 max-w-7xl mx-auto px-4 sm:px-6">
+              <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── 2. MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG (Thứ tự 2) ── */}
         <ProductDescription

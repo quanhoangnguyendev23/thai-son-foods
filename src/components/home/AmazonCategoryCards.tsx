@@ -10,6 +10,7 @@ import { getProductImage, getShortProductName, MISSING_PRODUCT_IMAGE } from '@/l
 import { useLanguage } from '@/context/LanguageContext';
 import { useUserAuth } from '@/context/UserAuthContext';
 import { INVENTORY_CONFIG } from '@/config/inventory';
+import { ENABLE_COMBOS } from '@/config/features';
 import StorePromotionSidebar from '@/components/home/StorePromotionSidebar';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { BUY_AGAIN_PLACEHOLDER } from '@/data/homepage-placeholders';
@@ -369,6 +370,7 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
   const { language } = useLanguage();
   const track =
     'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4';
+  const whySolo = !ENABLE_COMBOS && !SHOW_PLACEHOLDER_BLOCKS;
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -382,23 +384,33 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
 
       {/* HÀNG 2: combo · deal sốc cửa hàng · mua lại · vì sao chọn TSF */}
       <div className={track}>
-        <ComboQuadCard combos={combos} />
+        {ENABLE_COMBOS && <ComboQuadCard combos={combos} />}
 
-        <CardShell
-          title={language === 'en' ? 'Store hot deals' : 'Deal sốc cửa hàng'}
-          footer={<MoreLink href="/#combo">{language === 'en' ? 'See more' : 'Xem thêm'}</MoreLink>}
-        >
-          {/* Tái sử dụng nguyên khối 6 huy hiệu combo khuyến mãi của trang chủ cũ */}
-          <StorePromotionSidebar />
-        </CardShell>
+        {ENABLE_COMBOS && (
+          <CardShell
+            title={language === 'en' ? 'Store hot deals' : 'Deal sốc cửa hàng'}
+            footer={<MoreLink href="/#combo">{language === 'en' ? 'See more' : 'Xem thêm'}</MoreLink>}
+          >
+            {/* Tái sử dụng nguyên khối 6 huy hiệu combo khuyến mãi của trang chủ cũ */}
+            <StorePromotionSidebar />
+          </CardShell>
+        )}
 
         {SHOW_PLACEHOLDER_BLOCKS && <BuyAgainPlaceholderCard />}
 
+        {/* Tắt combo và không có thẻ "Mua lại" → thẻ "Vì sao chọn" đứng một mình: trải hết hàng, ảnh tỉ lệ ngang */}
         <CardShell
           title={language === 'en' ? 'Why choose Thai Son Foods?' : 'Vì sao chọn Thái Sơn Foods?'}
           footer={<MoreLink href="/#kho-si">{language === 'en' ? 'Learn more' : 'Tìm hiểu thêm'}</MoreLink>}
+          className={whySolo ? 'sm:col-span-2 lg:col-span-4' : undefined}
         >
-          <Link href="/#kho-si" className="group block relative aspect-[4/3] sm:aspect-auto sm:h-full min-h-[180px] rounded-lg overflow-hidden bg-ivory">
+          <Link
+            href="/#kho-si"
+            className={cn(
+              'group block relative rounded-lg overflow-hidden bg-ivory',
+              whySolo ? 'aspect-[4/3] sm:aspect-[1920/850] lg:aspect-[1920/600]' : 'aspect-[4/3] sm:aspect-auto sm:h-full min-h-[180px]'
+            )}
+          >
             <Image
               src="/images/warehouse/1920x850-3.png"
               alt={language === 'en' ? 'Thai Son Foods customer care' : 'Thái Sơn Foods chăm sóc khách hàng'}

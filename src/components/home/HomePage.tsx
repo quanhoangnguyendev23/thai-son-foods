@@ -5,8 +5,10 @@ import {
   HERO_MIN_SLIDES,
   HERO_PLACEHOLDER_SLIDES,
   HERO_PROMO_PLACEHOLDER_TILES,
+  HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO,
   RECOMMENDED_FOR_YOU_IDS,
 } from '@/data/homepage-placeholders';
+import { ENABLE_COMBOS } from '@/config/features';
 import AmazonHeroCarousel from '@/components/home/AmazonHeroCarousel';
 import HeroPromoTiles from '@/components/home/HeroPromoTiles';
 import AmazonCategoryCards, { HomeCategoryGroup } from '@/components/home/AmazonCategoryCards';
@@ -102,7 +104,8 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
     .filter((c) => c.isActive !== false)
     .map((c) => ((c.image || '').trim() ? c : { ...c, image: MISSING_PRODUCT_IMAGE }));
   const heroSlides = buildHeroSlides(heroBanners);
-  const promoTiles = promoBanners.length > 0 ? promoBanners : HERO_PROMO_PLACEHOLDER_TILES;
+  const promoTiles =
+    promoBanners.length > 0 ? promoBanners : ENABLE_COMBOS ? HERO_PROMO_PLACEHOLDER_TILES : HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO;
   const categoryGroups = buildCategoryGroups(products, liveCategories);
   const recommended = RECOMMENDED_FOR_YOU_IDS
     .map((id) => products.find((p) => p.id === id))
@@ -133,9 +136,11 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
         />
 
         {/* 4. DEAL TRONG NGÀY (anchor #deal-trong-ngay cho ô "Deal Sốc" cạnh hero) */}
-        <div id="deal-trong-ngay" className="scroll-mt-[130px]">
-          <AmazonDealsRow combos={combos} />
-        </div>
+        {ENABLE_COMBOS && (
+          <div id="deal-trong-ngay" className="scroll-mt-[130px]">
+            <AmazonDealsRow combos={combos} />
+          </div>
+        )}
 
         {/* 5. GỢI Ý CHO BẠN (PLACEHOLDER — chờ thuật toán gợi ý) */}
         {SHOW_PLACEHOLDER_BLOCKS && (
@@ -159,9 +164,11 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
         ))}
 
         {/* 7. COMBO TIẾT KIỆM (#combo) */}
-        <div className="bg-white rounded-2xl border border-border shadow-xs [&_#combo]:py-7 [&_#combo]:scroll-mt-[130px]">
-          <ComboShowcase combos={combos} />
-        </div>
+        {ENABLE_COMBOS && (
+          <div className="bg-white rounded-2xl border border-border shadow-xs [&_#combo]:py-7 [&_#combo]:scroll-mt-[130px]">
+            <ComboShowcase combos={combos} />
+          </div>
+        )}
 
         {/* 8. ĐÃ XEM GẦN ĐÂY */}
         <AmazonRecentlyViewed products={products} />

@@ -4,6 +4,7 @@ import { query, initDatabase, pool } from '@/lib/db';
 import { getUserSession } from '@/lib/auth';
 import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area';
 import { sendOrderEmail } from '@/lib/email/service';
+import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 
 function stripHtml(input: string): string {
@@ -292,6 +293,13 @@ export async function POST(request: Request) {
 
         // Kiểm tra nếu là combo có trong DB
         if (pId && (pId.startsWith('combo-') || pId.includes('combo'))) {
+          // Doanh nghiệp chưa chốt combo nào → tạm ngưng toàn bộ combo (kể cả combo trong bảng combos)
+          if (!ENABLE_COMBOS) {
+            return NextResponse.json(
+              { success: false, error: 'Combo đang tạm ngưng, vui lòng chọn sản phẩm lẻ.' },
+              { status: 400 }
+            );
+          }
           const comboRes = await client.query(
             `SELECT name, sale_price, image FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;`,
             [pId]
@@ -300,6 +308,12 @@ export async function POST(request: Request) {
             itemPrice = comboRes.rows[0].sale_price;
             itemName = comboRes.rows[0].name;
             itemThumbnail = comboRes.rows[0].image || null;
+          } else if (!ENABLE_CUSTOM_COMBOS) {
+            // B0: combo tự chọn (không có trong bảng combos) tạm ngưng — không bao giờ nhận giá do trình duyệt gửi
+            return NextResponse.json(
+              { success: false, error: 'Combo đang tạm ngưng, vui lòng chọn sản phẩm lẻ.' },
+              { status: 400 }
+            );
           }
         } else {
           // Là sản phẩm đơn hoặc variant: giá, tên, đơn vị và hệ số chai đều lấy từ DB

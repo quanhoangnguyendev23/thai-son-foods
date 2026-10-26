@@ -64,6 +64,37 @@ export const HERO_PROMO_PLACEHOLDER_TILES: Banner[] = [
   },
 ];
 
+// PLACEHOLDER: 2 ô cạnh hero khi TẮT combo (ENABLE_COMBOS = false trong src/config/features.ts) — không dẫn tới combo.
+// Banner admin placement = 'promo' vẫn được ưu tiên hơn khối này.
+export const HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO: Banner[] = [
+  {
+    id: 'placeholder-promo-best-sellers',
+    tag: 'Bán chạy',
+    title: 'Sản phẩm bán chạy',
+    titleEn: 'Best sellers',
+    subtitle: 'Được khách chọn nhiều nhất',
+    subtitleEn: 'Most loved by our customers',
+    ctaLabel: 'Xem ngay',
+    ctaLabelEn: 'Shop now',
+    image: '/images/products/1200x900-sb.jpg',
+    alt: 'Sữa bắp nếp Thái Sơn',
+    link: '/#san-pham',
+  },
+  {
+    id: 'placeholder-promo-nut-milk',
+    tag: 'Sữa hạt',
+    title: 'Sữa hạt Thái Sơn',
+    titleEn: 'Thai Son nut milks',
+    subtitle: 'Từ nguyên liệu chọn lọc',
+    subtitleEn: 'Made from selected ingredients',
+    ctaLabel: 'Xem sữa hạt',
+    ctaLabelEn: 'See nut milks',
+    image: '/images/products/1200x900-shs.jpg',
+    alt: 'Sữa hạt sen Thái Sơn',
+    link: '/#danh-muc-sua-hat',
+  },
+];
+
 // PLACEHOLDER: chờ triển khai — "Gợi ý cho bạn" (cần lịch sử xem/mua của khách + thuật toán gợi ý).
 // Hiện chỉ là danh sách id sản phẩm cố định; giá/ảnh vẫn lấy từ sản phẩm thật.
 export const RECOMMENDED_FOR_YOU_IDS = [

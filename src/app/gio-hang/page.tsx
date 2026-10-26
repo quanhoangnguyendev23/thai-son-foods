@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
 import { products } from '@/data/products';
 import { combos } from '@/data/combos';
+import { ENABLE_COMBOS } from '@/config/features';
 import { useCartInventory } from '@/hooks/useCartInventory';
 
 const MIN_ORDER_THRESHOLD = 120000;
@@ -366,6 +367,8 @@ export default function CartPage() {
       </section>
 
       {/* ═════════ SECTION B: Ụ HÀNG COMBO SIÊU HỜI RINH VỀ CHO CẢ NHÀ (12 COMBO - 1 HÀNG) ═════════ */}
+      {/* Ẩn khi tắt combo (ENABLE_COMBOS = false — doanh nghiệp chưa chốt combo) */}
+      {ENABLE_COMBOS && (
       <section aria-labelledby="checkout-combos-heading" className="space-y-3">
         {/* Header combo với phong cách ụ khuyến mãi siêu thị */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -524,6 +527,7 @@ export default function CartPage() {
           })}
         </div>
       </section>
+      )}
     </div>
   );
 
@@ -1083,11 +1087,12 @@ export default function CartPage() {
                 </h3>
                 <p className="text-[11px] text-emerald-700/90 leading-normal mt-0.5">
                   {language === 'en'
-                    ? '1-click to add chilled drinks & discount bundles!'
-                    : '1 chạm vào giỏ, nhận ngay đồ uống thanh mát & combo hời!'}
+                    ? (ENABLE_COMBOS ? '1-click to add chilled drinks & discount bundles!' : '1-click to add chilled drinks!')
+                    : (ENABLE_COMBOS ? '1 chạm vào giỏ, nhận ngay đồ uống thanh mát & combo hời!' : '1 chạm vào giỏ, nhận ngay đồ uống thanh mát!')}
                 </p>
 
-                {/* Tab Switcher 2 ngăn: Chai nước (12) vs Combo (12) */}
+                {/* Tab Switcher 2 ngăn: Chai nước (12) vs Combo (12) — ẩn khi tắt combo, chỉ còn danh sách chai */}
+                {ENABLE_COMBOS && (
                 <div className="grid grid-cols-2 gap-1.5 p-1 bg-emerald-100/60 rounded-xl mt-2.5 border border-emerald-200/70">
                   <button
                     type="button"
@@ -1113,6 +1118,7 @@ export default function CartPage() {
                     <span>{language === 'en' ? '12 Combos' : '12 Combo hời'}</span>
                   </button>
                 </div>
+                )}
               </div>
 
               {/* Danh sách 12 món cuộn mượt mà có scrollbar tùy chỉnh */}

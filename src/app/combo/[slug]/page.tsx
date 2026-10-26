@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { ENABLE_COMBOS } from '@/config/features';
 import { combos, getComboBySlug } from '@/data/combos';
 import { products } from '@/data/products';
 import ComboDetailView from '@/components/product/ComboDetailView';
@@ -130,6 +131,8 @@ export async function generateMetadata({
 import { getAvailability } from '@/lib/inventory';
 
 export default async function ComboDetailPage({ params }: ComboPageProps) {
+  // Doanh nghiệp chưa chốt combo → tạm ẩn trang chi tiết combo
+  if (!ENABLE_COMBOS) redirect('/');
   const { slug } = await params;
   const combo = await getLiveCombo(slug);
 

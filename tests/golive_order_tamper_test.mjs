@@ -264,6 +264,29 @@ async function main() {
     }
   }
 
+  console.log('\n[j] ENABLE_COMBOS = false: mọi combo (tự chọn và trong bảng combos) giá 1đ → 400');
+  {
+    const store = storeAB || storeC || { storeCode: 'NH', lat: 10.73, lng: 106.7 };
+    const customIds = [
+      'combo-van-phong-prod-sb-01:5_prod-ss-01:3_prod-sb-01:2',
+      'combo-4-chai-prod-sb-01:2_prod-ss-01:2',
+    ];
+    for (const productId of customIds) {
+      const r = await postOrder(orderBody({ store, items: [{ productId, name: 'Combo QA_TEST', price: 1, quantity: 1 }], extra: { subtotal: 1, total: 1 } }));
+      check(r.status === 400 && r.json.success === false && /Combo đang tạm ngưng/.test(r.json.error || ''), `${productId.slice(0, 20)}… giá 1đ → 400`, r);
+    }
+    // Combo cố định trong bảng combos (doanh nghiệp chưa chốt) cũng phải bị từ chối, kể cả khi gửi đúng giá
+    const dbCombos = (await pool.query(`SELECT id, sale_price FROM combos WHERE id = 'combo-sieu-hoi' OR is_active IS NOT FALSE ORDER BY (id = 'combo-sieu-hoi') DESC, id LIMIT 2;`).catch(() => ({ rows: [] }))).rows;
+    if (!dbCombos.length) {
+      skipped++;
+      console.warn('  ⏭️ SKIP: không có combo trong bảng combos');
+    }
+    for (const dbCombo of dbCombos) {
+      const r = await postOrder(orderBody({ store, items: [{ productId: dbCombo.id, name: 'x', price: Number(dbCombo.sale_price) || 1, quantity: 1 }] }));
+      check(r.status === 400 && r.json.success === false && /Combo đang tạm ngưng/.test(r.json.error || ''), `Combo trong bảng combos "${dbCombo.id}" → 400`, r);
+    }
+  }
+
   // ── (d) ──
   console.log('\n[d] Email templates escape HTML');
   {

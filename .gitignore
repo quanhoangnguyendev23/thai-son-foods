@@ -50,3 +50,5 @@ next-env.d.ts
 /backups/
 /ảnh/
 /.next-build/
+# mật khẩu tạm admin (golive_secure_admin_accounts)
+admin-credentials-*.csv

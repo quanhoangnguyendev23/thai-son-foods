@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { redirect, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -26,6 +26,22 @@ import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranchStore } from '@/store/branch';
 import { useBranchStockMap } from '@/hooks/useBranchStockMap';
+import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
+
+// Combo tự chọn đang tạm ngưng (ENABLE_CUSTOM_COMBOS = false): thay nút thêm giỏ bằng thông báo, không cho thêm vào giỏ
+function CustomComboPausedNotice() {
+  return (
+    <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 px-5 py-3 rounded-2xl bg-gray-100 border border-gray-200 text-center">
+      <span className="flex items-center gap-1.5 text-base text-gray-600">
+        <Lock className="w-4 h-4 text-gray-500" />
+        Combo tự chọn tạm ngưng
+      </span>
+      <Link href="/#combo" className="text-base text-forest-800 underline underline-offset-2 hover:text-forest-900">
+        Xem combo có sẵn
+      </Link>
+    </div>
+  );
+}
 
 // ==========================================
 // CẤU HÌNH COMBO 01 (TỰ DO 4 CHAI)
@@ -248,6 +264,7 @@ function Combo01View() {
   };
 
   const handleAddToCart = () => {
+    if (!ENABLE_CUSTOM_COMBOS) return;
     if (totalSelected !== COMBO_01_TARGET) return;
 
     const summaryList = Object.entries(selectedBottles)
@@ -582,6 +599,7 @@ function Combo01View() {
               </div>
             )}
 
+            {!ENABLE_CUSTOM_COMBOS ? <CustomComboPausedNotice /> : (
             <button
               type="button"
               onClick={handleAddToCart}
@@ -605,6 +623,7 @@ function Combo01View() {
                 </>
               )}
             </button>
+            )}
           </div>
         </div>
       </div>
@@ -695,6 +714,7 @@ function Combo02View() {
 
   // Thêm vào giỏ hàng
   const handleAddToCart = (e?: React.MouseEvent) => {
+    if (!ENABLE_CUSTOM_COMBOS) return;
     if (!isComplete || !selectedStep1Obj || !selectedStep2Obj || !selectedStep3Obj) return;
 
     if (e) {
@@ -1432,6 +1452,7 @@ function Combo02View() {
               </div>
             )}
 
+            {!ENABLE_CUSTOM_COMBOS ? <CustomComboPausedNotice /> : (
             <button
               type="button"
               onClick={handleAddToCart}
@@ -1455,6 +1476,7 @@ function Combo02View() {
                 </>
               )}
             </button>
+            )}
           </div>
         </div>
       </div>
@@ -1528,6 +1550,7 @@ function Combo05View() {
   };
 
   const handleAddToCart = () => {
+    if (!ENABLE_CUSTOM_COMBOS) return;
     if (!prodA || !prodB) return;
 
     const nameA = prodA.name;
@@ -2115,6 +2138,7 @@ function Combo05View() {
               </div>
             )}
 
+            {!ENABLE_CUSTOM_COMBOS ? <CustomComboPausedNotice /> : (
             <button
               type="button"
               onClick={handleAddToCart}
@@ -2138,6 +2162,7 @@ function Combo05View() {
                 </>
               )}
             </button>
+            )}
           </div>
         </div>
       </div>
@@ -2222,6 +2247,7 @@ function Combo06View() {
   };
 
   const handleAddToCart = () => {
+    if (!ENABLE_CUSTOM_COMBOS) return;
     const name1 = prod1.name;
     const name2 = prod2.name;
     const name3 = prod3.name;
@@ -2817,6 +2843,7 @@ function Combo06View() {
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            {!ENABLE_CUSTOM_COMBOS ? <CustomComboPausedNotice /> : (
             <button
               type="button"
               onClick={handleAddToCart}
@@ -2834,6 +2861,7 @@ function Combo06View() {
                 </>
               )}
             </button>
+            )}
           </div>
         </div>
       </div>
@@ -2973,6 +3001,8 @@ function ComboContent() {
 
 
 export default function ComboSelectionPage() {
+  // Doanh nghiệp chưa chốt combo → tạm ẩn trang combo (redirect hợp lệ khi render Client Component)
+  if (!ENABLE_COMBOS) redirect('/');
   return (
     <Suspense
       fallback={

@@ -34,6 +34,7 @@ import { useUserAuth } from '@/context/UserAuthContext';
 import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 import { products, categories as catalogCategories } from '@/data/products';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
+import { ENABLE_COMBOS } from '@/config/features';
 import { DELIVER_TO_PLACEHOLDER } from '@/data/homepage-placeholders';
 import CategorySidebar from '@/components/home/CategorySidebar';
 
@@ -189,7 +190,7 @@ export default function HeaderAmazon() {
 
   const taskbagItems = useMemo(
     () => [
-      { id: 'deal-soc', label: t('dealHot'), href: '/#combo', icon: Flame, color: 'text-corn', badge: 'HOT' },
+      ...(ENABLE_COMBOS ? [{ id: 'deal-soc', label: t('dealHot'), href: '/#combo', icon: Flame, color: 'text-corn', badge: 'HOT' }] : []),
       { id: 'ban-chay', label: t('bestSellers'), href: '/#san-pham', icon: Sparkles, color: 'text-corn' },
       ...(MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP
         ? [{ id: 'member-prime', label: 'Thái Sơn Prime', href: '/member', icon: Crown, color: 'text-corn', badge: 'HOT' }]

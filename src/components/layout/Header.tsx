@@ -35,6 +35,7 @@ import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 import { products } from '@/data/products';
 import BranchTopBar from '@/components/layout/BranchTopBar';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
+import { ENABLE_COMBOS } from '@/config/features';
 
 // Chuẩn hóa chuỗi tiếng Việt: bỏ dấu, đ→d, lowercase, gộp khoảng trắng
 function normalizeVi(input: string): string {
@@ -108,14 +109,18 @@ export default function Header() {
 
   const taskbagItems = useMemo(
     () => [
-      {
-        id: 'deal-soc',
-        label: t('dealHot'),
-        href: '/#combo',
-        icon: Flame,
-        color: 'text-red-500',
-        badge: 'HOT',
-      },
+      ...(ENABLE_COMBOS
+        ? [
+            {
+              id: 'deal-soc',
+              label: t('dealHot'),
+              href: '/#combo',
+              icon: Flame,
+              color: 'text-red-500',
+              badge: 'HOT',
+            },
+          ]
+        : []),
       {
         id: 'ban-chay',
         label: t('bestSellers'),
