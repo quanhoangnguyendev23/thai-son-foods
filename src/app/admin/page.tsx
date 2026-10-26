@@ -311,7 +311,7 @@ interface StatsData {
   statusBreakdown: { status: string; count: string | number; total_amount: string | number }[];
   recentOrders: Order[];
   topProducts: any[];
-  revenueTrend: { date_label: string; order_count: number; daily_revenue: number }[];
+  revenueTrend: { date_label: string; order_count: number; daily_revenue: number; placed_count?: number; placed_revenue?: number }[];
   dbStatus: { connected: boolean; database: string; timestamp: string };
 }
 
@@ -3282,47 +3282,60 @@ export default function AdminPage() {
                         <BarChart3 className="w-4 h-4 text-emerald-400" />
                         <span>Biểu Đồ Doanh Thu 7 Ngày Gần Nhất</span>
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Xu hướng đặt hàng thực tế trong tuần</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Theo ngày giờ Việt Nam · rê chuột vào cột để xem chi tiết</p>
                     </div>
                     <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
                       7 ngày qua
                     </span>
                   </div>
 
+                  {/* Chú thích 2 chỉ số */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-sky-600 to-sky-400"></span>
+                      Doanh số đặt hàng (mọi đơn không bị huỷ)
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-emerald-600 to-teal-400"></span>
+                      Doanh thu hoàn thành
+                    </span>
+                  </div>
+
                   {/* SVG interactive visual chart */}
                   <div className="pt-4 pb-2">
                     <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 px-2">
-                      {(stats?.revenueTrend || [
-                        { date_label: '15/09', daily_revenue: 120000, order_count: 2 },
-                        { date_label: '16/09', daily_revenue: 250000, order_count: 3 },
-                        { date_label: '17/09', daily_revenue: 180000, order_count: 2 },
-                        { date_label: '18/09', daily_revenue: 340000, order_count: 4 },
-                        { date_label: '19/09', daily_revenue: 210000, order_count: 3 },
-                        { date_label: '20/09', daily_revenue: 430000, order_count: 5 },
-                        { date_label: '21/09', daily_revenue: 320000, order_count: 4 },
-                      ]).map((item, idx) => {
+                      {(stats?.revenueTrend || []).map((item, idx) => {
+                        // Cùng một thang đo cho 2 cột; ngày 0đ thì cột trống (không vẽ cột giả)
                         const maxRev = Math.max(
-                          ...(stats?.revenueTrend?.map((r) => Number(r.daily_revenue)) || [500000]),
+                          ...(stats?.revenueTrend || []).map((r) => Math.max(Number(r.placed_revenue || 0), Number(r.daily_revenue || 0))),
                           100000
                         );
-                        const heightPct = Math.max(
-                          Math.round((Number(item.daily_revenue || 0) / maxRev) * 100),
-                          12
-                        );
+                        const pct = (v: number | undefined) => {
+                          const n = Number(v || 0);
+                          return n > 0 ? Math.max(Math.round((n / maxRev) * 100), 3) : 0;
+                        };
 
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
                             {/* Tooltip on hover */}
-                            <div className="absolute -top-12 bg-slate-950 text-white text-[10px] py-1 px-2 rounded-md shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
-                              <p className="text-emerald-400 text-[1.125em]">{formatVND(item.daily_revenue)}</p>
-                              <p className="text-slate-400">{item.order_count} đơn hàng</p>
+                            <div className="absolute -top-16 bg-slate-950 text-white text-[10px] py-1 px-2 rounded-md shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                              <p className="text-sky-300 text-[1.125em]">
+                                Đặt hàng: {formatVND(item.placed_revenue || 0)} · {item.placed_count || 0} đơn
+                              </p>
+                              <p className="text-emerald-400 text-[1.125em]">
+                                Hoàn thành: {formatVND(item.daily_revenue)} · {item.order_count} đơn
+                              </p>
                             </div>
 
-                            {/* Bar element */}
-                            <div className="w-full max-w-[48px] bg-slate-800/80 rounded-t-xl overflow-hidden flex flex-col justify-end p-1 h-36">
+                            {/* 2 cột: đặt hàng (xanh dương) · hoàn thành (xanh lá) */}
+                            <div className="w-full max-w-[56px] bg-slate-800/80 rounded-t-xl overflow-hidden flex items-end justify-center gap-1 p-1 h-36">
                               <div
-                                style={{ height: `${heightPct}%` }}
-                                className="w-full rounded-t-lg bg-gradient-to-t from-emerald-600 to-teal-400 group-hover:from-emerald-500 group-hover:to-teal-300 transition-all duration-300"
+                                style={{ height: `${pct(item.placed_revenue)}%` }}
+                                className="flex-1 rounded-t-lg bg-gradient-to-t from-sky-600 to-sky-400 group-hover:from-sky-500 group-hover:to-sky-300 transition-all duration-300"
+                              ></div>
+                              <div
+                                style={{ height: `${pct(item.daily_revenue)}%` }}
+                                className="flex-1 rounded-t-lg bg-gradient-to-t from-emerald-600 to-teal-400 group-hover:from-emerald-500 group-hover:to-teal-300 transition-all duration-300"
                               ></div>
                             </div>
                             <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-200">

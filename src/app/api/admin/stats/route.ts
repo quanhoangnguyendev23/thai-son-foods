@@ -163,43 +163,27 @@ export async function GET() {
           LIMIT 5;
         `);
 
-    // 7. Last 7 days revenue trend (chỉ tính doanh thu đơn hoàn thành)
+    // 7. Last 7 days trend theo ngày GIỜ VIỆT NAM (không phụ thuộc múi giờ máy chủ CSDL, cloud thường là UTC):
+    //    - placed_count / placed_revenue: "Doanh số đặt hàng" = mọi đơn không bị huỷ (gồm đơn chờ xác nhận, đang giao)
+    //    - order_count / daily_revenue: "Doanh thu hoàn thành" = đơn COMPLETED (giữ tên cũ)
+    const last7DaysSql = (storeFilter: string) => `
+          WITH vn_today AS (SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS d),
+          dates AS (
+            SELECT generate_series((SELECT d FROM vn_today) - 6, (SELECT d FROM vn_today), '1 day'::interval)::date AS day
+          )
+          SELECT
+            to_char(d.day, 'DD/MM') AS date_label,
+            COUNT(o.id) FILTER (WHERE o.status = 'COMPLETED') AS order_count,
+            COALESCE(SUM(o.total) FILTER (WHERE o.status = 'COMPLETED'), 0) AS daily_revenue,
+            COUNT(o.id) FILTER (WHERE COALESCE(o.status, '') <> 'CANCELLED') AS placed_count,
+            COALESCE(SUM(o.total) FILTER (WHERE COALESCE(o.status, '') <> 'CANCELLED'), 0) AS placed_revenue
+          FROM dates d
+          LEFT JOIN orders o ON (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = d.day${storeFilter}
+          GROUP BY d.day
+          ORDER BY d.day ASC;`;
     const last7DaysRes = storeScope
-      ? await query(
-          `WITH dates AS (
-            SELECT generate_series(
-              CURRENT_DATE - INTERVAL '6 days',
-              CURRENT_DATE,
-              '1 day'::interval
-            )::date AS day
-          )
-          SELECT 
-            to_char(d.day, 'DD/MM') AS date_label,
-            COALESCE(COUNT(CASE WHEN o.status = 'COMPLETED' THEN o.id END), 0) AS order_count,
-            COALESCE(SUM(CASE WHEN o.status = 'COMPLETED' THEN o.total ELSE 0 END), 0) AS daily_revenue
-          FROM dates d
-          LEFT JOIN orders o ON date_trunc('day', o.created_at) = d.day AND o.store_code = $1
-          GROUP BY d.day
-          ORDER BY d.day ASC;`,
-          [storeScope]
-        )
-      : await query(`
-          WITH dates AS (
-            SELECT generate_series(
-              CURRENT_DATE - INTERVAL '6 days',
-              CURRENT_DATE,
-              '1 day'::interval
-            )::date AS day
-          )
-          SELECT 
-            to_char(d.day, 'DD/MM') AS date_label,
-            COALESCE(COUNT(CASE WHEN o.status = 'COMPLETED' THEN o.id END), 0) AS order_count,
-            COALESCE(SUM(CASE WHEN o.status = 'COMPLETED' THEN o.total ELSE 0 END), 0) AS daily_revenue
-          FROM dates d
-          LEFT JOIN orders o ON date_trunc('day', o.created_at) = d.day
-          GROUP BY d.day
-          ORDER BY d.day ASC;
-        `);
+      ? await query(last7DaysSql(' AND o.store_code = $1'), [storeScope])
+      : await query(last7DaysSql(''));
 
     // 8. Profit overview (CHỈ dành riêng cho SUPER_ADMIN với profit.view, tính trên đơn COMPLETED)
     const canViewProfit = hasPermission(session, 'profit.view');
