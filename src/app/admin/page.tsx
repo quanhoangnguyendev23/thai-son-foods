@@ -138,6 +138,9 @@ export interface InventoryLogItem {
   created_at: string;
 }
 
+// Production: không hiển thị host/port CSDL và ẩn công cụ chỉ dành cho máy phát triển (API đã trả 403 trên production)
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
 interface Category {
   id: string;
   slug: string;
@@ -2577,17 +2580,30 @@ export default function AdminPage() {
         </div>
 
         {/* Center: DB Badge */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-slate-300 font-medium">PostgreSQL:</span>
-          <span className="text-emerald-400 font-mono text-[1.125em]">WebTSF</span>
-          <span className="text-slate-500">|</span>
-          <span className="text-slate-400 text-[11px]">Port 5432 (127.0.0.1)</span>
-        </div>
+        {IS_PRODUCTION ? (
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                stats?.dbStatus?.connected ? 'bg-emerald-400 animate-pulse' : loading ? 'bg-slate-500' : 'bg-amber-400'
+              }`}
+            ></span>
+            <span className="text-slate-300 font-medium">
+              {stats?.dbStatus?.connected ? 'Kết nối tốt' : loading ? 'Đang kiểm tra kết nối...' : 'Chưa xác nhận kết nối'}
+            </span>
+          </div>
+        ) : (
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-slate-300 font-medium">PostgreSQL:</span>
+            <span className="text-emerald-400 font-mono text-[1.125em]">WebTSF</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400 text-[11px]">Port 5432 (127.0.0.1)</span>
+          </div>
+        )}
 
         {/* Right action tools */}
         <div className="flex items-center gap-2.5">
-          {hasPermission(currentUser, 'system.sync') && (
+          {!IS_PRODUCTION && hasPermission(currentUser, 'system.sync') && (
             <button
               onClick={handleSyncStore}
               disabled={syncLoading}
@@ -2600,7 +2616,7 @@ export default function AdminPage() {
             </button>
           )}
 
-          {hasPermission(currentUser, 'system.seed') && (
+          {!IS_PRODUCTION && hasPermission(currentUser, 'system.seed') && (
             <button
               onClick={handleSeedDemoOrders}
               disabled={actionLoading}
@@ -3443,7 +3459,9 @@ export default function AdminPage() {
                       {orders.length === 0 && (
                         <tr>
                           <td colSpan={7} className="py-8 text-center text-slate-500">
-                            Chưa có đơn hàng nào trong cơ sở dữ liệu. Hãy bấm &quot;Nạp Đơn Mẫu&quot; ở trên góc phải để thử nghiệm!
+                            {IS_PRODUCTION
+                              ? 'Chưa có đơn hàng nào.'
+                              : <>Chưa có đơn hàng nào trong cơ sở dữ liệu. Hãy bấm &quot;Nạp Đơn Mẫu&quot; ở trên góc phải để thử nghiệm!</>}
                           </td>
                         </tr>
                       )}
@@ -4838,11 +4856,15 @@ export default function AdminPage() {
                       </p>
                     </div>
                   </div>
+                  {!IS_PRODUCTION && (
                   <span className="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     Port: 5432
                   </span>
+                  )}
                 </div>
 
+                {/* Thông số máy chủ CSDL chỉ hiện trên máy phát triển */}
+                {!IS_PRODUCTION && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
                   <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
                     <p className="text-xs text-slate-400">Database Name</p>
@@ -4861,6 +4883,7 @@ export default function AdminPage() {
                     <p className="text-base font-mono text-emerald-400 mt-1">Active (pg-pool 10)</p>
                   </div>
                 </div>
+                )}
               </div>
 
               {/* Store to DB Sync Control Center */}
