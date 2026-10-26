@@ -9,6 +9,7 @@ import { INVENTORY_CONFIG } from '@/config/inventory';
 import { ENABLE_COMBOS } from '@/config/features';
 import { categories as catalogCategories } from '@/data/products';
 import { formatPrice } from '@/lib/utils';
+import { HAS_LEGAL_LINKS, LegalCompanyBlock, LegalPolicyLinks } from '@/components/layout/FooterLegal';
 
 /**
  * FOOTER BIẾN THỂ AMAZON — chỉ dùng cho trang chủ mới. Footer.tsx gốc giữ nguyên cho các trang khác.
@@ -137,15 +138,15 @@ export default function FooterAmazon() {
           </div>
 
           <div>
-            <h3 className={headingCls}>{isEn ? 'Support' : 'Hỗ trợ'}</h3>
-            <ul className="mb-5">
-              <li>
-                <Link href="/#" className={linkCls}>{isEn ? 'Shipping Policy' : 'Chính sách giao hàng'}</Link>
-              </li>
-              <li>
-                <Link href="/#" className={linkCls}>{isEn ? 'Contact' : 'Liên hệ'}</Link>
-              </li>
-            </ul>
+            {/* Link chính sách lấy từ src/config/legal.ts — chỉ hiện link đã điền (thay cho link "/#" tạm) */}
+            {HAS_LEGAL_LINKS && (
+              <>
+                <h3 className={headingCls}>{isEn ? 'Support' : 'Hỗ trợ'}</h3>
+                <ul className="mb-5">
+                  <LegalPolicyLinks isEn={isEn} className={linkCls} />
+                </ul>
+              </>
+            )}
             <h3 className={headingCls}>{isEn ? 'Follow Us' : 'Kết nối'}</h3>
             <div className="flex items-center gap-3">
               <a href="https://www.facebook.com/suabapnepthaison" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-xl hover:bg-corn hover:text-text-dark transition-colors">
@@ -159,6 +160,11 @@ export default function FooterAmazon() {
               </a>
             </div>
           </div>
+        </div>
+
+        {/* Thông tin pháp lý doanh nghiệp + logo Bộ Công Thương (src/config/legal.ts, trống thì ẩn) */}
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 empty:hidden">
+          <LegalCompanyBlock isEn={isEn} className="pb-6" />
         </div>
 
         {/* Miễn phí vận chuyển — ngưỡng lấy từ INVENTORY_CONFIG (cùng giá trị 200.000đ với Footer gốc) */}

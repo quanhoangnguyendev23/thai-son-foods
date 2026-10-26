@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Truck } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { HAS_LEGAL_LINKS, LegalCompanyBlock, LegalPolicyLinks } from '@/components/layout/FooterLegal';
 
 function FacebookIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
@@ -116,24 +117,23 @@ export default function Footer() {
 
             {/* Support + Social */}
             <div>
-              <h3
-                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
-                style={{ color: 'var(--color-amber-500)' }}
-              >
-                {language === 'en' ? 'Support' : 'Hỗ trợ'}
-              </h3>
-              <ul className="space-y-1 text-[15px] sm:text-base text-white/90 mb-6">
-                <li>
-                  <Link href="/#" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
-                    {language === 'en' ? 'Shipping Policy' : 'Chính sách giao hàng'}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/#" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
-                    {language === 'en' ? 'Contact' : 'Liên hệ'}
-                  </Link>
-                </li>
-              </ul>
+              {/* Link chính sách lấy từ src/config/legal.ts — chỉ hiện link đã điền (thay cho link "/#" tạm) */}
+              {HAS_LEGAL_LINKS && (
+                <>
+                  <h3
+                    className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
+                    style={{ color: 'var(--color-amber-500)' }}
+                  >
+                    {language === 'en' ? 'Support' : 'Hỗ trợ'}
+                  </h3>
+                  <ul className="space-y-1 text-[15px] sm:text-base text-white/90 mb-6">
+                    <LegalPolicyLinks
+                      isEn={language === 'en'}
+                      className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block"
+                    />
+                  </ul>
+                </>
+              )}
 
               {/* Social */}
               <h3
@@ -184,6 +184,9 @@ export default function Footer() {
               <span className="text-amber-500 text-[1.125em]">200.000đ</span>
             </span>
           </div>
+
+          {/* Thông tin pháp lý doanh nghiệp + logo Bộ Công Thương (src/config/legal.ts, trống thì ẩn) */}
+          <LegalCompanyBlock isEn={language === 'en'} className="mt-8" />
 
           {/* Copyright */}
           <div className="mt-8 pt-6 border-t border-white/10 text-sm text-white/70">
