@@ -1,5 +1,15 @@
 import { formatPrice } from '@/lib/utils';
 
+/** Escape mọi giá trị động trước khi chèn vào HTML email (chống chèn thẻ/script từ dữ liệu khách nhập). */
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export interface OrderEmailItem {
   name: string;
   price: number;
@@ -57,7 +67,7 @@ function wrapEmailLayout({
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
@@ -91,7 +101,7 @@ function wrapEmailLayout({
                   <td align="center">
                     <!-- Khung Logo Trắng Nổi Bật Thái Sơn Foods -->
                     <div style="display: inline-block; background-color: #ffffff; padding: 12px 28px 10px 28px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 16px rgba(34,84,76,0.12);">
-                      <img src="${logoSrc}" alt="Thái Sơn Foods - Món ngon quê Việt" width="220" style="display: block; width: 220px; max-width: 100%; height: auto; margin: 0 auto; border: 0;" />
+                      <img src="${escapeHtml(logoSrc)}" alt="Thái Sơn Foods - Món ngon quê Việt" width="220" style="display: block; width: 220px; max-width: 100%; height: auto; margin: 0 auto; border: 0;" />
                     </div>
                     <div style="color: #F0F5F2; font-size: 13px; font-weight: 400; letter-spacing: 1.5px; text-transform: uppercase;">
                       Món Ngon Quê Việt • Đồ Uống Tươi Dinh Dưỡng
@@ -145,11 +155,11 @@ function renderItemsTable(items: OrderEmailItem[]): string {
       (item) => `
     <tr>
       <td style="padding: 12px 0; border-bottom: 1px solid #EEF3F3; font-size: 13px; color: #315B56;">
-        <strong style="font-weight: 400; color: #27534D; display: block; font-size: 15.5px;">${item.name}</strong>
-        <span style="font-size: 11.5px; color: #6F908C;">Quy cách: ${item.unit || '1 chai'}</span>
+        <strong style="font-weight: 400; color: #27534D; display: block; font-size: 15.5px;">${escapeHtml(item.name)}</strong>
+        <span style="font-size: 11.5px; color: #6F908C;">Quy cách: ${escapeHtml(item.unit || '1 chai')}</span>
       </td>
       <td align="center" style="padding: 12px 8px; border-bottom: 1px solid #EEF3F3; font-size: 15px; color: #40645F; font-weight: 400;">
-        x${item.quantity}
+        x${escapeHtml(item.quantity)}
       </td>
       <td align="right" style="padding: 12px 0; border-bottom: 1px solid #EEF3F3; font-size: 15px; color: #22544C; font-weight: 400;">
         ${formatPrice(item.price * item.quantity)}đ
@@ -186,7 +196,7 @@ export function renderOrderConfirmationEmail(
   html: string;
 } {
   const subject = `[Thái Sơn Foods] Xác nhận đã nhận đơn hàng #${order.orderCode}`;
-  const preheader = `Cảm ơn bạn! Đơn hàng #${order.orderCode} trị giá ${formatPrice(order.total)}đ đã được tiếp nhận và đang chuẩn bị giao.`;
+  const preheader = `Cảm ơn bạn! Đơn hàng #${escapeHtml(order.orderCode)} trị giá ${formatPrice(order.total)}đ đã được tiếp nhận và đang chuẩn bị giao.`;
 
   const fullAddress = [order.address, order.ward, order.district, order.province]
     .filter(Boolean)
@@ -204,10 +214,10 @@ export function renderOrderConfirmationEmail(
         ✓ Đơn hàng đã tiếp nhận
       </div>
       <h1 style="font-size: 22px; font-weight: 400; color: #27534D; margin: 0 0 8px 0; line-height: 1.3;">
-        Cảm ơn quý khách, ${order.fullName}!
+        Cảm ơn quý khách, ${escapeHtml(order.fullName)}!
       </h1>
       <p style="font-size: 13.5px; color: #40645F; line-height: 1.6; margin: 0;">
-        Đơn hàng <strong style="font-weight: 400; font-size: 1.125em; color: #1F5048;">#${order.orderCode}</strong> của bạn đã được ghi nhận trên hệ thống. Đội ngũ cửa hàng Thái Sơn Foods đang tiến hành kiểm tra kho và đóng gói đồ uống tươi mát để giao đến bạn sớm nhất.
+        Đơn hàng <strong style="font-weight: 400; font-size: 1.125em; color: #1F5048;">#${escapeHtml(order.orderCode)}</strong> của bạn đã được ghi nhận trên hệ thống. Đội ngũ cửa hàng Thái Sơn Foods đang tiến hành kiểm tra kho và đóng gói đồ uống tươi mát để giao đến bạn sớm nhất.
       </p>
     </div>
 
@@ -219,11 +229,11 @@ export function renderOrderConfirmationEmail(
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 13px; line-height: 1.6; color: #315B56;">
         <tr>
           <td style="width: 110px; color: #6F908C; vertical-align: top;">Người nhận:</td>
-          <td><strong style="font-weight: 400; font-size: 1.125em;">${order.fullName}</strong> - ${order.phone}</td>
+          <td><strong style="font-weight: 400; font-size: 1.125em;">${escapeHtml(order.fullName)}</strong> - ${escapeHtml(order.phone)}</td>
         </tr>
         <tr>
           <td style="color: #6F908C; vertical-align: top;">Địa chỉ giao:</td>
-          <td>${fullAddress}</td>
+          <td>${escapeHtml(fullAddress)}</td>
         </tr>
         <tr>
           <td style="color: #6F908C; vertical-align: top;">Thanh toán:</td>
@@ -233,7 +243,7 @@ export function renderOrderConfirmationEmail(
           order.note
             ? `<tr>
                 <td style="color: #6F908C; vertical-align: top;">Ghi chú:</td>
-                <td style="color: #C3183C; font-style: italic;">${order.note}</td>
+                <td style="color: #C3183C; font-style: italic;">${escapeHtml(order.note)}</td>
               </tr>`
             : ''
         }
@@ -318,7 +328,7 @@ export function renderOrderShippingEmail(
         Đồ uống tươi mát đang trên đường đến bạn!
       </h1>
       <p style="font-size: 13.5px; color: #40645F; line-height: 1.6; margin: 0;">
-        Chào <strong style="font-weight: 400; font-size: 1.125em;">${order.fullName}</strong>, đơn hàng <strong style="font-weight: 400; font-size: 1.125em; color: #1F5048;">#${order.orderCode}</strong> đã được xuất kho và giao cho nhân viên vận chuyển. Bạn hãy chuẩn bị nghe điện thoại nhận hàng nhé!
+        Chào <strong style="font-weight: 400; font-size: 1.125em;">${escapeHtml(order.fullName)}</strong>, đơn hàng <strong style="font-weight: 400; font-size: 1.125em; color: #1F5048;">#${escapeHtml(order.orderCode)}</strong> đã được xuất kho và giao cho nhân viên vận chuyển. Bạn hãy chuẩn bị nghe điện thoại nhận hàng nhé!
       </p>
     </div>
 
@@ -330,23 +340,23 @@ export function renderOrderShippingEmail(
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 13px; line-height: 1.7; color: #1F5048;">
         <tr>
           <td style="width: 120px; color: #34625A;">Người giao hàng:</td>
-          <td><strong style="font-weight: 400; font-size: 1.125em;">${shipperName}</strong></td>
+          <td><strong style="font-weight: 400; font-size: 1.125em;">${escapeHtml(shipperName)}</strong></td>
         </tr>
         <tr>
           <td style="color: #34625A;">Số điện thoại:</td>
           <td>
-            <a href="tel:${shipperPhone}" style="color: #1F5048; font-weight: 400; text-decoration: none; background-color: #ffffff; padding: 2px 8px; border-radius: 6px; border: 1px solid #9CBEAB; font-size: 1.125em;">
-              ${shipperPhone}
+            <a href="tel:${escapeHtml(shipperPhone)}" style="color: #1F5048; font-weight: 400; text-decoration: none; background-color: #ffffff; padding: 2px 8px; border-radius: 6px; border: 1px solid #9CBEAB; font-size: 1.125em;">
+              ${escapeHtml(shipperPhone)}
             </a>
           </td>
         </tr>
         <tr>
           <td style="color: #34625A;">Cửa hàng xuất:</td>
-          <td>${storeAddress}</td>
+          <td>${escapeHtml(storeAddress)}</td>
         </tr>
         <tr>
           <td style="color: #34625A;">Giao đến:</td>
-          <td><strong style="font-weight: 400; font-size: 1.125em;">${fullAddress}</strong></td>
+          <td><strong style="font-weight: 400; font-size: 1.125em;">${escapeHtml(fullAddress)}</strong></td>
         </tr>
       </table>
     </div>
@@ -377,7 +387,7 @@ export function renderOrderShippingEmail(
         Danh sách ${order.items.length} món trong đơn:
       </div>
       <ul style="margin: 0; padding-left: 18px; font-size: 12.5px; color: #40645F; line-height: 1.6;">
-        ${order.items.map((i) => `<li><strong style="font-weight: 400; font-size: 1.125em;">${i.name}</strong> (x${i.quantity}) - ${formatPrice(i.price * i.quantity)}đ</li>`).join('')}
+        ${order.items.map((i) => `<li><strong style="font-weight: 400; font-size: 1.125em;">${escapeHtml(i.name)}</strong> (x${escapeHtml(i.quantity)}) - ${formatPrice(i.price * i.quantity)}đ</li>`).join('')}
       </ul>
     </div>
 
@@ -413,7 +423,7 @@ export function renderOrderCompletedEmail(
         Cảm ơn bạn đã tin chọn Thái Sơn Foods!
       </h1>
       <p style="font-size: 13.5px; color: #40645F; line-height: 1.6; margin: 0 auto; max-width: 480px;">
-        Đơn hàng <strong style="font-weight: 400; font-size: 1.125em;">#${order.orderCode}</strong> đã được giao thành công đến bạn. Đội ngũ Thái Sơn Foods hy vọng bạn sẽ có những phút giây thưởng thức đồ uống mát lành, tràn đầy năng lượng cùng gia đình!
+        Đơn hàng <strong style="font-weight: 400; font-size: 1.125em;">#${escapeHtml(order.orderCode)}</strong> đã được giao thành công đến bạn. Đội ngũ Thái Sơn Foods hy vọng bạn sẽ có những phút giây thưởng thức đồ uống mát lành, tràn đầy năng lượng cùng gia đình!
       </p>
     </div>
 

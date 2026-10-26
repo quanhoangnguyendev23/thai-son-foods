@@ -25,6 +25,7 @@ import {
   MapPin,
   User,
   Package,
+  Leaf,
 } from 'lucide-react';
 import { useBranchStore } from '@/store/branch';
 import { useCartStore } from '@/store/cart';
@@ -85,6 +86,11 @@ export default function HeaderAmazon() {
 
   const [isMounted, setIsMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  // Tầng 2 trượt ẩn khi cuộn xuống, hiện lại khi cuộn lên (chỉ dùng transform → không gây CLS)
+  const [isNavHidden, setIsNavHidden] = useState(false);
+  const tier1Ref = useRef<HTMLDivElement>(null);
+  const tier2Ref = useRef<HTMLDivElement>(null);
+  const [tier1Height, setTier1Height] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -122,6 +128,39 @@ export default function HeaderAmazon() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [fetchBranches]);
+
+  // Đo chiều cao tầng 1 (đổi theo breakpoint) để tầng 2 dính ngay bên dưới
+  useEffect(() => {
+    const el = tier1Ref.current;
+    if (!el) return;
+    const update = () => setTier1Height(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Hướng cuộn → ẩn/hiện tầng 2. Ngưỡng 8px để không chập chờn khi cuộn rất chậm / quán tính.
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        const y = window.scrollY;
+        // Gần đầu trang (chưa qua hết phần header) luôn hiện tầng 2
+        const nearTop = y <= 240;
+        if (nearTop) setIsNavHidden(false);
+        else if (y > lastY + 8) setIsNavHidden(true);
+        else if (y < lastY - 8) setIsNavHidden(false);
+        if (nearTop || Math.abs(y - lastY) > 8) lastY = y;
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -410,10 +449,14 @@ export default function HeaderAmazon() {
 
   return (
     <>
-      {/* Mobile/tablet: header dùng display:contents để chỉ TẦNG 1 dính trên cùng, các hàng phụ cuộn đi tự nhiên (không đổi chiều cao khi cuộn → hết giật). Từ lg: header dính như cũ. */}
-      <header className={cn('z-50 bg-green-primary text-white max-lg:contents lg:sticky lg:top-0', isScrolled ? 'shadow-md' : '')}>
+      {/* header dùng display:contents để TẦNG 1 và TẦNG 2 dính độc lập: tầng 1 luôn dính trên cùng, tầng 2 dính ngay dưới
+          và trượt lên ẩn sau tầng 1 khi cuộn xuống. Chiều cao trong luồng trang không đổi → không nhảy bố cục (CLS). */}
+      <header className="text-white contents">
         {/* ── TẦNG 1 ── */}
-        <div className={cn('max-lg:sticky max-lg:top-0 max-lg:z-50 max-lg:bg-green-primary', isScrolled && 'max-lg:shadow-md')}>
+        <div
+          ref={tier1Ref}
+          className={cn('sticky top-0 z-50 bg-green-primary transition-shadow', isScrolled && (isNavHidden ? 'shadow-md' : ''))}
+        >
         <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5">
           <div className="flex items-center gap-2 lg:gap-3 h-14 lg:h-16">
             {/* Nút "Tất cả" (mobile/tablet) */}
@@ -542,15 +585,30 @@ export default function HeaderAmazon() {
           {/* Tìm kiếm (mobile/tablet) — luôn hiện, dễ dùng */}
           <div className="lg:hidden pb-2.5">{renderSearchForm('mobile')}</div>
         </div>
+        {/* Giao từ chi nhánh (1024–1279px) — thuộc tầng 1 nên vẫn dính khi cuộn */}
+        <div className="hidden lg:block xl:hidden bg-green-dark">
+          <div className="max-w-[1500px] mx-auto px-5 py-1.5">{deliverTo(true)}</div>
+        </div>
         </div>
 
         {/* Giao từ chi nhánh (mobile/tablet) — cuộn đi cùng nội dung, không ẩn bằng JS (tránh đổi chiều cao khi cuộn) */}
-        <div className="xl:hidden bg-green-dark px-3 sm:px-4 lg:px-5 py-1.5">{deliverTo(true)}</div>
+        <div className="lg:hidden bg-green-dark px-3 sm:px-4 py-1.5">{deliverTo(true)}</div>
 
-        {/* ── TẦNG 2: THANH ĐIỀU HƯỚNG PHỤ ── */}
-        <div className="bg-leaf-900">
-          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 min-h-11 py-0.5 lg:py-0 lg:h-10">
-            <nav className="grid grid-cols-2 w-full gap-x-1 md:flex md:flex-wrap md:w-auto lg:flex-nowrap items-center gap-0.5 lg:overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
+        {/* ── TẦNG 2: THANH ĐIỀU HƯỚNG PHỤ — dính dưới tầng 1, trượt ẩn khi cuộn xuống, hiện lại khi cuộn lên ── */}
+        <div
+          ref={tier2Ref}
+          className={cn(
+            'sticky z-40 bg-leaf-900 transition-transform duration-200 ease-out motion-reduce:transition-none',
+            !tier1Height && 'top-[106px] lg:top-16',
+            isNavHidden ? '-translate-y-full' : 'translate-y-0',
+            isScrolled && !isNavHidden && 'shadow-md'
+          )}
+          style={tier1Height ? { top: tier1Height } : undefined}
+          // Dùng bàn phím Tab vào tầng 2 khi đang ẩn → hiện lại
+          onFocusCapture={() => setIsNavHidden(false)}
+        >
+          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-11 lg:h-10">
+            <nav className="flex w-full lg:w-auto flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(true)}
@@ -561,7 +619,7 @@ export default function HeaderAmazon() {
                 {isEn ? 'All' : 'Tất cả'}
               </button>
               {taskbagItems.map((item) => {
-                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-11 max-md:justify-center max-md:px-1 max-md:text-[14px]');
+                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-10 max-md:text-[14px]');
                 if (item.action === 'open-support') {
                   return (
                     <button key={item.id} type="button" onClick={() => setIsSupportModalOpen(true)} className={cls}>
@@ -580,26 +638,28 @@ export default function HeaderAmazon() {
               })}
               <span className="hidden md:block w-px h-5 bg-white/25 mx-1 shrink-0" aria-hidden />
               {categoryLinks.map((c) => (
-                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-[13px] whitespace-nowrap shrink-0 max-lg:min-h-11')}>
+                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-[13px] whitespace-nowrap shrink-0 max-lg:min-h-10')}>
                   {c.label}
                 </Link>
               ))}
             </nav>
 
-            {/* Cam kết + hotline (từ Header gốc & BranchTopBar) */}
-            <div className="hidden xl:flex items-center gap-3 ml-auto text-[12px] text-white/85 shrink-0">
-              <span className="flex items-center gap-1">
+            {/* Dải tin cậy: cam kết + hotline (từ Header gốc & BranchTopBar), chữ ≥ 13px */}
+            <div className="hidden xl:flex items-center gap-2.5 ml-auto text-[13px] text-white/90 shrink-0" aria-label={isEn ? 'Our commitments' : 'Cam kết'}>
+              {/* 1280–1439px chỉ đủ chỗ cho hotline; từ 1440px hiện đủ 3 mục */}
+              <span className="hidden min-[1440px]:flex items-center gap-1">
+                <Leaf className="w-3.5 h-3.5 text-corn" aria-hidden />
                 {t('naturalIngredients')}
               </span>
-              <span className="text-white/40">•</span>
-              <span className="flex items-center gap-1">
-                <Truck className="w-3.5 h-3.5 text-corn" />
+              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
+              <span className="hidden min-[1440px]:flex items-center gap-1">
+                <Truck className="w-3.5 h-3.5 text-corn" aria-hidden />
                 {t('fastDelivery')}
               </span>
-              <span className="text-white/40">•</span>
-              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 hover:text-corn cursor-pointer text-[1.125em]">
+              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
+              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 hover:text-corn cursor-pointer">
                 <Headphones className="w-3.5 h-3.5 text-corn" />
-                {t('support247')}: <strong className="text-white text-[1.125em]">028 6291 5024</strong>
+                {t('support247')}: <strong className="text-white font-normal">028 6291 5024</strong>
               </button>
             </div>
           </div>

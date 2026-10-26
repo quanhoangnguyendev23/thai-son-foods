@@ -21,6 +21,46 @@ export const HERO_PLACEHOLDER_SLIDES: Banner[] = [
     image: '/images/banners/banner-1920x850-chu-a.jpg',
     alt: 'Thái Sơn Foods - Uống một bữa ăn ngon lành',
     link: '/#san-pham',
+    // Ảnh đã có sẵn khẩu hiệu → không chồng thêm tiêu đề, chỉ hiện nút CTA
+    title: '',
+    objectPosition: '50% 58%',
+  },
+];
+
+// PLACEHOLDER: chờ triển khai — 2 ô khuyến mãi cạnh banner hero (bố cục bento).
+// Triển khai thật: admin thêm banner với Vị trí = "Khuyến mãi / Khác" (placement = 'promo') tại /admin → Banner.
+// Khi có ít nhất 1 banner promo đang bật, khối này tự ngừng dùng (lấy tối đa 2 banner promo đầu tiên theo thứ tự).
+// Ảnh nên tỉ lệ 4:3 (khuyến nghị 800×600 px) vì ảnh chiếm nửa phải của ô.
+// `tag` = nhãn nhỏ phía trên tiêu đề; `ctaLabel` = chữ của liên kết. Không ghi giá/% giảm cố định ở đây:
+// % giảm (nếu hiện) được tính từ combo thật.
+export const HERO_PROMO_PLACEHOLDER_TILES: Banner[] = [
+  {
+    id: 'placeholder-promo-deal',
+    tag: 'Deal Sốc',
+    title: 'Deal trong ngày',
+    titleEn: 'Deals of the day',
+    subtitle: 'Combo đang giảm giá',
+    subtitleEn: 'Combos on sale',
+    ctaLabel: 'Xem deal',
+    ctaLabelEn: 'See deals',
+    image: '/images/combos/combo-6-chai.jpg',
+    alt: 'Combo 6 chai thức uống Thái Sơn',
+    link: '/#deal-trong-ngay',
+    objectPosition: '60% 55%',
+  },
+  {
+    id: 'placeholder-promo-combo',
+    tag: 'Combo',
+    title: 'Combo tiết kiệm',
+    titleEn: 'Value combos',
+    subtitle: 'Chọn sẵn cho cả nhà',
+    subtitleEn: 'Ready-made for the family',
+    ctaLabel: 'Xem combo',
+    ctaLabelEn: 'See combos',
+    image: '/images/banners/combo-01.jpg',
+    alt: 'Combo sữa hạt sen Thái Sơn',
+    link: '/#combo',
+    objectPosition: '62% 60%',
   },
 ];
 

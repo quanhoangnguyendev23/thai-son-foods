@@ -4,9 +4,11 @@ import { MEMBERSHIP_CONFIG } from '@/config/membership';
 import {
   HERO_MIN_SLIDES,
   HERO_PLACEHOLDER_SLIDES,
+  HERO_PROMO_PLACEHOLDER_TILES,
   RECOMMENDED_FOR_YOU_IDS,
 } from '@/data/homepage-placeholders';
 import AmazonHeroCarousel from '@/components/home/AmazonHeroCarousel';
+import HeroPromoTiles from '@/components/home/HeroPromoTiles';
 import AmazonCategoryCards, { HomeCategoryGroup } from '@/components/home/AmazonCategoryCards';
 import AmazonProductRow from '@/components/home/AmazonProductRow';
 import AmazonDealsRow from '@/components/home/AmazonDealsRow';
@@ -24,6 +26,8 @@ interface HomePageProps {
   liveCombos: Combo[];
   /** Tên danh mục do admin cấu hình (ưu tiên hơn tên mặc định trong mã nguồn) */
   liveCategories?: Array<{ id: string; name: string; nameEn?: string }>;
+  /** Banner admin placement = 'promo' cho 2 ô cạnh hero (rỗng → ô mẫu) */
+  promoBanners?: Banner[];
 }
 
 // Thứ tự danh mục giống CategorySidebar của trang chủ cũ
@@ -79,8 +83,8 @@ function sortBestSellersFirst(products: Product[]): Product[] {
  * TRANG CHỦ MỚI — bố cục trang chủ Amazon, bản sắc Thái Sơn Foods.
  * Hiển thị khi HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE = true (xem ROLLBACK.md).
  *
- *  1. Hero carousel lớn (nút trái/phải, tự chuyển)
- *  2. Lưới thẻ danh mục chồng lên chân hero (8 thẻ, 2 hàng)
+ *  1. Hero bento: carousel (2/3) + 2 ô khuyến mãi (1/3) trên desktop; dưới 1024px carousel full + hàng ô vuốt ngang
+ *  2. Lưới thẻ danh mục ngay dưới hero (8 thẻ, 2 hàng)
  *  3. Carousel "Sản phẩm Thái Sơn" (#san-pham) — toàn bộ sản phẩm, bán chạy trước
  *  4. Deal trong ngày (combo thật + đồng hồ placeholder)
  *  5. Gợi ý cho bạn (placeholder danh sách)
@@ -91,13 +95,14 @@ function sortBestSellersFirst(products: Product[]): Product[] {
  * 10. Giao định kỳ (theo cờ MEMBERSHIP_CONFIG, như trang cũ)
  * "Về đầu trang" + footer nhiều cột nằm trong FooterAmazon.
  */
-export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCategories = [] }: HomePageProps) {
+export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCategories = [], promoBanners = [] }: HomePageProps) {
   const products = liveProducts.filter((p) => p.isActive !== false);
   // Combo thiếu ảnh → ảnh dự phòng (tránh src rỗng trong ComboShowcase / hiệu ứng bay vào giỏ)
   const combos = liveCombos
     .filter((c) => c.isActive !== false)
     .map((c) => ((c.image || '').trim() ? c : { ...c, image: MISSING_PRODUCT_IMAGE }));
   const heroSlides = buildHeroSlides(heroBanners);
+  const promoTiles = promoBanners.length > 0 ? promoBanners : HERO_PROMO_PLACEHOLDER_TILES;
   const categoryGroups = buildCategoryGroups(products, liveCategories);
   const recommended = RECOMMENDED_FOR_YOU_IDS
     .map((id) => products.find((p) => p.id === id))
@@ -108,8 +113,11 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
       <h1 className="sr-only">Thái Sơn Foods — Thức uống tự nhiên từ nguyên liệu chọn lọc</h1>
 
       <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 pt-3 lg:pt-4 space-y-4 lg:space-y-5">
-        {/* 1. HERO — cùng bề rộng với lưới thẻ, bo góc, sát phía trên */}
-        <AmazonHeroCarousel banners={heroSlides} />
+        {/* 1. HERO BENTO — chiều cao do khung carousel quyết định; cột ô khuyến mãi kéo giãn theo */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+          <AmazonHeroCarousel banners={heroSlides} className="lg:col-span-2" />
+          <HeroPromoTiles tiles={promoTiles} />
+        </div>
 
         {/* 2. LƯỚI THẺ DANH MỤC — nằm ngay dưới hero, không che banner */}
         <AmazonCategoryCards categories={categoryGroups} combos={combos} />
@@ -124,8 +132,10 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
           products={sortBestSellersFirst(products)}
         />
 
-        {/* 4. DEAL TRONG NGÀY */}
-        <AmazonDealsRow combos={combos} />
+        {/* 4. DEAL TRONG NGÀY (anchor #deal-trong-ngay cho ô "Deal Sốc" cạnh hero) */}
+        <div id="deal-trong-ngay" className="scroll-mt-[130px]">
+          <AmazonDealsRow combos={combos} />
+        </div>
 
         {/* 5. GỢI Ý CHO BẠN (PLACEHOLDER — chờ thuật toán gợi ý) */}
         {SHOW_PLACEHOLDER_BLOCKS && (

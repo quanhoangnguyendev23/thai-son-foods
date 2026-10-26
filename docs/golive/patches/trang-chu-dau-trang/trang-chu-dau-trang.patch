@@ -1,0 +1,1209 @@
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 8ca652f..c4d1a3c 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -28,6 +28,7 @@ async function getHeroBanners(): Promise<Banner[]> {
+         titleEn: r.title_en || '',
+         subtitle: r.subtitle || '',
+         subtitleEn: r.subtitle_en || '',
++        tag: r.tag || undefined,
+         image: r.image,
+         mobileImage: r.mobile_image || undefined,
+         link: r.link || '',
+@@ -43,6 +44,31 @@ async function getHeroBanners(): Promise<Banner[]> {
+   return defaultBanners;
+ }
+ 
++// 2 ô khuyến mãi cạnh hero: banner admin có placement = 'promo' (tối đa 2). Rỗng → dùng ô mẫu trong homepage-placeholders.ts
++async function getPromoBanners(): Promise<Banner[]> {
++  try {
++    const res = await query(
++      `SELECT * FROM banners WHERE placement = 'promo' AND is_active = true ORDER BY sort_order ASC LIMIT 2`
++    );
++    return res.rows
++      .filter((r: any) => Boolean(r.image))
++      .map((r: any) => ({
++        id: r.id,
++        title: r.title || '',
++        subtitle: r.subtitle || '',
++        tag: r.tag || undefined,
++        image: r.image,
++        mobileImage: r.mobile_image || undefined,
++        link: r.link || '',
++        alt: r.alt || r.title || 'Thái Sơn Foods',
++        source: 'db' as const,
++      }));
++  } catch (err) {
++    console.error('Error fetching promo banners:', err);
++    return [];
++  }
++}
++
+ // Tên danh mục do admin cấu hình (bảng categories) — dùng để hiển thị tiêu đề các hàng sản phẩm theo danh mục
+ async function getLiveCategories(): Promise<Array<{ id: string; name: string; nameEn?: string }>> {
+   try {
+@@ -109,8 +135,8 @@ async function getLiveProducts(): Promise<Product[]> {
+ 
+         const activeImages = Array.isArray(row.images) && row.images.length > 0 ? row.images : [];
+         const thumbFromImages = activeImages.find((img: any) => img.isThumbnail)?.url || activeImages[0]?.url;
+-        // Ảnh gallery mới khai báo trong products.ts được ưu tiên hơn ảnh cũ lưu trong DB
+-        const codeGalleryThumb = base.thumbnail?.startsWith('/images/products/gallery/') ? base.thumbnail : null;
++        // Ảnh gallery mới khai báo trong products.ts được ưu tiên hơn ảnh cũ lưu trong DB
++        const codeGalleryThumb = base.thumbnail?.startsWith('/images/products/gallery/') ? base.thumbnail : null;
+         const finalThumbnail = codeGalleryThumb || row.thumbnail || thumbFromImages || base.thumbnail;
+ 
+         return {
+@@ -232,11 +258,12 @@ async function getLiveCombos(): Promise<Combo[]> {
+ }
+ 
+ export default async function HomeRoute() {
+-  const [heroBanners, liveProducts, liveCombos, liveCategories] = await Promise.all([
++  const [heroBanners, liveProducts, liveCombos, liveCategories, promoBanners] = await Promise.all([
+     getHeroBanners(),
+     getLiveProducts(),
+     getLiveCombos(),
+     getLiveCategories(),
++    getPromoBanners(),
+   ]);
+ 
+   // Cờ rollback: false = trang chủ cũ (HomePageLegacy), true = bố cục Amazon (HomePage). Xem ROLLBACK.md
+@@ -244,5 +271,5 @@ export default async function HomeRoute() {
+     return <HomePageLegacy heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} />;
+   }
+ 
+-  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} liveCategories={liveCategories} />;
++  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} liveCategories={liveCategories} promoBanners={promoBanners} />;
+ }
+diff --git a/src/components/home/AmazonCategoryCards.tsx b/src/components/home/AmazonCategoryCards.tsx
+index fa6cd01..c180263 100644
+--- a/src/components/home/AmazonCategoryCards.tsx
++++ b/src/components/home/AmazonCategoryCards.tsx
+@@ -1,11 +1,11 @@
+ 'use client';
+ 
+-import { useState } from 'react';
++import { useEffect, useState } from 'react';
+ import Image from 'next/image';
+ import Link from 'next/link';
+ import { LogIn, Package, ShoppingBag, Truck, UserRound } from 'lucide-react';
+ import { Combo, Product } from '@/types';
+-import { cn, formatPrice } from '@/lib/utils';
++import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
+ import { getProductImage, getShortProductName, MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
+ import { useLanguage } from '@/context/LanguageContext';
+ import { useUserAuth } from '@/context/UserAuthContext';
+@@ -45,16 +45,16 @@ function CardShell({
+   return (
+     <div
+       className={cn(
+-        'bg-white rounded-2xl border border-border shadow-xs p-4 lg:p-5 flex flex-col',
++        'bg-white rounded-2xl border border-border shadow-xs p-3.5 lg:p-4 flex flex-col',
+         className
+       )}
+     >
+-      <div className="flex items-start justify-between gap-2 mb-3">
+-        <h2 className="font-heading text-[19px] lg:text-[21px] text-text-dark leading-snug">{title}</h2>
++      <div className="flex items-start justify-between gap-2 mb-2">
++        <h2 className="font-heading text-[18px] lg:text-[20px] text-text-dark leading-snug">{title}</h2>
+         {badge}
+       </div>
+       <div className="flex-1 min-h-0">{children}</div>
+-      {footer && <div className="pt-3 mt-auto">{footer}</div>}
++      {footer && <div className="pt-2 mt-auto">{footer}</div>}
+     </div>
+   );
+ }
+@@ -98,15 +98,15 @@ function CategoryQuadCard({ group }: { group: HomeCategoryGroup }) {
+         </MoreLink>
+       }
+     >
+-      <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
++      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+         {items.map((p) => {
+           const name = getShortProductName(p, language);
+           return (
+             <Link key={p.id} href={`/san-pham/${p.slug}`} className="group min-w-0">
+-              <div className="relative aspect-[4/3] rounded-lg bg-ivory overflow-hidden">
++              <div className="relative aspect-[16/10] rounded-lg bg-ivory overflow-hidden">
+                 <TileImage src={getProductImage(p)} alt={name} sizes="(max-width: 640px) 40vw, 160px" />
+               </div>
+-              <p className="mt-1 text-[12px] leading-tight text-text-body line-clamp-2 group-hover:text-green-primary" title={name}>
++              <p className="mt-1 text-[13px] leading-tight text-text-body line-clamp-1 group-hover:text-green-primary" title={name}>
+                 {name}
+               </p>
+             </Link>
+@@ -117,6 +117,81 @@ function CategoryQuadCard({ group }: { group: HomeCategoryGroup }) {
+   );
+ }
+ 
++/* ───────────────────────── Đơn gần nhất (khách đã đăng nhập) ───────────────────────── */
++
++interface LatestOrder {
++  order_code?: string;
++  id: string;
++  status: string;
++  total: number | string;
++  created_at: string;
++}
++
++function orderStatusLabel(status: string, isEn: boolean): { label: string; className: string } {
++  const s = (status || '').toUpperCase();
++  if (s === 'COMPLETED' || s === 'DELIVERED') return { label: isEn ? 'Completed' : 'Hoàn thành', className: 'bg-emerald-100 text-emerald-800' };
++  if (s === 'PROCESSING' || s === 'SHIPPING') return { label: isEn ? 'Shipping' : 'Đang giao hàng', className: 'bg-blue-100 text-blue-800' };
++  if (s === 'CANCELLED') return { label: isEn ? 'Cancelled' : 'Đã hủy', className: 'bg-rose-100 text-rose-800' };
++  return { label: isEn ? 'Pending' : 'Chờ xác nhận', className: 'bg-amber-100 text-amber-800' };
++}
++
++/**
++ * Đơn hàng gần nhất — dữ liệu thật từ GET /api/user/orders (API sẵn có của trang Tài khoản, chỉ đọc).
++ * Điểm tích lũy: chưa hiển thị vì phân hệ hội viên đang tắt (MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP = false).
++ * Khung giữ chiều cao cố định trong lúc tải để không gây nhảy bố cục.
++ */
++function LatestOrderSummary() {
++  const { language } = useLanguage();
++  const isEn = language === 'en';
++  const [state, setState] = useState<{ loading: boolean; order: LatestOrder | null }>({ loading: true, order: null });
++
++  useEffect(() => {
++    let active = true;
++    safeFetchJson<{ success: boolean; orders?: LatestOrder[] }>('/api/user/orders').then((json) => {
++      if (!active) return;
++      setState({ loading: false, order: json?.success && json.orders?.length ? json.orders[0] : null });
++    });
++    return () => {
++      active = false;
++    };
++  }, []);
++
++  const box = 'mb-2.5 h-[62px] rounded-xl bg-ivory px-3 py-2 flex flex-col justify-center';
++
++  if (state.loading) {
++    return <div className={cn(box, 'animate-pulse')} aria-hidden />;
++  }
++
++  if (!state.order) {
++    return (
++      <div className={box}>
++        <p className="text-[13px] text-text-muted">{isEn ? 'No orders yet' : 'Bạn chưa có đơn hàng nào'}</p>
++        <Link href="/#san-pham" className="text-[14px] text-green-primary hover:underline self-start">
++          {isEn ? 'Start shopping' : 'Bắt đầu mua sắm'}
++        </Link>
++      </div>
++    );
++  }
++
++  const o = state.order;
++  const status = orderStatusLabel(o.status, isEn);
++  const date = o.created_at ? new Date(o.created_at).toLocaleDateString(isEn ? 'en-GB' : 'vi-VN') : '';
++  return (
++    <Link href="/tai-khoan?tab=orders" className={cn(box, 'hover:bg-ivory-dark transition-colors')}>
++      <span className="flex items-center justify-between gap-2 text-[13px] text-text-muted">
++        <span className="truncate">
++          {isEn ? 'Latest order' : 'Đơn gần nhất'} {o.order_code ? `#${o.order_code}` : ''}
++        </span>
++        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[12px]', status.className)}>{status.label}</span>
++      </span>
++      <span className="flex items-center justify-between gap-2 text-[14px] text-text-dark">
++        <strong className="font-normal">{formatPrice(Number(o.total) || 0)}đ</strong>
++        <span className="text-[13px] text-text-muted">{date}</span>
++      </span>
++    </Link>
++  );
++}
++
+ /* ───────────────────────── Thẻ đăng nhập / chào khách + miễn phí giao ───────────────────────── */
+ 
+ function SignInColumn() {
+@@ -125,11 +200,11 @@ function SignInColumn() {
+   const threshold = INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD;
+ 
+   return (
+-    <div className="flex flex-col gap-4 lg:gap-5">
+-      <div className="bg-white rounded-2xl border border-border shadow-xs p-4 lg:p-5">
++    <div className="flex flex-col gap-3 sm:gap-4">
++      <div className="bg-white rounded-2xl border border-border shadow-xs p-3.5 lg:p-4">
+         {user ? (
+           <>
+-            <div className="flex items-center gap-3 mb-3">
++            <div className="flex items-center gap-3 mb-2.5">
+               <span className="w-10 h-10 rounded-full bg-green-primary text-white flex items-center justify-center text-[1.125em]">
+                 {user.fullName ? user.fullName.charAt(0).toUpperCase() : <UserRound className="w-5 h-5" />}
+               </span>
+@@ -138,6 +213,7 @@ function SignInColumn() {
+                 <p className="font-heading text-[19px] text-text-dark truncate">{user.fullName}</p>
+               </div>
+             </div>
++            <LatestOrderSummary />
+             <div className="grid grid-cols-2 gap-2">
+               <Link
+                 href="/tai-khoan?tab=orders"
+@@ -157,7 +233,7 @@ function SignInColumn() {
+           </>
+         ) : (
+           <>
+-            <h2 className="font-heading text-[19px] lg:text-[21px] text-text-dark leading-snug mb-3">
++            <h2 className="font-heading text-[18px] lg:text-[20px] text-text-dark leading-snug mb-2.5">
+               {language === 'en' ? 'Sign in for a better shopping experience' : 'Đăng nhập để mua sắm thuận tiện hơn'}
+             </h2>
+             <button
+@@ -183,7 +259,7 @@ function SignInColumn() {
+       </div>
+ 
+       {/* Chính sách miễn phí giao hàng — số liệu thật từ INVENTORY_CONFIG.SHIPPING (đồng bộ với Footer) */}
+-      <div className="flex-1 bg-leaf-900 text-white rounded-2xl p-4 lg:p-5 flex flex-col justify-between gap-3 shadow-xs">
++      <div className="flex-1 bg-leaf-900 text-white rounded-2xl p-3.5 lg:p-4 flex flex-col justify-between gap-2.5 shadow-xs">
+         <div className="flex items-start gap-3">
+           <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+             <Truck className="w-5 h-5 text-corn" />
+@@ -219,12 +295,12 @@ function ComboQuadCard({ combos }: { combos: Combo[] }) {
+       title={language === 'en' ? 'Value combos' : 'Combo tiết kiệm'}
+       footer={<MoreLink href="/#combo">{language === 'en' ? 'See all combos' : 'Xem tất cả combo'}</MoreLink>}
+     >
+-      <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
++      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+         {items.map((c) => {
+           const name = (language === 'en' && c.nameEn ? c.nameEn : c.name).split(',')[0].trim();
+           return (
+             <Link key={c.id} href={`/combo/${c.slug}`} className="group min-w-0">
+-              <div className="relative aspect-[4/3] rounded-lg bg-ivory overflow-hidden">
++              <div className="relative aspect-[16/10] rounded-lg bg-ivory overflow-hidden">
+                 <TileImage src={c.image} alt={name} sizes="(max-width: 640px) 40vw, 160px" />
+                 {c.discount > 0 && (
+                   <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[11px] bg-sale text-white rounded">
+@@ -232,7 +308,7 @@ function ComboQuadCard({ combos }: { combos: Combo[] }) {
+                   </span>
+                 )}
+               </div>
+-              <p className="mt-1 text-[12px] leading-tight text-text-body line-clamp-2 group-hover:text-green-primary" title={name}>
++              <p className="mt-1 text-[13px] leading-tight text-text-body line-clamp-1 group-hover:text-green-primary" title={name}>
+                 {name}
+               </p>
+             </Link>
+@@ -285,17 +361,17 @@ function BuyAgainPlaceholderCard() {
+ /* ───────────────────────── Lưới thẻ ───────────────────────── */
+ 
+ /**
+- * Lưới thẻ danh mục theo bố cục Amazon: hàng 1 chồng lên chân hero (desktop),
+- * mobile chuyển thành dải vuốt ngang. Toàn bộ ảnh/tên/giá là dữ liệu thật,
++ * Lưới thẻ danh mục theo bố cục Amazon: hàng 1 nằm ngay dưới hero (thẻ đã thu gọn để lọt màn hình đầu).
++ * Toàn bộ ảnh/tên/giá là dữ liệu thật,
+  * trừ thẻ "Mua lại" (placeholder, có nhãn).
+  */
+ export default function AmazonCategoryCards({ categories, combos }: AmazonCategoryCardsProps) {
+   const { language } = useLanguage();
+   const track =
+-    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5';
++    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4';
+ 
+   return (
+-    <div className="space-y-4 lg:space-y-5">
++    <div className="space-y-3 sm:space-y-4">
+       {/* HÀNG 1: 3 danh mục + đăng nhập/miễn phí giao */}
+       <div className={track}>
+         {categories.slice(0, 3).map((g) => (
+diff --git a/src/components/home/AmazonHeroCarousel.tsx b/src/components/home/AmazonHeroCarousel.tsx
+index 282eef6..3dcb448 100644
+--- a/src/components/home/AmazonHeroCarousel.tsx
++++ b/src/components/home/AmazonHeroCarousel.tsx
+@@ -1,30 +1,165 @@
+ 'use client';
+ 
+ import { useCallback, useEffect, useRef, useState } from 'react';
+-import Image from 'next/image';
++import Image, { getImageProps } from 'next/image';
+ import Link from 'next/link';
+-import { ChevronLeft, ChevronRight } from 'lucide-react';
++import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+ import { Banner } from '@/types';
+ import { cn } from '@/lib/utils';
++import { useLanguage } from '@/context/LanguageContext';
++import { HOMEPAGE_HERO } from '@/config/homepage';
+ 
+ interface AmazonHeroCarouselProps {
+   banners: Banner[];
+-  /** Thời gian tự chuyển slide (ms). 0 = tắt tự chuyển */
++  /** Thời gian tự chuyển slide (ms), tối thiểu 5000. 0 = tắt tự chuyển. Mặc định lấy từ HOMEPAGE_HERO.AUTOPLAY_MS */
+   autoplayMs?: number;
++  className?: string;
+ }
+ 
+ const FALLBACK_BANNER = '/images/banners/banner-1600x900.png';
++const MIN_AUTOPLAY_MS = 5000;
+ 
+ /**
+- * Hero carousel bố cục Amazon: ảnh tràn ngang, mờ dần xuống nền trang ở chân,
+- * nút trái/phải cao 2 bên, tự chuyển (dừng khi rê chuột / focus / tab ẩn), vuốt trên cảm ứng.
++ * Bề rộng thật của khung ảnh: desktop chiếm 2/3 lưới bento (tối đa ~965px), dưới 1024px tràn ngang.
++ * Khai báo đúng để trình duyệt không tải ảnh 1920px cho khung 965px.
+  */
+-export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: AmazonHeroCarouselProps) {
++const HERO_SIZES = '(min-width: 1500px) 965px, (min-width: 1024px) 64vw, 100vw';
++
++interface SlideCopy {
++  tag?: string;
++  title?: string;
++  subtitle?: string;
++  ctaLabel: string;
++  href: string;
++}
++
++/** Chữ trên slide — thứ tự ưu tiên xem chú thích HOMEPAGE_HERO trong src/config/homepage.ts */
++function resolveCopy(banner: Banner, isEn: boolean): SlideCopy {
++  const d = HOMEPAGE_HERO.DEFAULT_COPY;
++  const ctaLabel =
++    (isEn ? banner.ctaLabelEn : banner.ctaLabel) || banner.ctaLabel || (isEn ? d.ctaLabelEn : d.ctaLabel);
++  const href = banner.link || d.ctaHref;
++  const defaults: SlideCopy = {
++    title: isEn ? d.titleEn : d.title,
++    subtitle: isEn ? d.subtitleEn : d.subtitle,
++    ctaLabel,
++    href,
++  };
++
++  if (banner.source === 'db') {
++    // Banner admin: chỉ coi là có chữ riêng khi đã điền Phụ đề (Tiêu đề cũ của banner hero chỉ dùng làm mô tả ảnh)
++    if (!banner.subtitle) return defaults;
++    return {
++      tag: banner.tag,
++      title: (isEn && banner.titleEn) || banner.title,
++      subtitle: (isEn && banner.subtitleEn) || banner.subtitle,
++      ctaLabel,
++      href,
++    };
++  }
++  if (banner.title !== undefined) {
++    return {
++      tag: banner.tag,
++      title: (isEn && banner.titleEn) || banner.title,
++      subtitle: (isEn && banner.subtitleEn) || banner.subtitle,
++      ctaLabel,
++      href,
++    };
++  }
++  return defaults;
++}
++
++function usePrefersReducedMotion() {
++  const [reduced, setReduced] = useState(false);
++  useEffect(() => {
++    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
++    const update = () => setReduced(mq.matches);
++    update();
++    mq.addEventListener('change', update);
++    return () => mq.removeEventListener('change', update);
++  }, []);
++  return reduced;
++}
++
++/** Ảnh một slide. Slide đầu: preload (ảnh LCP). Slide sau: lazy. Có ảnh điện thoại riêng → <picture> (art direction). */
++function SlideImage({
++  banner,
++  src,
++  first,
++  onError,
++}: {
++  banner: Banner;
++  src: string;
++  first: boolean;
++  onError: () => void;
++}) {
++  const alt = banner.alt || 'Thái Sơn Foods';
++  const objectPosition = banner.objectPosition || 'center';
++
++  if (banner.mobileImage) {
++    const {
++      props: { srcSet: desktopSrcSet },
++    } = getImageProps({ src, alt, fill: true, sizes: HERO_SIZES });
++    const {
++      props: { srcSet: mobileSrcSet, style, ...rest },
++    } = getImageProps({
++      src: banner.mobileImage,
++      alt,
++      fill: true,
++      sizes: '100vw',
++      // Không dùng preload/eager với <picture> (sẽ tải cả 2 ảnh) — theo tài liệu next/image
++      fetchPriority: first ? 'high' : undefined,
++    });
++    return (
++      <picture>
++        <source media="(min-width: 640px)" srcSet={desktopSrcSet} sizes={HERO_SIZES} />
++        <img
++          {...rest}
++          srcSet={mobileSrcSet}
++          alt={alt}
++          style={{ ...style, objectPosition }}
++          className="object-cover"
++          onError={onError}
++        />
++      </picture>
++    );
++  }
++
++  return (
++    <Image
++      src={src}
++      alt={alt}
++      fill
++      sizes={HERO_SIZES}
++      className="object-cover"
++      style={{ objectPosition }}
++      {...(first ? { preload: true } : { loading: 'lazy' as const })}
++      onError={onError}
++    />
++  );
++}
++
++/**
++ * Hero carousel trang chủ: khung cao cố định (không để tỉ lệ ảnh quyết định), lớp phủ tối phía chữ,
++ * tiêu đề + dòng phụ + nút CTA lấy từ banner/config. Tự chuyển ≥ 5 giây, dừng khi rê chuột / focus / tab ẩn,
++ * tắt khi người dùng bật "giảm chuyển động". Có chấm chỉ số, nút trước/sau, vuốt, phím ←/→.
++ * Slide đầu render sẵn ở server; ảnh các slide sau chỉ được gắn khi trang đã tải xong hoặc khi sắp tới lượt.
++ */
++export default function AmazonHeroCarousel({
++  banners,
++  autoplayMs = HOMEPAGE_HERO.AUTOPLAY_MS,
++  className,
++}: AmazonHeroCarouselProps) {
++  const { language } = useLanguage();
++  const isEn = language === 'en';
+   const slides = banners.filter((b) => Boolean(b.image));
+   const count = slides.length;
+   const [index, setIndex] = useState(0);
+   const [paused, setPaused] = useState(false);
+   const [failed, setFailed] = useState<Record<string, boolean>>({});
++  // Slide nào đã được phép gắn ảnh (slide 0 luôn có ngay từ server)
++  const [rendered, setRendered] = useState<Set<number>>(() => new Set([0]));
++  const reducedMotion = usePrefersReducedMotion();
+   const touchX = useRef<number | null>(null);
+ 
+   const go = useCallback(
+@@ -32,21 +167,49 @@ export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: Amazo
+     [count]
+   );
+ 
++  // Gắn ảnh slide hiện tại + slide kế tiếp; lần đầu đợi trang tải xong để không tranh băng thông với ảnh LCP
+   useEffect(() => {
+-    if (!autoplayMs || count < 2 || paused) return;
++    if (count < 2) return;
++    const add = () =>
++      setRendered((prev) => {
++        const next = (index + 1) % count;
++        if (prev.has(index) && prev.has(next)) return prev;
++        const s = new Set(prev);
++        s.add(index);
++        s.add(next);
++        return s;
++      });
++    if (document.readyState === 'complete') {
++      add();
++      return;
++    }
++    window.addEventListener('load', add, { once: true });
++    return () => window.removeEventListener('load', add);
++  }, [index, count]);
++
++  const interval = autoplayMs > 0 ? Math.max(MIN_AUTOPLAY_MS, autoplayMs) : 0;
++  const autoplayOn = Boolean(interval) && count > 1 && !reducedMotion;
++
++  useEffect(() => {
++    if (!autoplayOn || paused) return;
+     const timer = window.setInterval(() => {
+       if (document.visibilityState === 'visible') go(1);
+-    }, autoplayMs);
++    }, interval);
+     return () => window.clearInterval(timer);
+-  }, [autoplayMs, count, paused, go]);
++  }, [autoplayOn, paused, interval, go]);
+ 
+   if (count === 0) return null;
+ 
+   return (
+     <section
+       aria-roledescription="carousel"
+-      aria-label="Banner quảng cáo"
+-      className="relative w-full overflow-hidden rounded-2xl shadow-xs"
++      aria-label={isEn ? 'Promotional banners' : 'Banner quảng cáo'}
++      className={cn(
++        'relative w-full overflow-hidden rounded-2xl shadow-xs bg-ivory',
++        // Chiều cao cố định theo khung (CLS ≈ 0). Ô khuyến mãi bên cạnh kéo giãn theo hàng lưới này.
++        'h-[200px] sm:h-[240px] lg:h-[clamp(240px,26vw,340px)]',
++        className
++      )}
+       onMouseEnter={() => setPaused(true)}
+       onMouseLeave={() => setPaused(false)}
+       onFocusCapture={() => setPaused(true)}
+@@ -65,45 +228,12 @@ export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: Amazo
+         touchX.current = null;
+       }}
+     >
+-      <div className="relative w-full aspect-[16/9] sm:aspect-[1920/850]">
++      <div className="absolute inset-0" aria-live={autoplayOn && !paused ? 'off' : 'polite'}>
+         {slides.map((banner, i) => {
+           const active = i === index;
+           const src = failed[banner.id] ? FALLBACK_BANNER : banner.image;
+-          const hasMobile = Boolean(banner.mobileImage) && !failed[banner.id];
+-          const img = hasMobile ? (
+-            // Có ảnh riêng cho điện thoại: ảnh ngang từ 640px trở lên, ảnh điện thoại bên dưới đó
+-            <>
+-              <Image
+-                src={src}
+-                alt={banner.alt || 'Thái Sơn Foods'}
+-                fill
+-                sizes="(max-width: 1500px) 100vw, 1500px"
+-                className="hidden sm:block object-cover object-center"
+-                loading="lazy"
+-                onError={() => setFailed((f) => ({ ...f, [banner.id]: true }))}
+-              />
+-              <Image
+-                src={banner.mobileImage as string}
+-                alt={banner.alt || 'Thái Sơn Foods'}
+-                fill
+-                sizes="100vw"
+-                className="sm:hidden object-cover object-center"
+-                loading="lazy"
+-                onError={() => setFailed((f) => ({ ...f, [banner.id]: true }))}
+-              />
+-            </>
+-          ) : (
+-            <Image
+-              src={src}
+-              alt={banner.alt || 'Thái Sơn Foods'}
+-              fill
+-              sizes="(max-width: 1500px) 100vw, 1500px"
+-              className="object-cover object-center"
+-              priority={i === 0}
+-              loading={i === 0 ? 'eager' : 'lazy'}
+-              onError={() => setFailed((f) => ({ ...f, [banner.id]: true }))}
+-            />
+-          );
++          const copy = resolveCopy(banner, isEn);
++          const hasText = Boolean(copy.title || copy.subtitle);
+           return (
+             <div
+               key={banner.id}
+@@ -111,65 +241,114 @@ export default function AmazonHeroCarousel({ banners, autoplayMs = 6000 }: Amazo
+               aria-roledescription="slide"
+               aria-label={`${i + 1} / ${count}`}
+               aria-hidden={!active}
++              inert={!active}
+               className={cn(
+-                'absolute inset-0 transition-opacity duration-700 ease-out',
++                'absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none',
+                 active ? 'opacity-100 z-[1]' : 'opacity-0 z-0 pointer-events-none'
+               )}
+             >
+-              {banner.link ? (
+-                <Link href={banner.link} tabIndex={active ? 0 : -1} className="block w-full h-full relative">
+-                  {img}
++              {/* Ảnh — cả khung bấm được (chuột/cảm ứng); bàn phím dùng nút CTA */}
++              <Link href={copy.href} tabIndex={-1} aria-hidden className="absolute inset-0 block">
++                {(i === 0 || rendered.has(i)) && (
++                  <SlideImage
++                    banner={banner}
++                    src={src}
++                    first={i === 0}
++                    onError={() => setFailed((f) => ({ ...f, [banner.id]: true }))}
++                  />
++                )}
++              </Link>
++
++              {/* Lớp phủ tối phía chữ (WCAG AA cho chữ trắng) */}
++              <div
++                aria-hidden
++                className={cn(
++                  'pointer-events-none absolute inset-0',
++                  hasText
++                    ? 'bg-gradient-to-r from-ink-950/80 via-ink-950/45 to-transparent sm:via-ink-950/35 sm:to-55%'
++                    : 'bg-gradient-to-t from-ink-950/55 via-transparent to-transparent'
++                )}
++              />
++
++              <div
++                className={cn(
++                  'absolute inset-y-0 left-0 flex flex-col px-4 sm:px-8 lg:px-10 xl:px-12 max-w-[88%] sm:max-w-[64%] lg:max-w-[62%]',
++                  hasText ? 'justify-center' : 'justify-end pb-4 sm:pb-6'
++                )}
++              >
++                {hasText && copy.tag && (
++                  <p className="mb-1 text-[12px] sm:text-[13px] uppercase tracking-wide text-corn-light [text-shadow:0_1px_2px_rgb(0_0_0/0.4)]">
++                    {copy.tag}
++                  </p>
++                )}
++                {copy.title && (
++                  <h2 className="font-heading text-white text-[20px] sm:text-[28px] lg:text-[clamp(26px,2.2vw,36px)] leading-[1.15] line-clamp-2 [text-shadow:0_1px_3px_rgb(0_0_0/0.35)]">
++                    {copy.title}
++                  </h2>
++                )}
++                {copy.subtitle && (
++                  <p className="mt-1 sm:mt-1.5 text-[13px] sm:text-[15px] lg:text-[16px] text-white/95 line-clamp-1 [text-shadow:0_1px_2px_rgb(0_0_0/0.4)]">
++                    {copy.subtitle}
++                  </p>
++                )}
++                <Link
++                  href={copy.href}
++                  className={cn(
++                    'inline-flex items-center gap-1.5 self-start rounded-full bg-corn hover:bg-corn-dark text-text-dark shadow-xs transition-colors',
++                    'min-h-10 sm:min-h-11 px-4 sm:px-5 text-[14px] sm:text-[15px]',
++                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950',
++                    hasText ? 'mt-3 sm:mt-4' : ''
++                  )}
++                >
++                  {copy.ctaLabel}
++                  <ArrowRight className="w-4 h-4" aria-hidden />
+                 </Link>
+-              ) : (
+-                img
+-              )}
++              </div>
+             </div>
+           );
+         })}
++      </div>
+ 
+-
+-        {count > 1 && (
+-          <>
+-            <button
+-              type="button"
+-              onClick={() => go(-1)}
+-              aria-label="Banner trước"
+-              className="absolute left-0 top-0 z-[3] h-full w-12 sm:w-16 lg:w-20 flex items-center justify-center text-white/90 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-corn cursor-pointer group"
+-            >
+-              <span className="flex items-center justify-center w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-ink-950/25 group-hover:bg-ink-950/45 transition-colors">
+-                <ChevronLeft className="w-6 h-6 lg:w-8 lg:h-8" strokeWidth={2.5} />
+-              </span>
+-            </button>
+-            <button
+-              type="button"
+-              onClick={() => go(1)}
+-              aria-label="Banner tiếp theo"
+-              className="absolute right-0 top-0 z-[3] h-full w-12 sm:w-16 lg:w-20 flex items-center justify-center text-white/90 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-corn cursor-pointer group"
+-            >
+-              <span className="flex items-center justify-center w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-ink-950/25 group-hover:bg-ink-950/45 transition-colors">
+-                <ChevronRight className="w-6 h-6 lg:w-8 lg:h-8" strokeWidth={2.5} />
+-              </span>
+-            </button>
+-
+-            {/* Chấm chỉ số slide (mobile/tablet — trên desktop phần chân hero bị lưới thẻ che) */}
+-            <div className="absolute bottom-3 inset-x-0 z-[3] flex justify-center gap-1.5">
+-              {slides.map((b, i) => (
+-                <button
+-                  key={b.id}
+-                  type="button"
+-                  onClick={() => setIndex(i)}
+-                  aria-label={`Xem banner ${i + 1}`}
+-                  aria-current={i === index}
++      {count > 1 && (
++        <div className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-[3] flex items-center gap-0.5 rounded-full bg-ink-950/40 backdrop-blur-sm p-0.5">
++          <button
++            type="button"
++            onClick={() => go(-1)}
++            aria-label={isEn ? 'Previous banner' : 'Banner trước'}
++            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-white hover:bg-white/20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-corn"
++          >
++            <ChevronLeft className="w-5 h-5" strokeWidth={2.5} aria-hidden />
++          </button>
++          <div className="flex items-center gap-1 px-1">
++            {slides.map((b, i) => (
++              <button
++                key={b.id}
++                type="button"
++                onClick={() => setIndex(i)}
++                aria-label={isEn ? `Show banner ${i + 1}` : `Xem banner ${i + 1}`}
++                aria-current={i === index}
++                className="group relative h-6 w-4 flex items-center justify-center cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-corn data-[active=true]:w-7"
++                data-active={i === index}
++              >
++                <span
+                   className={cn(
+-                    'relative before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[\'\'] h-1.5 rounded-full transition-all cursor-pointer',
+-                    i === index ? 'w-6 bg-white' : 'w-1.5 bg-white/60'
++                    'block h-1.5 rounded-full transition-all motion-reduce:transition-none',
++                    i === index ? 'w-5 bg-white' : 'w-1.5 bg-white/60 group-hover:bg-white/85'
+                   )}
+                 />
+-              ))}
+-            </div>
+-          </>
+-        )}
+-      </div>
++              </button>
++            ))}
++          </div>
++          <button
++            type="button"
++            onClick={() => go(1)}
++            aria-label={isEn ? 'Next banner' : 'Banner tiếp theo'}
++            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-white hover:bg-white/20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-corn"
++          >
++            <ChevronRight className="w-5 h-5" strokeWidth={2.5} aria-hidden />
++          </button>
++        </div>
++      )}
+     </section>
+   );
+ }
+diff --git a/src/components/home/HeroPromoTiles.tsx b/src/components/home/HeroPromoTiles.tsx
+new file mode 100644
+index 0000000..2bd24a1
+--- /dev/null
++++ b/src/components/home/HeroPromoTiles.tsx
+@@ -0,0 +1,109 @@
++'use client';
++
++import { useState } from 'react';
++import Image from 'next/image';
++import Link from 'next/link';
++import { ArrowRight } from 'lucide-react';
++import { Banner } from '@/types';
++import { cn } from '@/lib/utils';
++import { useLanguage } from '@/context/LanguageContext';
++import { MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
++
++interface HeroPromoTilesProps {
++  /** Banner admin placement = 'promo' (tối đa 2), hoặc ô mẫu HERO_PROMO_PLACEHOLDER_TILES */
++  tiles: Banner[];
++  className?: string;
++}
++
++// Hai tông nền xen kẽ, đều đủ tương phản với chữ trắng
++const TILE_BG = ['bg-green-dark', 'bg-leaf-900'];
++
++function TileImage({ tile }: { tile: Banner }) {
++  const [src, setSrc] = useState(tile.image || MISSING_PRODUCT_IMAGE);
++  return (
++    <Image
++      src={src}
++      alt={tile.alt || ''}
++      fill
++      // Ảnh chiếm ~48% ô: desktop ô rộng ~476px; tablet 2 ô chia đôi; mobile ô ~82vw
++      sizes="(min-width: 1024px) 240px, (min-width: 640px) 25vw, 42vw"
++      className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
++      style={{ objectPosition: tile.objectPosition || 'center' }}
++      onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
++    />
++  );
++}
++
++/**
++ * 2 ô khuyến mãi cạnh hero (bố cục bento).
++ *  - Desktop ≥1024px: xếp dọc, cùng chiều cao với banner chính (kéo giãn theo hàng lưới).
++ *  - Tablet: 2 ô chia đôi một hàng. Mobile: hàng vuốt ngang (scroll-snap), ô sau ló ra để gợi ý vuốt.
++ * Chữ: tag (nhãn nhỏ), title, subtitle, ctaLabel — từ banner admin hoặc file mẫu, không viết cứng trong bố cục.
++ */
++export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps) {
++  const { language } = useLanguage();
++  const isEn = language === 'en';
++  const items = tiles.filter((t) => Boolean(t.image)).slice(0, 2);
++  if (items.length === 0) return null;
++
++  return (
++    <div
++      className={cn(
++        'flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
++        'lg:flex-col lg:overflow-visible lg:h-full',
++        className
++      )}
++      aria-label={isEn ? 'Promotions' : 'Khuyến mãi'}
++      role="region"
++    >
++      {items.map((tile, i) => {
++        const title = (isEn && tile.titleEn) || tile.title;
++        const subtitle = (isEn && tile.subtitleEn) || tile.subtitle;
++        const cta = (isEn ? tile.ctaLabelEn : tile.ctaLabel) || tile.ctaLabel || (isEn ? 'See more' : 'Xem ngay');
++        return (
++          <Link
++            key={tile.id}
++            href={tile.link || '/#san-pham'}
++            className={cn(
++              'group relative flex overflow-hidden rounded-2xl text-white shadow-xs',
++              'snap-start shrink-0 w-[82%] h-[112px] sm:w-[calc(50%-8px)] sm:h-[132px]',
++              'lg:w-auto lg:h-auto lg:flex-1 lg:min-h-0',
++              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-corn focus-visible:ring-offset-2 focus-visible:ring-offset-ivory-dark',
++              TILE_BG[i % TILE_BG.length]
++            )}
++          >
++            {/* Ảnh nửa phải, mờ dần sang nền để chữ luôn đọc rõ */}
++            <div className="absolute inset-y-0 right-0 w-[48%]">
++              <TileImage tile={tile} />
++              <div
++                aria-hidden
++                className={cn(
++                  'absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r to-transparent',
++                  i % 2 === 0 ? 'from-green-dark' : 'from-leaf-900'
++                )}
++              />
++            </div>
++
++            <div className="relative z-[1] w-[58%] flex flex-col justify-center gap-1 px-4 lg:px-5 py-3">
++              {tile.tag && (
++                <span className="self-start rounded-full bg-corn px-2 py-0.5 text-[12px] leading-tight text-text-dark">
++                  {tile.tag}
++                </span>
++              )}
++              {title && (
++                <p className="font-heading text-[17px] sm:text-[19px] lg:text-[clamp(18px,1.45vw,22px)] leading-tight line-clamp-2">
++                  {title}
++                </p>
++              )}
++              {subtitle && <p className="text-[13px] text-white/85 leading-snug line-clamp-1">{subtitle}</p>}
++              <span className="mt-0.5 inline-flex items-center gap-1 text-[14px] text-corn group-hover:underline">
++                {cta}
++                <ArrowRight className="w-3.5 h-3.5" aria-hidden />
++              </span>
++            </div>
++          </Link>
++        );
++      })}
++    </div>
++  );
++}
+diff --git a/src/components/home/HomePage.tsx b/src/components/home/HomePage.tsx
+index c5525d2..13cc999 100644
+--- a/src/components/home/HomePage.tsx
++++ b/src/components/home/HomePage.tsx
+@@ -4,9 +4,11 @@ import { MEMBERSHIP_CONFIG } from '@/config/membership';
+ import {
+   HERO_MIN_SLIDES,
+   HERO_PLACEHOLDER_SLIDES,
++  HERO_PROMO_PLACEHOLDER_TILES,
+   RECOMMENDED_FOR_YOU_IDS,
+ } from '@/data/homepage-placeholders';
+ import AmazonHeroCarousel from '@/components/home/AmazonHeroCarousel';
++import HeroPromoTiles from '@/components/home/HeroPromoTiles';
+ import AmazonCategoryCards, { HomeCategoryGroup } from '@/components/home/AmazonCategoryCards';
+ import AmazonProductRow from '@/components/home/AmazonProductRow';
+ import AmazonDealsRow from '@/components/home/AmazonDealsRow';
+@@ -24,6 +26,8 @@ interface HomePageProps {
+   liveCombos: Combo[];
+   /** Tên danh mục do admin cấu hình (ưu tiên hơn tên mặc định trong mã nguồn) */
+   liveCategories?: Array<{ id: string; name: string; nameEn?: string }>;
++  /** Banner admin placement = 'promo' cho 2 ô cạnh hero (rỗng → ô mẫu) */
++  promoBanners?: Banner[];
+ }
+ 
+ // Thứ tự danh mục giống CategorySidebar của trang chủ cũ
+@@ -79,8 +83,8 @@ function sortBestSellersFirst(products: Product[]): Product[] {
+  * TRANG CHỦ MỚI — bố cục trang chủ Amazon, bản sắc Thái Sơn Foods.
+  * Hiển thị khi HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE = true (xem ROLLBACK.md).
+  *
+- *  1. Hero carousel lớn (nút trái/phải, tự chuyển)
+- *  2. Lưới thẻ danh mục chồng lên chân hero (8 thẻ, 2 hàng)
++ *  1. Hero bento: carousel (2/3) + 2 ô khuyến mãi (1/3) trên desktop; dưới 1024px carousel full + hàng ô vuốt ngang
++ *  2. Lưới thẻ danh mục ngay dưới hero (8 thẻ, 2 hàng)
+  *  3. Carousel "Sản phẩm Thái Sơn" (#san-pham) — toàn bộ sản phẩm, bán chạy trước
+  *  4. Deal trong ngày (combo thật + đồng hồ placeholder)
+  *  5. Gợi ý cho bạn (placeholder danh sách)
+@@ -91,13 +95,14 @@ function sortBestSellersFirst(products: Product[]): Product[] {
+  * 10. Giao định kỳ (theo cờ MEMBERSHIP_CONFIG, như trang cũ)
+  * "Về đầu trang" + footer nhiều cột nằm trong FooterAmazon.
+  */
+-export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCategories = [] }: HomePageProps) {
++export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCategories = [], promoBanners = [] }: HomePageProps) {
+   const products = liveProducts.filter((p) => p.isActive !== false);
+   // Combo thiếu ảnh → ảnh dự phòng (tránh src rỗng trong ComboShowcase / hiệu ứng bay vào giỏ)
+   const combos = liveCombos
+     .filter((c) => c.isActive !== false)
+     .map((c) => ((c.image || '').trim() ? c : { ...c, image: MISSING_PRODUCT_IMAGE }));
+   const heroSlides = buildHeroSlides(heroBanners);
++  const promoTiles = promoBanners.length > 0 ? promoBanners : HERO_PROMO_PLACEHOLDER_TILES;
+   const categoryGroups = buildCategoryGroups(products, liveCategories);
+   const recommended = RECOMMENDED_FOR_YOU_IDS
+     .map((id) => products.find((p) => p.id === id))
+@@ -108,8 +113,11 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
+       <h1 className="sr-only">Thái Sơn Foods — Thức uống tự nhiên từ nguyên liệu chọn lọc</h1>
+ 
+       <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 pt-3 lg:pt-4 space-y-4 lg:space-y-5">
+-        {/* 1. HERO — cùng bề rộng với lưới thẻ, bo góc, sát phía trên */}
+-        <AmazonHeroCarousel banners={heroSlides} />
++        {/* 1. HERO BENTO — chiều cao do khung carousel quyết định; cột ô khuyến mãi kéo giãn theo */}
++        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
++          <AmazonHeroCarousel banners={heroSlides} className="lg:col-span-2" />
++          <HeroPromoTiles tiles={promoTiles} />
++        </div>
+ 
+         {/* 2. LƯỚI THẺ DANH MỤC — nằm ngay dưới hero, không che banner */}
+         <AmazonCategoryCards categories={categoryGroups} combos={combos} />
+@@ -124,8 +132,10 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
+           products={sortBestSellersFirst(products)}
+         />
+ 
+-        {/* 4. DEAL TRONG NGÀY */}
+-        <AmazonDealsRow combos={combos} />
++        {/* 4. DEAL TRONG NGÀY (anchor #deal-trong-ngay cho ô "Deal Sốc" cạnh hero) */}
++        <div id="deal-trong-ngay" className="scroll-mt-[130px]">
++          <AmazonDealsRow combos={combos} />
++        </div>
+ 
+         {/* 5. GỢI Ý CHO BẠN (PLACEHOLDER — chờ thuật toán gợi ý) */}
+         {SHOW_PLACEHOLDER_BLOCKS && (
+diff --git a/src/components/layout/HeaderAmazon.tsx b/src/components/layout/HeaderAmazon.tsx
+index c89ea37..a77ccc5 100644
+--- a/src/components/layout/HeaderAmazon.tsx
++++ b/src/components/layout/HeaderAmazon.tsx
+@@ -25,6 +25,7 @@ import {
+   MapPin,
+   User,
+   Package,
++  Leaf,
+ } from 'lucide-react';
+ import { useBranchStore } from '@/store/branch';
+ import { useCartStore } from '@/store/cart';
+@@ -85,6 +86,11 @@ export default function HeaderAmazon() {
+ 
+   const [isMounted, setIsMounted] = useState(false);
+   const [isScrolled, setIsScrolled] = useState(false);
++  // Tầng 2 trượt ẩn khi cuộn xuống, hiện lại khi cuộn lên (chỉ dùng transform → không gây CLS)
++  const [isNavHidden, setIsNavHidden] = useState(false);
++  const tier1Ref = useRef<HTMLDivElement>(null);
++  const tier2Ref = useRef<HTMLDivElement>(null);
++  const [tier1Height, setTier1Height] = useState<number | null>(null);
+   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+   const [isLangOpen, setIsLangOpen] = useState(false);
+@@ -123,6 +129,39 @@ export default function HeaderAmazon() {
+     return () => window.removeEventListener('scroll', handleScroll);
+   }, [fetchBranches]);
+ 
++  // Đo chiều cao tầng 1 (đổi theo breakpoint) để tầng 2 dính ngay bên dưới
++  useEffect(() => {
++    const el = tier1Ref.current;
++    if (!el) return;
++    const update = () => setTier1Height(el.offsetHeight);
++    update();
++    const ro = new ResizeObserver(update);
++    ro.observe(el);
++    return () => ro.disconnect();
++  }, []);
++
++  // Hướng cuộn → ẩn/hiện tầng 2. Ngưỡng 8px để không chập chờn khi cuộn rất chậm / quán tính.
++  useEffect(() => {
++    let lastY = window.scrollY;
++    let ticking = false;
++    const onScroll = () => {
++      if (ticking) return;
++      ticking = true;
++      window.requestAnimationFrame(() => {
++        const y = window.scrollY;
++        // Gần đầu trang (chưa qua hết phần header) luôn hiện tầng 2
++        const nearTop = y <= 240;
++        if (nearTop) setIsNavHidden(false);
++        else if (y > lastY + 8) setIsNavHidden(true);
++        else if (y < lastY - 8) setIsNavHidden(false);
++        if (nearTop || Math.abs(y - lastY) > 8) lastY = y;
++        ticking = false;
++      });
++    };
++    window.addEventListener('scroll', onScroll, { passive: true });
++    return () => window.removeEventListener('scroll', onScroll);
++  }, []);
++
+   useEffect(() => {
+     const handleClickOutside = (e: MouseEvent) => {
+       const target = e.target as Node;
+@@ -410,10 +449,14 @@ export default function HeaderAmazon() {
+ 
+   return (
+     <>
+-      {/* Mobile/tablet: header dùng display:contents để chỉ TẦNG 1 dính trên cùng, các hàng phụ cuộn đi tự nhiên (không đổi chiều cao khi cuộn → hết giật). Từ lg: header dính như cũ. */}
+-      <header className={cn('z-50 bg-green-primary text-white max-lg:contents lg:sticky lg:top-0', isScrolled ? 'shadow-md' : '')}>
++      {/* header dùng display:contents để TẦNG 1 và TẦNG 2 dính độc lập: tầng 1 luôn dính trên cùng, tầng 2 dính ngay dưới
++          và trượt lên ẩn sau tầng 1 khi cuộn xuống. Chiều cao trong luồng trang không đổi → không nhảy bố cục (CLS). */}
++      <header className="text-white contents">
+         {/* ── TẦNG 1 ── */}
+-        <div className={cn('max-lg:sticky max-lg:top-0 max-lg:z-50 max-lg:bg-green-primary', isScrolled && 'max-lg:shadow-md')}>
++        <div
++          ref={tier1Ref}
++          className={cn('sticky top-0 z-50 bg-green-primary transition-shadow', isScrolled && (isNavHidden ? 'shadow-md' : ''))}
++        >
+         <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5">
+           <div className="flex items-center gap-2 lg:gap-3 h-14 lg:h-16">
+             {/* Nút "Tất cả" (mobile/tablet) */}
+@@ -542,15 +585,30 @@ export default function HeaderAmazon() {
+           {/* Tìm kiếm (mobile/tablet) — luôn hiện, dễ dùng */}
+           <div className="lg:hidden pb-2.5">{renderSearchForm('mobile')}</div>
+         </div>
++        {/* Giao từ chi nhánh (1024–1279px) — thuộc tầng 1 nên vẫn dính khi cuộn */}
++        <div className="hidden lg:block xl:hidden bg-green-dark">
++          <div className="max-w-[1500px] mx-auto px-5 py-1.5">{deliverTo(true)}</div>
++        </div>
+         </div>
+ 
+         {/* Giao từ chi nhánh (mobile/tablet) — cuộn đi cùng nội dung, không ẩn bằng JS (tránh đổi chiều cao khi cuộn) */}
+-        <div className="xl:hidden bg-green-dark px-3 sm:px-4 lg:px-5 py-1.5">{deliverTo(true)}</div>
++        <div className="lg:hidden bg-green-dark px-3 sm:px-4 py-1.5">{deliverTo(true)}</div>
+ 
+-        {/* ── TẦNG 2: THANH ĐIỀU HƯỚNG PHỤ ── */}
+-        <div className="bg-leaf-900">
+-          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 min-h-11 py-0.5 lg:py-0 lg:h-10">
+-            <nav className="grid grid-cols-2 w-full gap-x-1 md:flex md:flex-wrap md:w-auto lg:flex-nowrap items-center gap-0.5 lg:overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
++        {/* ── TẦNG 2: THANH ĐIỀU HƯỚNG PHỤ — dính dưới tầng 1, trượt ẩn khi cuộn xuống, hiện lại khi cuộn lên ── */}
++        <div
++          ref={tier2Ref}
++          className={cn(
++            'sticky z-40 bg-leaf-900 transition-transform duration-200 ease-out motion-reduce:transition-none',
++            !tier1Height && 'top-[106px] lg:top-16',
++            isNavHidden ? '-translate-y-full' : 'translate-y-0',
++            isScrolled && !isNavHidden && 'shadow-md'
++          )}
++          style={tier1Height ? { top: tier1Height } : undefined}
++          // Dùng bàn phím Tab vào tầng 2 khi đang ẩn → hiện lại
++          onFocusCapture={() => setIsNavHidden(false)}
++        >
++          <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-11 lg:h-10">
++            <nav className="flex w-full lg:w-auto flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
+               <button
+                 type="button"
+                 onClick={() => setIsDrawerOpen(true)}
+@@ -561,7 +619,7 @@ export default function HeaderAmazon() {
+                 {isEn ? 'All' : 'Tất cả'}
+               </button>
+               {taskbagItems.map((item) => {
+-                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-11 max-md:justify-center max-md:px-1 max-md:text-[14px]');
++                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-10 max-md:text-[14px]');
+                 if (item.action === 'open-support') {
+                   return (
+                     <button key={item.id} type="button" onClick={() => setIsSupportModalOpen(true)} className={cls}>
+@@ -580,26 +638,28 @@ export default function HeaderAmazon() {
+               })}
+               <span className="hidden md:block w-px h-5 bg-white/25 mx-1 shrink-0" aria-hidden />
+               {categoryLinks.map((c) => (
+-                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-[13px] whitespace-nowrap shrink-0 max-lg:min-h-11')}>
++                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-[13px] whitespace-nowrap shrink-0 max-lg:min-h-10')}>
+                   {c.label}
+                 </Link>
+               ))}
+             </nav>
+ 
+-            {/* Cam kết + hotline (từ Header gốc & BranchTopBar) */}
+-            <div className="hidden xl:flex items-center gap-3 ml-auto text-[12px] text-white/85 shrink-0">
+-              <span className="flex items-center gap-1">
++            {/* Dải tin cậy: cam kết + hotline (từ Header gốc & BranchTopBar), chữ ≥ 13px */}
++            <div className="hidden xl:flex items-center gap-2.5 ml-auto text-[13px] text-white/90 shrink-0" aria-label={isEn ? 'Our commitments' : 'Cam kết'}>
++              {/* 1280–1439px chỉ đủ chỗ cho hotline; từ 1440px hiện đủ 3 mục */}
++              <span className="hidden min-[1440px]:flex items-center gap-1">
++                <Leaf className="w-3.5 h-3.5 text-corn" aria-hidden />
+                 {t('naturalIngredients')}
+               </span>
+-              <span className="text-white/40">•</span>
+-              <span className="flex items-center gap-1">
+-                <Truck className="w-3.5 h-3.5 text-corn" />
++              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
++              <span className="hidden min-[1440px]:flex items-center gap-1">
++                <Truck className="w-3.5 h-3.5 text-corn" aria-hidden />
+                 {t('fastDelivery')}
+               </span>
+-              <span className="text-white/40">•</span>
+-              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 hover:text-corn cursor-pointer text-[1.125em]">
++              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
++              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 hover:text-corn cursor-pointer">
+                 <Headphones className="w-3.5 h-3.5 text-corn" />
+-                {t('support247')}: <strong className="text-white text-[1.125em]">028 6291 5024</strong>
++                {t('support247')}: <strong className="text-white font-normal">028 6291 5024</strong>
+               </button>
+             </div>
+           </div>
+diff --git a/src/config/homepage.ts b/src/config/homepage.ts
+index 2ea15cd..3e9ae80 100644
+--- a/src/config/homepage.ts
++++ b/src/config/homepage.ts
+@@ -21,3 +21,29 @@ export const HOMEPAGE_CONFIG = {
+   // Biến môi trường (nếu có) được ưu tiên hơn giá trị mặc định trong file.
+   USE_AMAZON_HOMEPAGE: readFlag(process.env.NEXT_PUBLIC_USE_AMAZON_HOMEPAGE, DEFAULT_USE_AMAZON_HOMEPAGE),
+ } as const;
++
++/**
++ * NỘI DUNG PHẦN ĐẦU TRANG CHỦ (hero + 2 ô khuyến mãi) — Marketing/Design sửa ở đây, không cần đụng bố cục.
++ *
++ * Thứ tự ưu tiên chữ trên banner hero:
++ *  1. Banner admin (bảng `banners`, placement = 'hero') có điền "Mô tả / Phụ đề" → dùng Tiêu đề + Phụ đề của banner đó,
++ *     "Nhãn / Tag" (nếu có) làm chữ trên nút.
++ *  2. Banner trong mã nguồn (src/data/banners.ts, homepage-placeholders.ts) có khai báo `title` → dùng chữ của banner
++ *     (title rỗng '' = ảnh đã có chữ sẵn, chỉ hiện nút CTA).
++ *  3. Còn lại → DEFAULT_COPY bên dưới.
++ * Tiêu đề nên ≤ 6 từ, dòng phụ 1 dòng (≤ 60 ký tự) để không bị cắt trên điện thoại.
++ */
++export const HOMEPAGE_HERO = {
++  /** Thời gian tự chuyển slide (ms), tối thiểu 5000. Tự tắt khi người dùng bật "giảm chuyển động". */
++  AUTOPLAY_MS: 6000,
++  DEFAULT_COPY: {
++    title: 'Thức uống tự nhiên mỗi ngày',
++    titleEn: 'Natural drinks, every day',
++    subtitle: 'Sữa hạt, nước giải khát và trà sữa Thái Sơn',
++    subtitleEn: 'Thai Son nut milks, soft drinks and milk teas',
++    ctaLabel: 'Mua ngay',
++    ctaLabelEn: 'Shop now',
++    /** Dùng khi banner không có đường dẫn riêng */
++    ctaHref: '/#san-pham',
++  },
++} as const;
+diff --git a/src/data/homepage-placeholders.ts b/src/data/homepage-placeholders.ts
+index a257a78..759b06d 100644
+--- a/src/data/homepage-placeholders.ts
++++ b/src/data/homepage-placeholders.ts
+@@ -21,6 +21,46 @@ export const HERO_PLACEHOLDER_SLIDES: Banner[] = [
+     image: '/images/banners/banner-1920x850-chu-a.jpg',
+     alt: 'Thái Sơn Foods - Uống một bữa ăn ngon lành',
+     link: '/#san-pham',
++    // Ảnh đã có sẵn khẩu hiệu → không chồng thêm tiêu đề, chỉ hiện nút CTA
++    title: '',
++    objectPosition: '50% 58%',
++  },
++];
++
++// PLACEHOLDER: chờ triển khai — 2 ô khuyến mãi cạnh banner hero (bố cục bento).
++// Triển khai thật: admin thêm banner với Vị trí = "Khuyến mãi / Khác" (placement = 'promo') tại /admin → Banner.
++// Khi có ít nhất 1 banner promo đang bật, khối này tự ngừng dùng (lấy tối đa 2 banner promo đầu tiên theo thứ tự).
++// Ảnh nên tỉ lệ 4:3 (khuyến nghị 800×600 px) vì ảnh chiếm nửa phải của ô.
++// `tag` = nhãn nhỏ phía trên tiêu đề; `ctaLabel` = chữ của liên kết. Không ghi giá/% giảm cố định ở đây:
++// % giảm (nếu hiện) được tính từ combo thật.
++export const HERO_PROMO_PLACEHOLDER_TILES: Banner[] = [
++  {
++    id: 'placeholder-promo-deal',
++    tag: 'Deal Sốc',
++    title: 'Deal trong ngày',
++    titleEn: 'Deals of the day',
++    subtitle: 'Combo đang giảm giá',
++    subtitleEn: 'Combos on sale',
++    ctaLabel: 'Xem deal',
++    ctaLabelEn: 'See deals',
++    image: '/images/combos/combo-6-chai.jpg',
++    alt: 'Combo 6 chai thức uống Thái Sơn',
++    link: '/#deal-trong-ngay',
++    objectPosition: '60% 55%',
++  },
++  {
++    id: 'placeholder-promo-combo',
++    tag: 'Combo',
++    title: 'Combo tiết kiệm',
++    titleEn: 'Value combos',
++    subtitle: 'Chọn sẵn cho cả nhà',
++    subtitleEn: 'Ready-made for the family',
++    ctaLabel: 'Xem combo',
++    ctaLabelEn: 'See combos',
++    image: '/images/banners/combo-01.jpg',
++    alt: 'Combo sữa hạt sen Thái Sơn',
++    link: '/#combo',
++    objectPosition: '62% 60%',
+   },
+ ];
+ 
+diff --git a/src/types/index.ts b/src/types/index.ts
+index c94270d..f5369d5 100644
+--- a/src/types/index.ts
++++ b/src/types/index.ts
+@@ -139,6 +139,14 @@ export interface Banner {
+   subtitle?: string;
+   /** 'db' = banner do admin cấu hình; không có = banner mặc định/mẫu trong mã nguồn */
+   source?: 'db';
++  /** Bản tiếng Anh của tiêu đề / dòng phụ (cột title_en / subtitle_en nếu có) */
++  titleEn?: string;
++  subtitleEn?: string;
++  /** Chữ trên nút CTA của banner (mặc định lấy từ HOMEPAGE_HERO trong src/config/homepage.ts) */
++  ctaLabel?: string;
++  ctaLabelEn?: string;
++  /** Vị trí lấy nét khi ảnh bị cắt (CSS object-position), ví dụ 'center', '30% 50%' */
++  objectPosition?: string;
+ }
+ 
+ // ===== BRAND SHOWCASE TYPES =====

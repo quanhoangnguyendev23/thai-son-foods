@@ -15,23 +15,19 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // 0. Nhận diện tài khoản người dùng nếu có đăng nhập (Không bắt buộc)
-    let userId: string | null = body.userId || body.user_id || null;
-    if (!userId) {
-      try {
-        const userSession = await getUserSession();
-        if (userSession?.id) {
-          userId = userSession.id;
-        }
-      } catch {
-        // Guest checkout
+    // userId CHỈ lấy từ session cookie, không tin body.userId/body.user_id (tránh giả mạo tài khoản khác)
+    let userId: string | null = null;
+    try {
+      const userSession = await getUserSession();
+      if (userSession?.id) {
+        userId = userSession.id;
       }
+    } catch {
+      // Guest checkout
     }
 
-    // 1. Chuẩn hóa mã đơn hàng
-    const initialOrderCode =
-      body.orderCode ||
-      body.order_code ||
-      `TSF-${Date.now().toString().slice(-4)}${crypto.randomInt(1000, 9999)}`;
+    // 1. Mã đơn hàng LUÔN do server sinh (bỏ qua body.orderCode/body.order_code để chống chèn HTML/giả mạo mã)
+    const initialOrderCode = `TSF-${Date.now().toString().slice(-4)}${crypto.randomInt(1000, 9999)}`;
     let orderCode = initialOrderCode;
 
     // 2. Chuẩn hóa thông tin người nhận
@@ -93,7 +89,16 @@ export async function POST(request: Request) {
     const rankingSnapshot = body.rankingSnapshot ? JSON.stringify(body.rankingSnapshot) : null;
 
     // 4. Chuẩn hóa phương thức & phí
-    const paymentMethod = body.paymentMethod || customerObj.paymentMethod || 'cod';
+    // Trang thanh toán khách hàng hiện chỉ hỗ trợ COD (chuyển khoản chỉ có ở luồng đại lý /api/dealer/orders).
+    // Phương thức lạ bị từ chối để không lách được các kiểm tra riêng của COD (độ dài địa chỉ, giá trị tối đa).
+    const SUPPORTED_PAYMENT_METHODS = ['cod'];
+    const paymentMethod = String(body.paymentMethod || customerObj.paymentMethod || 'cod').trim().toLowerCase();
+    if (!SUPPORTED_PAYMENT_METHODS.includes(paymentMethod)) {
+      return NextResponse.json(
+        { success: false, error: 'Phương thức thanh toán không được hỗ trợ. Hiện chỉ hỗ trợ thanh toán khi nhận hàng (COD).' },
+        { status: 400 }
+      );
+    }
     const shippingFee = Math.round(Number(body.shippingFee) || 0);
 
     // 5. Chuẩn hóa danh sách sản phẩm
@@ -152,7 +157,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // V3: Kiểm tra giá trị đơn COD tối đa
+    // V3: Kiểm tra giá trị đơn COD tối đa (chặn sớm theo tổng client gửi; kiểm tra chính thức theo serverTotal ở bước tính giá)
     if (paymentMethod === 'cod' && total > codConfig.MAX_ORDER_VALUE) {
       return NextResponse.json(
         {
@@ -270,39 +275,80 @@ export async function POST(request: Request) {
       let serverCalculatedSubtotal = 0;
       const revalidatedItems = [];
 
+      const { extractBottleMultiplier } = await import('@/lib/inventory');
+      const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
       for (const rawItem of normalizedItems) {
         const pId = rawItem.productId;
         let itemPrice = rawItem.price;
-        let itemName = rawItem.name;
+        // Tên/đơn vị do trình duyệt gửi chỉ dùng cho combo tự chọn (đang chờ xử lý riêng) và luôn được lọc HTML
+        let itemName = stripHtml(rawItem.name.toString()).slice(0, 255) || 'Sản phẩm';
+        let itemUnit = rawItem.unit ? stripHtml(rawItem.unit.toString()).slice(0, 50) : rawItem.unit;
+        let canonicalProductId: string | null = null;
+        let bottleMultiplier = 1;
+        // Ảnh dòng hàng lấy từ DB; combo tự chọn chỉ nhận đường dẫn ảnh nội bộ (/images/...), không nhận URL ngoài
+        const rawThumb = typeof rawItem.thumbnail === 'string' ? rawItem.thumbnail.trim() : '';
+        let itemThumbnail: string | null = /^\/(?!\/)[\w\-./%]+$/.test(rawThumb) ? rawThumb.slice(0, 500) : null;
 
         // Kiểm tra nếu là combo có trong DB
         if (pId && (pId.startsWith('combo-') || pId.includes('combo'))) {
           const comboRes = await client.query(
-            `SELECT name, sale_price FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;`,
+            `SELECT name, sale_price, image FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;`,
             [pId]
           );
           if (comboRes.rows.length > 0) {
             itemPrice = comboRes.rows[0].sale_price;
             itemName = comboRes.rows[0].name;
+            itemThumbnail = comboRes.rows[0].image || null;
           }
         } else {
-          // Là sản phẩm đơn hoặc variant
-          const prodInfo = await resolveProductCanonical(pId, rawItem.name, client);
-          if (prodInfo) {
-            // Nếu là variant có hệ số số chai
-            const { extractBottleMultiplier } = await import('@/lib/inventory').then((m: any) => ({
-              extractBottleMultiplier: (id: string, unit?: string, name?: string) => {
-                const combined = `${id} ${unit || ''} ${name || ''}`.toLowerCase();
-                const m1 = combined.match(/(\d+)\s*(chai|bottle)/);
-                if (m1) return parseInt(m1[1], 10) || 1;
-                const m2 = combined.match(/[-_](\d+)chai/);
-                if (m2) return parseInt(m2[1], 10) || 1;
-                return 1;
+          // Là sản phẩm đơn hoặc variant: giá, tên, đơn vị và hệ số chai đều lấy từ DB
+          const prodInfo = pId ? await resolveProductCanonical(pId, undefined, client) : null;
+          if (!prodInfo) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: `Không nhận dạng được sản phẩm trong giỏ hàng (mã "${String(pId || '').slice(0, 80)}"). Vui lòng xóa sản phẩm này khỏi giỏ và thêm lại.`,
               },
-            }));
-            const multiplier = extractBottleMultiplier(pId || '', rawItem.unit, rawItem.name);
-            itemPrice = prodInfo.price * multiplier;
-            if (!itemName || itemName === 'Sản phẩm') itemName = prodInfo.name;
+              { status: 400 }
+            );
+          }
+          canonicalProductId = prodInfo.id;
+          const thumbRes = await client.query('SELECT thumbnail FROM products WHERE id = $1 LIMIT 1;', [prodInfo.id]);
+          itemThumbnail = thumbRes.rows[0]?.thumbnail || null;
+
+          if (prodInfo.variant) {
+            const v = prodInfo.variant;
+            // Nguồn chuẩn của số chai là product_variants.bottle_multiplier (admin bắt buộc nhập > 0).
+            // Từ chối nếu lệch với quantity để không bán/giữ chỗ sai số chai khi dữ liệu quy cách bị nhập sai.
+            if (!v.bottleMultiplier || v.bottleMultiplier <= 0 || (v.quantity && v.quantity > 0 && v.quantity !== v.bottleMultiplier)) {
+              console.error('[Orders] Variant bottle_multiplier không hợp lệ:', v);
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: `Quy cách "${v.name}" đang được cấu hình sai số chai. Vui lòng liên hệ hotline để được hỗ trợ.`,
+                },
+                { status: 400 }
+              );
+            }
+            bottleMultiplier = v.bottleMultiplier;
+            itemPrice = v.price;
+            const variantLabel = [capitalize(v.unit || ''), v.name].filter(Boolean).join(' ');
+            itemName = `${prodInfo.name} (${variantLabel})`;
+            itemUnit = variantLabel;
+          } else {
+            try {
+              // Hệ số chai chỉ suy ra từ mã sản phẩm và đơn vị trong DB, không dùng tên/đơn vị từ trình duyệt
+              bottleMultiplier = extractBottleMultiplier(pId || '', prodInfo.unit);
+            } catch {
+              return NextResponse.json(
+                { success: false, error: `Không xác định được quy cách đóng gói của sản phẩm "${prodInfo.name}".` },
+                { status: 400 }
+              );
+            }
+            itemPrice = prodInfo.price * bottleMultiplier;
+            itemName = bottleMultiplier > 1 ? `${prodInfo.name} (Lốc ${bottleMultiplier} chai)` : prodInfo.name;
+            itemUnit = bottleMultiplier > 1 ? `Lốc ${bottleMultiplier} chai` : prodInfo.unit;
           }
         }
 
@@ -310,7 +356,11 @@ export async function POST(request: Request) {
         revalidatedItems.push({
           ...rawItem,
           name: itemName,
+          unit: itemUnit,
           price: itemPrice,
+          thumbnail: itemThumbnail,
+          canonicalProductId,
+          bottleMultiplier,
         });
       }
 
@@ -342,12 +392,24 @@ export async function POST(request: Request) {
       const { expandedBottles, comboSnapshots } = await expandComboItems(revalidatedItems, client);
 
       // RÀNG BUỘC SỐ LƯỢNG TỐI ĐA 1.000 CHAI TRÊN TOÀN BỘ ĐƠN HÀNG
-      const totalBottlesInOrder = expandedBottles.reduce((sum: number, b: any) => sum + (Number(b.quantity) || 0), 0);
+      const totalBottlesInOrder = expandedBottles.reduce((sum: number, b: any) => sum + (Number(b.bottleQuantity) || 0), 0);
       if (totalBottlesInOrder > 1000) {
         return NextResponse.json(
           {
             success: false,
             error: `Số lượng đặt hàng (${totalBottlesInOrder.toLocaleString('vi-VN')} chai) vượt quá giới hạn tối đa cho phép là 1.000 chai trên một đơn hàng. Vui lòng giảm bớt số lượng hoặc liên hệ hotline để được hỗ trợ đơn hàng sỉ.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // V3 (chính thức): giá trị đơn COD tối đa tính theo tổng do server tự tính, không tin body.total
+      if (paymentMethod === 'cod' && serverTotal > codConfig.MAX_ORDER_VALUE) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng liên hệ hotline để đặt đơn lớn hoặc chọn phương thức thanh toán khác.`,
+            maxValue: codConfig.MAX_ORDER_VALUE,
           },
           { status: 400 }
         );
@@ -548,21 +610,13 @@ export async function POST(request: Request) {
             let itemCostPriceSnapshot: number | null = null;
 
             if (rawPId && !rawPId.startsWith('combo-')) {
-              const resolved = await resolveProductCanonical(rawPId, item.name, client);
-              if (resolved) {
-                canonicalProductId = resolved.id;
-                const extractMult = (id: string, unit?: string, name?: string) => {
-                  const combined = `${id} ${unit || ''} ${name || ''}`.toLowerCase();
-                  const m1 = combined.match(/(\d+)\s*(chai|bottle)/);
-                  if (m1) { const n = parseInt(m1[1], 10); if (!isNaN(n) && n > 0) return n; }
-                  const m2 = combined.match(/[-_](\d+)chai/);
-                  if (m2) { const n = parseInt(m2[1], 10); if (!isNaN(n) && n > 0) return n; }
-                  return 1;
-                };
-                bottleMultiplier = extractMult(rawPId, item.unit, item.name);
+              // Đã resolve và tính hệ số chai từ DB ở bước tính giá phía trên
+              if (item.canonicalProductId) {
+                canonicalProductId = item.canonicalProductId;
+                bottleMultiplier = item.bottleMultiplier;
                 totalBottlesVal = bottleMultiplier * (item.quantity || 1);
 
-                const prodCostRes = await client.query('SELECT cost_price FROM products WHERE id = $1 LIMIT 1;', [resolved.id]);
+                const prodCostRes = await client.query('SELECT cost_price FROM products WHERE id = $1 LIMIT 1;', [canonicalProductId]);
                 if (prodCostRes.rows.length > 0 && prodCostRes.rows[0].cost_price !== null && prodCostRes.rows[0].cost_price !== undefined) {
                   itemCostPriceSnapshot = (Number(prodCostRes.rows[0].cost_price) || 0) * bottleMultiplier;
                 }

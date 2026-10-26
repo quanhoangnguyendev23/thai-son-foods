@@ -23,9 +23,24 @@ interface RateBucket {
   count: number;
   resetAt: number;
 }
+// Lưu ý: bộ đếm nằm trong RAM của từng máy chủ. Trên Vercel mỗi instance đếm riêng, không chia sẻ với nhau,
+// nên đây chỉ là lớp chặn thô; các giới hạn quan trọng (đặt hàng, đăng nhập...) còn có kiểm tra riêng trong route.
 const globalRateLimitStore = new Map<string, RateBucket>();
-const GLOBAL_MAX_REQUESTS = 60; // 60 requests
+const GLOBAL_MAX_REQUESTS = 300; // 300 requests (60 cũ chặn nhầm khách lướt nhanh / dùng chung IP mạng di động)
 const GLOBAL_WINDOW_MS = 60 * 1000; // per minute
+
+// API chỉ đọc mà trang nào cũng gọi: không tính vào giới hạn chung (chỉ áp dụng cho GET)
+const READ_ONLY_EXEMPT_API_REGEX =
+  /^\/api\/(products|combos|stores|banners|brand-slides|categories|auth\/me|reviews|reviews\/summary)\/?$/;
+
+// API ghi / dễ bị lạm dụng: giới hạn chặt hơn theo nhóm (bucket riêng, đếm theo IP)
+const STRICT_API_LIMITS: ReadonlyArray<{ key: string; methods: readonly string[]; regex: RegExp; max: number }> = [
+  { key: 'orders-post', methods: ['POST'], regex: /^\/api\/orders\/?$/, max: 10 },
+  { key: 'orders-track', methods: ['GET'], regex: /^\/api\/orders\/?$/, max: 20 },
+  { key: 'auth', methods: ['POST'], regex: /^\/api\/auth\/(login|register)\/?$/, max: 10 },
+  { key: 'otp', methods: ['POST'], regex: /^\/api\/(membership\/auth|partner)\/otp\//, max: 5 },
+  { key: 'geo', methods: ['GET', 'POST'], regex: /^\/api\/geo\//, max: 60 },
+];
 
 // Tự động dọn dẹp mỗi 5 phút (edge runtime an toàn)
 if (typeof setInterval !== 'undefined') {
@@ -41,20 +56,23 @@ if (typeof setInterval !== 'undefined') {
   if (t.unref) t.unref();
 }
 
-function checkGlobalRateLimit(ip: string): { blocked: boolean; remaining: number; resetInSec: number } {
+function checkGlobalRateLimit(
+  ip: string,
+  max: number = GLOBAL_MAX_REQUESTS
+): { blocked: boolean; remaining: number; resetInSec: number; limit: number } {
   const now = Date.now();
   let bucket = globalRateLimitStore.get(ip);
   if (!bucket || bucket.resetAt <= now) {
     bucket = { count: 1, resetAt: now + GLOBAL_WINDOW_MS };
     globalRateLimitStore.set(ip, bucket);
-    return { blocked: false, remaining: GLOBAL_MAX_REQUESTS - 1, resetInSec: Math.ceil(GLOBAL_WINDOW_MS / 1000) };
+    return { blocked: false, remaining: max - 1, resetInSec: Math.ceil(GLOBAL_WINDOW_MS / 1000), limit: max };
   }
   bucket.count += 1;
   const resetInSec = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
-  if (bucket.count > GLOBAL_MAX_REQUESTS) {
-    return { blocked: true, remaining: 0, resetInSec };
+  if (bucket.count > max) {
+    return { blocked: true, remaining: 0, resetInSec, limit: max };
   }
-  return { blocked: false, remaining: GLOBAL_MAX_REQUESTS - bucket.count, resetInSec };
+  return { blocked: false, remaining: max - bucket.count, resetInSec, limit: max };
 }
 
 export async function middleware(req: NextRequest) {
@@ -178,7 +196,13 @@ export async function middleware(req: NextRequest) {
   // 0. GLOBAL RATE LIMITING cho mọi public API (60 req/phút/IP)
   // ═══════════════════════════════════════════════════════════════
   if (isApiRoute && !pathname.startsWith('/api/admin/')) {
-    const rl = checkGlobalRateLimit(`global:${ip}`);
+    const strict = STRICT_API_LIMITS.find((r) => r.methods.includes(req.method) && r.regex.test(pathname));
+    const isReadOnlyExempt = req.method === 'GET' && READ_ONLY_EXEMPT_API_REGEX.test(pathname);
+    const rl = strict
+      ? checkGlobalRateLimit(`strict:${strict.key}:${ip}`, strict.max)
+      : isReadOnlyExempt
+      ? { blocked: false, remaining: GLOBAL_MAX_REQUESTS, resetInSec: 0, limit: GLOBAL_MAX_REQUESTS }
+      : checkGlobalRateLimit(`global:${ip}`);
     if (rl.blocked) {
       return NextResponse.json(
         {
@@ -190,7 +214,7 @@ export async function middleware(req: NextRequest) {
           status: 429,
           headers: {
             'Retry-After': String(rl.resetInSec),
-            'X-RateLimit-Limit': String(GLOBAL_MAX_REQUESTS),
+            'X-RateLimit-Limit': String(rl.limit),
             'X-RateLimit-Remaining': '0',
           },
         }

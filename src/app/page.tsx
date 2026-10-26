@@ -28,6 +28,7 @@ async function getHeroBanners(): Promise<Banner[]> {
         titleEn: r.title_en || '',
         subtitle: r.subtitle || '',
         subtitleEn: r.subtitle_en || '',
+        tag: r.tag || undefined,
         image: r.image,
         mobileImage: r.mobile_image || undefined,
         link: r.link || '',
@@ -41,6 +42,31 @@ async function getHeroBanners(): Promise<Banner[]> {
     console.error('Error fetching live hero banners:', err);
   }
   return defaultBanners;
+}
+
+// 2 ô khuyến mãi cạnh hero: banner admin có placement = 'promo' (tối đa 2). Rỗng → dùng ô mẫu trong homepage-placeholders.ts
+async function getPromoBanners(): Promise<Banner[]> {
+  try {
+    const res = await query(
+      `SELECT * FROM banners WHERE placement = 'promo' AND is_active = true ORDER BY sort_order ASC LIMIT 2`
+    );
+    return res.rows
+      .filter((r: any) => Boolean(r.image))
+      .map((r: any) => ({
+        id: r.id,
+        title: r.title || '',
+        subtitle: r.subtitle || '',
+        tag: r.tag || undefined,
+        image: r.image,
+        mobileImage: r.mobile_image || undefined,
+        link: r.link || '',
+        alt: r.alt || r.title || 'Thái Sơn Foods',
+        source: 'db' as const,
+      }));
+  } catch (err) {
+    console.error('Error fetching promo banners:', err);
+    return [];
+  }
 }
 
 // Tên danh mục do admin cấu hình (bảng categories) — dùng để hiển thị tiêu đề các hàng sản phẩm theo danh mục
@@ -232,11 +258,12 @@ async function getLiveCombos(): Promise<Combo[]> {
 }
 
 export default async function HomeRoute() {
-  const [heroBanners, liveProducts, liveCombos, liveCategories] = await Promise.all([
+  const [heroBanners, liveProducts, liveCombos, liveCategories, promoBanners] = await Promise.all([
     getHeroBanners(),
     getLiveProducts(),
     getLiveCombos(),
     getLiveCategories(),
+    getPromoBanners(),
   ]);
 
   // Cờ rollback: false = trang chủ cũ (HomePageLegacy), true = bố cục Amazon (HomePage). Xem ROLLBACK.md
@@ -244,5 +271,5 @@ export default async function HomeRoute() {
     return <HomePageLegacy heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} />;
   }
 
-  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} liveCategories={liveCategories} />;
+  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} liveCategories={liveCategories} promoBanners={promoBanners} />;
 }

@@ -1,0 +1,66 @@
+import { Banner } from '@/types';
+
+/**
+ * DỮ LIỆU MẪU cho các khối trên TRANG CHỦ (bố cục Amazon) mà TSF CHƯA có nghiệp vụ / API thật.
+ *
+ * Quy ước (giống src/data/product-detail-placeholders.ts):
+ *  - Mọi mục trong file này đều là PLACEHOLDER. Giao diện hiển thị nhãn "Bản mẫu · chờ triển khai".
+ *  - KHÔNG chứa giá, tồn kho, % khuyến mãi hay đánh giá. Giá/ưu đãi hiển thị cạnh khối placeholder
+ *    luôn lấy từ dữ liệu sản phẩm/combo thật (DB → src/data/*).
+ *  - Tương tác của khối placeholder chỉ đổi trạng thái giao diện, KHÔNG gọi API, KHÔNG lưu dữ liệu.
+ *  - Khi triển khai thật, thay từng mục bằng API tương ứng rồi xoá khỏi file này.
+ */
+
+// PLACEHOLDER: chờ triển khai — slide hero bổ sung khi bảng `banners` (placement = 'hero') có ít hơn
+// HERO_MIN_SLIDES banner đang bật. Ảnh là ảnh thương hiệu TSF có sẵn trong /public, không chứa giá/khuyến mãi.
+// Triển khai thật: admin thêm banner hero tại /admin → khối này tự ngừng dùng.
+export const HERO_MIN_SLIDES = 2;
+export const HERO_PLACEHOLDER_SLIDES: Banner[] = [
+  {
+    id: 'placeholder-hero-bottles',
+    image: '/images/banners/banner-1920x850-chu-a.jpg',
+    alt: 'Thái Sơn Foods - Uống một bữa ăn ngon lành',
+    link: '/#san-pham',
+  },
+];
+
+// PLACEHOLDER: chờ triển khai — "Gợi ý cho bạn" (cần lịch sử xem/mua của khách + thuật toán gợi ý).
+// Hiện chỉ là danh sách id sản phẩm cố định; giá/ảnh vẫn lấy từ sản phẩm thật.
+export const RECOMMENDED_FOR_YOU_IDS = [
+  'tao-do-hat-chia',
+  'sua-hat-sen-mekong',
+  'matcha-tra-sua-ciao',
+  'sam-la-han-hoa-cuc',
+  'sua-gao-lut-ohsawa',
+  'tra-xanh-go',
+  'nha-dam-mu-trom',
+  'sua-bap-nep',
+];
+
+// PLACEHOLDER: chờ triển khai — "Mua lại" (cần API lịch sử đơn hàng của khách đã đăng nhập,
+// ví dụ GET /api/user/orders → gom sản phẩm đã mua). Hiện chỉ là ô trống minh hoạ.
+export const BUY_AGAIN_PLACEHOLDER = {
+  title: 'Mua lại',
+  description: 'Sản phẩm bạn đã mua sẽ hiện ở đây để đặt lại nhanh.',
+  slotCount: 4,
+  ctaLabel: 'Xem đơn hàng của tôi',
+};
+
+// PLACEHOLDER: chờ triển khai — "Deal trong ngày" có đếm ngược (website chưa có nghiệp vụ flash sale
+// có thời hạn). Đồng hồ chỉ minh hoạ giao diện, KHÔNG phải thời hạn ưu đãi thật.
+// Combo hiển thị trong khối là combo thật với giá/% giảm thật từ DB.
+export const DEAL_COUNTDOWN_PLACEHOLDER = {
+  title: 'Deal trong ngày',
+  note: 'Đồng hồ đếm ngược minh hoạ — chưa áp dụng thời hạn ưu đãi.',
+  /** Mốc minh hoạ: đếm tới 23:59:59 hôm nay theo giờ trình duyệt */
+  endHour: 23,
+  endMinute: 59,
+  endSecond: 59,
+  comboCount: 6,
+};
+
+// PLACEHOLDER: chờ triển khai — sổ địa chỉ giao hàng của khách (Amazon "Deliver to").
+// Header mới dùng chi nhánh đang chọn (dữ liệu thật). Dòng phụ dưới đây chỉ là gợi ý giao diện.
+export const DELIVER_TO_PLACEHOLDER = {
+  guestHint: 'Chọn chi nhánh gần bạn',
+};

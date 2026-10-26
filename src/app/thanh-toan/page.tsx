@@ -991,9 +991,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    const generatedCode = `TSF-${Math.floor(100000 + Math.random() * 900000)}`;
-    setOrderCode(generatedCode);
-
     setIsSubmitting(true);
     setStockConflictError(null);
     try {
@@ -1003,8 +1000,6 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderCode: generatedCode,
-          userId: user?.id || null,
           fullName: form.fullName,
           phone: form.phone,
           email: form.email,
@@ -1095,6 +1090,8 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Mã đơn do server sinh (không tin mã từ trình duyệt)
+      setOrderCode(String(data?.orderCode ?? data?.order?.orderCode ?? ''));
       setCompletedOrder({
         fullName: form.fullName,
         phone: form.phone,

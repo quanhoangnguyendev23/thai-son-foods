@@ -193,16 +193,25 @@ const PRODUCT_ALIAS_MAP: Record<string, string> = {
 };
 
 /**
- * Tra cứu thông tin sản phẩm chuẩn từ DB dựa vào id/slug/sku/alias
+ * Tra cứu thông tin sản phẩm chuẩn từ DB dựa vào id/slug/sku/alias/variant id.
+ * CHỈ khớp theo mã (không khớp mờ theo tên): tên do trình duyệt gửi không được quyết định sản phẩm/giá/tồn kho.
+ * Nếu mã trỏ tới một quy cách (product_variants) thì trả kèm `variant` lấy từ DB.
  */
 export async function resolveProductCanonical(
   rawId: string | null | undefined,
   nameHint?: string,
   client?: PoolClient
-): Promise<{ id: string; name: string; price: number; unit?: string } | null> {
+): Promise<{
+  id: string;
+  name: string;
+  price: number;
+  unit?: string;
+  variant?: { id: string; name: string; unit: string | null; price: number; quantity: number | null; bottleMultiplier: number | null };
+} | null> {
   if (!rawId && !nameHint) return null;
 
   const rawClean = (rawId || '').toLowerCase().trim();
+  if (!rawClean) return null;
 
   // 1. Kiểm tra alias tĩnh
   if (PRODUCT_ALIAS_MAP[rawClean]) {
@@ -212,7 +221,52 @@ export async function resolveProductCanonical(
     if (res.rows.length > 0) return res.rows[0];
   }
 
-  // 2. Tách variant suffix nếu có (ví dụ 'sua-bap-nep-sb-7chai' -> 'sua-bap-nep')
+  // 2. Tra bảng product_variants: variant ID nhúng trong chuỗi (format: slug-var_prodId_suffix) hoặc exact ID
+  const pvSql = `
+    SELECT pv.product_id AS id, p.name, p.price, pv.unit,
+           pv.id AS variant_id, pv.name AS variant_name, pv.price AS variant_price,
+           pv.quantity AS variant_quantity, pv.bottle_multiplier AS variant_bottle_multiplier
+    FROM product_variants pv
+    JOIN products p ON pv.product_id = p.id
+    WHERE pv.id = $1
+    LIMIT 1;
+  `;
+  const embeddedVarMatch = rawClean.match(/var_[a-z0-9_-]+/i);
+  const variantCandidates = embeddedVarMatch && embeddedVarMatch[0] !== rawClean ? [embeddedVarMatch[0], rawClean] : [rawClean];
+  for (const variantId of variantCandidates) {
+    const pvRes = client ? await client.query(pvSql, [variantId]) : await query(pvSql, [variantId]);
+    if (pvRes.rows.length > 0) {
+      const r = pvRes.rows[0];
+      return {
+        id: r.id,
+        name: r.name,
+        price: r.price,
+        unit: r.unit,
+        variant: {
+          id: r.variant_id,
+          name: r.variant_name,
+          unit: r.unit,
+          price: Number(r.variant_price),
+          quantity: r.variant_quantity === null ? null : Number(r.variant_quantity),
+          bottleMultiplier: r.variant_bottle_multiplier === null ? null : Number(r.variant_bottle_multiplier),
+        },
+      };
+    }
+  }
+
+  // 3. Tìm trực tiếp trong bảng products theo id / slug / sku (so khớp chính xác, không dùng ILIKE theo tên)
+  const sqlDirect = `
+    SELECT id, name, price, unit FROM products
+    WHERE id = $1 OR slug = $1 OR LOWER(sku) = $1
+    LIMIT 1;
+  `;
+  const resDirect = client
+    ? await client.query(sqlDirect, [rawClean])
+    : await query(sqlDirect, [rawClean]);
+
+  if (resDirect.rows.length > 0) return resDirect.rows[0];
+
+  // 4. Tách variant suffix nếu có (ví dụ 'sua-bap-nep-sb-7chai' -> 'sua-bap-nep')
   const baseSuffixClean = rawClean.split('-standard')[0].replace(/-[a-z0-9]+chai.*$/i, '');
   if (PRODUCT_ALIAS_MAP[baseSuffixClean]) {
     const canonicalId = PRODUCT_ALIAS_MAP[baseSuffixClean];
@@ -220,48 +274,6 @@ export async function resolveProductCanonical(
     const res = client ? await client.query(sql, [canonicalId]) : await query(sql, [canonicalId]);
     if (res.rows.length > 0) return res.rows[0];
   }
-
-  // 3. Tìm trực tiếp trong bảng products
-  const sqlDirect = `
-    SELECT id, name, price, unit FROM products
-    WHERE id = $1 OR slug = $1 OR sku ILIKE $1 OR name ILIKE $2
-    LIMIT 1;
-  `;
-  const resDirect = client
-    ? await client.query(sqlDirect, [rawClean, `%${nameHint || rawClean}%`])
-    : await query(sqlDirect, [rawClean, `%${nameHint || rawClean}%`]);
-
-  if (resDirect.rows.length > 0) return resDirect.rows[0];
-
-  // 3.5. Tìm variant ID nhúng trong chuỗi (format: slug-var_prodId_suffix)
-  const embeddedVarMatch = rawClean.match(/var_[a-z0-9_-]+/i);
-  if (embeddedVarMatch) {
-    const embeddedVariantId = embeddedVarMatch[0];
-    const varEmbedSql = `
-      SELECT pv.product_id AS id, p.name, p.price, pv.unit
-      FROM product_variants pv
-      JOIN products p ON pv.product_id = p.id
-      WHERE pv.id = $1
-      LIMIT 1;
-    `;
-    const varEmbedRes = client
-      ? await client.query(varEmbedSql, [embeddedVariantId])
-      : await query(varEmbedSql, [embeddedVariantId]);
-    if (varEmbedRes.rows.length > 0) return varEmbedRes.rows[0];
-  }
-
-  // 4. Tra bảng product_variants bằng exact ID
-  const pvExactSql = `
-    SELECT pv.product_id AS id, p.name, p.price, pv.unit
-    FROM product_variants pv
-    JOIN products p ON pv.product_id = p.id
-    WHERE pv.id = $1
-    LIMIT 1;
-  `;
-  const pvExactRes = client
-    ? await client.query(pvExactSql, [rawClean])
-    : await query(pvExactSql, [rawClean]);
-  if (pvExactRes.rows.length > 0) return pvExactRes.rows[0];
 
   // 5. Tách suffix liên tiếp để tìm base slug (slug-XX-Ychai → slug-XX → slug)
   let candidate = rawClean;
@@ -600,8 +612,9 @@ export async function expandComboItems(
         try {
           // product_variants.id có dạng "var_<productId>_<variantId>"; rawId của giỏ hàng là "<productId>-<variantId>"
           const variantKey = rawId.startsWith(`${prod.id}-`) ? `var_${prod.id}_${rawId.slice(prod.id.length + 1)}` : rawId;
-          const pvSql = `SELECT bottle_multiplier, quantity FROM product_variants WHERE id = $1 OR id = $2 LIMIT 1;`;
-          const pvRes = client ? await client.query(pvSql, [rawId, variantKey]) : await query(pvSql, [rawId, variantKey]);
+          const pvSql = `SELECT bottle_multiplier, quantity FROM product_variants WHERE id = $1 OR id = $2 OR id = $3 LIMIT 1;`;
+          const resolvedVariantId = prod.variant?.id || variantKey;
+          const pvRes = client ? await client.query(pvSql, [rawId, variantKey, resolvedVariantId]) : await query(pvSql, [rawId, variantKey, resolvedVariantId]);
           if (pvRes.rows.length > 0 && pvRes.rows[0].bottle_multiplier > 0) {
             dbMultiplier = Number(pvRes.rows[0].bottle_multiplier);
           }

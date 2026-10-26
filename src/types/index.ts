@@ -139,6 +139,14 @@ export interface Banner {
   subtitle?: string;
   /** 'db' = banner do admin cấu hình; không có = banner mặc định/mẫu trong mã nguồn */
   source?: 'db';
+  /** Bản tiếng Anh của tiêu đề / dòng phụ (cột title_en / subtitle_en nếu có) */
+  titleEn?: string;
+  subtitleEn?: string;
+  /** Chữ trên nút CTA của banner (mặc định lấy từ HOMEPAGE_HERO trong src/config/homepage.ts) */
+  ctaLabel?: string;
+  ctaLabelEn?: string;
+  /** Vị trí lấy nét khi ảnh bị cắt (CSS object-position), ví dụ 'center', '30% 50%' */
+  objectPosition?: string;
 }
 
 // ===== BRAND SHOWCASE TYPES =====
