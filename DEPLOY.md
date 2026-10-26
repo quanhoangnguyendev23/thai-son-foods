@@ -40,6 +40,15 @@ Tài liệu này hướng dẫn chi tiết quy trình đưa website Thái Sơn F
    - Key: `DATABASE_URL`
    - Value: Chuỗi kết nối vừa copy (áp dụng cho cả Production, Preview).
 
+### ⚠️ BẮT BUỘC: `DATABASE_URL` trên Vercel phải là chuỗi POOLER
+Vercel chạy nhiều instance serverless song song, mỗi instance mở pool kết nối riêng (`src/lib/db.ts` mặc định
+`max = 3` khi chạy trên Vercel; đặt `DB_POOL_MAX` để ghi đè). Nếu dùng chuỗi kết nối trực tiếp, lúc đông khách
+Postgres sẽ cạn kết nối ("too many connections").
+- **Neon / Vercel Postgres:** dùng host có hậu tố `-pooler`, ví dụ `postgresql://user:pass@ep-xxx-pooler.ap-southeast-1.aws.neon.tech/db?sslmode=require`.
+- **Supabase:** dùng Transaction Pooler cổng **6543** kèm `?pgbouncer=true` (như chuỗi mẫu ở Cách 2), không dùng cổng 5432.
+- Mã nguồn không dùng prepared statement có tên (`name:`) hay `LISTEN/NOTIFY` nên chạy được qua pgbouncer (chế độ transaction).
+- Riêng các lệnh chạy một lần từ máy (restore dữ liệu, migration) có thể dùng chuỗi kết nối trực tiếp.
+
 ---
 
 ## III. BƯỚC 2: CHUYỂN TOÀN BỘ DỮ LIỆU TỪ MÁY NÀY LÊN CLOUD DATABASE
