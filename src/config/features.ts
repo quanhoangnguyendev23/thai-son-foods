@@ -23,11 +23,13 @@ export const FEATURES = {
  * TẮT tạm vì máy chủ chưa tự tính được giá (lỗ hổng P0-1: giá do trình duyệt gửi). Combo cố định trong bảng combos
  * không bị ảnh hưởng. Bật lại sau khi chốt combo và làm bước B1 (docs: PROMPT-SUA-LOI-GOLIVE.md).
  */
-export const ENABLE_CUSTOM_COMBOS = false;
+// Nhánh tiếp tục làm combo. KHÔNG deploy nhánh này trước khi làm B1 (máy chủ tính giá combo tự chọn)
+export const ENABLE_CUSTOM_COMBOS = true;
 
 /**
  * TOÀN BỘ combo (cả combo cố định trong bảng combos) — doanh nghiệp CHƯA chốt combo nào, giá hiện tại chỉ là mẫu.
  * Khi tắt: API đặt hàng từ chối mọi dòng combo (400); ẩn combo ở trang chủ, header, footer, trang sản phẩm, giỏ hàng,
  * sitemap; /combo và /combo/[slug] chuyển về trang chủ. Bật lại khi doanh nghiệp chốt combo, rồi làm B1.
  */
-export const ENABLE_COMBOS = false;
+// Nhánh tiếp tục làm combo. KHÔNG deploy nhánh này trước khi làm B1 (máy chủ tính giá combo tự chọn)
+export const ENABLE_COMBOS = true;
