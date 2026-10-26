@@ -66,7 +66,8 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
             href={tile.link || '/#san-pham'}
             className={cn(
               'group relative flex overflow-hidden rounded-2xl text-white shadow-xs',
-              'snap-start shrink-0 w-[82%] h-[112px] sm:w-[calc(50%-8px)] sm:h-[132px]',
+              // Chiều cao tối thiểu (không cố định) để tiêu đề 2 dòng + dòng phụ + CTA không bị cắt trên điện thoại
+              'snap-start shrink-0 w-[82%] min-h-[112px] sm:w-[calc(50%-8px)] sm:min-h-[132px]',
               'lg:w-auto lg:h-auto lg:flex-1 lg:min-h-0',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-corn focus-visible:ring-offset-2 focus-visible:ring-offset-ivory-dark',
               TILE_BG[i % TILE_BG.length]
