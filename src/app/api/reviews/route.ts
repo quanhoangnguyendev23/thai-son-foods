@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
+import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 import {
   getProductReviews,
   createProductReview,
@@ -151,10 +152,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 7. Rate Limit & Chống spam (tối đa 3 lượt/IP/giờ, chặn trùng lặp trong 24h)
-    const ip =
-      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-      req.headers.get('x-real-ip') ||
-      '127.0.0.1';
+    const ip = getClientIp(req.headers) ?? UNKNOWN_CLIENT_IP;
 
     const rateResult = await checkAndRecordReviewRateLimit({
       ip,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { getUserSession } from '@/lib/auth';
+import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 import { voteHelpfulReview } from '@/lib/reviews/repository';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,7 @@ export async function POST(
     const session = await getUserSession();
 
     // Sinh fingerprint client dựa trên IP và User-Agent để chống spam
-    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+    const clientIp = getClientIp(req.headers) ?? UNKNOWN_CLIENT_IP;
     const userAgent = req.headers.get('user-agent') || 'unknown';
     const rawFp = `${clientIp}_${userAgent}`;
     const fingerprint = crypto.createHash('sha256').update(rawFp).digest('hex').slice(0, 32);

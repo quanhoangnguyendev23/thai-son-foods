@@ -3,6 +3,19 @@ import { jwtVerify } from 'jose';
 
 const ADMIN_COOKIE_NAME = 'tsf_admin_token';
 import { getJwtSecretBytes } from '@/lib/jwtSecret';
+import { getClientIp, getAllowedOrigins, getTrustedProxyCount, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
+
+// Cảnh báo khi không xác định được IP đáng tin (tối đa 1 dòng log/phút để không làm đầy log)
+let lastUnknownIpWarnAt = 0;
+function warnUnknownIp(pathname: string) {
+  const now = Date.now();
+  if (now - lastUnknownIpWarnAt < 60 * 1000) return;
+  lastUnknownIpWarnAt = now;
+  console.warn(
+    `[Middleware] Không xác định được IP khách đáng tin (TRUSTED_PROXY_COUNT=${getTrustedProxyCount()}, đường dẫn ${pathname}). ` +
+      'Các request này dùng chung nhóm rate limit "unknown". Kiểm tra cấu hình reverse proxy / TRUSTED_PROXY_COUNT.'
+  );
+}
 
 // Allowlist các route ngoại lệ có chủ đích (webhook cổng thanh toán, cronjob có Bearer token)
 const CSRF_EXEMPT_ROUTES: readonly string[] = [
@@ -78,8 +91,12 @@ function checkGlobalRateLimit(
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isApiRoute = pathname.startsWith('/api/');
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  const isLoopback = ip === '127.0.0.1' || ip === '::1' || ip === 'unknown' || ip === 'localhost';
+  // IP lấy theo số proxy tin cậy (src/lib/runtimeConfig.ts). Không xác định được → nhóm chung "unknown":
+  // vẫn bị rate limit, nhưng không đưa vào jail (jail nhóm chung sẽ chặn oan mọi khách).
+  const clientIp = getClientIp(req.headers);
+  if (!clientIp && pathname.startsWith('/api/')) warnUnknownIp(pathname);
+  const ip = clientIp ?? UNKNOWN_CLIENT_IP;
+  const isLoopback = ip === '127.0.0.1' || ip === '::1' || ip === UNKNOWN_CLIENT_IP || ip === 'localhost';
 
   // ═══════════════════════════════════════════════════════════════
   // -1. KIỂM TRA IP TRONG DANH SÁCH GIÁM SÁT (IP JAIL CHECK)
@@ -233,8 +250,12 @@ export async function middleware(req: NextRequest) {
       const origin = req.headers.get('origin');
       const referer = req.headers.get('referer');
       const host = req.headers.get('host');
-      const forwardedHost = req.headers.get('x-forwarded-host');
+      // X-Forwarded-Host chỉ có nghĩa khi có proxy tin cậy đặt nó (kết nối thẳng thì do khách tự gửi)
+      const forwardedHost = getTrustedProxyCount() > 0 ? req.headers.get('x-forwarded-host') : null;
       const allowedHosts = [host, forwardedHost].filter(Boolean) as string[];
+      // Origin khai báo tường minh qua ALLOWED_ORIGINS (dùng khi proxy đổi Host và không gửi X-Forwarded-Host)
+      const allowedOrigins = getAllowedOrigins();
+      const isAllowedUrl = (u: URL) => allowedHosts.includes(u.host) || allowedOrigins.includes(u.origin);
 
       // Fail-closed: Nếu thiếu cả Origin và Referer -> Từ chối 403
       if (!origin && !referer) {
@@ -252,7 +273,7 @@ export async function middleware(req: NextRequest) {
       if (origin) {
         try {
           const originUrl = new URL(origin);
-          if (!allowedHosts.includes(originUrl.host)) {
+          if (!isAllowedUrl(originUrl)) {
             return NextResponse.json(
               {
                 success: false,
@@ -272,7 +293,7 @@ export async function middleware(req: NextRequest) {
         // Nếu thiếu Origin nhưng có Referer -> Kiểm tra Referer
         try {
           const refererUrl = new URL(referer);
-          if (!allowedHosts.includes(refererUrl.host)) {
+          if (!isAllowedUrl(refererUrl)) {
             return NextResponse.json(
               {
                 success: false,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { hashPassword, signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS } from '@/lib/auth';
 import { checkRequestRateLimit } from '@/lib/rateLimit';
+import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ function stripHtmlTags(input: string): string {
 export async function POST(req: NextRequest) {
   try {
     // Rate Limiting: tối đa 5 lần đăng ký / giờ / IP
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || '127.0.0.1';
+    const ip = getClientIp(req.headers) ?? UNKNOWN_CLIENT_IP;
     const rl = checkRequestRateLimit(`register:ip:${ip}`, 5, 60 * 60 * 1000);
     if (rl.isBlocked) {
       return NextResponse.json(
