@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { trackReferralClick, signReferralCookie } from '@/lib/partner/referral';
 import { PARTNER_CONFIG } from '@/config/partner';
-import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
+import { getClientIp, UNKNOWN_CLIENT_IP, isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       path: '/',
       maxAge: maxAgeSeconds,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: isCookieSecure(),
     });
 
     return response;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { verifyPassword, signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS } from '@/lib/auth';
 import { checkRateLimit, recordFailedLogin, resetLoginRateLimit } from '@/lib/rateLimit';
+import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest) {
       name: USER_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isCookieSecure(),
       sameSite: 'lax',
       path: '/',
       maxAge: maxAgeSeconds,

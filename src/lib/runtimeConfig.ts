@@ -54,6 +54,19 @@ export function getClientIp(headers: HeaderBag): string | null {
   return normalizeIp(list[list.length - proxies]);
 }
 
+/**
+ * Cờ Secure cho cookie phiên đăng nhập.
+ * COOKIE_SECURE=true|false ghi đè; bỏ trống thì mặc định Secure khi NODE_ENV=production.
+ * LAN Testing chạy bản build production qua http://<IP LAN> phải đặt COOKIE_SECURE=false,
+ * nếu không trình duyệt bỏ cookie Secure trên HTTP và không đăng nhập được.
+ */
+export function isCookieSecure(): boolean {
+  const v = (process.env.COOKIE_SECURE || '').trim().toLowerCase();
+  if (v === 'true') return true;
+  if (v === 'false') return false;
+  return process.env.NODE_ENV === 'production';
+}
+
 let cachedOriginsRaw: string | undefined;
 let cachedOrigins: string[] = [];
 

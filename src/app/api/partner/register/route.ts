@@ -7,6 +7,7 @@ import { generatePartnerCode } from '@/lib/partner/referral';
 import { writeAuditLog } from '@/lib/audit';
 
 import { checkRequestRateLimit } from '@/lib/rateLimit';
+import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -190,7 +191,7 @@ export async function POST(request: Request) {
         name: USER_COOKIE_NAME,
         value: token,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isCookieSecure(),
         sameSite: 'lax',
         path: '/',
         maxAge: maxAgeSeconds,

@@ -10,6 +10,7 @@ import {
   invalidateAdminSessionCache,
 } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/audit';
+import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
       name: ADMIN_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isCookieSecure(),
       sameSite: 'lax',
       path: '/',
       maxAge: ADMIN_TOKEN_MAX_AGE_SECONDS,
