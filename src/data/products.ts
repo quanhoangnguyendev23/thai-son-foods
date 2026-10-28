@@ -382,6 +382,11 @@ export const products: Product[] = [
       { id: 'tsa-12chai', name: '12 chai', quantity: 12, price: 240000, unit: 'thùng', volume: '12 x 270ml' },
       { id: 'tsa-15chai', name: '15 chai', quantity: 15, price: 300000, unit: 'thùng', volume: '15 x 270ml' },
     ],
+    featureBanners: {
+      banner1: '/images/banners/banner-feature-tra-sua-ciao-01.jpg',
+      alt1: 'Trà Sữa Ciao - Uống một bữa ăn ngon lành - Sản phẩm thuần chay thành phần từ thiên nhiên',
+      title: 'Trải Nghiệm Trọn Vẹn Trà Sữa Ciao',
+    },
   },
   {
     id: 'matcha-tra-sua-ciao',
@@ -417,6 +422,11 @@ export const products: Product[] = [
       { id: 'mac-12chai', name: '12 chai', quantity: 12, price: 240000, unit: 'thùng', volume: '12 x 270ml' },
       { id: 'mac-15chai', name: '15 chai', quantity: 15, price: 300000, unit: 'thùng', volume: '15 x 270ml' },
     ],
+    featureBanners: {
+      banner1: '/images/banners/banner-feature-matcha-tra-sua-ciao-01.jpg',
+      alt1: 'Matcha Trà Sữa Ciao - Uống một bữa ăn ngon lành - Sản phẩm thuần chay thành phần từ thiên nhiên',
+      title: 'Trải Nghiệm Trọn Vẹn Matcha Trà Sữa Ciao',
+    },
   },
 
   // ─── HÀNG 5: 2 SẢN PHẨM (TSG - TXG: Bộ đôi Trà GO) ───
@@ -454,6 +464,11 @@ export const products: Product[] = [
       { id: 'tsg-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
       { id: 'tsg-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
+    featureBanners: {
+      banner1: '/images/banners/banner-feature-tra-sua-go-01.jpg',
+      alt1: 'Trà Sữa GO - Uống một bữa ăn ngon lành - Sản phẩm thuần chay thành phần từ thiên nhiên',
+      title: 'Trải Nghiệm Trọn Vẹn Trà Sữa GO',
+    },
   },
   {
     id: 'tra-xanh-go',
@@ -489,6 +504,11 @@ export const products: Product[] = [
       { id: 'txg-12chai', name: '12 chai', quantity: 12, price: 216000, unit: 'thùng', volume: '12 x 330ml' },
       { id: 'txg-15chai', name: '15 chai', quantity: 15, price: 270000, unit: 'thùng', volume: '15 x 330ml' },
     ],
+    featureBanners: {
+      banner1: '/images/banners/banner-feature-tra-xanh-go-01.jpg',
+      alt1: 'Trà Xanh GO - Uống một bữa ăn ngon lành - Sản phẩm thuần chay thành phần từ thiên nhiên',
+      title: 'Trải Nghiệm Trọn Vẹn Trà Xanh GO',
+    },
   },
 
 ];

@@ -32,7 +32,8 @@ export interface Product {
 
 export interface ProductFeatureBanner {
   banner1: string;
-  banner2: string;
+  /** Banner 2 (infographic) — không bắt buộc; thiếu thì chỉ hiện banner 1 */
+  banner2?: string;
   alt1?: string;
   alt2?: string;
   title?: string;

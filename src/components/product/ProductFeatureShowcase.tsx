@@ -197,19 +197,24 @@ export default function ProductFeatureShowcase({
             />
           </div>
 
-          {/* Đường kẻ phân cách */}
-          <div className="w-full h-px bg-gray-100" />
+          {/* Banner 2 chỉ hiện khi sản phẩm có (vd. dòng trà sữa hiện mới có banner 1) */}
+          {banners.banner2 && (
+            <>
+              {/* Đường kẻ phân cách */}
+              <div className="w-full h-px bg-gray-100" />
 
-          {/* Banner 2 (Phía dưới): Banner chữ 4 nhánh Infographic */}
-          <div className="relative w-full aspect-[1920/850] bg-ivory overflow-hidden group">
-            <Image
-              src={banners.banner2}
-              alt={banners.alt2 || `${product?.name || productName} - Đặc tính sản phẩm`}
-              fill
-              className="object-cover object-center transition-transform duration-500"
-              sizes="(max-width: 1200px) 100vw, 1200px"
-            />
-          </div>
+              {/* Banner 2 (Phía dưới): Banner chữ 4 nhánh Infographic */}
+              <div className="relative w-full aspect-[1920/850] bg-ivory overflow-hidden group">
+                <Image
+                  src={banners.banner2}
+                  alt={banners.alt2 || `${product?.name || productName} - Đặc tính sản phẩm`}
+                  fill
+                  className="object-cover object-center transition-transform duration-500"
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </section>
