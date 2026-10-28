@@ -125,6 +125,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return {
+      // Chỉ áp dụng khi không có file tĩnh trùng đường dẫn: file admin tải lên SAU khi build (hoặc nằm ở UPLOAD_DIR)
+      // được phục vụ qua route handler, vì `next start` chỉ phục vụ file có trong public/ lúc build.
+      fallback: [
+        {
+          source: '/uploads/:path*',
+          destination: '/api/uploads/:path*',
+        },
+      ],
+    };
+  },
 };
 
 export default nextConfig;

@@ -1,4 +1,5 @@
 import path from 'path';
+import { getUploadRoot } from '@/lib/uploadStorage';
 
 /**
  * Kiểm tra URL do admin nhập cho nội dung hiển thị công khai (banner, slide thương hiệu, ...).
@@ -32,7 +33,8 @@ export function resolveUploadedFile(url: unknown): string | null {
     return null;
   }
   if (decoded.includes('\0') || decoded.split(/[\/]/).includes('..')) return null;
-  const root = path.resolve(process.cwd(), 'public', 'uploads');
-  const abs = path.resolve(process.cwd(), 'public', decoded.replace(/^\/+/, ''));
+  // Thư mục upload: UPLOAD_DIR nếu có, mặc định public/uploads (src/lib/uploadStorage.ts)
+  const root = path.resolve(getUploadRoot());
+  const abs = path.resolve(root, decoded.replace(/^\/uploads\/+/, ''));
   return abs.startsWith(root + path.sep) ? abs : null;
 }

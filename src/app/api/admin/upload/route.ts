@@ -6,6 +6,7 @@ import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { put } from '@vercel/blob';
 import { writeAuditLog } from '@/lib/audit';
+import { getUploadRoot } from '@/lib/uploadStorage';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,7 +129,7 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', cleanFolder);
+    const uploadDir = path.join(getUploadRoot(), cleanFolder);
     if (!blobToken && !fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
