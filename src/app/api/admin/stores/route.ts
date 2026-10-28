@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission, getStoreScope } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error fetching admin stores:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -264,6 +265,6 @@ export async function PUT(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error updating store info:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('Error getting partner detail:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi lấy chi tiết đối tác' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi lấy chi tiết đối tác') }, { status: 500 });
   }
 }
 
@@ -229,6 +230,6 @@ export async function PUT(
     });
   } catch (error: any) {
     console.error('Error reviewing partner:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi cập nhật đối tác' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi cập nhật đối tác') }, { status: 500 });
   }
 }

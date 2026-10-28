@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,6 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error('Error fetching admin partners:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi lấy danh sách đối tác' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi lấy danh sách đối tác') }, { status: 500 });
   }
 }

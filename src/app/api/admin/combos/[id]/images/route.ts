@@ -5,6 +5,7 @@ import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { isSafeUrl, resolveUploadedFile } from '@/lib/content-validation';
 import { hasPermission } from '@/lib/rbac';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
   } catch (error: any) {
     console.error('Error fetching combo images:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -133,7 +134,7 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (error: any) {
     console.error('Error adding combo image:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -226,7 +227,7 @@ export async function PUT(request: Request, context: RouteContext) {
     return NextResponse.json({ success: true, message: 'Đã cập nhật ảnh combo thành công' });
   } catch (error: any) {
     console.error('Error updating combo image:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -302,6 +303,6 @@ export async function DELETE(request: Request, context: RouteContext) {
     return NextResponse.json({ success: true, message: 'Đã xóa ảnh combo thành công' });
   } catch (error: any) {
     console.error('Error deleting combo image:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

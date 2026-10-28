@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyOtp } from '@/lib/partner/otp';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('Error in verify OTP API:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi xác minh OTP' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi xác minh OTP') }, { status: 500 });
   }
 }

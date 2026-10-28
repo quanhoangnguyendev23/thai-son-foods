@@ -3,6 +3,7 @@ import { query, initDatabase } from '@/lib/db';
 import { signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS, getSafeAppOrigin } from '@/lib/auth';
 import { sanitizeReturnUrl } from '@/lib/oauth';
 import { isCookieSecure } from '@/lib/runtimeConfig';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -291,6 +292,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error: any) {
     console.error('Mock OAuth error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: publicErrorMessage(error) }, { status: 500 });
   }
 }

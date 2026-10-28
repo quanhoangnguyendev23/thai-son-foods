@@ -4,6 +4,7 @@ import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { processOrderReturn, reconcileCodPayment } from '@/lib/inventory';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -192,6 +193,6 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: any) {
     console.error('Error reconciling order:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

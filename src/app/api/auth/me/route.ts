@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { getUserSession } from '@/lib/auth';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -127,7 +128,7 @@ export async function PUT(req: NextRequest) {
   } catch (error: any) {
     console.error('Error updating customer profile:', error);
     return NextResponse.json(
-      { success: false, error: 'Lỗi cập nhật: ' + (error.message || 'Lỗi hệ thống') },
+      { success: false, error: publicErrorMessage(error, 'Lỗi cập nhật, vui lòng thử lại sau.') },
       { status: 500 }
     );
   }

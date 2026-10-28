@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getPartnerSession } from '@/lib/partner/auth';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error('Error fetching partner profile:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi lấy thông tin đối tác' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi lấy thông tin đối tác') }, { status: 500 });
   }
 }
 
@@ -138,6 +139,6 @@ export async function PUT(request: Request) {
     });
   } catch (error: any) {
     console.error('Error updating partner profile:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi cập nhật hồ sơ' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi cập nhật hồ sơ') }, { status: 500 });
   }
 }

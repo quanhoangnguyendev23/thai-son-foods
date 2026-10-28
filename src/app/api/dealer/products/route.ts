@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getPartnerSession } from '@/lib/partner/auth';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,6 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error('[DealerProducts] Error fetching wholesale products:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi hệ thống') }, { status: 500 });
   }
 }

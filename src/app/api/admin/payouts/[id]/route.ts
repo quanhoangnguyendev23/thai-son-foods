@@ -4,6 +4,7 @@ import { query, pool } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -196,6 +197,6 @@ export async function PUT(
     });
   } catch (error: any) {
     console.error('[AdminPayoutAction] Error updating payout:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

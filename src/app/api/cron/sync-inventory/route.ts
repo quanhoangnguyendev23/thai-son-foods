@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { syncInventoryFromSheet } from '@/lib/inventorySheet';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 // Đọc Google Sheet có thể mất vài giây: nới thời gian chạy tối đa trên Vercel (mặc định Hobby chỉ 10 giây)
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, timestamp, skipped: result.skipped ?? null, summary: result.summary ?? null });
   } catch (error: any) {
     console.error('[Cron SyncInventory] Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 

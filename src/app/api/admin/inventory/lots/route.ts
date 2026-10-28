@@ -5,6 +5,7 @@ import { hasPermission, getStoreScope } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { createOrUpdateInventoryLot } from '@/lib/partner/fefo';
 import { isSheetInventoryMode } from '@/config/inventorySheet';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, lots });
   } catch (error: any) {
     console.error('[AdminLots] Error fetching lots:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi hệ thống') }, { status: 500 });
   }
 }
 
@@ -201,6 +202,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('[AdminLots] Error creating lot:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi hệ thống') }, { status: 500 });
   }
 }

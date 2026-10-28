@@ -4,6 +4,7 @@ import { resolveProductCanonical } from '@/lib/inventory';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,7 +146,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, data: sanitizedCombos });
   } catch (error: any) {
     console.error('Error fetching admin combos:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -290,7 +291,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: { id, slug, name } });
   } catch (error: any) {
     console.error('Error creating admin combo:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -517,7 +518,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: true, message: 'Cập nhật combo thành công' });
   } catch (error: any) {
     console.error('Error updating admin combo:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -599,6 +600,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true, message: 'Đã xóa combo thành công' });
   } catch (error: any) {
     console.error('Error deleting admin combo:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

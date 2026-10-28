@@ -5,6 +5,7 @@ import { hasPermission, getStoreScope, NO_STORE_SCOPE } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { sendOrderEmail } from '@/lib/email/service';
 import { canDeleteOrder, canTransitionOrderStatus, isOrderStatus } from '@/lib/order-status';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -260,7 +261,7 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error('Error fetching admin orders:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -494,7 +495,7 @@ export async function PUT(request: Request) {
     });
   } catch (error: any) {
     console.error('Error updating order:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -588,6 +589,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true, message: 'Đã xóa đơn hàng thành công' });
   } catch (error: any) {
     console.error('Error deleting order:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

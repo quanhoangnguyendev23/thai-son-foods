@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateOtp } from '@/lib/partner/otp';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('Error in send OTP API:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi gửi mã OTP' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi gửi mã OTP') }, { status: 500 });
   }
 }

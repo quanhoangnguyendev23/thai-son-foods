@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { trackReferralClick, signReferralCookie } from '@/lib/partner/referral';
 import { PARTNER_CONFIG } from '@/config/partner';
 import { getClientIp, UNKNOWN_CLIENT_IP, isCookieSecure } from '@/lib/runtimeConfig';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,6 @@ export async function GET(request: Request) {
     return response;
   } catch (error: any) {
     console.error('Error tracking referral click:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi hệ thống') }, { status: 500 });
   }
 }

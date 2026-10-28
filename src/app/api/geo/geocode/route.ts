@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     // 1. Nếu có Google Maps API Key và có place_id
     if (apiKey && placeId && !placeId.startsWith('nom_') && !placeId.startsWith('loc_')) {
       try {
-        const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address,address_components&language=vi&key=${apiKey}`;
+        const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=geometry,formatted_address,address_components&language=vi&key=${apiKey}`;
         const gRes = await fetch(placeDetailsUrl);
         if (gRes.ok) {
           const gData = await gRes.json();

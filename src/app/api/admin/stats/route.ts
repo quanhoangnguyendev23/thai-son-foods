@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission, getStoreScope } from '@/lib/rbac';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -230,7 +231,7 @@ export async function GET() {
       {
         success: false,
         error: error.message,
-        dbStatus: { connected: false, error: error.message },
+        dbStatus: { connected: false, error: publicErrorMessage(error) },
       },
       { status: 500 }
     );

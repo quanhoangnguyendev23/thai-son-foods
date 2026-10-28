@@ -3,6 +3,7 @@ import { query, pool, initDatabase } from '@/lib/db';
 import { getAdminSession, invalidateUserSessionCache } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -171,7 +172,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('Error fetching members:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi máy chủ khi lấy danh sách thành viên' },
+      { success: false, error: publicErrorMessage(error, 'Lỗi máy chủ khi lấy danh sách thành viên') },
       { status: 500 }
     );
   }
@@ -272,7 +273,7 @@ export async function PUT(req: NextRequest) {
   } catch (error: any) {
     console.error('Error updating member:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi khi cập nhật thành viên' },
+      { success: false, error: publicErrorMessage(error, 'Lỗi khi cập nhật thành viên') },
       { status: 500 }
     );
   }
@@ -336,7 +337,7 @@ export async function DELETE(req: NextRequest) {
   } catch (error: any) {
     console.error('Error deleting member:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi khi xóa thành viên' },
+      { success: false, error: publicErrorMessage(error, 'Lỗi khi xóa thành viên') },
       { status: 500 }
     );
   }
