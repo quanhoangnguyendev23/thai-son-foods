@@ -173,8 +173,8 @@ export default function FooterAmazon() {
             <Truck className="w-5 h-5 text-corn shrink-0" />
             <span className="font-medium">
               {isEn
-                ? 'Free shipping in HCMC, Bien Hoa, Long Thanh on orders from '
-                : 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ '}
+                ? 'Free shipping within Ho Chi Minh City on orders from '
+                : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
               <span className="text-corn text-[1.125em]">{formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ</span>
             </span>
           </div>

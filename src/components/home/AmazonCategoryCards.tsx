@@ -267,8 +267,8 @@ function SignInColumn() {
           </span>
           <p className="text-[14px] leading-snug">
             {language === 'en'
-              ? 'Free shipping in HCMC, Bien Hoa, Long Thanh on orders from '
-              : 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ '}
+              ? 'Free shipping within Ho Chi Minh City on orders from '
+              : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
             <strong className="text-corn text-[1.125em]">{formatPrice(threshold)}đ</strong>
           </p>
         </div>

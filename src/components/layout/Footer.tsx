@@ -179,8 +179,8 @@ export default function Footer() {
             <Truck className="w-5 h-5 text-amber-500 shrink-0" />
             <span className="font-medium">
               {language === 'en'
-                ? 'Free shipping in HCMC, Bien Hoa, Long Thanh on orders from '
-                : 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ '}
+                ? 'Free shipping within Ho Chi Minh City on orders from '
+                : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
               <span className="text-amber-500 text-[1.125em]">200.000đ</span>
             </span>
           </div>

@@ -133,7 +133,7 @@ function wrapEmailLayout({
                 <tr>
                   <td align="center" style="padding-top: 14px; font-size: 11px; color: #98AEAB; line-height: 1.4;">
                     Email này được gửi tự động từ hệ thống quản lý đơn hàng Thái Sơn Foods.<br>
-                    Nếu quý khách có bất kỳ câu hỏi nào, vui lòng liên hệ hotline hỗ trợ 24/7 của chúng tôi.
+                    Nếu quý khách có bất kỳ câu hỏi nào, vui lòng liên hệ hotline hỗ trợ của chúng tôi (07:00–21:30 hằng ngày).
                   </td>
                 </tr>
               </table>
