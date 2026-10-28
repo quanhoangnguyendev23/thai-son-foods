@@ -91,7 +91,7 @@ async function plan(c, opts) {
   add('product_reviews', 'XOÁ đánh giá của khách test / đơn bị xoá', await count(c,
     `SELECT count(*) n FROM product_reviews WHERE id NOT IN (SELECT id FROM _purge_reviews)
        AND (user_id IN (SELECT id FROM _purge_users) OR order_id IN (SELECT id FROM _purge_orders));`));
-  for (const t of ['wishlists', 'product_views']) {
+  for (const t of ['wishlists'] /* product_views không có cột user_id (chỉ session_id) */) {
     if (await tableExists(c, t)) add(t, 'XOÁ của khách test', await count(c, `SELECT count(*) n FROM ${t} WHERE user_id IN (SELECT id FROM _purge_users);`));
   }
   add('partner_profiles', 'tự XOÁ theo khách test (khoá ngoại)', await count(c,
@@ -208,7 +208,7 @@ async function main() {
         `DELETE FROM product_reviews WHERE id NOT IN (SELECT id FROM _purge_reviews)
            AND (user_id IN (SELECT id FROM _purge_users) OR order_id IN (SELECT id FROM _purge_orders));`
       );
-      for (const t of ['wishlists', 'product_views']) {
+      for (const t of ['wishlists'] /* product_views không có cột user_id (chỉ session_id) */) {
         if (await tableExists(c, t)) done[t] = await del(`DELETE FROM ${t} WHERE user_id IN (SELECT id FROM _purge_users);`);
       }
       // Khách test còn gắn ở đơn thật (không xoá đơn) → bỏ liên kết trước khi xoá khách
