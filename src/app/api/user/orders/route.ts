@@ -16,11 +16,9 @@ export async function GET() {
       );
     }
 
-    // Get user details to match by user_id or email
-    const userRes = await query('SELECT email, phone FROM users WHERE id = $1 LIMIT 1;', [session.id]);
-    const userEmail = userRes.rows[0]?.email || session.email;
-    const userPhone = userRes.rows[0]?.phone || null;
-
+    // Chỉ lấy đơn gắn với tài khoản (user_id do máy chủ ghi từ phiên lúc đặt hàng).
+    // KHÔNG gộp theo email/SĐT: hai trường này khách tự khai khi đăng ký, chưa xác thực → ai cũng khai được SĐT/email
+    // của người khác để xem đơn của họ.
     const sql = `
       SELECT 
         o.id,
@@ -52,15 +50,12 @@ export async function GET() {
         ) FILTER (WHERE oi.id IS NOT NULL), '[]') AS items
       FROM orders o
       LEFT JOIN order_items oi ON oi.order_id = o.id
-      WHERE o.user_id = $1 
-         OR (o.email IS NOT NULL AND LOWER(o.email) = LOWER($2))
-         ${userPhone ? 'OR (o.phone IS NOT NULL AND o.phone = $3)' : ''}
+      WHERE o.user_id = $1
       GROUP BY o.id
       ORDER BY o.created_at DESC;
     `;
 
-    const params = userPhone ? [session.id, userEmail, userPhone] : [session.id, userEmail];
-    const res = await query(sql, params);
+    const res = await query(sql, [session.id]);
 
     return NextResponse.json({
       success: true,
