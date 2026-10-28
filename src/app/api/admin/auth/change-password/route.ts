@@ -10,13 +10,15 @@ import {
   invalidateAdminSessionCache,
 } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/audit';
-import { isCookieSecure } from '@/lib/runtimeConfig';
+import { isCookieSecure, getClientIp } from '@/lib/runtimeConfig';
+import { checkRateLimit, recordFailedLogin, resetLoginRateLimit } from '@/lib/rateLimit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined;
+    const ip = getClientIp(req.headers) ?? undefined;
     const userAgent = req.headers.get('user-agent') || undefined;
 
     // 1. Kiểm tra session hiện tại
@@ -87,9 +89,22 @@ export async function POST(req: NextRequest) {
 
     const user = userRes.rows[0];
 
-    // 4. Đối chiếu mật khẩu hiện tại
+    // 4. Đối chiếu mật khẩu hiện tại — tối đa 5 lần sai / 15 phút cho mỗi tài khoản (chống dò mật khẩu bằng phiên bị chiếm)
+    const pwKey = `pwchange:${user.id}`;
+    const pwLimit = checkRateLimit(pwKey);
+    if (pwLimit.isBlocked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Nhập sai mật khẩu hiện tại quá nhiều lần. Vui lòng thử lại sau ${Math.ceil(pwLimit.remainingSeconds / 60)} phút.`,
+          code: 'RATE_LIMITED',
+        },
+        { status: 429, headers: { 'Retry-After': String(pwLimit.remainingSeconds) } }
+      );
+    }
     const isCurrentValid = await verifyPassword(currentPassword, user.password_hash);
     if (!isCurrentValid) {
+      recordFailedLogin(pwKey);
       await writeAuditLog({
         adminId: user.id,
         adminUsername: user.username,
@@ -121,6 +136,7 @@ export async function POST(req: NextRequest) {
        WHERE id = $2;`,
       [newHash, user.id]
     );
+    resetLoginRateLimit(pwKey);
 
     // Xóa bộ nhớ cache phiên
     invalidateAdminSessionCache(user.id);
@@ -175,7 +191,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error in change-password API:', error);
     return NextResponse.json(
-      { success: false, error: 'Lỗi máy chủ khi đổi mật khẩu: ' + (error.message || 'Lỗi không xác định') },
+      { success: false, error: publicErrorMessage(error, 'Lỗi máy chủ khi đổi mật khẩu.') },
       { status: 500 }
     );
   }

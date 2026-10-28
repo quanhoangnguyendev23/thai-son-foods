@@ -51,6 +51,8 @@ const STRICT_API_LIMITS: ReadonlyArray<{ key: string; methods: readonly string[]
   { key: 'orders-post', methods: ['POST'], regex: /^\/api\/orders\/?$/, max: 10 },
   { key: 'orders-track', methods: ['GET'], regex: /^\/api\/orders\/?$/, max: 20 },
   { key: 'auth', methods: ['POST'], regex: /^\/api\/auth\/(login|register)\/?$/, max: 10 },
+  // Đăng nhập / khởi tạo / đổi mật khẩu quản trị (route còn có khóa riêng theo tài khoản)
+  { key: 'admin-auth', methods: ['POST'], regex: /^\/api\/admin\/auth\/(login|register|change-password)\/?$/, max: 10 },
   { key: 'otp', methods: ['POST'], regex: /^\/api\/(membership\/auth|partner)\/otp\//, max: 5 },
   { key: 'geo', methods: ['GET', 'POST'], regex: /^\/api\/geo\//, max: 60 },
 ];
@@ -212,7 +214,8 @@ export async function middleware(req: NextRequest) {
   // ═══════════════════════════════════════════════════════════════
   // 0. GLOBAL RATE LIMITING cho mọi public API (60 req/phút/IP)
   // ═══════════════════════════════════════════════════════════════
-  if (isApiRoute && !pathname.startsWith('/api/admin/')) {
+  // /api/admin/* (đã yêu cầu đăng nhập) miễn giới hạn chung, trừ nhóm /api/admin/auth/* là cửa đăng nhập công khai
+  if (isApiRoute && (!pathname.startsWith('/api/admin/') || pathname.startsWith('/api/admin/auth/'))) {
     const strict = STRICT_API_LIMITS.find((r) => r.methods.includes(req.method) && r.regex.test(pathname));
     const isReadOnlyExempt = req.method === 'GET' && READ_ONLY_EXEMPT_API_REGEX.test(pathname);
     const rl = strict

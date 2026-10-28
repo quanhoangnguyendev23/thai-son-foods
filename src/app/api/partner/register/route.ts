@@ -7,7 +7,7 @@ import { generatePartnerCode } from '@/lib/partner/referral';
 import { writeAuditLog } from '@/lib/audit';
 
 import { checkRequestRateLimit } from '@/lib/rateLimit';
-import { isCookieSecure } from '@/lib/runtimeConfig';
+import { isCookieSecure, getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ function stripHtml(input: string): string {
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip = getClientIp(request.headers) ?? UNKNOWN_CLIENT_IP;
     const rateLimit = checkRequestRateLimit(`partner_reg:${ip}`, 5, 3600 * 1000);
     if (rateLimit.isBlocked) {
       return NextResponse.json(
