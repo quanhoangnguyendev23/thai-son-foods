@@ -5,6 +5,7 @@ import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { syncProductToStaticFile } from '@/lib/products-file-sync';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -142,7 +143,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, data: sanitizedProducts });
   } catch (error: any) {
     console.error('Error fetching admin products:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -314,7 +315,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: createdProduct });
   } catch (error: any) {
     console.error('Error creating product:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -408,7 +409,7 @@ export async function PUT(request: Request) {
         price = COALESCE($6, price),
         unit = COALESCE($7, unit),
         thumbnail = COALESCE($8, thumbnail),
-        category_id = $9,
+        category_id = CASE WHEN $16::boolean THEN $9 ELSE category_id END,
         is_featured = COALESCE($10, is_featured),
         is_new = COALESCE($11, is_new),
         is_best_seller = COALESCE($12, is_best_seller),
@@ -428,7 +429,7 @@ export async function PUT(request: Request) {
       price !== undefined ? parseInt(price, 10) : null,
       unit !== undefined ? String(unit) : null,
       thumbnail !== undefined ? String(thumbnail) : null,
-      category_id || null,
+      category_id || null, // $9: chỉ ghi khi request có gửi category_id (xem $16)
       is_featured !== undefined ? Boolean(is_featured) : null,
       is_new !== undefined ? Boolean(is_new) : null,
       is_best_seller !== undefined ? Boolean(is_best_seller) : null,
@@ -437,6 +438,8 @@ export async function PUT(request: Request) {
       body.sold_offset !== undefined && body.sold_offset !== null && body.sold_offset !== ''
         ? Math.max(0, parseInt(body.sold_offset, 10) || 0)
         : null,
+      // $16: request có gửi category_id hay không — không gửi thì giữ danh mục cũ, gửi rỗng thì bỏ danh mục
+      category_id !== undefined,
     ];
 
     const result = await query(updateSql, values);
@@ -553,7 +556,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: true, data: updatedProd });
   } catch (error: any) {
     console.error('Error updating product:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -665,6 +668,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true, message: 'Đã xóa sản phẩm thành công' });
   } catch (error: any) {
     console.error('Error deleting product:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
