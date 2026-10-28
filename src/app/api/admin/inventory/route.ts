@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, pool } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
-import { hasPermission, getStoreScope } from '@/lib/rbac';
+import { hasPermission, getStoreScope, NO_STORE_SCOPE } from '@/lib/rbac';
+
+/**
+ * Chặn mã kho không hợp lệ trước khi đọc/ghi store_inventory:
+ * nhân viên chưa gán chi nhánh (NO_STORE_SCOPE) → 403; mã không có trong bảng stores → 400.
+ * (GET tự tạo dòng tồn kho cho cửa hàng được xem, nên phải kiểm tra để không sinh dòng rác.)
+ */
+async function rejectInvalidStore(storeCode: string): Promise<NextResponse | null> {
+  if (storeCode === NO_STORE_SCOPE) {
+    return NextResponse.json(
+      { success: false, error: 'Tài khoản nhân viên chưa được gán chi nhánh. Hãy liên hệ Quản trị viên cấp cao.', code: 'NO_STORE_ASSIGNED' },
+      { status: 403 }
+    );
+  }
+  const exists = await query('SELECT 1 FROM stores WHERE code = $1 LIMIT 1;', [storeCode]);
+  if (exists.rows.length === 0) {
+    return NextResponse.json({ success: false, error: `Không tìm thấy cửa hàng "${storeCode.slice(0, 50)}".`, code: 'STORE_NOT_FOUND' }, { status: 400 });
+  }
+  return null;
+}
 import { writeAuditLog } from '@/lib/audit';
 import { isSheetInventoryMode } from '@/config/inventorySheet';
 
 export const dynamic = 'force-dynamic';
 
 import { ACTIVE_STORES } from '@/data/stores';
+import { publicErrorMessage } from '@/lib/apiError';
 
 // Danh sách các cửa hàng mặc định
 const STORE_LIST = ACTIVE_STORES.map((s) => ({
@@ -82,6 +102,8 @@ export async function GET(req: NextRequest) {
         requestedStore = 'NH';
       }
     }
+    const invalidStore = await rejectInvalidStore(requestedStore);
+    if (invalidStore) return invalidStore;
 
     // Tồn kho lấy từ Google Sheet: đọc lại sheet nếu đã quá chu kỳ trước khi trả số cho admin
     const sheetMode = isSheetInventoryMode();
@@ -139,7 +161,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error fetching store inventory:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -201,6 +223,8 @@ export async function PUT(req: NextRequest) {
     } else if (!storeCode) {
       storeCode = 'NH';
     }
+    const invalidPutStore = await rejectInvalidStore(storeCode);
+    if (invalidPutStore) return invalidPutStore;
 
     // Chuẩn hóa danh sách cần cập nhật (1 sản phẩm lẻ hoặc batch) và kiểm tra đầu vào TRƯỚC khi chạm CSDL
     const isBatch = Array.isArray(items) && items.length > 0;
