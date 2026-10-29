@@ -415,3 +415,47 @@
   --shadow-inner: inset 0 2px 4px 0 rgb(34 84 76 / 0.05);
   --drop-shadow: 0 1px 2px rgb(34 84 76 / 0.1), 0 1px 1px rgb(34 84 76 / 0.06);
 }
+
+/* =========================================================================
+   ĐỘ TƯƠNG PHẢN CHỮ (WCAG AA: chữ thường >= 4.5:1). Chỉ đổi MÀU CHỮ, không đổi nền/viền.
+   Kiểm tra lại bằng đo trên trang (xem .agents/rules/brand-colors.md).
+   ========================================================================= */
+@layer utilities {
+  /* Nền sáng (trang bán hàng): xám 400/500 chỉ đạt 2.3–3.5:1 -> dùng ink-600 (4.8:1 trên trắng) */
+  .text-gray-400,
+  .text-gray-500 {
+    color: var(--color-ink-600);
+  }
+
+  /* Trang quản trị nền tối #22544C: các chữ màu quá tối trên nền rêu -> dùng sắc pha trắng sáng hơn */
+  .admin-theme .text-slate-500,
+  .admin-theme .text-slate-600,
+  .admin-theme .text-gray-400,
+  .admin-theme .text-gray-500 {
+    color: var(--color-ink-300);
+  }
+  .admin-theme .text-emerald-300,
+  .admin-theme .text-emerald-400,
+  .admin-theme .text-emerald-500,
+  .admin-theme .text-teal-400 {
+    color: var(--color-emerald-200);
+  }
+  .admin-theme .text-rose-300,
+  .admin-theme .text-rose-400,
+  .admin-theme .text-red-300,
+  .admin-theme .text-red-400 {
+    color: var(--color-crimson-200);
+  }
+  .admin-theme .text-blue-400,
+  .admin-theme .text-leaf-400,
+  .admin-theme .text-cyan-400,
+  .admin-theme .text-sky-400 {
+    color: var(--color-leaf-300);
+  }
+
+  /* Trang quản trị nền sáng (đối tác, chi trả) */
+  .admin-light .text-slate-400,
+  .admin-light .text-slate-500 {
+    color: var(--color-ink-600);
+  }
+}

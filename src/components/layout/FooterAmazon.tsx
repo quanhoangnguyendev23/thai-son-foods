@@ -51,7 +51,7 @@ function TiktokIcon({ className = 'w-5 h-5' }: { className?: string }) {
 }
 const CATEGORY_ORDER = ['sua-hat', 'nuoc-giai-khat', 'tra-sua'];
 const linkCls = 'hover:text-corn hover:underline transition-colors py-1.5 inline-block';
-const headingCls = 'font-heading text-[17px] uppercase tracking-wider text-corn mb-3';
+const headingCls = 'font-heading text-[17px] uppercase tracking-wider text-amber-300 mb-3';
 
 export default function FooterAmazon() {
   const { language, setLanguage } = useLanguage();
@@ -185,7 +185,7 @@ export default function FooterAmazon() {
               {isEn
                 ? 'Free shipping within Ho Chi Minh City on orders from '
                 : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
-              <span className="text-corn text-[1.125em]">{formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ</span>
+              <span className="text-amber-300 text-[1.125em]">{formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ</span>
             </span>
           </div>
         </div>

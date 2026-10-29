@@ -248,7 +248,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
           <button
             type="button"
             onClick={onChangeBranch}
-            className="text-copper-600 hover:text-copper-800 underline underline-offset-2 font-medium cursor-pointer inline-flex items-center gap-0.5"
+            className="text-copper-700 hover:text-copper-800 underline underline-offset-2 font-medium cursor-pointer inline-flex items-center gap-0.5"
           >
             <MapPin className="w-3 h-3" aria-hidden />
             {isEn ? 'Change' : 'Đổi'}

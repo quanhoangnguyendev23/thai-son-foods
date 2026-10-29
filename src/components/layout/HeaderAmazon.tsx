@@ -399,7 +399,7 @@ export default function HeaderAmazon() {
         <span className={cn('block text-white truncate', compact ? 'text-[12px]' : 'text-[13px] max-w-[170px]')}>
           {compact && <span className="font-normal text-white/75">{isEn ? 'Delivering from ' : 'Giao từ '}</span>}
           {isMounted ? branchName : DELIVER_TO_PLACEHOLDER.guestHint}
-          {compact && <span className="ml-1 underline text-corn text-[1.125em]">{isEn ? 'Change' : 'Đổi'}</span>}
+          {compact && <span className="ml-1 underline text-amber-300 text-[1.125em]">{isEn ? 'Change' : 'Đổi'}</span>}
         </span>
       </span>
     </button>

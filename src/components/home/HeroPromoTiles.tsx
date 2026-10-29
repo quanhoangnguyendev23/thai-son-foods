@@ -97,7 +97,7 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
                 </p>
               )}
               {subtitle && <p className="text-[13px] text-white/85 leading-snug line-clamp-1">{subtitle}</p>}
-              <span className="mt-0.5 inline-flex items-center gap-1 text-[14px] text-corn group-hover:underline">
+              <span className="mt-0.5 inline-flex items-center gap-1 text-[14px] text-amber-200 group-hover:underline">
                 {cta}
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden />
               </span>

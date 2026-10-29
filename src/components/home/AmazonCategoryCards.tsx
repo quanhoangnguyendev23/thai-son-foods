@@ -269,12 +269,12 @@ function SignInColumn() {
             {language === 'en'
               ? 'Free shipping within Ho Chi Minh City on orders from '
               : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
-            <strong className="text-corn text-[1.125em]">{formatPrice(threshold)}đ</strong>
+            <strong className="text-amber-200 text-[1.125em]">{formatPrice(threshold)}đ</strong>
           </p>
         </div>
         <Link
           href="/gio-hang"
-          className="inline-flex items-center gap-1.5 self-start text-[15px] text-corn hover:underline"
+          className="inline-flex items-center gap-1.5 self-start text-[15px] text-amber-200 hover:underline"
         >
           <ShoppingBag className="w-4 h-4" />
           {language === 'en' ? 'Go to cart' : 'Xem giỏ hàng'}

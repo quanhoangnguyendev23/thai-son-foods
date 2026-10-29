@@ -39,3 +39,11 @@ Chỉ được đổi bảng màu khi chủ dự án yêu cầu rõ ràng bằng
   Script kiểm mọi màu trong CSS đã build (gồm CSS thư viện Leaflet/Swiper) và email.
 - Chạy: `grep -rnE "#[0-9A-Fa-f]{3,8}\b|rgb\(|hsl\(" src/app src/components --include=*.tsx` và bảo đảm không có màu mới ngoài các ngoại lệ ở mục 5.
 - Không thay đổi giá trị trong `src/app/brand-tokens.css` nếu chưa được chủ dự án duyệt bằng văn bản.
+
+## Độ tương phản chữ (bắt buộc)
+
+- Chữ thường phải đạt tối thiểu **4.5:1** với nền (chữ ≥ 24px hoặc ≥ 18.66px đậm: 3:1).
+- Nền sáng: chữ phụ dùng `text-gray-600` trở lên (`text-gray-400/500` đã được ép về ink-600 trong `brand-tokens.css`).
+- Nền tối `#22544C` / `#236E45`: **không** dùng `text-corn`/`amber-500` cho chữ nhỏ; dùng `text-amber-300` (rêu) hoặc `text-amber-200` (lục bảo).
+  Icon được phép giữ amber gốc (đồ hoạ chỉ cần 3:1).
+- Trang quản trị nền tối có lớp `admin-theme`, nền sáng có lớp `admin-light`; các quy tắc tương phản riêng nằm cuối `brand-tokens.css`.

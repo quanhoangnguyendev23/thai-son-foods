@@ -67,8 +67,8 @@ export default function Footer() {
             {/* Company Info */}
             <div>
               <h3
-                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
-                style={{ color: 'var(--color-amber-500)' }}
+                className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-4"
+                style={{ color: 'var(--color-amber-300)' }}
               >
                 {language === 'en' ? 'Company' : 'Công ty'}
               </h3>
@@ -98,8 +98,8 @@ export default function Footer() {
             {/* Products */}
             <div>
               <h3
-                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
-                style={{ color: 'var(--color-amber-500)' }}
+                className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-4"
+                style={{ color: 'var(--color-amber-300)' }}
               >
                 {language === 'en' ? 'Products' : 'Sản phẩm'}
               </h3>
@@ -128,8 +128,8 @@ export default function Footer() {
               {HAS_LEGAL_LINKS && (
                 <>
                   <h3
-                    className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-4"
-                    style={{ color: 'var(--color-amber-500)' }}
+                    className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-4"
+                    style={{ color: 'var(--color-amber-300)' }}
                   >
                     {language === 'en' ? 'Support' : 'Hỗ trợ'}
                   </h3>
@@ -144,8 +144,8 @@ export default function Footer() {
 
               {/* Social */}
               <h3
-                className="text-lg uppercase tracking-wider text-amber-500 font-sans mb-3.5"
-                style={{ color: 'var(--color-amber-500)' }}
+                className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-3.5"
+                style={{ color: 'var(--color-amber-300)' }}
               >
                 {language === 'en' ? 'Follow Us' : 'Kết nối'}
               </h3>
@@ -197,7 +197,7 @@ export default function Footer() {
               {language === 'en'
                 ? 'Free shipping within Ho Chi Minh City on orders from '
                 : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
-              <span className="text-amber-500 text-[1.125em]">200.000đ</span>
+              <span className="text-amber-300 text-[1.125em]">200.000đ</span>
             </span>
           </div>
 

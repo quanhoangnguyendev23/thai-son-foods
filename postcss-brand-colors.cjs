@@ -24,7 +24,10 @@ function alphaOut(alpha) {
  * Trả về [r, g, b] mới, hoặc null nếu giữ nguyên.
  */
 const FOREST = [34, 84, 76];
+// Màu nhận diện bên thứ ba bắt buộc giữ (Google, Facebook, Zalo) — xem mục 5 trong brand-colors.md
+const THIRD_PARTY = new Set(['66,133,244', '52,168,83', '251,188,5', '234,67,53', '24,119,242', '0,104,255']);
 function brandRemap(r, g, b) {
+  if (THIRD_PARTY.has(r + ',' + g + ',' + b)) return null;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
   if (max < LIMIT) return FOREST;
   if (max - min <= 6 && (r + g + b) / 3 < 240) {
