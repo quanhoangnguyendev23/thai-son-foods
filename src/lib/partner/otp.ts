@@ -28,7 +28,7 @@ export function generateOtp(phone: string): string {
   });
 
   // Giả lập gửi tin nhắn SMS / ZNS (ghi log trên console phục vụ dev/staging)
-  console.log(`[OtpService] Mã xác thực OTP gửi tới ${cleanPhone}: [${code}] (Hết hạn sau 5 phút)`);
+  console.log(`[OtpService] Mã xác thực OTP gửi tới ${cleanPhone.slice(0, 3)}****${cleanPhone.slice(-3)}` + (process.env.NODE_ENV === 'production' ? '' : `: [${code}]`) + ' (Hết hạn sau 5 phút)');
 
   return code;
 }

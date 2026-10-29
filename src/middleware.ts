@@ -4,6 +4,7 @@ import { jwtVerify } from 'jose';
 const ADMIN_COOKIE_NAME = 'tsf_admin_token';
 import { getJwtSecretBytes } from '@/lib/jwtSecret';
 import { getClientIp, getAllowedOrigins, getTrustedProxyCount, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
+import { MEMBERSHIP_CONFIG } from '@/config/membership';
 
 // Cảnh báo khi không xác định được IP đáng tin (tối đa 1 dòng log/phút để không làm đầy log)
 let lastUnknownIpWarnAt = 0;
@@ -172,6 +173,20 @@ export async function middleware(req: NextRequest) {
         headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store, private' },
       });
     }
+  }
+
+  // GIAI ĐOẠN 2: Hội viên & Giao định kỳ (src/config/membership.ts) đang tắt → API tương ứng trả 404,
+  // không chỉ ẩn giao diện (API vẫn gọi thẳng được nếu không chặn ở đây).
+  const membershipApiOff = !MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP && !MEMBERSHIP_CONFIG.ENABLE_SUBSCRIBE_SAVE;
+  const subscriptionApiOff = !MEMBERSHIP_CONFIG.ENABLE_SUBSCRIBE_SAVE;
+  if (
+    (membershipApiOff && /^\/api\/membership(\/|$)/.test(pathname)) ||
+    (subscriptionApiOff && /^\/api\/(subscriptions|cron\/subscriptions)(\/|$)/.test(pathname))
+  ) {
+    return new NextResponse(JSON.stringify({ success: false, error: 'Chức năng chưa mở sử dụng.', code: 'FEATURE_DISABLED' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store, private' },
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════
