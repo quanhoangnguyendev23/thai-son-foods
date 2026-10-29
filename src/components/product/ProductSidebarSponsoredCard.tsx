@@ -208,7 +208,7 @@ export default function ProductSidebarSponsoredCard({
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="ml-auto relative shrink-0 w-8 h-8 flex items-center justify-center bg-leaf-900 text-white rounded-lg hover:bg-forest-700 transition-colors active:scale-95 cursor-pointer shadow-xs"
+                  className="ml-auto relative shrink-0 w-8 h-8 flex items-center justify-center bg-brand-emerald text-white rounded-lg hover:bg-forest-700 transition-colors active:scale-95 cursor-pointer shadow-xs"
                   aria-label={`Thêm ${cleanName} (${packUnit}) vào giỏ hàng`}
                   title={`Thêm ${cleanName} (${packUnit}) vào giỏ hàng`}
                 >

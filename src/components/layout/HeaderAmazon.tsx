@@ -599,7 +599,7 @@ export default function HeaderAmazon() {
         <div
           ref={tier2Ref}
           className={cn(
-            'sticky z-40 bg-leaf-900 transition-transform duration-200 ease-out motion-reduce:transition-none',
+            'sticky z-40 bg-brand-emerald transition-transform duration-200 ease-out motion-reduce:transition-none',
             !tier1Height && 'top-[106px] lg:top-16',
             isNavHidden ? '-translate-y-full' : 'translate-y-0',
             isScrolled && !isNavHidden && 'shadow-md'

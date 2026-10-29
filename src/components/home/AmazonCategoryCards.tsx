@@ -260,7 +260,7 @@ function SignInColumn() {
       </div>
 
       {/* Chính sách miễn phí giao hàng — số liệu thật từ INVENTORY_CONFIG.SHIPPING (đồng bộ với Footer) */}
-      <div className="flex-1 bg-leaf-900 text-white rounded-2xl p-3.5 lg:p-4 flex flex-col justify-between gap-2.5 shadow-xs">
+      <div className="flex-1 bg-brand-emerald text-white rounded-2xl p-3.5 lg:p-4 flex flex-col justify-between gap-2.5 shadow-xs">
         <div className="flex items-start gap-3">
           <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
             <Truck className="w-5 h-5 text-corn" />

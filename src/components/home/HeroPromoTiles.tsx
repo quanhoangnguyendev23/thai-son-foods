@@ -16,7 +16,7 @@ interface HeroPromoTilesProps {
 }
 
 // Hai tông nền xen kẽ, đều đủ tương phản với chữ trắng
-const TILE_BG = ['bg-green-dark', 'bg-leaf-900'];
+const TILE_BG = ['bg-green-dark', 'bg-brand-emerald'];
 
 function TileImage({ tile }: { tile: Banner }) {
   const [src, setSrc] = useState(tile.image || MISSING_PRODUCT_IMAGE);
@@ -80,7 +80,7 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
                 aria-hidden
                 className={cn(
                   'absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r to-transparent',
-                  i % 2 === 0 ? 'from-green-dark' : 'from-leaf-900'
+                  i % 2 === 0 ? 'from-green-dark' : 'from-brand-emerald'
                 )}
               />
             </div>

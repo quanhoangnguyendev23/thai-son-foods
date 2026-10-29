@@ -670,7 +670,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 type="button"
                 onClick={handleBuyNow}
                 disabled={remainingCanAdd <= 0}
-                className="w-full py-3 px-4 bg-leaf-900 hover:bg-leaf-900 active:scale-[0.99] text-white font-medium rounded-full text-sm shadow-sm transition-all cursor-pointer text-center"
+                className="w-full py-3 px-4 bg-brand-emerald hover:bg-brand-forest active:scale-[0.99] text-white font-medium rounded-full text-sm shadow-sm transition-all cursor-pointer text-center"
               >
                 Mua ngay
               </button>

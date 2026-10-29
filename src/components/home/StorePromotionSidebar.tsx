@@ -112,7 +112,7 @@ export default function StorePromotionSidebar() {
       icon: Gift,
       iconColor: 'text-leaf-200',
       tagColor: 'text-leaf-100',
-      bgGradient: 'from-leaf-600 to-leaf-700',
+      bgGradient: 'from-brand-leaf to-brand-emerald',
       borderColor: 'border-leaf-300/40',
       href: '/combo/combo-7',
       animClass: 'animate-tsf-float-2',
