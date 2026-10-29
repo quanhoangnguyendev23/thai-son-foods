@@ -2526,7 +2526,7 @@ export default function AdminPage() {
             color: #e0ebe5;
           }
           :where(.admin-theme) .to-teal-400 {
-            --tw-gradient-to: #dee7e6;
+            --tw-gradient-to: #DFE6E5;
           }
           :where(.admin-theme) .border-slate-800 {
             border-color: #7ca250;
