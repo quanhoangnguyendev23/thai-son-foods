@@ -1066,10 +1066,10 @@ export default function AdminPage() {
     }
   };
 
-  // Nạp danh sách chi nhánh khi mở chi tiết đơn (storeList trước đây chỉ được nạp ở tab Tồn kho,
-  // nên ô chọn "Chuyển đơn sang chi nhánh khác" bị rỗng nếu chưa từng mở tab đó)
+  // Nạp danh sách chi nhánh khi mở chi tiết đơn hoặc tab Nhật ký (storeList trước đây chỉ được nạp ở tab Tồn kho,
+  // nên ô chọn "Chuyển đơn sang chi nhánh khác" và ô lọc cửa hàng ở Nhật ký bị rỗng nếu chưa từng mở tab đó)
   useEffect(() => {
-    if (!selectedOrder || storeList.length > 0) return;
+    if ((!selectedOrder && activeTab !== 'audit') || storeList.length > 0) return;
     let cancelled = false;
     fetch('/api/admin/stores', { cache: 'no-store' })
       .then((r) => r.json())
@@ -1080,7 +1080,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedOrder?.id, storeList.length]);
+  }, [selectedOrder?.id, storeList.length, activeTab]);
 
   // Đồng bộ nạp dữ liệu khi chuyển tab sang Users, Inventory, Banners, hoặc Audit
   useEffect(() => {
