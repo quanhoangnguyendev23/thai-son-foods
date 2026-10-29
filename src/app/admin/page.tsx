@@ -6265,20 +6265,63 @@ export default function AdminPage() {
                     onChange={(e) => setAuditActionFilter(e.target.value)}
                     className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-leaf-500 cursor-pointer"
                   >
+                    {/* Giá trị phải trùng đúng mã hành động lưu trong audit_logs.action (vd PRODUCT_UPDATE) */}
                     <option value="ALL">Tất cả hành động</option>
-                    <option value="auth.login">Đăng nhập (auth.login)</option>
-                    <option value="orders.status_update">Cập nhật đơn (orders.status_update)</option>
-                    <option value="orders.transfer">Chuyển chi nhánh (orders.transfer)</option>
-                    <option value="inventory.update">Cập nhật tồn kho (inventory.update)</option>
-                    <option value="products.create">Tạo sản phẩm (products.create)</option>
-                    <option value="products.update">Sửa sản phẩm (products.update)</option>
-                    <option value="products.delete">Xóa sản phẩm (products.delete)</option>
-                    <option value="combos.create">Tạo combo (combos.create)</option>
-                    <option value="combos.update">Sửa combo (combos.update)</option>
-                    <option value="combos.delete">Xóa combo (combos.delete)</option>
-                    <option value="users.create">Tạo tài khoản (users.create)</option>
-                    <option value="users.update">Sửa tài khoản (users.update)</option>
-                    <option value="users.delete">Xóa tài khoản (users.delete)</option>
+                    <optgroup label="Đăng nhập & tài khoản">
+                      <option value="AUTH_LOGIN_SUCCESS">Đăng nhập thành công</option>
+                      <option value="AUTH_LOGIN_FAILED">Đăng nhập sai</option>
+                      <option value="AUTH_RATE_LIMITED">Bị khóa do sai nhiều lần</option>
+                      <option value="AUTH_LOGOUT">Đăng xuất</option>
+                      <option value="AUTH_PASSWORD_CHANGE">Đổi mật khẩu</option>
+                      <option value="AUTH_PASSWORD_CHANGE_FAILED">Đổi mật khẩu thất bại</option>
+                      <option value="ADMIN_USER_CREATE">Tạo tài khoản quản trị</option>
+                      <option value="ADMIN_USER_UPDATE">Sửa tài khoản quản trị</option>
+                      <option value="ADMIN_USER_DELETE">Xóa tài khoản quản trị</option>
+                    </optgroup>
+                    <optgroup label="Đơn hàng">
+                      <option value="ORDER_STATUS_UPDATE">Cập nhật trạng thái đơn</option>
+                      <option value="ORDER_CANCEL">Hủy đơn</option>
+                      <option value="ORDER_DELETE">Xóa đơn</option>
+                      <option value="ORDER_TRANSFER_STORE">Chuyển chi nhánh</option>
+                      <option value="ORDER_PAYMENT_CONFIRM">Xác nhận thanh toán</option>
+                      <option value="ORDER_EXPORT_CSV">Xuất CSV đơn hàng</option>
+                      <option value="COD_RECONCILE">Đối soát COD</option>
+                      <option value="COD_PROCESS_RETURN">Xử lý hoàn hàng COD</option>
+                    </optgroup>
+                    <optgroup label="Sản phẩm & nội dung">
+                      <option value="PRODUCT_CREATE">Tạo sản phẩm</option>
+                      <option value="PRODUCT_UPDATE">Sửa sản phẩm</option>
+                      <option value="PRODUCT_DELETE">Xóa sản phẩm</option>
+                      <option value="PRODUCT_PRICE_UPDATE">Đổi giá sản phẩm</option>
+                      <option value="PRODUCT_COST_UPDATE">Đổi giá vốn</option>
+                      <option value="FILE_UPLOAD">Tải ảnh/tệp lên</option>
+                      <option value="CATEGORY_CREATE">Tạo danh mục</option>
+                      <option value="CATEGORY_UPDATE">Sửa danh mục</option>
+                      <option value="CATEGORY_DELETE">Xóa danh mục</option>
+                      <option value="BANNER_CREATE">Tạo banner</option>
+                      <option value="BANNER_UPDATE">Sửa banner</option>
+                      <option value="BANNER_DELETE">Xóa banner</option>
+                      <option value="REVIEW_MODERATE">Duyệt đánh giá</option>
+                      <option value="REVIEW_DELETE">Xóa đánh giá</option>
+                    </optgroup>
+                    <optgroup label="Tồn kho & cửa hàng">
+                      <option value="INVENTORY_UPDATE">Cập nhật tồn kho</option>
+                      <option value="INVENTORY_BATCH_UPDATE">Cập nhật tồn kho hàng loạt</option>
+                      <option value="INVENTORY_LOT_CREATE">Thêm lô hàng</option>
+                      <option value="INVENTORY_SHEET_SYNC">Đọc lại Google Sheet</option>
+                      <option value="STORE_UPDATE">Sửa cửa hàng</option>
+                    </optgroup>
+                    <optgroup label="Thành viên">
+                      <option value="MEMBER_LOCK">Khóa thành viên</option>
+                      <option value="MEMBER_UNLOCK">Mở khóa thành viên</option>
+                      <option value="MEMBER_UPDATE">Sửa thành viên</option>
+                      <option value="MEMBER_DELETE">Xóa thành viên</option>
+                    </optgroup>
+                    <optgroup label="Combo">
+                      <option value="COMBO_CREATE">Tạo combo</option>
+                      <option value="COMBO_UPDATE">Sửa combo</option>
+                      <option value="COMBO_DELETE">Xóa combo</option>
+                    </optgroup>
                   </select>
 
                   <select
