@@ -113,6 +113,8 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
         unit: dbProd.unit || fallback.unit,
         shortDescription: dbProd.short_description || fallback.shortDescription,
         description: dbProd.description || fallback.description,
+        // Dung tích chai do admin chỉnh (products.volume); trống thì dùng giá trị trong products.ts
+        volume: dbProd.volume || (fallback as { volume?: string }).volume,
         thumbnail: finalThumbnail,
         images: activeImages.length > 0
           ? activeImages.map((img: any) => ({

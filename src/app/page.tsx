@@ -147,6 +147,7 @@ async function getLiveProducts(): Promise<Product[]> {
           unit: row.unit || base.unit,
           shortDescription: row.short_description || base.shortDescription,
           description: row.description || base.description,
+          volume: row.volume || (base as { volume?: string }).volume,
           thumbnail: finalThumbnail,
           categoryId: (row.category_id ? row.category_id.replace(/^cat-/, '') : base.categoryId),
           isFeatured: row.is_featured !== null ? Boolean(row.is_featured) : base.isFeatured,

@@ -210,8 +210,8 @@ export async function POST(request: Request) {
     const insertSql = `
       INSERT INTO products (
         id, slug, name, sku, short_description, description, price, unit, thumbnail,
-        category_id, is_featured, is_new, is_best_seller, is_active, cost_price, sold_offset
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        category_id, is_featured, is_new, is_best_seller, is_active, cost_price, sold_offset, volume
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *;
     `;
 
@@ -232,6 +232,7 @@ export async function POST(request: Request) {
       Boolean(is_active),
       costPriceVal,
       Math.max(0, parseInt(body.sold_offset, 10) || 0),
+      typeof body.volume === 'string' && body.volume.trim() ? body.volume.trim().slice(0, 30) : '330ml',
     ];
 
     const variantsError = validateVariantsInput(variants);
@@ -415,7 +416,8 @@ export async function PUT(request: Request) {
         is_best_seller = COALESCE($12, is_best_seller),
         is_active = COALESCE($13, is_active),
         cost_price = COALESCE($14, cost_price),
-        sold_offset = COALESCE($15, sold_offset)
+        sold_offset = COALESCE($15, sold_offset),
+        volume = COALESCE($17, volume)
       WHERE id = $1
       RETURNING *;
     `;
@@ -440,6 +442,8 @@ export async function PUT(request: Request) {
         : null,
       // $16: request có gửi category_id hay không — không gửi thì giữ danh mục cũ, gửi rỗng thì bỏ danh mục
       category_id !== undefined,
+      // $17: dung tích chai (vd 330ml); không gửi / để trống thì giữ giá trị cũ
+      typeof body.volume === 'string' && body.volume.trim() ? body.volume.trim().slice(0, 30) : null,
     ];
 
     const result = await query(updateSql, values);

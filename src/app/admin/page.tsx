@@ -161,6 +161,8 @@ interface ProductVariant {
 
 interface Product {
   sold_offset?: number | null;
+  /** Dung tích chai, vd "330ml" (cột products.volume) */
+  volume?: string | null;
   id: string;
   slug: string;
   name: string;
@@ -6650,6 +6652,19 @@ export default function AdminPage() {
                     value={editingProduct.unit || '1 chai'}
                     onChange={(e) => setEditingProduct({ ...editingProduct, unit: e.target.value })}
                     placeholder="1 chai, chai, lon..."
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                {/* Dung tích chai (lưu cột products.volume; quy cách hiển thị "7 x 330ml" lấy theo giá trị này) */}
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">Dung tích chai</label>
+                  <input
+                    type="text"
+                    value={editingProduct.volume || ''}
+                    maxLength={30}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, volume: e.target.value })}
+                    placeholder="VD: 330ml, 270ml, 568ml"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
