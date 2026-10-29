@@ -341,7 +341,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   // Admin hiển thị MÃ SP (vd: SB-01) thay cho tên dài; tên đầy đủ để ở tooltip (title)
   const productCodeOf = (id?: string | null, sku?: string | null, fallback?: string) =>
-    sku || products.find((p) => p.id === id)?.sku || (id ? id.replace(/^prod-/, '').toUpperCase() : fallback || '—');
+    (sku || products.find((p) => p.id === id)?.sku || (id ? id.replace(/^prod-/, '').toUpperCase() : '') || fallback || '—').replace(/-\d+$/, '');
   const [combos, setCombos] = useState<Combo[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -3568,8 +3568,7 @@ export default function AdminPage() {
                   <table className="w-full text-left text-xs text-slate-300">
                     <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
                       <tr>
-                        <th className="py-3 px-4">Ảnh & Sản Phẩm</th>
-                        <th className="py-3 px-4">SKU</th>
+                        <th className="py-3 px-4">Ảnh & Mã SP</th>
                         <th className="py-3 px-4">Danh Mục</th>
                         <th className="py-3 px-4">Giá Bán</th>
                         <th className="py-3 px-4">Huy Hiệu</th>
@@ -3598,12 +3597,11 @@ export default function AdminPage() {
                                 )}
                               </div>
                               <div>
-                                <p className="text-slate-100 text-base">{p.name}</p>
+                                <p className="text-slate-100 text-base font-mono" title={p.name}>{productCodeOf(p.id, p.sku, p.name)}</p>
                                 <p className="text-[11px] text-slate-400">Đơn vị: {p.unit}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-4 font-mono text-slate-400">{p.sku || '—'}</td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-0.5 rounded-md text-[11px] bg-slate-800 text-slate-300 border border-slate-700">
                               {p.category_name || 'Chưa phân loại'}
@@ -3679,7 +3677,7 @@ export default function AdminPage() {
                       ))}
                       {filteredProducts.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-slate-500">
+                          <td colSpan={6} className="py-8 text-center text-slate-500">
                             Không tìm thấy sản phẩm nào khớp với điều kiện lọc.
                           </td>
                         </tr>
@@ -5299,7 +5297,7 @@ export default function AdminPage() {
                                       {productCodeOf(item.product_id, item.sku, item.product_name)}
                                     </p>
                                     <p className="text-[11px] font-mono text-slate-400">
-                                      SKU: <span className="text-amber-400 text-[1.125em]">{item.sku || 'N/A'}</span> • {item.unit || '1 chai'}
+                                      {item.unit || '1 chai'}
                                     </p>
                                   </div>
                                 </div>
@@ -8587,7 +8585,7 @@ export default function AdminPage() {
                     {productCodeOf(stockModalItem.product_id, stockModalItem.sku, stockModalItem.product_name)}
                   </p>
                   <p className="text-[11px] font-mono text-slate-400 mt-1">
-                    SKU: <span className="text-amber-400 text-[1.125em]">{stockModalItem.sku}</span> • {stockModalItem.unit}
+                    {stockModalItem.unit}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Số lượng hiện tại: <strong className="text-emerald-400 font-mono text-[1.125em]">{stockModalItem.current_stock} chai</strong>

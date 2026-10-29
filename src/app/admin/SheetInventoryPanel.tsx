@@ -383,7 +383,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               const isBusy = busyProduct === r.productId;
               const formOpen = stopForm?.productId === r.productId;
               // Admin chỉ cần MÃ SP; tên đầy đủ để ở tooltip
-              const name = r.sku || shortName(r.productId, r.sku, r.productName);
+              const name = r.spCode || (r.sku ? r.sku.replace(/-\d+$/, '') : shortName(r.productId, r.sku, r.productName));
               return (
                 <React.Fragment key={r.productId}>
                   <tr className={`hover:bg-slate-800/40 transition-colors ${r.stopped ? 'opacity-70' : ''}`}>
@@ -392,7 +392,6 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                         {name}
                       </p>
                       <p className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                        <span className="font-mono text-slate-400">{r.spCode}</span>
                         {r.nh === 1 && (
                           <span className="inline-flex items-center gap-1 text-emerald-300">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden />
