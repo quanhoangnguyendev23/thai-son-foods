@@ -339,6 +339,9 @@ export default function AdminPage() {
   // Data states
   const [stats, setStats] = useState<StatsData | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  // Admin hiển thị MÃ SP (vd: SB-01) thay cho tên dài; tên đầy đủ để ở tooltip (title)
+  const productCodeOf = (id?: string | null, sku?: string | null, fallback?: string) =>
+    sku || products.find((p) => p.id === id)?.sku || (id ? id.replace(/^prod-/, '').toUpperCase() : fallback || '—');
   const [combos, setCombos] = useState<Combo[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -3387,7 +3390,7 @@ export default function AdminPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-200 truncate">{p.name}</p>
+                          <p className="text-sm text-slate-200 truncate font-mono" title={p.name}>{productCodeOf(p.id, p.sku, p.name)}</p>
                           <p className="text-[12px] text-emerald-400">{formatVND(p.price)}</p>
                         </div>
                         <div className="text-right shrink-0">
@@ -5292,8 +5295,8 @@ export default function AdminPage() {
                                     />
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-white text-sm truncate max-w-[240px]" title={item.product_name}>
-                                      {item.product_name}
+                                    <p className="text-white text-sm truncate max-w-[240px] font-mono" title={item.product_name}>
+                                      {productCodeOf(item.product_id, item.sku, item.product_name)}
                                     </p>
                                     <p className="text-[11px] font-mono text-slate-400">
                                       SKU: <span className="text-amber-400 text-[1.125em]">{item.sku || 'N/A'}</span> • {item.unit || '1 chai'}
@@ -5479,7 +5482,7 @@ export default function AdminPage() {
                         <option value="">— Chọn sản phẩm —</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name.length > 60 ? `${p.name.slice(0, 58)}…` : p.name}
+                            {productCodeOf(p.id, p.sku, p.name)}
                           </option>
                         ))}
                       </select>
@@ -5580,8 +5583,8 @@ export default function AdminPage() {
                         const fmtDate = (d: string) => new Date(d).toLocaleDateString('vi-VN');
                         return (
                           <tr key={lot.id} className="hover:bg-slate-800/40 transition-colors">
-                            <td className="py-3 px-4 text-slate-100 max-w-[240px] truncate text-[1.125em]" title={lot.product_name}>
-                              {lot.product_name}
+                            <td className="py-3 px-4 text-slate-100 max-w-[240px] truncate text-[1.125em] font-mono" title={lot.product_name}>
+                              {productCodeOf(lot.product_id, null, lot.product_name)}
                             </td>
                             <td className="py-3 px-4 font-mono text-emerald-400">{lot.lot_code}</td>
                             <td className="py-3 px-4 text-slate-400">{fmtDate(lot.manufacturing_date)}</td>
@@ -7942,7 +7945,7 @@ export default function AdminPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-100 truncate">{item.name}</p>
+                          <p className="text-sm text-slate-100 truncate font-mono" title={item.name}>{item.product_id ? productCodeOf(item.product_id) : item.name}</p>
                           <div className="flex items-center gap-2 flex-wrap mt-0.5">
                             <p className="text-[11px] text-slate-400">
                               {formatVND(item.price)} × {item.quantity} {item.unit}
@@ -8580,8 +8583,8 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white text-sm leading-snug line-clamp-2">
-                    {stockModalItem.product_name}
+                  <p className="text-white text-sm leading-snug line-clamp-2 font-mono" title={stockModalItem.product_name}>
+                    {productCodeOf(stockModalItem.product_id, stockModalItem.sku, stockModalItem.product_name)}
                   </p>
                   <p className="text-[11px] font-mono text-slate-400 mt-1">
                     SKU: <span className="text-amber-400 text-[1.125em]">{stockModalItem.sku}</span> • {stockModalItem.unit}
@@ -9172,7 +9175,7 @@ export default function AdminPage() {
                               </td>
                               <td className="py-3 px-3.5">
                                 <div className="text-slate-100 max-w-[180px] truncate text-[1.125em]" title={log.product_name}>
-                                  {log.product_name || log.product_id}
+                                  {productCodeOf(log.product_id, null, log.product_name)}
                                 </div>
                                 <div className="text-[10px] text-slate-500 font-mono">
                                   {log.unit || '1 chai'}

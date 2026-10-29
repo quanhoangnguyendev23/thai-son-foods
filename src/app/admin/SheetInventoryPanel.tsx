@@ -382,7 +382,8 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
             {visibleRows.map((r) => {
               const isBusy = busyProduct === r.productId;
               const formOpen = stopForm?.productId === r.productId;
-              const name = shortName(r.productId, r.sku, r.productName);
+              // Admin chỉ cần MÃ SP; tên đầy đủ để ở tooltip
+              const name = r.sku || shortName(r.productId, r.sku, r.productName);
               return (
                 <React.Fragment key={r.productId}>
                   <tr className={`hover:bg-slate-800/40 transition-colors ${r.stopped ? 'opacity-70' : ''}`}>
