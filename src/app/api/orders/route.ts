@@ -4,6 +4,7 @@ import { query, initDatabase, pool } from '@/lib/db';
 import { getUserSession } from '@/lib/auth';
 import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area';
 import { sendOrderEmail } from '@/lib/email/service';
+import { notifyNewOrderZalo } from '@/lib/notify/zalo';
 import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
@@ -825,6 +826,19 @@ export async function POST(request: Request) {
           items: revalidatedItems,
         }).catch((err) => console.error('[Order] Error sending confirmation email:', err));
       }
+
+      // Báo đơn mới về Zalo của Marketing (không chặn phản hồi; thiếu cấu hình thì bỏ qua)
+      notifyNewOrderZalo({
+        orderCode,
+        fullName,
+        phone,
+        address: [address, ward, district, province].filter(Boolean).join(', '),
+        storeCode: targetStoreCode,
+        paymentMethod,
+        total: serverTotal,
+        note,
+        items: revalidatedItems.map((it: any) => ({ name: it.name, quantity: it.quantity, unit: it.unit })),
+      }).catch(() => {});
 
       return NextResponse.json({
         success: true,
