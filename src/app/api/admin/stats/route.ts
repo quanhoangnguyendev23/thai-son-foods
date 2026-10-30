@@ -50,24 +50,70 @@ async function getRangeStats(storeScope: string | null, from: string | null, to:
     ORDER BY d.day ASC;`,
     params
   );
+  // Top sản phẩm / combo: "Hoàn thành" = đơn COMPLETED (total_*, order_count — giữ tên cũ),
+  // "Đặt hàng" = mọi đơn không bị huỷ (placed_*). Combo = dòng hàng không phải sản phẩm lẻ (combo DB hoặc combo tự chọn).
   const topRes = await query(
     `${bounds}
     SELECT p.id, p.name, p.sku, p.thumbnail, p.price, p.unit,
-      COALESCE(SUM(oi.quantity), 0) AS total_sold,
-      COALESCE(SUM(oi.quantity * oi.price), 0) AS total_earned
+      COALESCE(SUM(oi.quantity) FILTER (WHERE o.status = 'COMPLETED'), 0) AS total_sold,
+      COALESCE(SUM(oi.quantity * oi.price) FILTER (WHERE o.status = 'COMPLETED'), 0) AS total_earned,
+      COUNT(DISTINCT o.id) FILTER (WHERE o.status = 'COMPLETED') AS order_count,
+      COALESCE(SUM(oi.quantity), 0) AS placed_sold,
+      COALESCE(SUM(oi.quantity * oi.price), 0) AS placed_earned,
+      COUNT(DISTINCT o.id) AS placed_order_count
     FROM products p
     INNER JOIN order_items oi ON COALESCE(oi.canonical_product_id, oi.product_id) = p.id
-    INNER JOIN orders o ON o.id = oi.order_id AND o.status = 'COMPLETED'
+    INNER JOIN orders o ON o.id = oi.order_id AND COALESCE(o.status, '') <> 'CANCELLED'
     WHERE (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN (SELECT d_from FROM rng) AND (SELECT d_to FROM rng)${storeFilter}
     GROUP BY p.id, p.name, p.sku, p.thumbnail, p.price, p.unit
-    ORDER BY total_earned DESC, total_sold DESC
-    LIMIT 6;`,
+    ORDER BY total_earned DESC, placed_earned DESC, total_sold DESC
+    LIMIT 50;`,
+    params
+  );
+  const comboRes = await query(
+    `${bounds}
+    SELECT g.combo_key AS id,
+      MAX(g.combo_name) AS name,
+      MAX(g.thumb) AS thumbnail,
+      COALESCE(SUM(g.quantity) FILTER (WHERE g.status = 'COMPLETED'), 0) AS total_sold,
+      COALESCE(SUM(g.quantity * g.price) FILTER (WHERE g.status = 'COMPLETED'), 0) AS total_earned,
+      COUNT(DISTINCT g.order_id) FILTER (WHERE g.status = 'COMPLETED') AS order_count,
+      COALESCE(SUM(g.quantity), 0) AS placed_sold,
+      COALESCE(SUM(g.quantity * g.price), 0) AS placed_earned,
+      COUNT(DISTINCT g.order_id) AS placed_order_count
+    FROM (
+      SELECT o.id AS order_id, o.status, oi.quantity, oi.price,
+        COALESCE(c.id, CASE
+          WHEN oi.product_id LIKE 'combo-4-chai-%' THEN 'combo-4-chai'
+          WHEN oi.product_id LIKE 'combo-van-phong-%' THEN 'combo-van-phong'
+          WHEN oi.product_id LIKE 'combo-5-%' THEN 'combo-5'
+          WHEN oi.product_id LIKE 'combo-6-%' THEN 'combo-6'
+          ELSE oi.product_id END, 'combo-khac') AS combo_key,
+        COALESCE(c.name, CASE
+          WHEN oi.product_id LIKE 'combo-4-chai-%' THEN 'Combo 4 chai tự chọn'
+          WHEN oi.product_id LIKE 'combo-van-phong-%' THEN 'Combo văn phòng tự chọn'
+          WHEN oi.product_id LIKE 'combo-5-%' THEN 'Combo siêu hời'
+          WHEN oi.product_id LIKE 'combo-6-%' THEN 'Combo bậc thang'
+          ELSE oi.name END) AS combo_name,
+        COALESCE(c.image, oi.thumbnail) AS thumb
+      FROM order_items oi
+      INNER JOIN orders o ON o.id = oi.order_id AND COALESCE(o.status, '') <> 'CANCELLED'
+      LEFT JOIN combos c ON c.id = oi.product_id OR c.slug = oi.product_id
+      LEFT JOIN products p ON p.id = COALESCE(oi.canonical_product_id, oi.product_id)
+      WHERE p.id IS NULL
+        AND (c.id IS NOT NULL OR oi.product_id LIKE 'combo%' OR oi.combo_snapshot IS NOT NULL)
+        AND (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN (SELECT d_from FROM rng) AND (SELECT d_to FROM rng)${storeFilter}
+    ) g
+    GROUP BY g.combo_key
+    ORDER BY total_earned DESC, placed_earned DESC, total_sold DESC
+    LIMIT 50;`,
     params
   );
   const rows = trendRes.rows || [];
   return {
     revenueTrend: rows,
     topProducts: topRes.rows || [],
+    topCombos: comboRes.rows || [],
     range: { from: rows[0]?.date_iso || from, to: rows[rows.length - 1]?.date_iso || to },
   };
 }

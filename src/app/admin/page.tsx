@@ -65,6 +65,7 @@ import { FEATURES } from '@/config/features';
 import { canDeleteOrder, canTransitionOrderStatus } from '@/lib/order-status';
 import { safeFetchJson } from '@/lib/utils';
 import SheetInventoryPanel from './SheetInventoryPanel';
+import { RevenueCard, TopProductsCard, TopCombosCard, formatRangeLabel, isTrendStale } from './DashboardCharts';
 import { banners as defaultHeroBanners } from '@/data/banners';
 import { HERO_PLACEHOLDER_SLIDES } from '@/data/homepage-placeholders';
 
@@ -366,28 +367,32 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [trendHover, setTrendHover] = useState<number | null>(null);
   // Khoảng thời gian của biểu đồ doanh thu + sản phẩm bán chạy (ngày theo giờ Việt Nam)
   const vnDate = (offsetDays = 0) =>
     new Date(Date.now() + offsetDays * 86400000).toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
   const [rangePreset, setRangePreset] = useState<'7' | '30' | '90' | 'custom'>('7');
   const [rangeFrom, setRangeFrom] = useState(() => vnDate(-6));
   const [rangeTo, setRangeTo] = useState(() => vnDate(0));
-  const [rangeData, setRangeData] = useState<{ revenueTrend: any[]; topProducts: any[] } | null>(null);
+  const [rangeData, setRangeData] = useState<{ revenueTrend: any[]; topProducts: any[]; topCombos: any[] } | null>(null);
   const [rangeLoading, setRangeLoading] = useState(false);
+  const [rangeError, setRangeError] = useState(false);
+  const [rangeReload, setRangeReload] = useState(0);
   useEffect(() => {
     if (!rangeFrom || !rangeTo || rangeFrom > rangeTo) return;
     let alive = true;
     setRangeLoading(true);
+    setRangeError(false);
     safeFetchJson<any>(`/api/admin/stats?section=range&from=${rangeFrom}&to=${rangeTo}`, { cache: 'no-store' })
       .then((d) => {
-        if (alive && d?.success) setRangeData({ revenueTrend: d.revenueTrend || [], topProducts: d.topProducts || [] });
+        if (!alive) return;
+        if (d?.success) setRangeData({ revenueTrend: d.revenueTrend || [], topProducts: d.topProducts || [], topCombos: d.topCombos || [] });
+        else setRangeError(true);
       })
       .finally(() => alive && setRangeLoading(false));
     return () => {
       alive = false;
     };
-  }, [rangeFrom, rangeTo]);
+  }, [rangeFrom, rangeTo, rangeReload]);
   const pickPreset = (p: '7' | '30' | '90') => {
     setRangePreset(p);
     setRangeFrom(vnDate(-(Number(p) - 1)));
@@ -3264,223 +3269,48 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Chart & Top Products Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Biểu đồ doanh thu theo khoảng ngày (đường cong SVG) */}
-                <div className="lg:col-span-2 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-base text-white flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-emerald-400" />
-                        <span>Biểu Đồ Doanh Thu</span>
-                        {rangeLoading && <RefreshCw className="w-3.5 h-3.5 text-slate-400 animate-spin" />}
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Từ {rangeFrom.split('-').reverse().join('/')} đến {rangeTo.split('-').reverse().join('/')} · giờ Việt Nam · rê chuột để xem từng ngày
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {(['7', '30', '90'] as const).map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => pickPreset(p)}
-                          className={`text-xs px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                            rangePreset === p
-                              ? 'bg-amber-300 text-forest-950 border-amber-300'
-                              : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-500'
-                          }`}
-                        >
-                          {p} ngày
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => setRangePreset('custom')}
-                        className={`text-xs px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                          rangePreset === 'custom'
-                            ? 'bg-amber-300 text-forest-950 border-amber-300'
-                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-500'
-                        }`}
-                      >
-                        Tuỳ chọn
-                      </button>
-                    </div>
-                  </div>
-
-                  {rangePreset === 'custom' && (
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
-                      <label htmlFor="range-from">Từ ngày</label>
-                      <input
-                        id="range-from"
-                        type="date"
-                        value={rangeFrom}
-                        max={rangeTo}
-                        onChange={(e) => e.target.value && setRangeFrom(e.target.value)}
-                        className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 [color-scheme:dark]"
-                      />
-                      <label htmlFor="range-to">đến</label>
-                      <input
-                        id="range-to"
-                        type="date"
-                        value={rangeTo}
-                        min={rangeFrom}
-                        max={vnDate(0)}
-                        onChange={(e) => e.target.value && setRangeTo(e.target.value)}
-                        className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 [color-scheme:dark]"
-                      />
-                      <span className="text-slate-400">Tối đa 366 ngày</span>
-                    </div>
-                  )}
-
-                  {/* Chú thích 2 chỉ số */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-4 h-1 rounded-full bg-leaf-300"></span>
-                      Doanh số đặt hàng (mọi đơn không bị huỷ)
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-4 h-1 rounded-full bg-amber-300"></span>
-                      Doanh thu hoàn thành
-                    </span>
-                  </div>
-
-                  {/* Biểu đồ đường cong (SVG): Đặt hàng (rêu nhạt) · Hoàn thành (cam nhạt) */}
-                  {(() => {
-                    const trend = rangeData?.revenueTrend || stats?.revenueTrend || [];
-                    if (trend.length === 0) {
-                      return <p className="text-sm text-slate-400 py-16 text-center">Chưa có dữ liệu doanh thu.</p>;
-                    }
-                    const W = 720, H = 230, padL = 56, padR = 16, padT = 18, padB = 34;
-                    const maxRaw = Math.max(
-                      ...trend.map((r) => Math.max(Number(r.placed_revenue || 0), Number(r.daily_revenue || 0))),
-                      100000
-                    );
-                    const step = Math.pow(10, Math.floor(Math.log10(maxRaw)));
-                    const maxY = Math.ceil(maxRaw / step) * step;
-                    const x = (i: number) => padL + (trend.length === 1 ? (W - padL - padR) / 2 : (i * (W - padL - padR)) / (trend.length - 1));
-                    const y = (v: number) => padT + (1 - v / maxY) * (H - padT - padB);
-                    // Đường cong mượt (Catmull-Rom → Bézier), kẹp không vượt dưới trục 0
-                    const curve = (vals: number[]) => {
-                      const pts = vals.map((v, i) => [x(i), y(v)] as [number, number]);
-                      if (pts.length < 2) return `M${pts[0][0]},${pts[0][1]}`;
-                      let d = `M${pts[0][0]},${pts[0][1]}`;
-                      for (let i = 0; i < pts.length - 1; i++) {
-                        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-                        const c1 = [p1[0] + (p2[0] - p0[0]) / 6, Math.min(y(0), p1[1] + (p2[1] - p0[1]) / 6)];
-                        const c2 = [p2[0] - (p3[0] - p1[0]) / 6, Math.min(y(0), p2[1] - (p3[1] - p1[1]) / 6)];
-                        d += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
-                      }
-                      return d;
-                    };
-                    const placed = trend.map((r) => Number(r.placed_revenue || 0));
-                    const done = trend.map((r) => Number(r.daily_revenue || 0));
-                    const area = (vals: number[]) => `${curve(vals)} L${x(vals.length - 1)},${y(0)} L${x(0)},${y(0)} Z`;
-                    const shortVND = (v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}tr` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`);
-                    const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => t * maxY);
-                    const hi = trendHover;
-                    return (
-                      <div className="relative pt-2" onMouseLeave={() => setTrendHover(null)}>
-                        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Biểu đồ doanh thu 7 ngày">
-                          <defs>
-                            <linearGradient id="trendPlaced" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="var(--color-leaf-300)" stopOpacity="0.35" />
-                              <stop offset="100%" stopColor="var(--color-leaf-300)" stopOpacity="0" />
-                            </linearGradient>
-                            <linearGradient id="trendDone" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="var(--color-amber-300)" stopOpacity="0.35" />
-                              <stop offset="100%" stopColor="var(--color-amber-300)" stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
-                          {ticks.map((t, i) => (
-                            <g key={i}>
-                              <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="var(--color-ink-700)" strokeDasharray={i === 0 ? undefined : '3 5'} />
-                              <text x={padL - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--color-ink-300)">{shortVND(t)}</text>
-                            </g>
-                          ))}
-                          <path d={area(placed)} fill="url(#trendPlaced)" />
-                          <path d={area(done)} fill="url(#trendDone)" />
-                          <path d={curve(placed)} fill="none" stroke="var(--color-leaf-300)" strokeWidth="2.5" strokeLinecap="round" />
-                          <path d={curve(done)} fill="none" stroke="var(--color-amber-300)" strokeWidth="2.5" strokeLinecap="round" />
-                          {hi !== null && <line x1={x(hi)} x2={x(hi)} y1={padT} y2={y(0)} stroke="var(--color-ink-300)" strokeDasharray="2 4" />}
-                          {trend.map((item, i) => (
-                            <g key={i}>
-                              {(trend.length <= 31 || hi === i) && <circle cx={x(i)} cy={y(placed[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-leaf-300)" strokeWidth="2" />}
-                              {(trend.length <= 31 || hi === i) && <circle cx={x(i)} cy={y(done[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-amber-300)" strokeWidth="2" />}
-                              {(i % Math.ceil(trend.length / 10) === 0 || i === trend.length - 1 || hi === i) && (
-                                <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="11.5" fill={hi === i ? 'var(--color-ink-100)' : 'var(--color-ink-300)'}>{item.date_label}</text>
-                              )}
-                              <rect
-                                x={x(i) - (W - padL - padR) / Math.max(trend.length - 1, 1) / 2}
-                                y={padT}
-                                width={(W - padL - padR) / Math.max(trend.length - 1, 1)}
-                                height={H - padT}
-                                fill="transparent"
-                                onMouseEnter={() => setTrendHover(i)}
-                              />
-                            </g>
-                          ))}
-                        </svg>
-                        {hi !== null && trend[hi] && (
-                          <div
-                            className="absolute top-0 -translate-x-1/2 bg-slate-950 text-white text-[11px] py-1.5 px-2.5 rounded-lg shadow-xl border border-slate-700 pointer-events-none whitespace-nowrap z-30"
-                            style={{ left: `${(x(hi) / W) * 100}%` }}
-                          >
-                            <p className="text-slate-200 mb-0.5">{trend[hi].date_label}</p>
-                            <p className="text-leaf-300">Đặt hàng: {formatVND(trend[hi].placed_revenue || 0)} · {trend[hi].placed_count || 0} đơn</p>
-                            <p className="text-amber-300">Hoàn thành: {formatVND(trend[hi].daily_revenue)} · {trend[hi].order_count} đơn</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                {/* Top Selling Products */}
-                <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-base text-white flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-400" />
-                        <span>Sản Phẩm Bán Chạy</span>
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Doanh thu từng sản phẩm (đơn hoàn thành) trong khoảng đã chọn</p>
-                    </div>
-                  </div>
-
-                  {(() => {
-                    const top = (rangeData?.topProducts || stats?.topProducts || []).map((p: any) => ({
-                      ...p,
-                      revenue: Number(p.total_earned || 0),
-                      sold: Number(p.total_sold || 0),
-                    }));
-                    if (top.length === 0) {
-                      return <p className="text-sm text-slate-400 py-16 text-center">Chưa có đơn hoàn thành để tính doanh thu.</p>;
-                    }
-                    const maxRev = Math.max(...top.map((p) => p.revenue), 1);
-                    const shortVND = (v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}tr` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`);
-                    return (
-                      <div className="h-56 flex items-end justify-between gap-2 pt-6">
-                        {top.map((p, idx) => (
-                          <div key={p.id || idx} className="flex-1 min-w-0 h-full flex flex-col items-center justify-end gap-1.5 group relative">
-                            <div className="absolute -top-1 bg-slate-950 text-white text-[11px] py-1 px-2 rounded-md shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
-                              <p className="text-slate-200">{p.name?.split(/[,-]/)[0]?.trim()}</p>
-                              <p className="text-amber-300">{formatVND(p.revenue)} · {p.sold} chai</p>
-                            </div>
-                            <span className="text-[11px] text-amber-300 tabular-nums">{shortVND(p.revenue)}</span>
-                            <div
-                              style={{ height: `${Math.max((p.revenue / maxRev) * 100, 4)}%` }}
-                              className={`w-full max-w-[44px] rounded-t-lg transition-all duration-300 ${idx === 0 ? 'bg-amber-300' : 'bg-leaf-300'} group-hover:opacity-90`}
-                            ></div>
-                            <span className="text-[11px] text-slate-200 font-mono truncate max-w-full" title={p.name}>
-                              {productCodeOf(p.id, p.sku, p.name)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
+              {/* Doanh thu (cả hàng) + Sản phẩm bán chạy | Combo bán chạy (component: ./DashboardCharts) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <RevenueCard
+                  className="lg:col-span-2"
+                  trend={rangeData?.revenueTrend || stats?.revenueTrend || []}
+                  from={rangeFrom}
+                  to={rangeTo}
+                  preset={rangePreset}
+                  maxDate={vnDate(0)}
+                  loading={rangeLoading}
+                  error={rangeError}
+                  onRetry={() => setRangeReload((n) => n + 1)}
+                  onPreset={pickPreset}
+                  onCustomRange={(f, t) => {
+                    setRangePreset('custom');
+                    setRangeFrom(f);
+                    setRangeTo(t);
+                  }}
+                />
+                <TopProductsCard
+                  items={
+                    rangeLoading && isTrendStale(rangeData?.revenueTrend || stats?.revenueTrend || [], rangeFrom, rangeTo)
+                      ? []
+                      : rangeData?.topProducts || stats?.topProducts || []
+                  }
+                  rangeLabel={formatRangeLabel(rangeFrom, rangeTo)}
+                  loading={rangeLoading}
+                  error={rangeError}
+                  onRetry={() => setRangeReload((n) => n + 1)}
+                  codeOf={productCodeOf}
+                />
+                <TopCombosCard
+                  items={
+                    rangeLoading && isTrendStale(rangeData?.revenueTrend || stats?.revenueTrend || [], rangeFrom, rangeTo)
+                      ? []
+                      : rangeData?.topCombos || []
+                  }
+                  rangeLabel={formatRangeLabel(rangeFrom, rangeTo)}
+                  loading={rangeLoading}
+                  error={rangeError}
+                  onRetry={() => setRangeReload((n) => n + 1)}
+                />
               </div>
 
               {/* Recent Orders Table */}
