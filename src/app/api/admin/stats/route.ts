@@ -141,8 +141,8 @@ export async function GET() {
           INNER JOIN orders o ON o.id = oi.order_id AND o.status = 'COMPLETED'
           WHERE o.store_code = $1
           GROUP BY p.id, p.name, p.thumbnail, p.price, p.unit, c.name
-          ORDER BY total_sold DESC, p.price DESC
-          LIMIT 5;`,
+          ORDER BY total_earned DESC, total_sold DESC
+          LIMIT 6;`,
           [storeScope]
         )
       : await query(`
@@ -160,8 +160,8 @@ export async function GET() {
           INNER JOIN order_items oi ON COALESCE(oi.canonical_product_id, oi.product_id) = p.id
           INNER JOIN orders o ON o.id = oi.order_id AND o.status = 'COMPLETED'
           GROUP BY p.id, p.name, p.thumbnail, p.price, p.unit, c.name
-          ORDER BY total_sold DESC, p.price DESC
-          LIMIT 5;
+          ORDER BY total_earned DESC, total_sold DESC
+          LIMIT 6;
         `);
 
     // 7. Last 7 days trend theo ngày GIỜ VIỆT NAM (không phụ thuộc múi giờ máy chủ CSDL, cloud thường là UTC):

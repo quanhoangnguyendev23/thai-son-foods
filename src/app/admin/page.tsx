@@ -364,6 +364,7 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [trendHover, setTrendHover] = useState<number | null>(null);
 
   // Image & Gallery Management
   const [productImages, setProductImages] = useState<any[]>([]);
@@ -3169,8 +3170,8 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* 5 KPI Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {/* 3 KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* Total Revenue */}
                     <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-900/40 border border-slate-800 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -3214,48 +3215,6 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Products Count */}
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-900/40 border border-slate-800 relative overflow-hidden group hover:border-leaf-500/40 transition-all">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Package className="w-16 h-16 text-leaf-400" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-400">Sản Phẩm Đang Bán</span>
-                    <span className="p-2 rounded-xl bg-leaf-500/10 text-leaf-400">
-                      <Package className="w-4 h-4" />
-                    </span>
-                  </div>
-                  <div className="text-2xl text-white mt-2 tracking-tight">
-                    {products.length}
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-2">
-                    <span className="text-leaf-400 text-[1.125em]">{categories.length} danh mục</span>
-                    <span>•</span>
-                    <span className="text-emerald-400 text-[1.125em]">{products.filter((p) => p.is_active).length} kích hoạt</span>
-                  </div>
-                </div>
-
-                {/* Combos Count */}
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-900/40 border border-slate-800 relative overflow-hidden group hover:border-amber-500/40 transition-all">
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Boxes className="w-16 h-16 text-amber-400" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-400">Gói Combo Tiết Kiệm</span>
-                    <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-                      <Boxes className="w-4 h-4" />
-                    </span>
-                  </div>
-                  <div className="text-2xl text-white mt-2 tracking-tight">
-                    {combos.length}
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-2">
-                    <span className="text-amber-400 text-[1.125em]">{combos.filter((c) => c.is_active).length} đang bán</span>
-                    <span>•</span>
-                    <span className="text-emerald-400 text-[1.125em]">100% Khớp Store</span>
-                  </div>
-                </div>
-
                 {/* DB Health */}
                 <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-900/40 border border-slate-800 relative overflow-hidden group hover:border-teal-500/40 transition-all">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -3287,7 +3246,7 @@ export default function AdminPage() {
                         <BarChart3 className="w-4 h-4 text-emerald-400" />
                         <span>Biểu Đồ Doanh Thu 7 Ngày Gần Nhất</span>
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Theo ngày giờ Việt Nam · rê chuột vào cột để xem chi tiết</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Theo ngày giờ Việt Nam · rê chuột vào từng ngày để xem chi tiết</p>
                     </div>
                     <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
                       7 ngày qua
@@ -3297,60 +3256,102 @@ export default function AdminPage() {
                   {/* Chú thích 2 chỉ số */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-sky-600 to-sky-400"></span>
+                      <span className="w-4 h-1 rounded-full bg-leaf-300"></span>
                       Doanh số đặt hàng (mọi đơn không bị huỷ)
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-emerald-600 to-teal-400"></span>
+                      <span className="w-4 h-1 rounded-full bg-amber-300"></span>
                       Doanh thu hoàn thành
                     </span>
                   </div>
 
-                  {/* SVG interactive visual chart */}
-                  <div className="pt-4 pb-2">
-                    <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 px-2">
-                      {(stats?.revenueTrend || []).map((item, idx) => {
-                        // Cùng một thang đo cho 2 cột; ngày 0đ thì cột trống (không vẽ cột giả)
-                        const maxRev = Math.max(
-                          ...(stats?.revenueTrend || []).map((r) => Math.max(Number(r.placed_revenue || 0), Number(r.daily_revenue || 0))),
-                          100000
-                        );
-                        const pct = (v: number | undefined) => {
-                          const n = Number(v || 0);
-                          return n > 0 ? Math.max(Math.round((n / maxRev) * 100), 3) : 0;
-                        };
-
-                        return (
-                          <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
-                            {/* Tooltip on hover */}
-                            <div className="absolute -top-16 bg-slate-950 text-white text-[10px] py-1 px-2 rounded-md shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
-                              <p className="text-sky-300 text-[1.125em]">
-                                Đặt hàng: {formatVND(item.placed_revenue || 0)} · {item.placed_count || 0} đơn
-                              </p>
-                              <p className="text-emerald-400 text-[1.125em]">
-                                Hoàn thành: {formatVND(item.daily_revenue)} · {item.order_count} đơn
-                              </p>
-                            </div>
-
-                            {/* 2 cột: đặt hàng (xanh dương) · hoàn thành (xanh lá) */}
-                            <div className="w-full max-w-[56px] bg-slate-800/80 rounded-t-xl overflow-hidden flex items-end justify-center gap-1 p-1 h-36">
-                              <div
-                                style={{ height: `${pct(item.placed_revenue)}%` }}
-                                className="flex-1 rounded-t-lg bg-gradient-to-t from-sky-600 to-sky-400 group-hover:from-sky-500 group-hover:to-sky-300 transition-all duration-300"
-                              ></div>
-                              <div
-                                style={{ height: `${pct(item.daily_revenue)}%` }}
-                                className="flex-1 rounded-t-lg bg-gradient-to-t from-emerald-600 to-teal-400 group-hover:from-emerald-500 group-hover:to-teal-300 transition-all duration-300"
-                              ></div>
-                            </div>
-                            <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-200">
-                              {item.date_label}
-                            </span>
+                  {/* Biểu đồ đường cong (SVG): Đặt hàng (rêu nhạt) · Hoàn thành (cam nhạt) */}
+                  {(() => {
+                    const trend = stats?.revenueTrend || [];
+                    if (trend.length === 0) {
+                      return <p className="text-sm text-slate-400 py-16 text-center">Chưa có dữ liệu doanh thu.</p>;
+                    }
+                    const W = 720, H = 230, padL = 56, padR = 16, padT = 18, padB = 34;
+                    const maxRaw = Math.max(
+                      ...trend.map((r) => Math.max(Number(r.placed_revenue || 0), Number(r.daily_revenue || 0))),
+                      100000
+                    );
+                    const step = Math.pow(10, Math.floor(Math.log10(maxRaw)));
+                    const maxY = Math.ceil(maxRaw / step) * step;
+                    const x = (i: number) => padL + (trend.length === 1 ? (W - padL - padR) / 2 : (i * (W - padL - padR)) / (trend.length - 1));
+                    const y = (v: number) => padT + (1 - v / maxY) * (H - padT - padB);
+                    // Đường cong mượt (Catmull-Rom → Bézier), kẹp không vượt dưới trục 0
+                    const curve = (vals: number[]) => {
+                      const pts = vals.map((v, i) => [x(i), y(v)] as [number, number]);
+                      if (pts.length < 2) return `M${pts[0][0]},${pts[0][1]}`;
+                      let d = `M${pts[0][0]},${pts[0][1]}`;
+                      for (let i = 0; i < pts.length - 1; i++) {
+                        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+                        const c1 = [p1[0] + (p2[0] - p0[0]) / 6, Math.min(y(0), p1[1] + (p2[1] - p0[1]) / 6)];
+                        const c2 = [p2[0] - (p3[0] - p1[0]) / 6, Math.min(y(0), p2[1] - (p3[1] - p1[1]) / 6)];
+                        d += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
+                      }
+                      return d;
+                    };
+                    const placed = trend.map((r) => Number(r.placed_revenue || 0));
+                    const done = trend.map((r) => Number(r.daily_revenue || 0));
+                    const area = (vals: number[]) => `${curve(vals)} L${x(vals.length - 1)},${y(0)} L${x(0)},${y(0)} Z`;
+                    const shortVND = (v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}tr` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`);
+                    const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => t * maxY);
+                    const hi = trendHover;
+                    return (
+                      <div className="relative pt-2" onMouseLeave={() => setTrendHover(null)}>
+                        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Biểu đồ doanh thu 7 ngày">
+                          <defs>
+                            <linearGradient id="trendPlaced" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="var(--color-leaf-300)" stopOpacity="0.35" />
+                              <stop offset="100%" stopColor="var(--color-leaf-300)" stopOpacity="0" />
+                            </linearGradient>
+                            <linearGradient id="trendDone" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="var(--color-amber-300)" stopOpacity="0.35" />
+                              <stop offset="100%" stopColor="var(--color-amber-300)" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          {ticks.map((t, i) => (
+                            <g key={i}>
+                              <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="var(--color-ink-700)" strokeDasharray={i === 0 ? undefined : '3 5'} />
+                              <text x={padL - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--color-ink-300)">{shortVND(t)}</text>
+                            </g>
+                          ))}
+                          <path d={area(placed)} fill="url(#trendPlaced)" />
+                          <path d={area(done)} fill="url(#trendDone)" />
+                          <path d={curve(placed)} fill="none" stroke="var(--color-leaf-300)" strokeWidth="2.5" strokeLinecap="round" />
+                          <path d={curve(done)} fill="none" stroke="var(--color-amber-300)" strokeWidth="2.5" strokeLinecap="round" />
+                          {hi !== null && <line x1={x(hi)} x2={x(hi)} y1={padT} y2={y(0)} stroke="var(--color-ink-300)" strokeDasharray="2 4" />}
+                          {trend.map((item, i) => (
+                            <g key={i}>
+                              <circle cx={x(i)} cy={y(placed[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-leaf-300)" strokeWidth="2" />
+                              <circle cx={x(i)} cy={y(done[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-amber-300)" strokeWidth="2" />
+                              <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="11.5" fill={hi === i ? 'var(--color-ink-100)' : 'var(--color-ink-300)'}>{item.date_label}</text>
+                              <rect
+                                x={x(i) - (W - padL - padR) / Math.max(trend.length - 1, 1) / 2}
+                                y={padT}
+                                width={(W - padL - padR) / Math.max(trend.length - 1, 1)}
+                                height={H - padT}
+                                fill="transparent"
+                                onMouseEnter={() => setTrendHover(i)}
+                              />
+                            </g>
+                          ))}
+                        </svg>
+                        {hi !== null && trend[hi] && (
+                          <div
+                            className="absolute top-0 -translate-x-1/2 bg-slate-950 text-white text-[11px] py-1.5 px-2.5 rounded-lg shadow-xl border border-slate-700 pointer-events-none whitespace-nowrap z-30"
+                            style={{ left: `${(x(hi) / W) * 100}%` }}
+                          >
+                            <p className="text-slate-200 mb-0.5">{trend[hi].date_label}</p>
+                            <p className="text-leaf-300">Đặt hàng: {formatVND(trend[hi].placed_revenue || 0)} · {trend[hi].placed_count || 0} đơn</p>
+                            <p className="text-amber-300">Hoàn thành: {formatVND(trend[hi].daily_revenue)} · {trend[hi].order_count} đơn</p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Top Selling Products */}
@@ -3361,46 +3362,42 @@ export default function AdminPage() {
                         <Sparkles className="w-4 h-4 text-amber-400" />
                         <span>Sản Phẩm Bán Chạy</span>
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Top sản phẩm được ưa chuộng</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Doanh thu từng sản phẩm (đơn hoàn thành)</p>
                     </div>
                   </div>
 
-                  <div className="space-y-3 pt-1">
-                    {(stats?.topProducts && stats.topProducts.length > 0
-                      ? stats.topProducts
-                      : products.slice(0, 5)
-                    ).map((p: any, idx: number) => (
-                      <div
-                        key={p.id || idx}
-                        className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/40 border border-slate-800 hover:border-slate-700 transition-colors"
-                      >
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-800 relative shrink-0">
-                          {p.thumbnail ? (
-                            <Image
-                              src={p.thumbnail}
-                              alt={p.name}
-                              fill
-                              className="object-contain p-1"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-600">
-                              <Package className="w-4 h-4" />
+                  {(() => {
+                    const top = (stats?.topProducts || []).map((p: any) => ({
+                      ...p,
+                      revenue: Number(p.total_earned || 0),
+                      sold: Number(p.total_sold || 0),
+                    }));
+                    if (top.length === 0) {
+                      return <p className="text-sm text-slate-400 py-16 text-center">Chưa có đơn hoàn thành để tính doanh thu.</p>;
+                    }
+                    const maxRev = Math.max(...top.map((p) => p.revenue), 1);
+                    const shortVND = (v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}tr` : v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`);
+                    return (
+                      <div className="h-56 flex items-end justify-between gap-2 pt-6">
+                        {top.map((p, idx) => (
+                          <div key={p.id || idx} className="flex-1 min-w-0 h-full flex flex-col items-center justify-end gap-1.5 group relative">
+                            <div className="absolute -top-1 bg-slate-950 text-white text-[11px] py-1 px-2 rounded-md shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                              <p className="text-slate-200">{p.name?.split(/[,-]/)[0]?.trim()}</p>
+                              <p className="text-amber-300">{formatVND(p.revenue)} · {p.sold} chai</p>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-200 truncate font-mono" title={p.name}>{productCodeOf(p.id, p.sku, p.name)}</p>
-                          <p className="text-[12px] text-emerald-400">{formatVND(p.price)}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="px-2 py-0.5 rounded-md text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                            #{idx + 1}
-                          </span>
-                        </div>
+                            <span className="text-[11px] text-amber-300 tabular-nums">{shortVND(p.revenue)}</span>
+                            <div
+                              style={{ height: `${Math.max((p.revenue / maxRev) * 100, 4)}%` }}
+                              className={`w-full max-w-[44px] rounded-t-lg transition-all duration-300 ${idx === 0 ? 'bg-amber-300' : 'bg-leaf-300'} group-hover:opacity-90`}
+                            ></div>
+                            <span className="text-[11px] text-slate-200 font-mono truncate max-w-full" title={p.name}>
+                              {productCodeOf(p.id, p.sku, p.name)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
 
