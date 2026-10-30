@@ -607,13 +607,13 @@ function Combo01View() {
               className={cn(
                 'w-full sm:w-auto px-6 sm:px-8 py-3 rounded-2xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all shadow-md',
                 totalSelected === COMBO_01_TARGET
-                  ? 'bg-forest-800 text-white hover:bg-forest-900 active:scale-95 cursor-pointer shadow-forest-800/20'
+                  ? 'bg-corn text-text-dark hover:bg-amber-400 active:scale-95 cursor-pointer shadow-amber-500/20'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
               )}
             >
               {justAdded ? (
                 <>
-                  <Check className="w-4 h-4 text-white" />
+                  <Check className="w-4 h-4 text-text-dark" />
                   Đã thêm vào giỏ!
                 </>
               ) : (
@@ -746,7 +746,7 @@ function Combo02View() {
       {/* Header: Tiêu đề & Mức giá ưu đãi */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6 pb-2">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-sm mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-corn text-text-dark text-sm mb-2">
             <span>Ưu đãi nhánh vị • Tự do phối 10 chai</span>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl text-forest-950 font-heading tracking-tight">
@@ -865,7 +865,7 @@ function Combo02View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-brand-emerald text-white text-[12px]">
                 2. Bổ trợ • 3 chai
               </span>
               {currentStep === 2 && (
@@ -1018,7 +1018,7 @@ function Combo02View() {
           className={cn(
             'flex-1 py-2.5 px-3 rounded-xl text-sm sm:text-base transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer',
             currentStep === 2
-              ? 'bg-amber-600 text-white shadow-sm'
+              ? 'bg-brand-emerald text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900 bg-transparent'
           )}
         >
@@ -1072,7 +1072,7 @@ function Combo02View() {
             <span
               className={cn(
                 'text-sm px-2.5 py-0.5 rounded-full',
-                step1 ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                step1 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-chestnut-700'
               )}
             >
               {step1 ? '✓ Đã chọn 5 chai' : 'Bắt buộc chọn'}
@@ -1135,7 +1135,7 @@ function Combo02View() {
                         'px-4 py-3 rounded-xl text-sm transition-all cursor-pointer',
                         isSelected
                           ? 'bg-forest-800 text-white'
-                          : 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                          : 'bg-white text-forest-950 ring-1 ring-inset ring-forest-800 hover:bg-forest-50'
                       )}
                     >
                       {isSelected ? 'Đã chọn' : 'Chọn 5 chai'}
@@ -1151,7 +1151,7 @@ function Combo02View() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm sm:text-base flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-brand-emerald hover:bg-forest-800 text-white text-sm sm:text-base flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
                 <span>Chuyển sang Bước 2: Chọn 3 chai bổ trợ</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1199,7 +1199,7 @@ function Combo02View() {
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-600" />
+                <span className="w-2.5 h-2.5 rounded-full bg-brand-emerald" />
                 <h3 className="text-lg sm:text-xl text-text-dark font-heading">
                   2. Chọn 3 chai bổ trợ ({step1 === 'sua-bap-nep' ? 'Nhánh Thảo Mộc Thanh Mát' : 'Nhánh Sữa Hạt Mekong Xanh'})
                 </h3>
@@ -1211,7 +1211,7 @@ function Combo02View() {
             <span
               className={cn(
                 'text-sm px-2.5 py-0.5 rounded-full',
-                step2 ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-500'
+                step2 ? 'bg-amber-100 text-amber-800' : 'bg-amber-100 text-chestnut-700'
               )}
             >
               {step2 ? '✓ Đã chọn 3 chai' : 'Bắt buộc chọn'}
@@ -1273,8 +1273,8 @@ function Combo02View() {
                       className={cn(
                         'px-4 py-2 rounded-xl text-sm transition-all cursor-pointer',
                         isSelected
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-amber-100 text-amber-900 hover:bg-amber-200'
+                          ? 'bg-brand-emerald text-white'
+                          : 'bg-white text-forest-950 ring-1 ring-inset ring-forest-800 hover:bg-forest-50'
                       )}
                     >
                       {isSelected ? 'Đã chọn' : 'Chọn 3 chai'}
@@ -1327,7 +1327,7 @@ function Combo02View() {
             <span
               className={cn(
                 'text-sm px-2.5 py-0.5 rounded-full',
-                step3 ? 'bg-teal-100 text-teal-800' : 'bg-gray-100 text-gray-500'
+                step3 ? 'bg-teal-100 text-teal-800' : 'bg-amber-100 text-chestnut-700'
               )}
             >
               {step3 ? '✓ Đã chọn 2 chai' : 'Bắt buộc chọn'}
@@ -1390,7 +1390,7 @@ function Combo02View() {
                         'px-4 py-2 rounded-xl text-sm transition-all cursor-pointer',
                         isSelected
                           ? 'bg-teal-700 text-white'
-                          : 'bg-teal-50 text-teal-800 hover:bg-teal-100'
+                          : 'bg-white text-forest-950 ring-1 ring-inset ring-forest-800 hover:bg-forest-50'
                       )}
                     >
                       {isSelected ? 'Đã chọn' : 'Chọn 2 chai'}
@@ -1460,13 +1460,13 @@ function Combo02View() {
               className={cn(
                 'w-full sm:w-auto px-6 sm:px-8 py-3 rounded-2xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all shadow-md',
                 isComplete
-                  ? 'bg-gradient-to-r from-emerald-800 to-forest-800 text-white hover:opacity-95 active:scale-95 cursor-pointer shadow-emerald-700/20'
+                  ? 'bg-corn text-text-dark hover:bg-amber-400 active:scale-95 cursor-pointer shadow-amber-500/20'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
               )}
             >
               {justAdded ? (
                 <>
-                  <Check className="w-4 h-4 text-white" />
+                  <Check className="w-4 h-4 text-text-dark" />
                   Đã thêm Combo Khám Phá vào giỏ!
                 </>
               ) : (
@@ -1575,7 +1575,7 @@ function Combo05View() {
       {/* Header: Tiêu đề & Giá bán */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6 pb-2">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-sm mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-corn text-text-dark text-sm mb-2">
             <span>Ưu đãi siêu hời • Mua 15 Tặng 2</span>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl text-forest-950 font-heading tracking-tight">
@@ -1858,7 +1858,7 @@ function Combo05View() {
             <span
               className={cn(
                 'text-sm px-2.5 py-0.5 rounded-full',
-                prodA ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                prodA ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-chestnut-700'
               )}
             >
               {prodA ? '✓ Đã chọn 10 chai' : 'Bắt buộc chọn'}
@@ -1921,7 +1921,7 @@ function Combo05View() {
                         'px-3 py-1.5 rounded-xl text-sm transition-all cursor-pointer',
                         isSelected
                           ? 'bg-forest-800 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          : 'bg-white text-forest-950 ring-1 ring-inset ring-forest-800 hover:bg-forest-50'
                       )}
                     >
                       {isSelected ? 'Đã chọn' : 'Chọn 10 chai'}
@@ -1938,7 +1938,7 @@ function Combo05View() {
               <button
                 type="button"
                 onClick={() => setCurrentStep('B')}
-                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-ink-950 text-sm sm:text-base flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-corn hover:bg-amber-400 text-text-dark text-sm sm:text-base flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
                 <span>Chuyển sang Bước 2: Chọn sản phẩm B (Tặng 2 chai)</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1997,7 +1997,7 @@ function Combo05View() {
             <span
               className={cn(
                 'text-sm px-2.5 py-0.5 rounded-full',
-                prodB ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-500'
+                prodB ? 'bg-amber-100 text-amber-800' : 'bg-amber-100 text-chestnut-700'
               )}
             >
               {prodB ? '✓ Đã chọn 5 + 2 tặng' : 'Bắt buộc chọn'}
@@ -2146,13 +2146,13 @@ function Combo05View() {
               className={cn(
                 'w-full sm:w-auto px-6 sm:px-8 py-3 rounded-2xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all shadow-md',
                 isComplete
-                  ? 'bg-gradient-to-r from-amber-600 to-forest-800 text-white hover:opacity-95 active:scale-95 cursor-pointer shadow-emerald-700/20'
+                  ? 'bg-corn text-text-dark hover:bg-amber-400 active:scale-95 cursor-pointer shadow-amber-500/20'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
               )}
             >
               {justAdded ? (
                 <>
-                  <Check className="w-4 h-4 text-white" />
+                  <Check className="w-4 h-4 text-text-dark" />
                   Đã thêm Combo Siêu Hời vào giỏ!
                 </>
               ) : (
@@ -2289,7 +2289,7 @@ function Combo06View() {
       {/* Header: Tiêu đề & Mức giá ưu đãi */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6 pb-2">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-sm mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-corn text-text-dark text-sm mb-2">
             <span>Ưu đãi bậc thang • Càng mua nhiều giảm càng sâu</span>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl text-forest-950 font-heading tracking-tight">
@@ -2666,7 +2666,7 @@ function Combo06View() {
               className={cn(
                 'flex-1 py-2.5 px-3 rounded-xl text-sm sm:text-base transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer',
                 activeSlot === 3
-                  ? 'bg-amber-600 text-white shadow-sm'
+                  ? 'bg-brand-emerald text-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900 bg-transparent'
               )}
             >
@@ -2777,7 +2777,7 @@ function Combo06View() {
                       'px-3 py-1.5 rounded-xl text-sm transition-all cursor-pointer',
                       isSelectedForCombo
                         ? 'bg-forest-800 text-white'
-                        : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                        : 'bg-white text-forest-950 ring-1 ring-inset ring-forest-800 hover:bg-forest-50'
                     )}
                   >
                     {isSameFlavor
@@ -2847,11 +2847,11 @@ function Combo06View() {
             <button
               type="button"
               onClick={handleAddToCart}
-              className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-2xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all shadow-md bg-gradient-to-r from-emerald-800 to-forest-800 text-white hover:opacity-95 active:scale-95 cursor-pointer shadow-emerald-700/20"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-2xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all shadow-md bg-corn text-text-dark hover:bg-amber-400 active:scale-95 cursor-pointer shadow-amber-500/20"
             >
               {justAdded ? (
                 <>
-                  <Check className="w-4 h-4 text-white" />
+                  <Check className="w-4 h-4 text-text-dark" />
                   Đã thêm Combo Giảm Giá Bậc Thang vào giỏ!
                 </>
               ) : (
@@ -2942,15 +2942,15 @@ function ComboContent() {
             </div>
 
             {/* TABS CHỌN GIỮA COMBO 02, COMBO 05 VÀ COMBO 06 */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-gray-200/80 rounded-2xl max-w-4xl mb-8 shadow-inner">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-white border border-forest-100 rounded-2xl max-w-4xl mb-8 shadow-xs">
               <button
                 type="button"
                 onClick={() => setActiveTab('combo-02')}
                 className={cn(
                   'py-2.5 px-3 rounded-xl text-sm sm:text-base transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer leading-snug',
                   activeTab === 'combo-02'
-                    ? 'bg-white text-forest-950 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-brand-forest text-white shadow-sm'
+                    : 'text-forest-950 hover:bg-forest-50'
                 )}
               >
                 <span>Combo khám phá thức uống đa dạng, trải nghiệm hương vị mới gồm sữa hạt, nước giải khát và trà sữa, 10 chai đồ uống kết hợp.</span>
@@ -2962,8 +2962,8 @@ function ComboContent() {
                 className={cn(
                   'py-2.5 px-3 rounded-xl text-sm sm:text-base transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer leading-snug',
                   activeTab === 'combo-05'
-                    ? 'bg-white text-forest-950 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-brand-forest text-white shadow-sm'
+                    : 'text-forest-950 hover:bg-forest-50'
                 )}
               >
                 <span>Combo siêu hời tiết kiệm, tích trữ thông minh cho gia đình, 17 chai thức uống yêu thích.</span>
@@ -2975,8 +2975,8 @@ function ComboContent() {
                 className={cn(
                   'py-2.5 px-3 rounded-xl text-sm sm:text-base transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer leading-snug',
                   activeTab === 'combo-06'
-                    ? 'bg-white text-forest-950 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-brand-forest text-white shadow-sm'
+                    : 'text-forest-950 hover:bg-forest-50'
                 )}
               >
                 <span>Combo giảm giá bậc thang mua nhiều giảm sâu, tùy chọn hương vị theo sở thích của mình.</span>
