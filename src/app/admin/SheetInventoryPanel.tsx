@@ -231,7 +231,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
   if (!data) {
     return loading ? (
       <div className="rounded-2xl bg-slate-900/80 border border-slate-800 px-5 py-4 text-xs text-slate-400">
-        Đang nạp tồn kho từ Google Sheet...
+        Đang nạp tồn kho...
       </div>
     ) : null;
   }

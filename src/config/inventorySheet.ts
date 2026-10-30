@@ -3,7 +3,7 @@
  * Web CHỈ ĐỌC sheet (quyền xem), không bao giờ ghi ngược vào sheet.
  *
  * Biến môi trường (đều không bắt buộc):
- *   INVENTORY_SOURCE            'sheet' (mặc định) | 'manual' (quay về nhập tay trên web)
+ *   INVENTORY_SOURCE            'manual' (mặc định, admin nhập tay trên web) | 'sheet' (đọc tồn từ Google Sheet)
  *   INVENTORY_SHEET_ID          ID file Google Sheet
  *   INVENTORY_SHEET_TAB         Tên tab nguồn (mặc định 'INPUT DATA')
  *   INVENTORY_SHEET_CSV_URL     Link CSV tự chọn (ví dụ link "Xuất bản lên web"), ưu tiên hơn ID + tab
@@ -67,7 +67,10 @@ export const SHEET_LOT_PREFIX = 'SHEET-';
 /** Tên người thực hiện ghi vào nhật ký khi hệ thống tự đồng bộ */
 export const SHEET_SYNC_ACTOR = 'sheet-sync';
 
-/** true = tồn kho lấy từ Google Sheet; false = admin nhập tay như trước */
+/**
+ * true = tồn kho lấy từ Google Sheet; false = admin nhập tay số lượng trên web.
+ * Từ 30/10/2026 mặc định NHẬP TAY (không tự đọc sheet nữa); chỉ bật lại sheet khi đặt INVENTORY_SOURCE=sheet.
+ */
 export function isSheetInventoryMode(): boolean {
-  return (process.env.INVENTORY_SOURCE || 'sheet').trim().toLowerCase() !== 'manual';
+  return (process.env.INVENTORY_SOURCE || 'manual').trim().toLowerCase() === 'sheet';
 }
