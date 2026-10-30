@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { isOrderStatus } from '@/lib/order-status';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -240,6 +241,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Profit report error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

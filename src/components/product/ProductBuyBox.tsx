@@ -220,7 +220,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             disabled={!canAdd && stock.existingCartQty === 0}
             className={cn(
               'w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-all duration-200 motion-reduce:transition-none',
-              'bg-leaf-900 hover:bg-forest-800 text-white cursor-pointer',
+              'bg-brand-emerald hover:bg-forest-800 text-white cursor-pointer',
               'enabled:active:scale-[0.98]',
               'disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed'
             )}
@@ -248,7 +248,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
           <button
             type="button"
             onClick={onChangeBranch}
-            className="text-copper-600 hover:text-copper-800 underline underline-offset-2 font-medium cursor-pointer inline-flex items-center gap-0.5"
+            className="text-copper-700 hover:text-copper-800 underline underline-offset-2 font-medium cursor-pointer inline-flex items-center gap-0.5"
           >
             <MapPin className="w-3 h-3" aria-hidden />
             {isEn ? 'Change' : 'Đổi'}

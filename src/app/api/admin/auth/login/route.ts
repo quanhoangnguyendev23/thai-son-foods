@@ -3,6 +3,7 @@ import { query, initDatabase } from '@/lib/db';
 import { verifyPassword, signAdminToken, ADMIN_COOKIE_NAME, ADMIN_TOKEN_MAX_AGE_SECONDS } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/audit';
 import { checkRateLimit, recordFailedLogin, resetLoginRateLimit } from '@/lib/rateLimit';
+import { isCookieSecure, getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,8 @@ export async function POST(req: NextRequest) {
     await initDatabase();
     const body = await req.json();
     const { identifier, password } = body;
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined;
+    // IP đáng tin theo TRUSTED_PROXY_COUNT (không tin X-Forwarded-For do khách tự gửi)
+    const ip = getClientIp(req.headers) ?? undefined;
     const userAgent = req.headers.get('user-agent') || undefined;
 
     if (!identifier || typeof identifier !== 'string' || !identifier.trim()) {
@@ -30,7 +32,8 @@ export async function POST(req: NextRequest) {
 
     const cleanIdentifier = identifier.trim().toLowerCase();
     const ipKey = ip ? `ip:${ip}` : null;
-    const userKey = `user:${cleanIdentifier}`;
+    // Khóa theo cặp tài khoản + IP: kẻ phá không thể khóa chết tài khoản admin từ IP khác
+    const userKey = `admin:${cleanIdentifier}:${ip ?? UNKNOWN_CLIENT_IP}`;
 
     // 0. Kiểm tra Rate Limiting chống Brute-force
     const userLimit = checkRateLimit(userKey);
@@ -185,7 +188,7 @@ export async function POST(req: NextRequest) {
       name: ADMIN_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isCookieSecure(),
       sameSite: 'lax',
       path: '/',
       maxAge: ADMIN_TOKEN_MAX_AGE_SECONDS,

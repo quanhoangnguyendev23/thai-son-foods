@@ -32,10 +32,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Header/Footer biến thể Amazon CHỈ dùng cho trang chủ mới; mọi trang khác giữ Header/Footer gốc
   const useAmazonChrome = pathname === '/' && HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE;
-  // Trang chi tiết sản phẩm / combo dùng chung Header với trang chủ (Footer giữ nguyên)
-  const useAmazonHeader =
-    useAmazonChrome ||
-    (HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE && Boolean(pathname?.startsWith('/san-pham/') || pathname?.startsWith('/combo/')));
+  // Header mới dùng thống nhất cho MỌI trang khách (trang chủ, sản phẩm, giỏ hàng, thanh toán, tài khoản...).
+  // Footer mới vẫn chỉ ở trang chủ. Tắt cờ USE_AMAZON_HOMEPAGE → mọi trang quay về Header gốc.
+  const useAmazonHeader = HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE;
 
   return (
     <LanguageProvider>

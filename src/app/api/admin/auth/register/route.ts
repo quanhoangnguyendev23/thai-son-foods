@@ -3,14 +3,25 @@ import { query, initDatabase } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/audit';
 import { validateAdminPassword } from '@/lib/password-policy';
+import { checkRequestRateLimit } from '@/lib/rateLimit';
+import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 import crypto from 'node:crypto';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     await initDatabase();
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined;
+    const ip = getClientIp(req.headers) ?? undefined;
+    // Tối đa 5 lần / giờ / IP (chống dò ADMIN_REGISTER_KEY khi CSDL còn trống)
+    const regLimit = checkRequestRateLimit(`admin_register:ip:${ip ?? UNKNOWN_CLIENT_IP}`, 5, 60 * 60 * 1000);
+    if (regLimit.isBlocked) {
+      return NextResponse.json(
+        { success: false, error: 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau.', code: 'RATE_LIMITED' },
+        { status: 429 }
+      );
+    }
     const userAgent = req.headers.get('user-agent') || undefined;
 
     // Check total admins in database first
@@ -150,7 +161,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error in admin register API:', error);
     return NextResponse.json(
-      { success: false, error: 'Lỗi máy chủ khi đăng ký: ' + (error.message || 'Lỗi không xác định') },
+      { success: false, error: publicErrorMessage(error, 'Lỗi máy chủ khi đăng ký.') },
       { status: 500 }
     );
   }

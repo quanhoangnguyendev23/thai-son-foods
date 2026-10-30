@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS, getSafeAppOrigin } from '@/lib/auth';
 import { clearOAuthCookies, verifyOAuthCallback } from '@/lib/oauth';
+import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,7 +111,7 @@ export async function GET(req: NextRequest) {
       name: USER_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isCookieSecure(),
       sameSite: 'lax',
       path: '/',
       maxAge: TOKEN_EXPIRY_DAYS * 24 * 60 * 60,

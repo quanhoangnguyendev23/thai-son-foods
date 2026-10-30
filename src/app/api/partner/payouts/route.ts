@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { query, pool } from '@/lib/db';
 import { getPartnerSession } from '@/lib/partner/auth';
 import { PARTNER_CONFIG } from '@/config/partner';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error('[PartnerPayouts] Error fetching payouts:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -244,6 +245,6 @@ export async function POST(request: Request) {
     }
   } catch (error: any) {
     console.error('[PartnerPayouts] Error creating payout request:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi hệ thống') }, { status: 500 });
   }
 }

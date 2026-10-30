@@ -114,14 +114,20 @@ export function syncProductToStaticFile(data: ProductSyncPayload): boolean {
 
 function replaceFieldInBlock(block: string, fieldName: string, jsonValue: string): string {
   // 1. Quoted string: field: '...' or "..." or `...`
-  const strRegex = new RegExp(`(${fieldName}\\s*:\\s*)(?:'[^']*'|"[^"]*"|\`[^\`]*\`)`, 'g');
+  // Chuỗi có thể chứa ký tự thoát (\" \' \\) → khớp cả cặp \x thay vì dừng ở dấu nháy đầu tiên
+  // KHÔNG dùng cờ 'g': chỉ thay lần xuất hiện ĐẦU TIÊN = trường của sản phẩm. Trước đây thay toàn khối nên
+  // ghi đè luôn name/price/unit của từng quy cách (variants) bên dưới, làm hỏng dữ liệu (vd. lốc 7 chai thành 18.000đ).
+  const strRegex = new RegExp(
+    `(\\b${fieldName}\\s*:\\s*)(?:'(?:[^'\\\\]|\\\\.)*'|"(?:[^"\\\\]|\\\\.)*"|\`(?:[^\`\\\\]|\\\\.)*\`)`
+  );
+  // Dùng hàm thay thế: chuỗi thay thế dạng "$1..." sẽ hiểu sai các ký tự $&, $1... có trong tên/mô tả sản phẩm
   if (strRegex.test(block)) {
-    return block.replace(strRegex, `$1${jsonValue}`);
+    return block.replace(strRegex, (_m, prefix: string) => prefix + jsonValue);
   }
   // 2. Primitive (numbers, booleans)
-  const primitiveRegex = new RegExp(`(${fieldName}\\s*:\\s*)(?:true|false|\\d+)`, 'g');
+  const primitiveRegex = new RegExp(`(\\b${fieldName}\\s*:\\s*)(?:true|false|\\d+)`);
   if (primitiveRegex.test(block)) {
-    return block.replace(primitiveRegex, `$1${jsonValue}`);
+    return block.replace(primitiveRegex, (_m, prefix: string) => prefix + jsonValue);
   }
   return block;
 }

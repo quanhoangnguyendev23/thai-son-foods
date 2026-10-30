@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { trackReferralClick, signReferralCookie } from '@/lib/partner/referral';
 import { PARTNER_CONFIG } from '@/config/partner';
+import { getClientIp, UNKNOWN_CLIENT_IP, isCookieSecure } from '@/lib/runtimeConfig';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +15,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: 'Thiếu mã đối tác (ref)' }, { status: 400 });
     }
 
-    const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const ipAddress = getClientIp(request.headers) ?? UNKNOWN_CLIENT_IP;
     const userAgent = request.headers.get('user-agent') || null;
     const refererUrl = request.headers.get('referer') || null;
 
@@ -45,12 +47,12 @@ export async function GET(request: Request) {
       path: '/',
       maxAge: maxAgeSeconds,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: isCookieSecure(),
     });
 
     return response;
   } catch (error: any) {
     console.error('Error tracking referral click:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi hệ thống') }, { status: 500 });
   }
 }

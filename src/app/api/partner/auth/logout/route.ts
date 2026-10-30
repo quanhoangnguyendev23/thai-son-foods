@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { USER_COOKIE_NAME } from '@/lib/auth';
+import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export async function POST() {
     name: USER_COOKIE_NAME,
     value: '',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isCookieSecure(),
     sameSite: 'lax',
     path: '/',
     maxAge: 0,

@@ -3,6 +3,7 @@ import { pool } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission, getStoreScope, NO_STORE_SCOPE } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -202,6 +203,6 @@ export async function POST(
     });
   } catch (error: any) {
     console.error('[ConfirmPayment] Error confirming order payment:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi hệ thống') }, { status: 500 });
   }
 }

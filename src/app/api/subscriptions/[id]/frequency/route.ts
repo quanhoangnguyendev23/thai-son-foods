@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
 import { updateSubscriptionFrequency } from '@/lib/membership/repository';
 import { SubscriptionFrequency } from '@/types/membership';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     });
   } catch (error: any) {
     console.error('Error in update subscription frequency:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi cập nhật tần suất giao hàng.' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi cập nhật tần suất giao hàng.') }, { status: 500 });
   }
 }

@@ -210,7 +210,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               } flex flex-col gap-0.5 z-10`}
             >
               {product.isBestSeller && (
-                <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-leaf-900 text-white rounded shadow-xs">
+                <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-brand-emerald text-white rounded shadow-xs">
                   {bestSellerText}
                 </span>
               )}
@@ -251,7 +251,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               {undoPill}
               <button
                 onClick={handleAddToCart}
-                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center bg-leaf-900 text-white rounded-lg hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
+                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center bg-brand-emerald text-white rounded-lg hover:bg-brand-forest transition-colors active:scale-95 cursor-pointer shadow-xs"
                 aria-label={language === 'en' ? `Add ${fullName} (${defaultVariant.name}) to cart` : `Thêm ${fullName} (${defaultVariant.name}) vào giỏ hàng`}
                 title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
               >
@@ -302,7 +302,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               } flex flex-col gap-1 z-10`}
             >
               {product.isBestSeller && (
-                <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-leaf-900 text-white rounded sm:rounded-md shadow-xs">
+                <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
                   {bestSellerText}
                 </span>
               )}
@@ -343,7 +343,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               {undoPill}
               <button
                 onClick={handleAddToCart}
-                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-leaf-900 text-white rounded-lg sm:rounded-xl hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
+                className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-brand-emerald text-white rounded-lg sm:rounded-xl hover:bg-brand-forest transition-colors active:scale-95 cursor-pointer shadow-xs"
                 aria-label={language === 'en' ? `Add ${fullName} (${defaultVariant.name}) to cart` : `Thêm ${fullName} (${defaultVariant.name}) vào giỏ hàng`}
                 title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
               >
@@ -393,7 +393,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             } flex flex-col gap-1 z-10`}
           >
             {product.isBestSeller && (
-              <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-leaf-900 text-white rounded sm:rounded-md shadow-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
                 {bestSellerText}
               </span>
             )}
@@ -434,7 +434,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             {undoPill}
             <button
               onClick={handleAddToCart}
-              className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-leaf-900 text-white rounded-lg sm:rounded-xl hover:bg-leaf-900 transition-colors active:scale-95 cursor-pointer shadow-xs"
+              className="relative shrink-0 w-9 h-9 before:absolute before:-inset-1 before:content-[''] sm:before:hidden sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center bg-brand-emerald text-white rounded-lg sm:rounded-xl hover:bg-brand-forest transition-colors active:scale-95 cursor-pointer shadow-xs"
               aria-label={language === 'en' ? `Add ${fullName} (${defaultVariant.name}) to cart` : `Thêm ${fullName} (${defaultVariant.name}) vào giỏ hàng`}
               title={language === 'en' ? `Add ${packDisplayUnit}` : `Thêm ${packDisplayUnit}`}
             >

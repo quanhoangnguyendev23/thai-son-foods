@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { getComboStockDetails } from '@/lib/inventory';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('[Admin Combo Inventory Details API] Error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi lấy chi tiết tồn kho combo' },
+      { success: false, error: publicErrorMessage(error, 'Lỗi lấy chi tiết tồn kho combo') },
       { status: 500 }
     );
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { verifyPassword, signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS } from '@/lib/auth';
 import { checkRateLimit, recordFailedLogin, resetLoginRateLimit } from '@/lib/rateLimit';
+import { isCookieSecure, getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,10 +27,12 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || undefined;
+    // IP đáng tin theo TRUSTED_PROXY_COUNT (không tin X-Forwarded-For do khách tự gửi)
+    const ip = getClientIp(req.headers) ?? undefined;
 
     // 0. Rate Limiting chống Brute-force (5 lần sai / 15 phút)
-    const emailKey = `user:${cleanEmail}`;
+    // Khóa theo cặp email + IP: không ai khóa được tài khoản của người khác từ IP khác
+    const emailKey = `cust:${cleanEmail}:${ip ?? UNKNOWN_CLIENT_IP}`;
     const ipKey = ip ? `userip:${ip}` : null;
 
     const emailLimit = checkRateLimit(emailKey);
@@ -126,7 +129,7 @@ export async function POST(req: NextRequest) {
       name: USER_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isCookieSecure(),
       sameSite: 'lax',
       path: '/',
       maxAge: maxAgeSeconds,

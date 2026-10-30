@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getPartnerSession } from '@/lib/partner/auth';
 import { savePartnerDocument } from '@/lib/partner/storage';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('Error uploading partner document:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi khi tải tài liệu' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi khi tải tài liệu') }, { status: 500 });
   }
 }

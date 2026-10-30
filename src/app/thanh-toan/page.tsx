@@ -1382,7 +1382,7 @@ export default function CheckoutPage() {
                   </a>
                   <a
                     href="/api/auth/facebook?returnUrl=/thanh-toan"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] hover:bg-emerald-400 text-ink-950 text-sm rounded-xl transition-colors shadow-2xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] hover:bg-[#1877F2]/90 text-white text-sm rounded-xl transition-colors shadow-2xs"
                     title="Đăng nhập nhanh với Facebook"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

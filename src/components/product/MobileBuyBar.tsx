@@ -72,7 +72,7 @@ export default function MobileBuyBar({
               tabIndex={visible ? 0 : -1}
               onClick={onBuyNow}
               disabled={!canAdd}
-              className="h-11 px-5 rounded-full bg-leaf-900 hover:bg-leaf-900 text-white text-base cursor-pointer disabled:bg-gray-200 disabled:text-gray-500"
+              className="h-11 px-5 rounded-full bg-brand-emerald hover:bg-brand-forest text-white text-base cursor-pointer disabled:bg-gray-200 disabled:text-gray-500"
             >
               {isEn ? 'Buy now' : 'Mua ngay'}
             </button>

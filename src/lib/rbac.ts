@@ -139,10 +139,14 @@ export interface UserSessionPayload {
  * Hoàn toàn isomorphic, an toàn sử dụng cả ở Client lẫn Server.
  */
 export function hasPermission(
-  session: { role?: string | null } | null | undefined,
+  session: { role?: string | null; mustChangePassword?: boolean } | null | undefined,
   perm: Permission
 ): boolean {
   if (!session || !session.role) {
+    return false;
+  }
+  // Tài khoản đang bị bắt buộc đổi mật khẩu (theo CSDL, qua getAdminSession) chưa được dùng quyền quản trị nào
+  if (session.mustChangePassword === true) {
     return false;
   }
   const role = session.role as Role;

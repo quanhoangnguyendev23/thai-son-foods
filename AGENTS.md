@@ -50,3 +50,11 @@ Trước và sau mỗi lần chỉnh sửa:
 2. **Sau khi sửa:** Kiểm tra lại:
    - Các phân đoạn khác trên trang có bị dịch chuyển, đổi màu, đổi font hay mất nội dung không?
    - Dev server (`npm run dev`) có tiếp tục chạy mượt mà, không sinh lỗi biên dịch/TypeScript nào không?
+
+---
+
+## 5. BẢNG MÀU THƯƠNG HIỆU (BRAND COLORS) — KHÔNG ĐƯỢC TỰ Ý THAY ĐỔI
+- Chỉ dùng 7 màu chính thức của công ty: `#22544C` (forest, màu chính), `#236E45` (emerald), `#7CA250` (leaf), `#E09245` (amber), `#B56322` (copper), `#82422D` (chestnut), `#EE355C` (crimson).
+- Nguồn duy nhất khai báo màu: `src/app/brand-tokens.css`. Trong component chỉ dùng class/biến token, **không** viết mã HEX/rgb/hsl hay `bg-[#...]`.
+- **Không** thêm, bớt, đổi, pha hay tinh chỉnh màu; không dùng màu đen và màu tím. Chỉ đổi khi chủ dự án yêu cầu rõ ràng bằng mã HEX mới.
+- Chi tiết, ngoại lệ (logo Google/Facebook/Zalo) và lệnh kiểm tra: `.agents/rules/brand-colors.md`.

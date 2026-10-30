@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ADMIN_COOKIE_NAME, getAdminSession } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/audit';
+import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export async function POST() {
     name: ADMIN_COOKIE_NAME,
     value: '',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isCookieSecure(),
     sameSite: 'lax',
     path: '/',
     maxAge: 0,

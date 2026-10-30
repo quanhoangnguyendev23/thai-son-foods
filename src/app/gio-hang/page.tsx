@@ -26,6 +26,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { products } from '@/data/products';
 import { combos } from '@/data/combos';
 import { ENABLE_COMBOS } from '@/config/features';
+import { getShortProductName } from '@/lib/product-detail';
 import { useCartInventory } from '@/hooks/useCartInventory';
 
 const MIN_ORDER_THRESHOLD = 120000;
@@ -1122,7 +1123,7 @@ export default function CartPage() {
               </div>
 
               {/* Danh sách 12 món cuộn mượt mà có scrollbar tùy chỉnh */}
-              <div className="p-2.5 space-y-1.5 max-h-[440px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200/90 divide-y divide-gray-100/80">
+              <div className="px-2.5 py-1 max-h-[440px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200/90 divide-y divide-gray-100/80">
                 {activeImpulseTab === 'products'
                   ? shelfProducts.map((prod) => {
                       // Cộng số lượng của mọi quy cách (lốc) của sản phẩm này đang có trong giỏ
@@ -1131,27 +1132,24 @@ export default function CartPage() {
                         0
                       );
                       const isJustAdded = !!addedIds[prod.id];
-                      const isPoster =
-                        prod.thumbnail.includes('620x930') ||
-                        prod.thumbnail.includes('800x1200') ||
-                        prod.thumbnail.includes('lifestyle') ||
-                        prod.imageFit === 'cover';
                       const prodName = language === 'en' && prod.nameEn ? prod.nameEn : prod.name;
+                      // Tên ngắn cho kệ gợi ý (tên đầy đủ rất dài, để ở title khi rê chuột)
+                      const shelfName = getShortProductName(prod, language);
 
                       return (
                         <div
                           key={prod.id}
-                          className="flex items-center gap-3 group hover:bg-emerald-50/40 p-2 rounded-xl transition-colors"
+                          className="flex items-center gap-3 group hover:bg-emerald-50/40 py-2.5 px-1.5 rounded-lg transition-colors"
                         >
-                          {/* Ảnh sản phẩm vuông vắn bo góc */}
-                          <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                          {/* Ảnh sản phẩm theo đúng tỉ lệ ảnh gốc 4:3, phủ kín khung (không viền trắng) */}
+                          <div className="relative w-[84px] h-[63px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
                             {prod.thumbnail ? (
                             <Image
                               src={prod.thumbnail}
                               alt={prod.name}
                               fill
-                              sizes="72px"
-                              className={`${isPoster ? 'object-cover' : 'object-contain p-1'} transition-transform duration-200`}
+                              sizes="84px"
+                              className="object-cover transition-transform duration-200"
                             />
                             ) : null}
                             {prod.isBestSeller ? (
@@ -1179,13 +1177,13 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0 pr-1">
                             <Link
                               href={`/san-pham/${prod.slug}`}
-                              className="text-[14px] sm:text-[15px] text-gray-900 line-clamp-2 break-words group-hover:text-emerald-700 transition-colors leading-snug"
+                              className="block text-[14px] sm:text-[15px] text-gray-900 truncate group-hover:text-emerald-700 transition-colors leading-snug"
                               title={prodName}
                             >
-                              {prodName}
+                              {shelfName}
                             </Link>
                             <p className="text-[11px] text-gray-500 truncate mt-0.5">
-                              {prod.volume || '330ml'} • {language === 'en' ? 'Natural' : 'Tươi mát'}
+                              {prod.volume || '330ml'} • ~{formatPrice(prod.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                             </p>
                             {(() => {
                               const minVariant = (prod.variants && prod.variants.length > 0)
@@ -1214,9 +1212,6 @@ export default function CartPage() {
                                       /{packLabel}
                                     </span>
                                   </div>
-                                  <span className="text-[11px] text-gray-500">
-                                    ~{formatPrice(prod.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
-                                  </span>
                                 </div>
                               );
                             })()}

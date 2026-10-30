@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ export async function GET() {
     return NextResponse.json({ success: true, data: res.rows });
   } catch (error: any) {
     console.error('Error fetching categories:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: created });
   } catch (error: any) {
     console.error('Error creating category:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -151,7 +152,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
     console.error('Error updating category:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -207,6 +208,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true, message: 'Đã xóa danh mục thành công' });
   } catch (error: any) {
     console.error('Error deleting category:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

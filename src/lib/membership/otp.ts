@@ -34,7 +34,12 @@ export function generateCustomerOtp(phone: string): { success: boolean; code?: s
   });
 
   const maskedPhone = cleanPhone.slice(0, 3) + '****' + cleanPhone.slice(-3);
-  console.log(`[CustomerOtp] Đã gửi mã xác thực tới ${maskedPhone}: [${code}] (Hết hạn sau 5 phút)`);
+  // Không ghi mã OTP ra log ở production (log máy chủ không được chứa mã đăng nhập)
+  console.log(
+    `[CustomerOtp] Đã gửi mã xác thực tới ${maskedPhone}` +
+      (process.env.NODE_ENV === 'production' ? '' : `: [${code}]`) +
+      ' (Hết hạn sau 5 phút)'
+  );
 
   return { success: true, code };
 }
@@ -63,7 +68,9 @@ export function verifyCustomerOtp(phone: string, inputCode: string): { success: 
     return { success: false, error: 'Bạn đã nhập sai quá 5 lần. Vui lòng gửi lại mã mới.' };
   }
 
-  if (entry.code !== inputCode.trim() && inputCode.trim() !== '123456') {
+  // Mã thử 123456 CHỈ dùng ngoài production (giống OTP đối tác); production luôn so đúng mã đã sinh
+  const isDevMasterCode = process.env.NODE_ENV !== 'production' && inputCode.trim() === '123456';
+  if (entry.code !== inputCode.trim() && !isDevMasterCode) {
     entry.attempts += 1;
     return { success: false, error: `Mã OTP không chính xác (còn ${OTP_MAX_ATTEMPTS - entry.attempts} lần thử).` };
   }

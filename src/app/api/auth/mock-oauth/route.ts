@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 import { signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS, getSafeAppOrigin } from '@/lib/auth';
 import { sanitizeReturnUrl } from '@/lib/oauth';
+import { isCookieSecure } from '@/lib/runtimeConfig';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +41,7 @@ export async function GET(req: NextRequest) {
         body {
           font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
           background: #FAF7F0;
-          color: #315B56;
+          color: #2E5E56;
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -49,7 +51,7 @@ export async function GET(req: NextRequest) {
         .card {
           background: #fff;
           border-radius: 24px;
-          border: 1px solid #DEE7E6;
+          border: 1px solid #DFE6E5;
           box-shadow: 0 10px 25px -5px rgba(34,84,76,0.05);
           width: 100%;
           max-width: 480px;
@@ -66,8 +68,8 @@ export async function GET(req: NextRequest) {
           justify-content: center;
           margin-bottom: 16px;
         }
-        h1 { font-size: 22px; font-weight: 400; color: #27534D; margin-bottom: 8px; }
-        p.subtitle { font-size: 13px; color: #6F908C; margin-bottom: 24px; line-height: 1.5; }
+        h1 { font-size: 22px; font-weight: 400; color: #22544C; margin-bottom: 8px; }
+        p.subtitle { font-size: 13px; color: #70908B; margin-bottom: 24px; line-height: 1.5; }
         .btn-quick {
           display: block;
           width: 100%;
@@ -82,13 +84,13 @@ export async function GET(req: NextRequest) {
           transition: background 0.2s;
           margin-bottom: 16px;
         }
-        .btn-quick:hover { background: #1F5048; }
+        .btn-quick:hover { background: #22544C; }
         .divider {
           display: flex;
           align-items: center;
           text-align: center;
           margin: 20px 0;
-          color: #98AEAB;
+          color: #97AFAB;
           font-size: 12px;
           font-weight: 400;
           text-transform: uppercase;
@@ -96,16 +98,16 @@ export async function GET(req: NextRequest) {
         .divider::before, .divider::after {
           content: '';
           flex: 1;
-          border-bottom: 1px solid #DEE7E6;
+          border-bottom: 1px solid #DFE6E5;
         }
         .divider::before { margin-right: 12px; }
         .divider::after { margin-left: 12px; }
         .form-group { text-align: left; margin-bottom: 14px; }
-        label { display: block; font-size: 14px; font-weight: 400; color: #40645F; margin-bottom: 6px; }
+        label { display: block; font-size: 14px; font-weight: 400; color: #3B6760; margin-bottom: 6px; }
         input {
           width: 100%;
           padding: 11px 14px;
-          border: 1px solid #DEE7E6;
+          border: 1px solid #DFE6E5;
           border-radius: 12px;
           font-size: 13px;
           outline: none;
@@ -115,8 +117,8 @@ export async function GET(req: NextRequest) {
           display: block;
           width: 100%;
           background: #fff;
-          color: #315B56;
-          border: 1.5px solid #DEE7E6;
+          color: #2E5E56;
+          border: 1.5px solid #DFE6E5;
           font-size: 15px;
           font-weight: 400;
           padding: 12px;
@@ -124,27 +126,27 @@ export async function GET(req: NextRequest) {
           cursor: pointer;
           transition: all 0.2s;
         }
-        .btn-custom:hover { background: #F0F5F2; border-color: #C5D3D1; }
+        .btn-custom:hover { background: #F0F5F2; border-color: #C6D3D1; }
         .info-box {
           margin-top: 24px;
           background: #F0F5F2;
-          border: 1px dashed #C5D3D1;
+          border: 1px dashed #C6D3D1;
           border-radius: 12px;
           padding: 12px 14px;
           text-align: left;
           font-size: 11px;
-          color: #6F908C;
+          color: #70908B;
           line-height: 1.5;
         }
         .info-box code {
-          background: #EEF3F3;
-          color: #C3183C;
+          background: #EFF3F2;
+          color: #EE355C;
           padding: 2px 4px;
           border-radius: 4px;
           font-family: monospace;
           font-size: 11px;
         }
-        a.cancel { display: inline-block; margin-top: 16px; font-size: 12px; color: #6F908C; text-decoration: none; }
+        a.cancel { display: inline-block; margin-top: 16px; font-size: 12px; color: #70908B; text-decoration: none; }
         a.cancel:hover { text-decoration: underline; }
       </style>
     </head>
@@ -281,7 +283,7 @@ export async function POST(req: NextRequest) {
       name: USER_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: (process.env.NODE_ENV as string) === 'production',
+      secure: isCookieSecure(),
       sameSite: 'lax',
       path: '/',
       maxAge: maxAgeSeconds,
@@ -290,6 +292,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error: any) {
     console.error('Mock OAuth error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: publicErrorMessage(error) }, { status: 500 });
   }
 }

@@ -12,6 +12,7 @@ import {
   InsufficientStockError,
 } from '@/lib/inventory';
 import { INVENTORY_CONFIG } from '@/config/inventory';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -277,6 +278,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: any) {
     console.error('Error transferring order store:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

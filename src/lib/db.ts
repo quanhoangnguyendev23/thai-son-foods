@@ -8,7 +8,9 @@ const isRemoteUrl = Boolean(
   !rawDbUrl.includes('localhost')
 );
 
-const poolMax = parseInt(process.env.DB_POOL_MAX || '20', 10);
+// Trên Vercel mỗi instance serverless mở pool riêng → mặc định chỉ 3 kết nối/instance để không cạn kết nối Postgres.
+// DATABASE_URL trên Vercel phải là chuỗi pooler (xem DEPLOY.md). Đặt DB_POOL_MAX để ghi đè.
+const poolMax = parseInt(process.env.DB_POOL_MAX || (process.env.VERCEL ? '3' : '20'), 10);
 
 export const pool = new Pool(
   rawDbUrl

@@ -6,6 +6,10 @@ import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area'
 import { sendOrderEmail } from '@/lib/email/service';
 import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
+import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
+
+/** Số dòng sản phẩm tối đa trong 1 đơn (sau đó mới gộp dòng trùng) */
+const MAX_ORDER_LINES = 50;
 
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>?/gm, '').trim();
@@ -104,8 +108,18 @@ export async function POST(request: Request) {
 
     // 5. Chuẩn hóa danh sách sản phẩm
     const rawItems = Array.isArray(body.items) ? body.items : [];
+    // Giỏ hàng phải có 1–50 dòng: chặn đơn rỗng và mảng items khổng lồ làm nghẽn giao dịch đặt hàng
+    if (rawItems.length === 0) {
+      return NextResponse.json({ success: false, error: 'Giỏ hàng trống, vui lòng chọn sản phẩm.' }, { status: 400 });
+    }
+    if (rawItems.length > MAX_ORDER_LINES) {
+      return NextResponse.json(
+        { success: false, error: `Mỗi đơn hàng tối đa ${MAX_ORDER_LINES} dòng sản phẩm. Vui lòng gộp hoặc tách đơn.` },
+        { status: 400 }
+      );
+    }
     let itemsCalculatedSubtotal = 0;
-    const normalizedItems = rawItems.map((item: any) => {
+    const parsedItems = rawItems.map((item: any) => {
       const name = (item.name || item.productName || item.title || 'Sản phẩm').toString();
       const price = Math.round(Number(item.price) || 0);
       const quantity = Math.max(1, Math.round(Number(item.quantity) || 1));
@@ -122,6 +136,20 @@ export async function POST(request: Request) {
         thumbnail,
       };
     });
+    // Gộp các dòng trùng productId (productId đã gồm quy cách, vd "<id>-<variantId>") thành 1 dòng cộng số lượng
+    const normalizedItems: typeof parsedItems = [];
+    const lineByProduct = new Map<string, (typeof parsedItems)[number]>();
+    for (const it of parsedItems) {
+      const key = it.productId ? String(it.productId) : null;
+      const existing = key ? lineByProduct.get(key) : undefined;
+      if (existing) {
+        existing.quantity += it.quantity;
+      } else {
+        const line = { ...it };
+        normalizedItems.push(line);
+        if (key) lineByProduct.set(key, line);
+      }
+    }
 
     const subtotal = Math.round(
       Number(body.subtotal ?? (body.totalAmount ?? itemsCalculatedSubtotal)) || 0
@@ -238,15 +266,26 @@ export async function POST(request: Request) {
       }
 
       if (targetStoreCode) {
+        // Chi nhánh khách chọn phải tồn tại, đang hoạt động và thuộc khu vực phục vụ (TP.HCM)
         const storeRes = await client.query(
-          `SELECT code, name, address, latitude, longitude FROM stores WHERE code = $1 LIMIT 1;`,
+          `SELECT code, name, address, latitude, longitude FROM stores s
+            WHERE s.code = $1 AND s.is_active = true AND ${hcmStoreSql('s')} LIMIT 1;`,
           [targetStoreCode]
         );
-        if (storeRes.rows.length > 0) {
-          if (!targetStoreAddress) targetStoreAddress = storeRes.rows[0].address;
-          targetStoreLat = storeRes.rows[0].latitude ? Number(storeRes.rows[0].latitude) : null;
-          targetStoreLng = storeRes.rows[0].longitude ? Number(storeRes.rows[0].longitude) : null;
+        if (storeRes.rows.length === 0) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Chi nhánh đã chọn không còn phục vụ. Vui lòng chọn lại chi nhánh giao hàng.',
+              code: 'INVALID_STORE',
+            },
+            { status: 400 }
+          );
         }
+        targetStoreCode = storeRes.rows[0].code;
+        if (!targetStoreAddress) targetStoreAddress = storeRes.rows[0].address;
+        targetStoreLat = storeRes.rows[0].latitude ? Number(storeRes.rows[0].latitude) : null;
+        targetStoreLng = storeRes.rows[0].longitude ? Number(storeRes.rows[0].longitude) : null;
       } else {
         const allStoresRes = await client.query(
           `SELECT code, name, address, latitude, longitude FROM stores s WHERE s.is_active = true AND ${hcmStoreSql('s')} ORDER BY code ASC;`
@@ -933,7 +972,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Kiểm tra Rate Limiting (10 req/phút/IP và chống brute force dò theo mã đơn)
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+    const ip = getClientIp(request.headers) ?? UNKNOWN_CLIENT_IP;
     const ipRate = checkRequestRateLimit(`track:ip:${ip}`, 10, 60 * 1000);
     if (ipRate.isBlocked) {
       return NextResponse.json(

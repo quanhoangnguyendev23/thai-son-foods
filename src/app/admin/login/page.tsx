@@ -112,7 +112,7 @@ function AdminLoginForm() {
             color: #e0ebe5;
           }
           :where(.admin-theme) .to-teal-400 {
-            --tw-gradient-to: #dee7e6;
+            --tw-gradient-to: #DFE6E5;
           }
           :where(.admin-theme) .border-slate-800 {
             border-color: #7ca250;
@@ -170,10 +170,13 @@ function AdminLoginForm() {
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Xác thực Quản trị viên</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
-              <Database className="w-3 h-3 text-emerald-400" />
-              <span>PostgreSQL: WebTSF</span>
-            </div>
+            {/* Tên CSDL chỉ hiện trên máy phát triển */}
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
+                <Database className="w-3 h-3 text-emerald-400" />
+                <span>PostgreSQL: WebTSF</span>
+              </div>
+            )}
           </div>
 
           {/* Error & Success Messages */}

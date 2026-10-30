@@ -119,7 +119,7 @@ export default function AdminPayoutsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans p-4 sm:p-6 lg:p-8">
+    <div className="admin-light min-h-screen bg-slate-100 text-slate-800 font-sans p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">

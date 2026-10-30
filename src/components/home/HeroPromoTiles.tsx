@@ -16,7 +16,7 @@ interface HeroPromoTilesProps {
 }
 
 // Hai tông nền xen kẽ, đều đủ tương phản với chữ trắng
-const TILE_BG = ['bg-green-dark', 'bg-leaf-900'];
+const TILE_BG = ['bg-green-dark', 'bg-brand-emerald'];
 
 function TileImage({ tile }: { tile: Banner }) {
   const [src, setSrc] = useState(tile.image || MISSING_PRODUCT_IMAGE);
@@ -66,7 +66,8 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
             href={tile.link || '/#san-pham'}
             className={cn(
               'group relative flex overflow-hidden rounded-2xl text-white shadow-xs',
-              'snap-start shrink-0 w-[82%] h-[112px] sm:w-[calc(50%-8px)] sm:h-[132px]',
+              // Chiều cao tối thiểu (không cố định) để tiêu đề 2 dòng + dòng phụ + CTA không bị cắt trên điện thoại
+              'snap-start shrink-0 w-[82%] min-h-[112px] sm:w-[calc(50%-8px)] sm:min-h-[132px]',
               'lg:w-auto lg:h-auto lg:flex-1 lg:min-h-0',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-corn focus-visible:ring-offset-2 focus-visible:ring-offset-ivory-dark',
               TILE_BG[i % TILE_BG.length]
@@ -79,7 +80,7 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
                 aria-hidden
                 className={cn(
                   'absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r to-transparent',
-                  i % 2 === 0 ? 'from-green-dark' : 'from-leaf-900'
+                  i % 2 === 0 ? 'from-green-dark' : 'from-brand-emerald'
                 )}
               />
             </div>
@@ -96,7 +97,7 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
                 </p>
               )}
               {subtitle && <p className="text-[13px] text-white/85 leading-snug line-clamp-1">{subtitle}</p>}
-              <span className="mt-0.5 inline-flex items-center gap-1 text-[14px] text-corn group-hover:underline">
+              <span className="mt-0.5 inline-flex items-center gap-1 text-[14px] text-amber-200 group-hover:underline">
                 {cta}
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden />
               </span>

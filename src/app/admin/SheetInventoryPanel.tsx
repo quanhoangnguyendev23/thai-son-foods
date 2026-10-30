@@ -2,6 +2,22 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { products as catalogProducts } from '@/data/products';
+import { getShortProductName } from '@/lib/product-detail';
+
+/** Ngưỡng cảnh báo: bán được ≤ LOW_STOCK là "sắp hết"; lô còn ≤ EXPIRING_DAYS ngày là "sắp hết hạn" */
+const LOW_STOCK = 5;
+const EXPIRING_DAYS = 5;
+
+type RowFilter = 'all' | 'low' | 'expiring' | 'stopped';
+
+/** Tên ngắn để bảng gọn (tên đầy đủ hiện khi rê chuột) */
+function shortName(productId: string, sku: string | null, fullName: string): string {
+  const p = catalogProducts.find((x) => x.id === productId || (sku && x.sku === sku));
+  if (p) return getShortProductName(p, 'vi');
+  const first = fullName.split(/\s[-–]\s|[,.]/)[0].trim();
+  return first.length > 42 ? `${first.slice(0, 40)}…` : first;
+}
 
 /**
  * Khung "Nguồn tồn kho: Google Sheet" ở tab Tồn kho của trang quản trị.
@@ -119,6 +135,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
   const [busyProduct, setBusyProduct] = useState<string | null>(null);
   const [stopForm, setStopForm] = useState<{ productId: string; reason: string } | null>(null);
   const [showWarnings, setShowWarnings] = useState(false);
+  const [filter, setFilter] = useState<RowFilter>('all');
   const [now, setNow] = useState(() => Date.now());
   const reqSeq = useRef(0);
 
@@ -225,6 +242,26 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
   const summary = status?.summary || null;
   const issueCount = (summary?.warningCount || 0) + (summary?.unmappedStores.length || 0) + (summary?.unmappedProducts.length || 0);
 
+  // Số liệu tổng quan + bộ lọc nhanh
+  const isLow = (r: SheetRow) => !r.stopped && r.available <= LOW_STOCK;
+  const isExpiring = (r: SheetRow) => r.lots.some((l) => !l.expired && l.daysLeft <= EXPIRING_DAYS) || r.expiredQty > 0;
+  const counts = {
+    all: rows.length,
+    low: rows.filter(isLow).length,
+    expiring: rows.filter(isExpiring).length,
+    stopped: rows.filter((r) => r.stopped).length,
+  };
+  const totalAvailable = rows.reduce((s, r) => s + (r.stopped ? 0 : r.available), 0);
+  const totalReserved = rows.reduce((s, r) => s + r.reserved, 0);
+  const visibleRows =
+    filter === 'low' ? rows.filter(isLow) : filter === 'expiring' ? rows.filter(isExpiring) : filter === 'stopped' ? rows.filter((r) => r.stopped) : rows;
+  const filterTabs: { key: RowFilter; label: string; tone: string }[] = [
+    { key: 'all', label: 'Tất cả', tone: 'text-slate-200' },
+    { key: 'low', label: `Sắp hết (≤${LOW_STOCK})`, tone: 'text-amber-300' },
+    { key: 'expiring', label: `Lô sắp hết hạn (≤${EXPIRING_DAYS} ngày)`, tone: 'text-rose-300' },
+    { key: 'stopped', label: 'Tạm hết hàng', tone: 'text-slate-300' },
+  ];
+
   return (
     <section className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-xl">
       {/* Đầu khung */}
@@ -297,49 +334,75 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
         </div>
       )}
 
-      {/* Bảng tồn theo lô */}
+      {/* Tổng quan nhanh + bộ lọc */}
+      <div className="px-5 py-3 border-b border-slate-800 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[12px] text-slate-400">
+          <span>
+            <span className="text-slate-100 text-base tabular-nums">{rows.length}</span> mặt hàng
+          </span>
+          <span>
+            Bán được <span className="text-emerald-300 text-base tabular-nums">{totalAvailable.toLocaleString('vi-VN')}</span> chai
+          </span>
+          <span>
+            Đang giữ cho đơn <span className="text-slate-100 text-base tabular-nums">{totalReserved.toLocaleString('vi-VN')}</span> chai
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Lọc mặt hàng">
+          {filterTabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={filter === t.key}
+              onClick={() => setFilter(t.key)}
+              className={`px-3 py-1.5 rounded-lg text-[12px] border transition-colors cursor-pointer ${
+                filter === t.key ? 'bg-slate-700 border-slate-600 text-white' : `bg-slate-950/40 border-slate-800 hover:bg-slate-800 ${t.tone}`
+              }`}
+            >
+              {t.label} <span className="tabular-nums opacity-80">({counts[t.key]})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bảng tồn theo lô: 1 dòng / mặt hàng, số căn phải để dễ so */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+          <thead className="bg-slate-950/60 text-slate-400 text-[11px] border-b border-slate-800">
             <tr>
-              <th className="py-3 px-4">Sản phẩm</th>
-              <th className="py-3 px-3 text-center">Nhập hàng hôm nay</th>
-              <th className="py-3 px-3">Lô theo hạn dùng (số chai)</th>
-              <th className="py-3 px-3 text-center">Tồn còn hạn</th>
-              <th className="py-3 px-3 text-center">Đang giữ</th>
-              <th className="py-3 px-3 text-center">Bán được</th>
-              <th className="py-3 px-4 text-right">Thao tác</th>
+              <th className="py-2.5 px-4 font-normal">Sản phẩm</th>
+              <th className="py-2.5 px-3 font-normal">Lô theo hạn dùng · số chai</th>
+              <th className="py-2.5 px-3 font-normal text-right">Tồn còn hạn</th>
+              <th className="py-2.5 px-3 font-normal text-right">Đang giữ</th>
+              <th className="py-2.5 px-3 font-normal text-right">Bán được</th>
+              <th className="py-2.5 px-4 font-normal text-right w-[140px]">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {rows.map((r) => {
+            {visibleRows.map((r) => {
               const isBusy = busyProduct === r.productId;
               const formOpen = stopForm?.productId === r.productId;
+              // Admin chỉ cần MÃ SP; tên đầy đủ để ở tooltip
+              const name = r.spCode || (r.sku ? r.sku.replace(/-\d+$/, '') : shortName(r.productId, r.sku, r.productName));
               return (
                 <React.Fragment key={r.productId}>
-                  <tr className="hover:bg-slate-800/40 transition-colors align-top">
-                    <td className="py-3 px-4">
-                      <p className="text-white text-sm">{r.productName}</p>
-                      <p className="text-[11px] font-mono text-slate-400">
-                        Mã sheet: <span className="text-amber-400 text-[1.125em]">{r.spCode}</span>
+                  <tr className={`hover:bg-slate-800/40 transition-colors ${r.stopped ? 'opacity-70' : ''}`}>
+                    <td className="py-2.5 px-4 min-w-[220px]">
+                      <p className="text-white text-[13.5px] truncate max-w-[340px]" title={r.productName}>
+                        {name}
+                      </p>
+                      <p className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                        {r.nh === 1 && (
+                          <span className="inline-flex items-center gap-1 text-emerald-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden />
+                            Đã nhập hôm nay
+                          </span>
+                        )}
+                        {r.nh === 0 && <span className="text-slate-500">Chưa nhập hôm nay</span>}
                       </p>
                     </td>
 
-                    <td className="py-3 px-3 text-center">
-                      {r.nh === 1 ? (
-                        <span className="inline-block px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-                          Đã nhập hàng
-                        </span>
-                      ) : r.nh === 0 ? (
-                        <span className="inline-block px-2.5 py-1 rounded-full text-[11px] bg-slate-800 text-slate-400 border border-slate-700">
-                          Chưa nhập
-                        </span>
-                      ) : (
-                        <span className="text-slate-600">—</span>
-                      )}
-                    </td>
-
-                    <td className="py-3 px-3">
+                    <td className="py-2.5 px-3">
                       {r.lots.length === 0 ? (
                         <span className="text-slate-500">Không có lô nào</span>
                       ) : (
@@ -349,83 +412,59 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                               ? 'bg-rose-500/15 text-rose-300 border-rose-500/30 line-through'
                               : l.daysLeft <= 2
                                 ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
-                                : l.daysLeft <= 5
+                                : l.daysLeft <= EXPIRING_DAYS
                                   ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                                  : 'bg-slate-950 text-slate-200 border-slate-700';
+                                  : 'bg-slate-950/60 text-slate-300 border-slate-800';
+                            const warn = l.expired ? 'hết hạn' : l.daysLeft <= EXPIRING_DAYS ? `còn ${l.daysLeft} ngày` : '';
                             return (
                               <span
                                 key={`${l.nsx}-${l.hsd}`}
-                                className={`inline-flex flex-col px-2 py-1 rounded-lg border font-mono text-[11px] leading-tight ${tone}`}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[11.5px] whitespace-nowrap tabular-nums ${tone}`}
                                 title={`Sản xuất ${fmtDay(l.nsx)} · hạn dùng ${fmtDay(l.hsd)}${l.expired ? ' · đã hết hạn, không bán' : ` · còn ${l.daysLeft} ngày`}`}
                               >
-                                <span>
-                                  HSD {fmtDay(l.hsd)} · <span className="text-[1.125em]">{l.qty}</span>
-                                </span>
-                                <span className="text-[10px] opacity-70">
-                                  {l.expired ? 'hết hạn' : l.daysLeft === 0 ? 'hết hạn hôm nay' : `còn ${l.daysLeft} ngày`}
-                                </span>
+                                <span className="opacity-70">{fmtDay(l.hsd)}</span>
+                                <span className="text-slate-100">{l.qty}</span>
+                                {warn && <span className="text-[10.5px]">· {warn}</span>}
                               </span>
                             );
                           })}
                         </div>
                       )}
                       {r.expiredQty > 0 && (
-                        <p className="text-[11px] text-rose-300 mt-1">{r.expiredQty} chai đã hết hạn, không tính vào tồn bán được.</p>
+                        <p className="text-[11px] text-rose-300 mt-1">{r.expiredQty} chai hết hạn, không tính vào bán được.</p>
                       )}
                     </td>
 
-                    <td className="py-3 px-3 text-center">
-                      <span className="inline-block px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-slate-200 text-sm">
-                        {r.sellableFromSheet}
-                      </span>
+                    <td className="py-2.5 px-3 text-right tabular-nums text-[13.5px] text-slate-300">{r.sellableFromSheet}</td>
+
+                    <td className={`py-2.5 px-3 text-right tabular-nums text-[13.5px] ${r.reserved > 0 ? 'text-amber-300' : 'text-slate-600'}`}>
+                      {r.reserved}
                     </td>
 
-                    <td className="py-3 px-3 text-center">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-xl font-mono text-sm border ${
-                          r.reserved > 0
-                            ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                            : 'bg-slate-950/60 text-slate-500 border-slate-800'
-                        }`}
-                      >
-                        {r.reserved}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-3 text-center">
+                    <td className="py-2.5 px-3 text-right">
                       {r.stopped ? (
-                        <span className="inline-block px-2.5 py-1 rounded-full text-[11px] bg-rose-500/10 text-rose-300 border border-rose-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded-md text-[11px] bg-rose-500/10 text-rose-300 border border-rose-500/30" title={[r.stopReason, r.stopBy && `bởi ${r.stopBy} lúc ${fmtTime(r.stopAt)}`].filter(Boolean).join(' · ')}>
                           Tạm hết hàng
                         </span>
                       ) : (
                         <span
-                          className={`inline-block px-3 py-1 rounded-xl font-mono text-sm border ${
-                            r.available === 0
-                              ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
-                              : r.available <= 5
-                                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                                : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                          className={`tabular-nums text-[15px] ${
+                            r.available === 0 ? 'text-rose-400' : r.available <= LOW_STOCK ? 'text-amber-300' : 'text-emerald-300'
                           }`}
                         >
                           {r.available}
                         </span>
                       )}
-                      {r.stopped && r.stopReason && <p className="text-[10px] text-slate-500 mt-1 max-w-[160px] mx-auto">{r.stopReason}</p>}
-                      {r.stopped && r.stopBy && (
-                        <p className="text-[10px] text-slate-500">
-                          bởi {r.stopBy} lúc {fmtTime(r.stopAt)}
-                        </p>
-                      )}
                     </td>
 
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                    <td className="py-2.5 px-4 text-right whitespace-nowrap">
                       {canUpdate ? (
                         r.stopped ? (
                           <button
                             type="button"
                             disabled={isBusy}
                             onClick={() => handleStopSale(r.productId, false)}
-                            className="px-3 py-1.5 rounded-xl text-xs bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white transition-all cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-[12px] bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white transition-all cursor-pointer"
                           >
                             {isBusy ? 'Đang xử lý...' : 'Mở bán lại'}
                           </button>
@@ -434,7 +473,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                             type="button"
                             disabled={isBusy}
                             onClick={() => setStopForm(formOpen ? null : { productId: r.productId, reason: '' })}
-                            className="px-3 py-1.5 rounded-xl text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-[12px] text-slate-400 hover:text-rose-200 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
                           >
                             {formOpen ? 'Đóng' : 'Tạm hết hàng'}
                           </button>
@@ -447,10 +486,10 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
 
                   {formOpen && (
                     <tr className="bg-slate-950/50">
-                      <td colSpan={7} className="px-4 py-3">
+                      <td colSpan={6} className="px-4 py-3">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                           <span className="text-xs text-slate-300">
-                            Chặn bán {r.productName} tại {storeCode} cho tới khi mở bán lại. Lý do (không bắt buộc):
+                            Chặn bán {name} tại {storeCode} cho tới khi mở bán lại. Lý do (không bắt buộc):
                           </span>
                           <input
                             type="text"
@@ -477,8 +516,15 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-slate-500">
-                  Chưa có dữ liệu. Bấm "Cập nhật ngay" để đọc sheet.
+                <td colSpan={6} className="py-10 text-center text-slate-500">
+                  Chưa có dữ liệu. Bấm &quot;Cập nhật ngay&quot; để đọc sheet.
+                </td>
+              </tr>
+            )}
+            {rows.length > 0 && visibleRows.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-slate-500">
+                  Không có mặt hàng nào trong nhóm này.
                 </td>
               </tr>
             )}

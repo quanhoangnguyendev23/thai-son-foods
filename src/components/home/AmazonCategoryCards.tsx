@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LogIn, Package, ShoppingBag, Truck, UserRound } from 'lucide-react';
+import { Headphones, Leaf, LogIn, Package, ShoppingBag, Store, Truck, UserRound } from 'lucide-react';
 import { Combo, Product } from '@/types';
 import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 import { getProductImage, getShortProductName, MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
@@ -260,21 +260,21 @@ function SignInColumn() {
       </div>
 
       {/* Chính sách miễn phí giao hàng — số liệu thật từ INVENTORY_CONFIG.SHIPPING (đồng bộ với Footer) */}
-      <div className="flex-1 bg-leaf-900 text-white rounded-2xl p-3.5 lg:p-4 flex flex-col justify-between gap-2.5 shadow-xs">
+      <div className="flex-1 bg-brand-emerald text-white rounded-2xl p-3.5 lg:p-4 flex flex-col justify-between gap-2.5 shadow-xs">
         <div className="flex items-start gap-3">
           <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
             <Truck className="w-5 h-5 text-corn" />
           </span>
           <p className="text-[14px] leading-snug">
             {language === 'en'
-              ? 'Free shipping in HCMC, Bien Hoa, Long Thanh on orders from '
-              : 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ '}
-            <strong className="text-corn text-[1.125em]">{formatPrice(threshold)}đ</strong>
+              ? 'Free shipping within Ho Chi Minh City on orders from '
+              : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
+            <strong className="text-amber-200 text-[1.125em]">{formatPrice(threshold)}đ</strong>
           </p>
         </div>
         <Link
           href="/gio-hang"
-          className="inline-flex items-center gap-1.5 self-start text-[15px] text-corn hover:underline"
+          className="inline-flex items-center gap-1.5 self-start text-[15px] text-amber-200 hover:underline"
         >
           <ShoppingBag className="w-4 h-4" />
           {language === 'en' ? 'Go to cart' : 'Xem giỏ hàng'}
@@ -404,21 +404,76 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
           footer={<MoreLink href="/#kho-si">{language === 'en' ? 'Learn more' : 'Tìm hiểu thêm'}</MoreLink>}
           className={whySolo ? 'sm:col-span-2 lg:col-span-4' : undefined}
         >
-          <Link
-            href="/#kho-si"
-            className={cn(
-              'group block relative rounded-lg overflow-hidden bg-ivory',
-              whySolo ? 'aspect-[4/3] sm:aspect-[1920/850] lg:aspect-[1920/600]' : 'aspect-[4/3] sm:aspect-auto sm:h-full min-h-[180px]'
-            )}
-          >
-            <Image
-              src="/images/warehouse/1920x850-3.png"
-              alt={language === 'en' ? 'Thai Son Foods customer care' : 'Thái Sơn Foods chăm sóc khách hàng'}
-              fill
-              sizes="(max-width: 640px) 82vw, 700px"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          </Link>
+          {whySolo ? (
+            // Thẻ đứng một mình (trải hết hàng): ảnh giữ đúng tỉ lệ gốc 1920x850 (không cắt) + 4 lý do bên cạnh
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-center">
+              <Link href="/#kho-si" className="group block relative rounded-lg overflow-hidden bg-ivory aspect-[1920/850]">
+                <Image
+                  src="/images/warehouse/1920x850-3.png"
+                  alt={language === 'en' ? 'Thai Son Foods drinks on a supermarket chiller' : 'Sản phẩm Thái Sơn Foods trên quầy mát siêu thị'}
+                  fill
+                  sizes="(max-width: 1024px) 92vw, 760px"
+                  className="object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                />
+              </Link>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
+                {[
+                  {
+                    icon: Leaf,
+                    title: language === 'en' ? 'Natural ingredients' : 'Nguyên liệu tự nhiên',
+                    text:
+                      language === 'en'
+                        ? 'Corn, lotus seed, brown rice, tea — selected and plant-based.'
+                        : 'Bắp, hạt sen, gạo lứt, trà… chọn lọc, thuần chay.',
+                  },
+                  {
+                    icon: Store,
+                    title: language === 'en' ? 'Fast delivery from the nearest store' : 'Giao nhanh từ chi nhánh gần nhất',
+                    text:
+                      language === 'en'
+                        ? 'Your order is prepared by the branch closest to you.'
+                        : 'Đơn được chuẩn bị tại cửa hàng gần bạn nhất.',
+                  },
+                  {
+                    icon: Truck,
+                    title: language === 'en' ? 'Free delivery in HCMC' : 'Miễn phí giao nội thành TP.HCM',
+                    text:
+                      language === 'en'
+                        ? `On orders from ${formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ.`
+                        : `Cho đơn hàng từ ${formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ.`,
+                  },
+                  {
+                    icon: Headphones,
+                    title: language === 'en' ? 'Support 7:00–21:30' : 'Hỗ trợ 07:00–21:30',
+                    text: language === 'en' ? 'Hotline 028 6291 5024, every day.' : 'Hotline 028 6291 5024, tất cả các ngày.',
+                  },
+                ].map(({ icon: Icon, title, text }) => (
+                  <li key={title} className="flex items-start gap-3 rounded-xl bg-ivory/70 border border-border/70 p-3">
+                    <span className="w-9 h-9 shrink-0 rounded-lg bg-green-primary/10 text-green-primary flex items-center justify-center">
+                      <Icon className="w-[18px] h-[18px]" aria-hidden />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[15px] text-text-dark leading-snug">{title}</span>
+                      <span className="block text-[13px] text-text-muted leading-snug mt-0.5">{text}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <Link
+              href="/#kho-si"
+              className="group block relative rounded-lg overflow-hidden bg-ivory aspect-[4/3] sm:aspect-auto sm:h-full min-h-[180px]"
+            >
+              <Image
+                src="/images/warehouse/1920x850-3.png"
+                alt={language === 'en' ? 'Thai Son Foods customer care' : 'Thái Sơn Foods chăm sóc khách hàng'}
+                fill
+                sizes="(max-width: 640px) 82vw, 700px"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </Link>
+          )}
         </CardShell>
       </div>
     </div>

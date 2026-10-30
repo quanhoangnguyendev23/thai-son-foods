@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import type { NextRequest, NextResponse } from 'next/server';
+import { isCookieSecure } from '@/lib/runtimeConfig';
 
 /**
  * Tiện ích dùng chung cho đăng nhập Google / Facebook (OAuth 2.0 Authorization Code).
@@ -50,7 +51,7 @@ export function newOAuthState(): string {
 function cookieOptions(maxAge: number) {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isCookieSecure(),
     sameSite: 'lax' as const, // callback là điều hướng cấp cao từ nhà cung cấp → cookie lax vẫn được gửi
     path: '/',
     maxAge,

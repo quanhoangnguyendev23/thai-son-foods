@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { getAdminSession, hashPassword } from '@/lib/auth';
+import { getAdminSession, hashPassword, invalidateAdminSessionCache } from '@/lib/auth';
 import { hasPermission, Role } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { validateAdminPassword } from '@/lib/password-policy';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data: res.rows });
   } catch (error: any) {
     console.error('Error fetching admin users:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -159,7 +160,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error creating admin user:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -299,13 +300,17 @@ export async function PUT(req: NextRequest) {
       updates.push(`is_active = $${params.length}`);
     }
 
-    if (mustChangePassword !== undefined) {
+    const hasNewPassword = password !== undefined && password !== null && password !== '';
+    // Khi đặt mật khẩu mới, must_change_password đã được bật ở dưới — không gán cột này 2 lần trong cùng câu UPDATE
+    if (mustChangePassword !== undefined && !hasNewPassword) {
       params.push(Boolean(mustChangePassword));
       updates.push(`must_change_password = $${params.length}`);
+      // Bật bắt buộc đổi mật khẩu → token đang dùng (ký khi chưa bị bắt buộc) hết hiệu lực, phải đăng nhập lại
+      if (Boolean(mustChangePassword)) updates.push(`password_changed_at = CURRENT_TIMESTAMP`);
     }
 
     let passwordChanged = false;
-    if (password !== undefined && password !== null && password !== '') {
+    if (hasNewPassword) {
       const resetError = validateAdminPassword(password);
       if (resetError) {
         return NextResponse.json({ success: false, error: resetError }, { status: 400 });
@@ -324,6 +329,8 @@ export async function PUT(req: NextRequest) {
 
     const updateRes = await query(sql, params);
     const updatedUser = updateRes.rows[0];
+    // Khóa / đổi quyền / đổi chi nhánh có hiệu lực ngay, không chờ cache phiên 5 giây
+    invalidateAdminSessionCache(String(id));
 
     // Ghi audit log
     await writeAuditLog({
@@ -360,7 +367,7 @@ export async function PUT(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error updating admin user:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -413,6 +420,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     await query('DELETE FROM admin_users WHERE id = $1;', [targetId]);
+    invalidateAdminSessionCache(targetId);
 
     await writeAuditLog({
       adminId: session.userId,
@@ -437,6 +445,6 @@ export async function DELETE(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error deleting admin user:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

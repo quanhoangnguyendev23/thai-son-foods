@@ -146,10 +146,10 @@ function ScrollSlide({
             </span>
           )}
           {banner.title && (
-            <h2 className="text-2xl sm:text-4xl leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">{banner.title}</h2>
+            <h2 className="text-2xl sm:text-4xl leading-tight drop-shadow-[0_2px_8px_rgba(34,84,76,0.55)]">{banner.title}</h2>
           )}
           {banner.subtitle && (
-            <p className="mt-2 text-sm sm:text-base text-white/90 drop-shadow-[0_1px_6px_rgba(0,0,0,0.55)]">{banner.subtitle}</p>
+            <p className="mt-2 text-sm sm:text-base text-white/90 drop-shadow-[0_1px_6px_rgba(34,84,76,0.55)]">{banner.subtitle}</p>
           )}
         </div>
       )}

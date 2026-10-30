@@ -138,6 +138,9 @@ export interface InventoryLogItem {
   created_at: string;
 }
 
+// Production: không hiển thị host/port CSDL và ẩn công cụ chỉ dành cho máy phát triển (API đã trả 403 trên production)
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
 interface Category {
   id: string;
   slug: string;
@@ -158,6 +161,8 @@ interface ProductVariant {
 
 interface Product {
   sold_offset?: number | null;
+  /** Dung tích chai, vd "330ml" (cột products.volume) */
+  volume?: string | null;
   id: string;
   slug: string;
   name: string;
@@ -308,7 +313,7 @@ interface StatsData {
   statusBreakdown: { status: string; count: string | number; total_amount: string | number }[];
   recentOrders: Order[];
   topProducts: any[];
-  revenueTrend: { date_label: string; order_count: number; daily_revenue: number }[];
+  revenueTrend: { date_label: string; order_count: number; daily_revenue: number; placed_count?: number; placed_revenue?: number }[];
   dbStatus: { connected: boolean; database: string; timestamp: string };
 }
 
@@ -334,6 +339,9 @@ export default function AdminPage() {
   // Data states
   const [stats, setStats] = useState<StatsData | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  // Admin hiển thị MÃ SP (vd: SB-01) thay cho tên dài; tên đầy đủ để ở tooltip (title)
+  const productCodeOf = (id?: string | null, sku?: string | null, fallback?: string) =>
+    (sku || products.find((p) => p.id === id)?.sku || (id ? id.replace(/^prod-/, '').toUpperCase() : '') || fallback || '—').replace(/-\d+$/, '');
   const [combos, setCombos] = useState<Combo[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -1063,10 +1071,10 @@ export default function AdminPage() {
     }
   };
 
-  // Nạp danh sách chi nhánh khi mở chi tiết đơn (storeList trước đây chỉ được nạp ở tab Tồn kho,
-  // nên ô chọn "Chuyển đơn sang chi nhánh khác" bị rỗng nếu chưa từng mở tab đó)
+  // Nạp danh sách chi nhánh khi mở chi tiết đơn hoặc tab Nhật ký (storeList trước đây chỉ được nạp ở tab Tồn kho,
+  // nên ô chọn "Chuyển đơn sang chi nhánh khác" và ô lọc cửa hàng ở Nhật ký bị rỗng nếu chưa từng mở tab đó)
   useEffect(() => {
-    if (!selectedOrder || storeList.length > 0) return;
+    if ((!selectedOrder && activeTab !== 'audit') || storeList.length > 0) return;
     let cancelled = false;
     fetch('/api/admin/stores', { cache: 'no-store' })
       .then((r) => r.json())
@@ -1077,7 +1085,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedOrder?.id, storeList.length]);
+  }, [selectedOrder?.id, storeList.length, activeTab]);
 
   // Đồng bộ nạp dữ liệu khi chuyển tab sang Users, Inventory, Banners, hoặc Audit
   useEffect(() => {
@@ -2521,7 +2529,7 @@ export default function AdminPage() {
             color: #e0ebe5;
           }
           :where(.admin-theme) .to-teal-400 {
-            --tw-gradient-to: #dee7e6;
+            --tw-gradient-to: #DFE6E5;
           }
           :where(.admin-theme) .border-slate-800 {
             border-color: #7ca250;
@@ -2577,17 +2585,30 @@ export default function AdminPage() {
         </div>
 
         {/* Center: DB Badge */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-slate-300 font-medium">PostgreSQL:</span>
-          <span className="text-emerald-400 font-mono text-[1.125em]">WebTSF</span>
-          <span className="text-slate-500">|</span>
-          <span className="text-slate-400 text-[11px]">Port 5432 (127.0.0.1)</span>
-        </div>
+        {IS_PRODUCTION ? (
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                stats?.dbStatus?.connected ? 'bg-emerald-400 animate-pulse' : loading ? 'bg-slate-500' : 'bg-amber-400'
+              }`}
+            ></span>
+            <span className="text-slate-300 font-medium">
+              {stats?.dbStatus?.connected ? 'Kết nối tốt' : loading ? 'Đang kiểm tra kết nối...' : 'Chưa xác nhận kết nối'}
+            </span>
+          </div>
+        ) : (
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-slate-300 font-medium">PostgreSQL:</span>
+            <span className="text-emerald-400 font-mono text-[1.125em]">WebTSF</span>
+            <span className="text-slate-500">|</span>
+            <span className="text-slate-400 text-[11px]">Port 5432 (127.0.0.1)</span>
+          </div>
+        )}
 
         {/* Right action tools */}
         <div className="flex items-center gap-2.5">
-          {hasPermission(currentUser, 'system.sync') && (
+          {!IS_PRODUCTION && hasPermission(currentUser, 'system.sync') && (
             <button
               onClick={handleSyncStore}
               disabled={syncLoading}
@@ -2600,7 +2621,7 @@ export default function AdminPage() {
             </button>
           )}
 
-          {hasPermission(currentUser, 'system.seed') && (
+          {!IS_PRODUCTION && hasPermission(currentUser, 'system.seed') && (
             <button
               onClick={handleSeedDemoOrders}
               disabled={actionLoading}
@@ -3266,47 +3287,60 @@ export default function AdminPage() {
                         <BarChart3 className="w-4 h-4 text-emerald-400" />
                         <span>Biểu Đồ Doanh Thu 7 Ngày Gần Nhất</span>
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Xu hướng đặt hàng thực tế trong tuần</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Theo ngày giờ Việt Nam · rê chuột vào cột để xem chi tiết</p>
                     </div>
                     <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
                       7 ngày qua
                     </span>
                   </div>
 
+                  {/* Chú thích 2 chỉ số */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-sky-600 to-sky-400"></span>
+                      Doanh số đặt hàng (mọi đơn không bị huỷ)
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-emerald-600 to-teal-400"></span>
+                      Doanh thu hoàn thành
+                    </span>
+                  </div>
+
                   {/* SVG interactive visual chart */}
                   <div className="pt-4 pb-2">
                     <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 px-2">
-                      {(stats?.revenueTrend || [
-                        { date_label: '15/09', daily_revenue: 120000, order_count: 2 },
-                        { date_label: '16/09', daily_revenue: 250000, order_count: 3 },
-                        { date_label: '17/09', daily_revenue: 180000, order_count: 2 },
-                        { date_label: '18/09', daily_revenue: 340000, order_count: 4 },
-                        { date_label: '19/09', daily_revenue: 210000, order_count: 3 },
-                        { date_label: '20/09', daily_revenue: 430000, order_count: 5 },
-                        { date_label: '21/09', daily_revenue: 320000, order_count: 4 },
-                      ]).map((item, idx) => {
+                      {(stats?.revenueTrend || []).map((item, idx) => {
+                        // Cùng một thang đo cho 2 cột; ngày 0đ thì cột trống (không vẽ cột giả)
                         const maxRev = Math.max(
-                          ...(stats?.revenueTrend?.map((r) => Number(r.daily_revenue)) || [500000]),
+                          ...(stats?.revenueTrend || []).map((r) => Math.max(Number(r.placed_revenue || 0), Number(r.daily_revenue || 0))),
                           100000
                         );
-                        const heightPct = Math.max(
-                          Math.round((Number(item.daily_revenue || 0) / maxRev) * 100),
-                          12
-                        );
+                        const pct = (v: number | undefined) => {
+                          const n = Number(v || 0);
+                          return n > 0 ? Math.max(Math.round((n / maxRev) * 100), 3) : 0;
+                        };
 
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
                             {/* Tooltip on hover */}
-                            <div className="absolute -top-12 bg-slate-950 text-white text-[10px] py-1 px-2 rounded-md shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
-                              <p className="text-emerald-400 text-[1.125em]">{formatVND(item.daily_revenue)}</p>
-                              <p className="text-slate-400">{item.order_count} đơn hàng</p>
+                            <div className="absolute -top-16 bg-slate-950 text-white text-[10px] py-1 px-2 rounded-md shadow-xl border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-30">
+                              <p className="text-sky-300 text-[1.125em]">
+                                Đặt hàng: {formatVND(item.placed_revenue || 0)} · {item.placed_count || 0} đơn
+                              </p>
+                              <p className="text-emerald-400 text-[1.125em]">
+                                Hoàn thành: {formatVND(item.daily_revenue)} · {item.order_count} đơn
+                              </p>
                             </div>
 
-                            {/* Bar element */}
-                            <div className="w-full max-w-[48px] bg-slate-800/80 rounded-t-xl overflow-hidden flex flex-col justify-end p-1 h-36">
+                            {/* 2 cột: đặt hàng (xanh dương) · hoàn thành (xanh lá) */}
+                            <div className="w-full max-w-[56px] bg-slate-800/80 rounded-t-xl overflow-hidden flex items-end justify-center gap-1 p-1 h-36">
                               <div
-                                style={{ height: `${heightPct}%` }}
-                                className="w-full rounded-t-lg bg-gradient-to-t from-emerald-600 to-teal-400 group-hover:from-emerald-500 group-hover:to-teal-300 transition-all duration-300"
+                                style={{ height: `${pct(item.placed_revenue)}%` }}
+                                className="flex-1 rounded-t-lg bg-gradient-to-t from-sky-600 to-sky-400 group-hover:from-sky-500 group-hover:to-sky-300 transition-all duration-300"
+                              ></div>
+                              <div
+                                style={{ height: `${pct(item.daily_revenue)}%` }}
+                                className="flex-1 rounded-t-lg bg-gradient-to-t from-emerald-600 to-teal-400 group-hover:from-emerald-500 group-hover:to-teal-300 transition-all duration-300"
                               ></div>
                             </div>
                             <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-200">
@@ -3356,7 +3390,7 @@ export default function AdminPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-200 truncate">{p.name}</p>
+                          <p className="text-sm text-slate-200 truncate font-mono" title={p.name}>{productCodeOf(p.id, p.sku, p.name)}</p>
                           <p className="text-[12px] text-emerald-400">{formatVND(p.price)}</p>
                         </div>
                         <div className="text-right shrink-0">
@@ -3443,7 +3477,9 @@ export default function AdminPage() {
                       {orders.length === 0 && (
                         <tr>
                           <td colSpan={7} className="py-8 text-center text-slate-500">
-                            Chưa có đơn hàng nào trong cơ sở dữ liệu. Hãy bấm &quot;Nạp Đơn Mẫu&quot; ở trên góc phải để thử nghiệm!
+                            {IS_PRODUCTION
+                              ? 'Chưa có đơn hàng nào.'
+                              : <>Chưa có đơn hàng nào trong cơ sở dữ liệu. Hãy bấm &quot;Nạp Đơn Mẫu&quot; ở trên góc phải để thử nghiệm!</>}
                           </td>
                         </tr>
                       )}
@@ -3532,8 +3568,7 @@ export default function AdminPage() {
                   <table className="w-full text-left text-xs text-slate-300">
                     <thead className="bg-slate-950/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
                       <tr>
-                        <th className="py-3 px-4">Ảnh & Sản Phẩm</th>
-                        <th className="py-3 px-4">SKU</th>
+                        <th className="py-3 px-4">Ảnh & Mã SP</th>
                         <th className="py-3 px-4">Danh Mục</th>
                         <th className="py-3 px-4">Giá Bán</th>
                         <th className="py-3 px-4">Huy Hiệu</th>
@@ -3562,12 +3597,11 @@ export default function AdminPage() {
                                 )}
                               </div>
                               <div>
-                                <p className="text-slate-100 text-base">{p.name}</p>
+                                <p className="text-slate-100 text-base font-mono" title={p.name}>{productCodeOf(p.id, p.sku, p.name)}</p>
                                 <p className="text-[11px] text-slate-400">Đơn vị: {p.unit}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-4 font-mono text-slate-400">{p.sku || '—'}</td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-0.5 rounded-md text-[11px] bg-slate-800 text-slate-300 border border-slate-700">
                               {p.category_name || 'Chưa phân loại'}
@@ -3643,7 +3677,7 @@ export default function AdminPage() {
                       ))}
                       {filteredProducts.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-slate-500">
+                          <td colSpan={6} className="py-8 text-center text-slate-500">
                             Không tìm thấy sản phẩm nào khớp với điều kiện lọc.
                           </td>
                         </tr>
@@ -4838,11 +4872,15 @@ export default function AdminPage() {
                       </p>
                     </div>
                   </div>
+                  {!IS_PRODUCTION && (
                   <span className="text-xs font-mono px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     Port: 5432
                   </span>
+                  )}
                 </div>
 
+                {/* Thông số máy chủ CSDL chỉ hiện trên máy phát triển */}
+                {!IS_PRODUCTION && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
                   <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
                     <p className="text-xs text-slate-400">Database Name</p>
@@ -4861,6 +4899,7 @@ export default function AdminPage() {
                     <p className="text-base font-mono text-emerald-400 mt-1">Active (pg-pool 10)</p>
                   </div>
                 </div>
+                )}
               </div>
 
               {/* Store to DB Sync Control Center */}
@@ -5254,11 +5293,11 @@ export default function AdminPage() {
                                     />
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-white text-sm truncate max-w-[240px]" title={item.product_name}>
-                                      {item.product_name}
+                                    <p className="text-white text-sm truncate max-w-[240px] font-mono" title={item.product_name}>
+                                      {productCodeOf(item.product_id, item.sku, item.product_name)}
                                     </p>
                                     <p className="text-[11px] font-mono text-slate-400">
-                                      SKU: <span className="text-amber-400 text-[1.125em]">{item.sku || 'N/A'}</span> • {item.unit || '1 chai'}
+                                      {item.unit || '1 chai'}
                                     </p>
                                   </div>
                                 </div>
@@ -5441,7 +5480,7 @@ export default function AdminPage() {
                         <option value="">— Chọn sản phẩm —</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name.length > 60 ? `${p.name.slice(0, 58)}…` : p.name}
+                            {productCodeOf(p.id, p.sku, p.name)}
                           </option>
                         ))}
                       </select>
@@ -5542,8 +5581,8 @@ export default function AdminPage() {
                         const fmtDate = (d: string) => new Date(d).toLocaleDateString('vi-VN');
                         return (
                           <tr key={lot.id} className="hover:bg-slate-800/40 transition-colors">
-                            <td className="py-3 px-4 text-slate-100 max-w-[240px] truncate text-[1.125em]" title={lot.product_name}>
-                              {lot.product_name}
+                            <td className="py-3 px-4 text-slate-100 max-w-[240px] truncate text-[1.125em] font-mono" title={lot.product_name}>
+                              {productCodeOf(lot.product_id, null, lot.product_name)}
                             </td>
                             <td className="py-3 px-4 font-mono text-emerald-400">{lot.lot_code}</td>
                             <td className="py-3 px-4 text-slate-400">{fmtDate(lot.manufacturing_date)}</td>
@@ -6229,20 +6268,63 @@ export default function AdminPage() {
                     onChange={(e) => setAuditActionFilter(e.target.value)}
                     className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-leaf-500 cursor-pointer"
                   >
+                    {/* Giá trị phải trùng đúng mã hành động lưu trong audit_logs.action (vd PRODUCT_UPDATE) */}
                     <option value="ALL">Tất cả hành động</option>
-                    <option value="auth.login">Đăng nhập (auth.login)</option>
-                    <option value="orders.status_update">Cập nhật đơn (orders.status_update)</option>
-                    <option value="orders.transfer">Chuyển chi nhánh (orders.transfer)</option>
-                    <option value="inventory.update">Cập nhật tồn kho (inventory.update)</option>
-                    <option value="products.create">Tạo sản phẩm (products.create)</option>
-                    <option value="products.update">Sửa sản phẩm (products.update)</option>
-                    <option value="products.delete">Xóa sản phẩm (products.delete)</option>
-                    <option value="combos.create">Tạo combo (combos.create)</option>
-                    <option value="combos.update">Sửa combo (combos.update)</option>
-                    <option value="combos.delete">Xóa combo (combos.delete)</option>
-                    <option value="users.create">Tạo tài khoản (users.create)</option>
-                    <option value="users.update">Sửa tài khoản (users.update)</option>
-                    <option value="users.delete">Xóa tài khoản (users.delete)</option>
+                    <optgroup label="Đăng nhập & tài khoản">
+                      <option value="AUTH_LOGIN_SUCCESS">Đăng nhập thành công</option>
+                      <option value="AUTH_LOGIN_FAILED">Đăng nhập sai</option>
+                      <option value="AUTH_RATE_LIMITED">Bị khóa do sai nhiều lần</option>
+                      <option value="AUTH_LOGOUT">Đăng xuất</option>
+                      <option value="AUTH_PASSWORD_CHANGE">Đổi mật khẩu</option>
+                      <option value="AUTH_PASSWORD_CHANGE_FAILED">Đổi mật khẩu thất bại</option>
+                      <option value="ADMIN_USER_CREATE">Tạo tài khoản quản trị</option>
+                      <option value="ADMIN_USER_UPDATE">Sửa tài khoản quản trị</option>
+                      <option value="ADMIN_USER_DELETE">Xóa tài khoản quản trị</option>
+                    </optgroup>
+                    <optgroup label="Đơn hàng">
+                      <option value="ORDER_STATUS_UPDATE">Cập nhật trạng thái đơn</option>
+                      <option value="ORDER_CANCEL">Hủy đơn</option>
+                      <option value="ORDER_DELETE">Xóa đơn</option>
+                      <option value="ORDER_TRANSFER_STORE">Chuyển chi nhánh</option>
+                      <option value="ORDER_PAYMENT_CONFIRM">Xác nhận thanh toán</option>
+                      <option value="ORDER_EXPORT_CSV">Xuất CSV đơn hàng</option>
+                      <option value="COD_RECONCILE">Đối soát COD</option>
+                      <option value="COD_PROCESS_RETURN">Xử lý hoàn hàng COD</option>
+                    </optgroup>
+                    <optgroup label="Sản phẩm & nội dung">
+                      <option value="PRODUCT_CREATE">Tạo sản phẩm</option>
+                      <option value="PRODUCT_UPDATE">Sửa sản phẩm</option>
+                      <option value="PRODUCT_DELETE">Xóa sản phẩm</option>
+                      <option value="PRODUCT_PRICE_UPDATE">Đổi giá sản phẩm</option>
+                      <option value="PRODUCT_COST_UPDATE">Đổi giá vốn</option>
+                      <option value="FILE_UPLOAD">Tải ảnh/tệp lên</option>
+                      <option value="CATEGORY_CREATE">Tạo danh mục</option>
+                      <option value="CATEGORY_UPDATE">Sửa danh mục</option>
+                      <option value="CATEGORY_DELETE">Xóa danh mục</option>
+                      <option value="BANNER_CREATE">Tạo banner</option>
+                      <option value="BANNER_UPDATE">Sửa banner</option>
+                      <option value="BANNER_DELETE">Xóa banner</option>
+                      <option value="REVIEW_MODERATE">Duyệt đánh giá</option>
+                      <option value="REVIEW_DELETE">Xóa đánh giá</option>
+                    </optgroup>
+                    <optgroup label="Tồn kho & cửa hàng">
+                      <option value="INVENTORY_UPDATE">Cập nhật tồn kho</option>
+                      <option value="INVENTORY_BATCH_UPDATE">Cập nhật tồn kho hàng loạt</option>
+                      <option value="INVENTORY_LOT_CREATE">Thêm lô hàng</option>
+                      <option value="INVENTORY_SHEET_SYNC">Đọc lại Google Sheet</option>
+                      <option value="STORE_UPDATE">Sửa cửa hàng</option>
+                    </optgroup>
+                    <optgroup label="Thành viên">
+                      <option value="MEMBER_LOCK">Khóa thành viên</option>
+                      <option value="MEMBER_UNLOCK">Mở khóa thành viên</option>
+                      <option value="MEMBER_UPDATE">Sửa thành viên</option>
+                      <option value="MEMBER_DELETE">Xóa thành viên</option>
+                    </optgroup>
+                    <optgroup label="Combo">
+                      <option value="COMBO_CREATE">Tạo combo</option>
+                      <option value="COMBO_UPDATE">Sửa combo</option>
+                      <option value="COMBO_DELETE">Xóa combo</option>
+                    </optgroup>
                   </select>
 
                   <select
@@ -6571,6 +6653,19 @@ export default function AdminPage() {
                     value={editingProduct.unit || '1 chai'}
                     onChange={(e) => setEditingProduct({ ...editingProduct, unit: e.target.value })}
                     placeholder="1 chai, chai, lon..."
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                {/* Dung tích chai (lưu cột products.volume; quy cách hiển thị "7 x 330ml" lấy theo giá trị này) */}
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">Dung tích chai</label>
+                  <input
+                    type="text"
+                    value={editingProduct.volume || ''}
+                    maxLength={30}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, volume: e.target.value })}
+                    placeholder="VD: 330ml, 270ml, 568ml"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
@@ -7848,7 +7943,7 @@ export default function AdminPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-100 truncate">{item.name}</p>
+                          <p className="text-sm text-slate-100 truncate font-mono" title={item.name}>{item.product_id ? productCodeOf(item.product_id) : item.name}</p>
                           <div className="flex items-center gap-2 flex-wrap mt-0.5">
                             <p className="text-[11px] text-slate-400">
                               {formatVND(item.price)} × {item.quantity} {item.unit}
@@ -8486,11 +8581,11 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white text-sm leading-snug line-clamp-2">
-                    {stockModalItem.product_name}
+                  <p className="text-white text-sm leading-snug line-clamp-2 font-mono" title={stockModalItem.product_name}>
+                    {productCodeOf(stockModalItem.product_id, stockModalItem.sku, stockModalItem.product_name)}
                   </p>
                   <p className="text-[11px] font-mono text-slate-400 mt-1">
-                    SKU: <span className="text-amber-400 text-[1.125em]">{stockModalItem.sku}</span> • {stockModalItem.unit}
+                    {stockModalItem.unit}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Số lượng hiện tại: <strong className="text-emerald-400 font-mono text-[1.125em]">{stockModalItem.current_stock} chai</strong>
@@ -9078,7 +9173,7 @@ export default function AdminPage() {
                               </td>
                               <td className="py-3 px-3.5">
                                 <div className="text-slate-100 max-w-[180px] truncate text-[1.125em]" title={log.product_name}>
-                                  {log.product_name || log.product_id}
+                                  {productCodeOf(log.product_id, null, log.product_name)}
                                 </div>
                                 <div className="text-[10px] text-slate-500 font-mono">
                                   {log.unit || '1 chai'}

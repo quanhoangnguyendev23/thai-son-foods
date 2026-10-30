@@ -4,6 +4,7 @@ import { getPartnerDocumentById } from '@/lib/partner/storage';
 import { getPartnerSession } from '@/lib/partner/auth';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,6 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('Error fetching partner document file:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Lỗi đọc tệp tài liệu' }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error, 'Lỗi đọc tệp tài liệu') }, { status: 500 });
   }
 }

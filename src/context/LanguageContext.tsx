@@ -10,7 +10,7 @@ export const translations = {
     searchPlaceholder: 'Tìm kiếm theo bắp, sữa hạt sen, combo đồ uống...',
     searchBtn: 'Tìm kiếm',
     searchHints: 'Gợi ý tìm kiếm:',
-    support247: 'Hỗ trợ 24/7',
+    support247: 'Hỗ trợ (07:00–21:30)',
     account: 'Tài khoản',
     cart: 'Giỏ hàng',
     menu: 'Menu',
@@ -78,7 +78,7 @@ export const translations = {
     footerShipping: 'Chính sách giao hàng',
     footerContact: 'Liên hệ',
     footerConnect: 'Kết nối',
-    footerFreeShipping: 'Miễn phí vận chuyển trong khu vực HCM, Biên Hòa, Long Thành cho đơn hàng từ',
+    footerFreeShipping: 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ',
     footerRights: '© 2026 Thái Sơn Foods. All rights reserved.',
 
     // Cart & Drawer
@@ -107,7 +107,7 @@ export const translations = {
     searchPlaceholder: 'Search by corn milk, lotus milk, drink combos...',
     searchBtn: 'Search',
     searchHints: 'Popular searches:',
-    support247: 'Support 24/7',
+    support247: 'Support (7:00–21:30)',
     account: 'Account',
     cart: 'Cart',
     menu: 'Menu',
@@ -175,7 +175,7 @@ export const translations = {
     footerShipping: 'Shipping Policy',
     footerContact: 'Contact Us',
     footerConnect: 'Follow Us',
-    footerFreeShipping: 'Free shipping in HCMC, Bien Hoa, Long Thanh for orders from',
+    footerFreeShipping: 'Free shipping within Ho Chi Minh City for orders from',
     footerRights: '© 2026 Thai Son Foods. All rights reserved.',
 
     // Cart & Drawer

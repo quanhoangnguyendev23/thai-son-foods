@@ -6,6 +6,7 @@ import { getAdminSession } from '@/lib/auth';
 import { isSafeUrl, resolveUploadedFile } from '@/lib/content-validation';
 import { hasPermission } from '@/lib/rbac';
 import { syncProductToStaticFile } from '@/lib/products-file-sync';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
   } catch (error: any) {
     console.error('Error fetching product images:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -139,7 +140,7 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (error: any) {
     console.error('Error adding product image:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -233,7 +234,7 @@ export async function PUT(request: Request, context: RouteContext) {
     return NextResponse.json({ success: true, message: 'Đã cập nhật ảnh thành công' });
   } catch (error: any) {
     console.error('Error updating product image:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -313,6 +314,6 @@ export async function DELETE(request: Request, context: RouteContext) {
     return NextResponse.json({ success: true, message: 'Đã xóa ảnh thành công' });
   } catch (error: any) {
     console.error('Error deleting product image:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
   }
 }

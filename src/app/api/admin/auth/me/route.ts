@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/auth';
 import { query } from '@/lib/db';
 
 import { ROLE_PERMISSIONS, Role } from '@/lib/rbac';
+import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +65,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Error in /api/admin/auth/me:', error);
     return NextResponse.json(
-      { success: false, authenticated: false, error: error.message },
+      { success: false, authenticated: false, error: publicErrorMessage(error) },
       { status: 500 }
     );
   }
