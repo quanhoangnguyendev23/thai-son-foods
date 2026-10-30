@@ -64,6 +64,7 @@ import { hasPermission, Role, Permission } from '@/lib/rbac';
 import { FEATURES } from '@/config/features';
 import { canDeleteOrder, canTransitionOrderStatus } from '@/lib/order-status';
 import { safeFetchJson } from '@/lib/utils';
+import { downloadXlsx } from '@/lib/xlsx';
 import SheetInventoryPanel from './SheetInventoryPanel';
 import { RevenueCard, TopProductsCard, TopCombosCard, formatRangeLabel, isTrendStale } from './DashboardCharts';
 import { banners as defaultHeroBanners } from '@/data/banners';
@@ -921,33 +922,38 @@ export default function AdminPage() {
     }
   };
 
-  // Xuất file CSV báo cáo lợi nhuận
-  const handleExportProfitCSV = () => {
+  // Xuất file Excel (.xlsx) báo cáo lợi nhuận theo cách nhóm đang chọn
+  const handleExportProfitExcel = () => {
     if (!profitData?.breakdown || profitData.breakdown.length === 0) {
-      showToast('Không có dữ liệu lợi nhuận để xuất CSV', 'error');
+      showToast('Không có dữ liệu lợi nhuận để xuất Excel', 'error');
       return;
     }
-    const headers = ['Tiêu chí / Đối tượng', 'Số đơn / Số lượng bán', 'Doanh thu (VNĐ)', 'Giá vốn (VNĐ)', 'Lợi nhuận gộp (VNĐ)', 'Tỷ suất (%)', 'Số mục chưa có giá vốn'];
-    const rows = profitData.breakdown.map((r: any) => [
-      `"${r.label || r.name || r.store_name || r.period || ''}"`,
-      r.orders_count !== undefined ? r.orders_count : r.quantity_sold,
-      r.revenue,
-      r.cost,
-      r.profit,
-      `${r.margin}%`,
-      r.missing_cost_items || 0,
+    const groupLabel: Record<string, string> = { day: 'Theo ngày', month: 'Theo tháng', product: 'Theo sản phẩm', store: 'Theo cửa hàng' };
+    const isProduct = profitGroupBy === 'product';
+    downloadXlsx(`Loi_Nhuan_${profitGroupBy}_Thai_Son_Foods_${new Date().toISOString().slice(0, 10)}.xlsx`, [
+      {
+        name: `Lợi nhuận - ${groupLabel[profitGroupBy] || profitGroupBy}`,
+        columns: [
+          { header: 'Tiêu chí / Đối tượng', width: 32 },
+          { header: isProduct ? 'Số lượng bán' : 'Số đơn', width: 13, type: 'number' },
+          { header: 'Doanh thu (₫)', width: 16, type: 'money' },
+          { header: 'Giá vốn (₫)', width: 16, type: 'money' },
+          { header: 'Lợi nhuận gộp (₫)', width: 18, type: 'money' },
+          { header: 'Tỷ suất', width: 10, type: 'percent' },
+          { header: 'Số mục chưa có giá vốn', width: 14, type: 'number' },
+        ],
+        rows: profitData.breakdown.map((r: any) => [
+          r.label || r.name || r.store_name || r.period || '',
+          r.orders_count !== undefined ? r.orders_count : r.quantity_sold,
+          r.revenue,
+          r.cost,
+          r.profit,
+          Number.isFinite(Number(r.margin)) ? Number(r.margin) / 100 : '',
+          r.missing_cost_items || 0,
+        ]),
+      },
     ]);
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((e: any[]) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `WebTSF_Loi_Nhuan_${profitGroupBy}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('Đã xuất báo cáo lợi nhuận sang CSV thành công!');
+    showToast('Đã xuất báo cáo lợi nhuận ra file Excel!');
   };
 
   // Fetch inventory for store
@@ -2434,14 +2440,14 @@ export default function AdminPage() {
     }
   };
 
-  // ==================== CSV EXPORT ====================
+  // ==================== EXCEL EXPORT ====================
   const handleExportOrdersCSV = () => {
     if (orderStatusCounts.ALL === 0) {
       showToast('Chưa có đơn hàng nào để xuất', 'info');
       return;
     }
-    // Xuất TOÀN BỘ đơn khớp bộ lọc hiện tại (không chỉ trang đang xem) — máy chủ sinh file, thoát ký tự an toàn
-    const params = new URLSearchParams({ export: 'csv' });
+    // Xuất TOÀN BỘ đơn khớp bộ lọc hiện tại (không chỉ trang đang xem) — máy chủ sinh file Excel (.xlsx)
+    const params = new URLSearchParams({ export: 'xlsx' });
     if (orderStatusFilter !== 'ALL') params.set('status', orderStatusFilter);
     if (debouncedOrderSearch) params.set('q', debouncedOrderSearch);
     const link = document.createElement('a');
@@ -2450,7 +2456,7 @@ export default function AdminPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Đang tải file CSV...');
+    showToast('Đang tạo file Excel...');
   };
 
   // ==================== FILTER LOGIC ====================
@@ -3189,7 +3195,7 @@ export default function AdminPage() {
                         className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-sm transition-all"
                       >
                         <Download className="w-4 h-4 text-slate-400" />
-                        <span>Xuất Báo Cáo CSV</span>
+                        <span>Xuất Báo Cáo Excel</span>
                       </button>
                       {hasPermission(currentUser, 'products.manage') && (
                         <button
@@ -3851,7 +3857,7 @@ export default function AdminPage() {
                     className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all cursor-pointer"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                    <span>Xuất File Excel/CSV</span>
+                    <span>Xuất File Excel</span>
                   </button>
                 </div>
               </div>
@@ -4425,7 +4431,7 @@ export default function AdminPage() {
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/30 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Xuất Toàn Bộ Báo Cáo CSV</span>
+                  <span>Xuất Toàn Bộ Báo Cáo Excel</span>
                 </button>
               </div>
 
@@ -4571,14 +4577,14 @@ export default function AdminPage() {
                         <RefreshCw className={`w-4 h-4 text-amber-400 ${profitLoading ? 'animate-spin' : ''}`} />
                       </button>
 
-                      {/* Export CSV */}
+                      {/* Xuất Excel */}
                       <button
                         type="button"
-                        onClick={handleExportProfitCSV}
+                        onClick={handleExportProfitExcel}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm bg-amber-600 hover:bg-amber-700 text-ink-950 shadow-lg shadow-amber-900/30 transition-all cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Xuất CSV Lợi Nhuận</span>
+                        <span>Xuất Excel Lợi Nhuận</span>
                       </button>
                     </div>
                   </div>
@@ -6196,6 +6202,7 @@ export default function AdminPage() {
                       <option value="ORDER_DELETE">Xóa đơn</option>
                       <option value="ORDER_TRANSFER_STORE">Chuyển chi nhánh</option>
                       <option value="ORDER_PAYMENT_CONFIRM">Xác nhận thanh toán</option>
+                      <option value="ORDER_EXPORT_XLSX">Xuất Excel đơn hàng</option>
                       <option value="ORDER_EXPORT_CSV">Xuất CSV đơn hàng</option>
                       <option value="COD_RECONCILE">Đối soát COD</option>
                       <option value="COD_PROCESS_RETURN">Xử lý hoàn hàng COD</option>

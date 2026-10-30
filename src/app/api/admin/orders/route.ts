@@ -6,6 +6,7 @@ import { writeAuditLog } from '@/lib/audit';
 import { sendOrderEmail } from '@/lib/email/service';
 import { canDeleteOrder, canTransitionOrderStatus, isOrderStatus } from '@/lib/order-status';
 import { publicErrorMessage } from '@/lib/apiError';
+import { buildXlsx, XLSX_MIME } from '@/lib/xlsx';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,25 @@ const MAX_PAGE_SIZE = 100;
 const LEGACY_LIST_CAP = 500; // Gọi không có ?page → chỉ trả tối đa 500 đơn mới nhất (tương thích ngược)
 const CSV_EXPORT_CAP = 20000;
 const CSV_BOM = String.fromCharCode(0xfeff); // để Excel đọc đúng tiếng Việt UTF-8
+
+/** Nhãn tiếng Việt dùng trong file Excel (giống nhãn trên trang quản trị) */
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Chờ xử lý',
+  CONFIRMED: 'Đã xác nhận',
+  PROCESSING: 'Đang chuẩn bị',
+  SHIPPING: 'Đang giao hàng',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
+};
+const PAYMENT_LABELS: Record<string, string> = {
+  cod: 'COD (tiền mặt)',
+  bank: 'Chuyển khoản',
+  banking: 'Chuyển khoản',
+  bank_transfer: 'Chuyển khoản',
+  vietqr: 'Chuyển khoản (VietQR)',
+  momo: 'MoMo',
+  vnpay: 'VNPay',
+};
 
 function noStoreResponse() {
   return NextResponse.json(
@@ -72,6 +92,7 @@ export async function GET(request: Request) {
     const queryStoreCode = searchParams.get('storeCode');
     const pageParam = searchParams.get('page');
     const isCsvExport = searchParams.get('export') === 'csv';
+    const isXlsxExport = searchParams.get('export') === 'xlsx';
 
     const canViewCostPrice = hasPermission(session, 'cost_price.view');
 
@@ -148,7 +169,112 @@ export async function GET(request: Request) {
       filterWhere += ` AND o.status = $${filterParams.length}`;
     }
 
-    // 2a. Xuất CSV toàn bộ đơn theo bộ lọc hiện tại
+    // 2a. Xuất Excel (.xlsx) toàn bộ đơn theo bộ lọc hiện tại: sheet "Đơn hàng" + sheet "Chi tiết sản phẩm"
+    if (isXlsxExport) {
+      const res = await query(
+        `SELECT o.id, o.order_code, o.full_name, o.phone, o.email, o.province, o.address, o.total, o.status, o.payment_method, o.store_code, o.created_at,
+                (SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi WHERE oi.order_id = o.id) AS item_qty
+         FROM orders o ${filterWhere} ORDER BY o.created_at DESC LIMIT ${CSV_EXPORT_CAP};`,
+        filterParams
+      );
+      const ids = res.rows.map((o: any) => o.id);
+      const itemsRes = ids.length
+        ? await query(
+            `SELECT oi.order_id, oi.name, oi.unit, oi.quantity, oi.price, oi.product_id, p.sku
+             FROM order_items oi LEFT JOIN products p ON p.id = COALESCE(oi.canonical_product_id, oi.product_id)
+             WHERE oi.order_id = ANY($1::text[]) ORDER BY oi.order_id, oi.id;`,
+            [ids]
+          )
+        : { rows: [] as any[] };
+      const byId = new Map(res.rows.map((o: any) => [o.id, o]));
+      const statusLabel = (s: string) => ORDER_STATUS_LABELS[s] || s || '';
+      const paymentLabel = (m: string) => PAYMENT_LABELS[String(m || '').toLowerCase()] || m || '';
+
+      const file = buildXlsx([
+        {
+          name: 'Đơn hàng',
+          columns: [
+            { header: 'Mã đơn', width: 16 },
+            { header: 'Ngày đặt', width: 17, type: 'date' },
+            { header: 'Khách hàng', width: 24 },
+            { header: 'Điện thoại', width: 14 },
+            { header: 'Email', width: 24 },
+            { header: 'Tỉnh/TP', width: 16 },
+            { header: 'Địa chỉ', width: 40 },
+            { header: 'Số lượng SP', width: 12, type: 'number' },
+            { header: 'Tổng tiền (₫)', width: 15, type: 'money' },
+            { header: 'Trạng thái', width: 15 },
+            { header: 'Thanh toán', width: 16 },
+            { header: 'Chi nhánh', width: 11 },
+          ],
+          rows: res.rows.map((o: any) => [
+            o.order_code,
+            o.created_at,
+            o.full_name,
+            o.phone,
+            o.email,
+            o.province,
+            o.address,
+            Number(o.item_qty) || 0,
+            Number(o.total) || 0,
+            statusLabel(o.status),
+            paymentLabel(o.payment_method),
+            o.store_code,
+          ]),
+        },
+        {
+          name: 'Chi tiết sản phẩm',
+          columns: [
+            { header: 'Mã đơn', width: 16 },
+            { header: 'Ngày đặt', width: 17, type: 'date' },
+            { header: 'Trạng thái', width: 15 },
+            { header: 'Mã SP', width: 12 },
+            { header: 'Sản phẩm', width: 44 },
+            { header: 'Đơn vị', width: 10 },
+            { header: 'Số lượng', width: 10, type: 'number' },
+            { header: 'Đơn giá (₫)', width: 13, type: 'money' },
+            { header: 'Thành tiền (₫)', width: 15, type: 'money' },
+            { header: 'Chi nhánh', width: 11 },
+          ],
+          rows: itemsRes.rows.map((it: any) => {
+            const o: any = byId.get(it.order_id) || {};
+            const qty = Number(it.quantity) || 0;
+            const price = Number(it.price) || 0;
+            return [
+              o.order_code,
+              o.created_at,
+              statusLabel(o.status),
+              it.sku ? String(it.sku).replace(/-\d+$/, '') : it.product_id,
+              it.name,
+              it.unit,
+              qty,
+              price,
+              qty * price,
+              o.store_code,
+            ];
+          }),
+        },
+      ]);
+      await writeAuditLog({
+        adminId: session.id,
+        adminUsername: session.username,
+        role: session.role,
+        action: 'ORDER_EXPORT_XLSX',
+        entityType: 'ORDER',
+        storeCode: storeScope || undefined,
+        afterJson: { rows: res.rows.length, items: itemsRes.rows.length, status, q: search },
+      });
+      return new NextResponse(file as BodyInit, {
+        status: 200,
+        headers: {
+          'Content-Type': XLSX_MIME,
+          'Content-Disposition': `attachment; filename="Bao_Cao_Don_Hang_Thai_Son_Foods_${new Date().toISOString().slice(0, 10)}.xlsx"`,
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
+
+    // 2a'. Xuất CSV toàn bộ đơn theo bộ lọc hiện tại (giữ cho tương thích)
     if (isCsvExport) {
       const res = await query(
         `SELECT o.order_code, o.full_name, o.phone, o.province, o.address, o.total, o.status, o.payment_method, o.store_code, o.created_at
