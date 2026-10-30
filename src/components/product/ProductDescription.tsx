@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { formatKcal } from '@/lib/utils';
 
 interface ProductDescriptionProps {
   productName?: string;
@@ -8,6 +9,8 @@ interface ProductDescriptionProps {
   className?: string;
   /** Ẩn bảng dinh dưỡng ước tính chung khi sản phẩm đã có số liệu thật từ nhãn. Mặc định giữ hành vi cũ. */
   hideEstimatedNutrition?: boolean;
+  /** Năng lượng thật trên 100ml (kcal) do admin nhập; có thì thay cho số ước tính */
+  energyKcal?: number | null;
 }
 
 export default function ProductDescription({
@@ -15,6 +18,7 @@ export default function ProductDescription({
   description,
   className = '',
   hideEstimatedNutrition = false,
+  energyKcal = null,
 }: ProductDescriptionProps) {
   return (
     <section className={`bg-white py-12 md:py-16 border-t border-gray-200 ${className}`}>
@@ -123,7 +127,7 @@ export default function ProductDescription({
               <div className="divide-y divide-gray-100">
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Năng lượng / Energy</span>
-                  <span className="text-gray-900 text-[1.125em]">~62 kcal</span>
+                  <span className="text-gray-900 text-[1.125em]">{formatKcal(energyKcal) || '~62 kcal'}</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Carbohydrate</span>

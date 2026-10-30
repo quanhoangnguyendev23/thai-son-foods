@@ -461,6 +461,8 @@ async function runInitDatabase() {
       ALTER TABLE combos ADD COLUMN IF NOT EXISTS cost_price INTEGER DEFAULT 0;
       -- Số lượng ĐÃ BÁN THẬT ở kênh ngoài website (cửa hàng, đại lý...) do admin nhập; cộng với đơn trên web khi hiển thị
       ALTER TABLE products ADD COLUMN IF NOT EXISTS sold_offset INTEGER NOT NULL DEFAULT 0;
+      -- Năng lượng trên 100ml (kcal), admin nhập; trống thì dùng giá trị trong src/data/products.ts
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS energy_kcal NUMERIC(6,1);
       ALTER TABLE combos ADD COLUMN IF NOT EXISTS sold_offset INTEGER NOT NULL DEFAULT 0;
       ALTER TABLE order_items ADD COLUMN IF NOT EXISTS cost_price INTEGER;
 

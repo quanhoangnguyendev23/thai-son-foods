@@ -115,6 +115,7 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
         description: dbProd.description || fallback.description,
         // Dung tích chai do admin chỉnh (products.volume); trống thì dùng giá trị trong products.ts
         volume: dbProd.volume || (fallback as { volume?: string }).volume,
+        energyKcal: dbProd.energy_kcal !== null && dbProd.energy_kcal !== undefined ? Number(dbProd.energy_kcal) : (fallback as { energyKcal?: number }).energyKcal ?? null,
         thumbnail: finalThumbnail,
         images: activeImages.length > 0
           ? activeImages.map((img: any) => ({
@@ -348,6 +349,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           productName={product.name}
           description={product.description || product.shortDescription}
           hideEstimatedNutrition={Boolean(getProductDetailContent(product).nutrition)}
+          energyKcal={product.energyKcal}
         />
 
         {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (ảnh khách hàng = placeholder, gộp trong mục; đánh giá = dữ liệu thật) */}

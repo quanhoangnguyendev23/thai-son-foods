@@ -210,8 +210,8 @@ export async function POST(request: Request) {
     const insertSql = `
       INSERT INTO products (
         id, slug, name, sku, short_description, description, price, unit, thumbnail,
-        category_id, is_featured, is_new, is_best_seller, is_active, cost_price, sold_offset, volume
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        category_id, is_featured, is_new, is_best_seller, is_active, cost_price, sold_offset, volume, energy_kcal
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *;
     `;
 
@@ -233,6 +233,10 @@ export async function POST(request: Request) {
       costPriceVal,
       Math.max(0, parseInt(body.sold_offset, 10) || 0),
       typeof body.volume === 'string' && body.volume.trim() ? body.volume.trim().slice(0, 30) : '330ml',
+      // $18: năng lượng kcal/100ml (tuỳ chọn)
+      body.energy_kcal !== undefined && body.energy_kcal !== null && body.energy_kcal !== '' && Number.isFinite(Number(body.energy_kcal))
+        ? Math.min(9999, Math.max(0, Math.round(Number(body.energy_kcal) * 10) / 10))
+        : null,
     ];
 
     const variantsError = validateVariantsInput(variants);
@@ -417,7 +421,8 @@ export async function PUT(request: Request) {
         is_active = COALESCE($13, is_active),
         cost_price = COALESCE($14, cost_price),
         sold_offset = COALESCE($15, sold_offset),
-        volume = COALESCE($17, volume)
+        volume = COALESCE($17, volume),
+        energy_kcal = COALESCE($18, energy_kcal)
       WHERE id = $1
       RETURNING *;
     `;
@@ -444,6 +449,10 @@ export async function PUT(request: Request) {
       category_id !== undefined,
       // $17: dung tích chai (vd 330ml); không gửi / để trống thì giữ giá trị cũ
       typeof body.volume === 'string' && body.volume.trim() ? body.volume.trim().slice(0, 30) : null,
+      // $18: năng lượng kcal/100ml; không gửi / để trống thì giữ giá trị cũ
+      body.energy_kcal !== undefined && body.energy_kcal !== null && body.energy_kcal !== '' && Number.isFinite(Number(body.energy_kcal))
+        ? Math.min(9999, Math.max(0, Math.round(Number(body.energy_kcal) * 10) / 10))
+        : null,
     ];
 
     const result = await query(updateSql, values);

@@ -25,6 +25,8 @@ export interface Product {
   isActive: boolean;
   isVegan?: boolean;
   volume?: string;
+  /** Năng lượng trên 100ml (kcal), admin chỉnh được (cột products.energy_kcal) */
+  energyKcal?: number | null;
   imageFit?: 'cover' | 'contain';
   variants?: ProductVariant[];
   featureBanners?: ProductFeatureBanner;

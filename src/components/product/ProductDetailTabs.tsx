@@ -4,7 +4,7 @@ import { useId, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ZoomIn, X } from 'lucide-react';
 import { Product } from '@/types';
-import { cn, formatPrice } from '@/lib/utils';
+import { cn, formatKcal, formatPrice } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { DEFAULT_PRODUCT_DETAIL, getProductDetailContent } from '@/data/product-detail-content';
 import { getBottleVolume, getUnitPrice, getVariantLabel, sortVariants } from '@/lib/product-detail';
@@ -145,7 +145,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                     </div>
                     <table className="w-full text-sm">
                       <tbody>
-                        {content.nutrition.rows.map((row) => (
+                        {content.nutrition.rows.map((r) => (/năng lượng/i.test(r.label) && formatKcal(product.energyKcal) ? { ...r, value: formatKcal(product.energyKcal) as string } : r)).map((row) => (
                           <tr key={row.label} className="border-b border-gray-100 last:border-0">
                             <th scope="row" className="text-left font-normal text-gray-700 px-4 py-2">{row.label}</th>
                             <td className="text-right text-ink-950 px-4 py-2 text-[1.125em]">{row.value}</td>
@@ -154,6 +154,23 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                       </tbody>
                     </table>
                     <p className="text-[11px] text-gray-500 px-4 py-2 border-t border-gray-200">{content.nutrition.source}</p>
+                  </div>
+                ) : formatKcal(product.energyKcal) ? (
+                  <div className="border border-gray-300 rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2.5 text-base text-ink-950 border-b border-gray-300">
+                      {isEn ? 'Average nutrition per 100ml' : 'Giá trị dinh dưỡng trung bình trong 100ml'}
+                    </div>
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr>
+                          <th scope="row" className="text-left font-normal text-gray-700 px-4 py-2">{isEn ? 'Energy' : 'Năng lượng'}</th>
+                          <td className="text-right text-ink-950 px-4 py-2 text-[1.125em]">{formatKcal(product.energyKcal)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p className="text-[11px] text-gray-500 px-4 py-2 border-t border-gray-200">
+                      {isEn ? 'Other nutrition values are being updated.' : 'Các chỉ số dinh dưỡng khác đang được cập nhật.'}
+                    </p>
                   </div>
                 ) : (
                   pendingNote

@@ -163,6 +163,8 @@ interface Product {
   sold_offset?: number | null;
   /** Dung tích chai, vd "330ml" (cột products.volume) */
   volume?: string | null;
+  /** Năng lượng trên 100ml (kcal) — cột products.energy_kcal */
+  energy_kcal?: number | string | null;
   id: string;
   slug: string;
   name: string;
@@ -6743,6 +6745,22 @@ export default function AdminPage() {
                     maxLength={30}
                     onChange={(e) => setEditingProduct({ ...editingProduct, volume: e.target.value })}
                     placeholder="VD: 330ml, 270ml, 568ml"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                {/* Năng lượng / 100ml (lưu cột products.energy_kcal; hiện ở tab Dinh dưỡng và bảng so sánh) */}
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">Năng lượng (kcal / 100ml)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    max={9999}
+                    step={0.1}
+                    value={editingProduct.energy_kcal ?? ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, energy_kcal: e.target.value })}
+                    placeholder="VD: 31 hoặc 10.8"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>

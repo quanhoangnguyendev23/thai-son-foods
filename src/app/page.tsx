@@ -148,6 +148,7 @@ async function getLiveProducts(): Promise<Product[]> {
           shortDescription: row.short_description || base.shortDescription,
           description: row.description || base.description,
           volume: row.volume || (base as { volume?: string }).volume,
+          energyKcal: row.energy_kcal !== null && row.energy_kcal !== undefined ? Number(row.energy_kcal) : (base as { energyKcal?: number }).energyKcal ?? null,
           thumbnail: finalThumbnail,
           categoryId: (row.category_id ? row.category_id.replace(/^cat-/, '') : base.categoryId),
           isFeatured: row.is_featured !== null ? Boolean(row.is_featured) : base.isFeatured,

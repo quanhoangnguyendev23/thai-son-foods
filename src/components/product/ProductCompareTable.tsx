@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Check, Star, StarHalf } from 'lucide-react';
 import { Product } from '@/types';
-import { cn, formatPrice } from '@/lib/utils';
+import { cn, formatKcal, formatPrice } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
@@ -231,7 +231,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
       key: 'energy',
       label: isEn ? 'Energy / 100ml' : 'Năng lượng / 100ml',
       // Chỉ hiển thị khi đã số hoá nhãn dinh dưỡng thật (product-detail-content), không ước tính
-      render: (p) => getProductDetailContent(p).nutrition?.rows.find((r) => /năng lượng/i.test(r.label))?.value || dash,
+      render: (p) => formatKcal(p.energyKcal) || getProductDetailContent(p).nutrition?.rows.find((r) => /năng lượng/i.test(r.label))?.value || dash,
     },
     { kind: 'text', key: 'category', label: isEn ? 'Category' : 'Danh mục', render: (p) => categoryName(p) },
     { kind: 'check', key: 'vegan', label: isEn ? 'Plant-based (vegan)' : 'Thuần chay, từ thực vật', test: (p) => Boolean(p.isVegan) },
