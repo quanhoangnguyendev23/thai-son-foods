@@ -11,7 +11,6 @@ import { motion } from 'framer-motion';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
-import SectionTitle from '@/components/ui/SectionTitle';
 
 import { Combo } from '@/types';
 
@@ -91,14 +90,14 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
   ];
 
   return (
-    <section id="combo" className="section-container max-sm:px-2.5 pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-10 md:pb-16">
-      {/* Tiêu đề phần Combo tiết kiệm đồng bộ với phần Sản phẩm */}
-      <SectionTitle
-        title={language === 'en' ? 'Value Combos' : 'Combo tiết kiệm'}
-        badge={language === 'en' ? 'Smart savings' : 'Tiết kiệm hơn'}
-        variant="combo"
-        className="mb-6 sm:mb-7 md:mb-8"
-      />
+    <section id="combo" className="max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8">
+      {/* Tiêu đề cùng kiểu với các hàng sản phẩm trang chủ (ProductCarousel) */}
+      <div className="mb-3">
+        <h2 className="text-xl md:text-2xl text-ink-950">{language === 'en' ? 'Value Combos' : 'Combo tiết kiệm'}</h2>
+        <p className="text-xs md:text-sm text-gray-600 mt-0.5">
+          {language === 'en' ? 'Mix your favourite drinks and save more' : 'Kết hợp nhiều loại thức uống, tiết kiệm hơn mua lẻ'}
+        </p>
+      </div>
 
       {/* Lưới 2 hàng x 6 cột chuẩn giao diện trang chủ */}
       <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 w-full">
@@ -201,8 +200,8 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                         className={cn(
                           'shrink-0 w-10 h-10 sm:w-8 sm:h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg transition-all active:scale-95 cursor-pointer shadow-xs',
                           isJustAdded
-                            ? 'bg-emerald-700 text-white'
-                            : 'bg-green-primary hover:bg-green-dark text-white'
+                            ? 'bg-brand-forest text-white'
+                            : 'bg-brand-emerald hover:bg-brand-forest text-white'
                         )}
                         title={language === 'en' ? 'Add combo to cart' : 'Thêm combo vào giỏ hàng'}
                         aria-label={language === 'en' ? `Add ${comboName} to cart` : `Thêm ${comboName} vào giỏ hàng`}
