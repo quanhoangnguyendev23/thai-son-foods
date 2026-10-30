@@ -6,7 +6,73 @@ import { publicErrorMessage } from '@/lib/apiError';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_RANGE_DAYS = 366;
+
+/** Khoảng ngày (giờ Việt Nam) cho biểu đồ: mặc định 7 ngày gần nhất, tối đa 366 ngày. */
+function parseRange(url: URL): { from: string | null; to: string | null } {
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+  if (!from || !to || !DATE_RE.test(from) || !DATE_RE.test(to)) return { from: null, to: null };
+  const a = Date.parse(from + 'T00:00:00Z');
+  const b = Date.parse(to + 'T00:00:00Z');
+  if (Number.isNaN(a) || Number.isNaN(b) || b < a || (b - a) / 86400000 + 1 > MAX_RANGE_DAYS) return { from: null, to: null };
+  return { from, to };
+}
+
+/** Doanh thu theo ngày + top sản phẩm theo doanh thu trong khoảng [from, to] (null = 7 ngày gần nhất). */
+async function getRangeStats(storeScope: string | null, from: string | null, to: string | null) {
+  const params: unknown[] = [from, to];
+  let storeFilter = '';
+  if (storeScope) {
+    params.push(storeScope);
+    storeFilter = ' AND o.store_code = $3';
+  }
+  const bounds = `
+    WITH vn_today AS (SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS d),
+    rng AS (
+      SELECT COALESCE($1::date, (SELECT d FROM vn_today) - 6) AS d_from,
+             COALESCE($2::date, (SELECT d FROM vn_today)) AS d_to
+    )`;
+  const trendRes = await query(
+    `${bounds},
+    dates AS (SELECT generate_series((SELECT d_from FROM rng), (SELECT d_to FROM rng), '1 day'::interval)::date AS day)
+    SELECT
+      to_char(d.day, 'DD/MM') AS date_label,
+      to_char(d.day, 'YYYY-MM-DD') AS date_iso,
+      COUNT(o.id) FILTER (WHERE o.status = 'COMPLETED') AS order_count,
+      COALESCE(SUM(o.total) FILTER (WHERE o.status = 'COMPLETED'), 0) AS daily_revenue,
+      COUNT(o.id) FILTER (WHERE COALESCE(o.status, '') <> 'CANCELLED') AS placed_count,
+      COALESCE(SUM(o.total) FILTER (WHERE COALESCE(o.status, '') <> 'CANCELLED'), 0) AS placed_revenue
+    FROM dates d
+    LEFT JOIN orders o ON (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = d.day${storeFilter}
+    GROUP BY d.day
+    ORDER BY d.day ASC;`,
+    params
+  );
+  const topRes = await query(
+    `${bounds}
+    SELECT p.id, p.name, p.sku, p.thumbnail, p.price, p.unit,
+      COALESCE(SUM(oi.quantity), 0) AS total_sold,
+      COALESCE(SUM(oi.quantity * oi.price), 0) AS total_earned
+    FROM products p
+    INNER JOIN order_items oi ON COALESCE(oi.canonical_product_id, oi.product_id) = p.id
+    INNER JOIN orders o ON o.id = oi.order_id AND o.status = 'COMPLETED'
+    WHERE (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN (SELECT d_from FROM rng) AND (SELECT d_to FROM rng)${storeFilter}
+    GROUP BY p.id, p.name, p.sku, p.thumbnail, p.price, p.unit
+    ORDER BY total_earned DESC, total_sold DESC
+    LIMIT 6;`,
+    params
+  );
+  const rows = trendRes.rows || [];
+  return {
+    revenueTrend: rows,
+    topProducts: topRes.rows || [],
+    range: { from: rows[0]?.date_iso || from, to: rows[rows.length - 1]?.date_iso || to },
+  };
+}
+
+export async function GET(request: Request) {
   try {
     const session = await getAdminSession();
     if (!session) {
@@ -28,6 +94,14 @@ export async function GET() {
     }
 
     const storeScope = getStoreScope(session);
+
+    // Chỉ lấy biểu đồ doanh thu + top sản phẩm theo khoảng ngày (bộ chọn thời gian ở trang Tổng quan)
+    const url = new URL(request.url);
+    if (url.searchParams.get('section') === 'range') {
+      const { from, to } = parseRange(url);
+      const data = await getRangeStats(storeScope, from, to);
+      return NextResponse.json({ success: true, storeScope: storeScope || 'ALL', ...data });
+    }
 
     // 1. Overall summary (toàn công ty hoặc theo cửa hàng của chính mình)
     const summaryRes = storeScope

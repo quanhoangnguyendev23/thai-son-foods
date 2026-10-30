@@ -365,6 +365,32 @@ export default function AdminPage() {
   const [syncLoading, setSyncLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [trendHover, setTrendHover] = useState<number | null>(null);
+  // Khoảng thời gian của biểu đồ doanh thu + sản phẩm bán chạy (ngày theo giờ Việt Nam)
+  const vnDate = (offsetDays = 0) =>
+    new Date(Date.now() + offsetDays * 86400000).toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+  const [rangePreset, setRangePreset] = useState<'7' | '30' | '90' | 'custom'>('7');
+  const [rangeFrom, setRangeFrom] = useState(() => vnDate(-6));
+  const [rangeTo, setRangeTo] = useState(() => vnDate(0));
+  const [rangeData, setRangeData] = useState<{ revenueTrend: any[]; topProducts: any[] } | null>(null);
+  const [rangeLoading, setRangeLoading] = useState(false);
+  useEffect(() => {
+    if (!rangeFrom || !rangeTo || rangeFrom > rangeTo) return;
+    let alive = true;
+    setRangeLoading(true);
+    safeFetchJson<any>(`/api/admin/stats?section=range&from=${rangeFrom}&to=${rangeTo}`, { cache: 'no-store' })
+      .then((d) => {
+        if (alive && d?.success) setRangeData({ revenueTrend: d.revenueTrend || [], topProducts: d.topProducts || [] });
+      })
+      .finally(() => alive && setRangeLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [rangeFrom, rangeTo]);
+  const pickPreset = (p: '7' | '30' | '90') => {
+    setRangePreset(p);
+    setRangeFrom(vnDate(-(Number(p) - 1)));
+    setRangeTo(vnDate(0));
+  };
 
   // Image & Gallery Management
   const [productImages, setProductImages] = useState<any[]>([]);
@@ -3238,20 +3264,72 @@ export default function AdminPage() {
 
               {/* Chart & Top Products Row */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* 7 Days Revenue Trend (Visual SVG Bar Chart) */}
+                {/* Biểu đồ doanh thu theo khoảng ngày (đường cong SVG) */}
                 <div className="lg:col-span-2 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-base text-white flex items-center gap-2">
                         <BarChart3 className="w-4 h-4 text-emerald-400" />
-                        <span>Biểu Đồ Doanh Thu 7 Ngày Gần Nhất</span>
+                        <span>Biểu Đồ Doanh Thu</span>
+                        {rangeLoading && <RefreshCw className="w-3.5 h-3.5 text-slate-400 animate-spin" />}
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Theo ngày giờ Việt Nam · rê chuột vào từng ngày để xem chi tiết</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Từ {rangeFrom.split('-').reverse().join('/')} đến {rangeTo.split('-').reverse().join('/')} · giờ Việt Nam · rê chuột để xem từng ngày
+                      </p>
                     </div>
-                    <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
-                      7 ngày qua
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {(['7', '30', '90'] as const).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => pickPreset(p)}
+                          className={`text-xs px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                            rangePreset === p
+                              ? 'bg-amber-300 text-forest-950 border-amber-300'
+                              : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-500'
+                          }`}
+                        >
+                          {p} ngày
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setRangePreset('custom')}
+                        className={`text-xs px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                          rangePreset === 'custom'
+                            ? 'bg-amber-300 text-forest-950 border-amber-300'
+                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-500'
+                        }`}
+                      >
+                        Tuỳ chọn
+                      </button>
+                    </div>
                   </div>
+
+                  {rangePreset === 'custom' && (
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                      <label htmlFor="range-from">Từ ngày</label>
+                      <input
+                        id="range-from"
+                        type="date"
+                        value={rangeFrom}
+                        max={rangeTo}
+                        onChange={(e) => e.target.value && setRangeFrom(e.target.value)}
+                        className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 [color-scheme:dark]"
+                      />
+                      <label htmlFor="range-to">đến</label>
+                      <input
+                        id="range-to"
+                        type="date"
+                        value={rangeTo}
+                        min={rangeFrom}
+                        max={vnDate(0)}
+                        onChange={(e) => e.target.value && setRangeTo(e.target.value)}
+                        className="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 [color-scheme:dark]"
+                      />
+                      <span className="text-slate-400">Tối đa 366 ngày</span>
+                    </div>
+                  )}
 
                   {/* Chú thích 2 chỉ số */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
@@ -3267,7 +3345,7 @@ export default function AdminPage() {
 
                   {/* Biểu đồ đường cong (SVG): Đặt hàng (rêu nhạt) · Hoàn thành (cam nhạt) */}
                   {(() => {
-                    const trend = stats?.revenueTrend || [];
+                    const trend = rangeData?.revenueTrend || stats?.revenueTrend || [];
                     if (trend.length === 0) {
                       return <p className="text-sm text-slate-400 py-16 text-center">Chưa có dữ liệu doanh thu.</p>;
                     }
@@ -3325,9 +3403,11 @@ export default function AdminPage() {
                           {hi !== null && <line x1={x(hi)} x2={x(hi)} y1={padT} y2={y(0)} stroke="var(--color-ink-300)" strokeDasharray="2 4" />}
                           {trend.map((item, i) => (
                             <g key={i}>
-                              <circle cx={x(i)} cy={y(placed[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-leaf-300)" strokeWidth="2" />
-                              <circle cx={x(i)} cy={y(done[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-amber-300)" strokeWidth="2" />
-                              <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="11.5" fill={hi === i ? 'var(--color-ink-100)' : 'var(--color-ink-300)'}>{item.date_label}</text>
+                              {(trend.length <= 31 || hi === i) && <circle cx={x(i)} cy={y(placed[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-leaf-300)" strokeWidth="2" />}
+                              {(trend.length <= 31 || hi === i) && <circle cx={x(i)} cy={y(done[i])} r={hi === i ? 5 : 3.5} fill="var(--color-forest-950)" stroke="var(--color-amber-300)" strokeWidth="2" />}
+                              {(i % Math.ceil(trend.length / 10) === 0 || i === trend.length - 1 || hi === i) && (
+                                <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="11.5" fill={hi === i ? 'var(--color-ink-100)' : 'var(--color-ink-300)'}>{item.date_label}</text>
+                              )}
                               <rect
                                 x={x(i) - (W - padL - padR) / Math.max(trend.length - 1, 1) / 2}
                                 y={padT}
@@ -3362,12 +3442,12 @@ export default function AdminPage() {
                         <Sparkles className="w-4 h-4 text-amber-400" />
                         <span>Sản Phẩm Bán Chạy</span>
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Doanh thu từng sản phẩm (đơn hoàn thành)</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Doanh thu từng sản phẩm (đơn hoàn thành) trong khoảng đã chọn</p>
                     </div>
                   </div>
 
                   {(() => {
-                    const top = (stats?.topProducts || []).map((p: any) => ({
+                    const top = (rangeData?.topProducts || stats?.topProducts || []).map((p: any) => ({
                       ...p,
                       revenue: Number(p.total_earned || 0),
                       sold: Number(p.total_sold || 0),
