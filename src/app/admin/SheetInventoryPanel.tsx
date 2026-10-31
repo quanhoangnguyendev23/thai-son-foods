@@ -230,7 +230,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
 
   if (!data) {
     return loading ? (
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 px-5 py-4 text-xs text-slate-400">
+      <div className="rounded-2xl bg-white border border-ink-200 px-5 py-4 text-xs text-ink-700">
         Đang nạp tồn kho...
       </div>
     ) : null;
@@ -256,24 +256,24 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
   const visibleRows =
     filter === 'low' ? rows.filter(isLow) : filter === 'expiring' ? rows.filter(isExpiring) : filter === 'stopped' ? rows.filter((r) => r.stopped) : rows;
   const filterTabs: { key: RowFilter; label: string; tone: string }[] = [
-    { key: 'all', label: 'Tất cả', tone: 'text-slate-200' },
-    { key: 'low', label: `Sắp hết (≤${LOW_STOCK})`, tone: 'text-amber-300' },
-    { key: 'expiring', label: `Lô sắp hết hạn (≤${EXPIRING_DAYS} ngày)`, tone: 'text-rose-300' },
-    { key: 'stopped', label: 'Tạm hết hàng', tone: 'text-slate-300' },
+    { key: 'all', label: 'Tất cả', tone: 'text-ink-950' },
+    { key: 'low', label: `Sắp hết (≤${LOW_STOCK})`, tone: 'text-amber-800' },
+    { key: 'expiring', label: `Lô sắp hết hạn (≤${EXPIRING_DAYS} ngày)`, tone: 'text-rose-600' },
+    { key: 'stopped', label: 'Tạm hết hàng', tone: 'text-ink-800' },
   ];
 
   return (
-    <section className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-xl">
+    <section className="rounded-2xl bg-white border border-ink-200 overflow-hidden shadow-xl">
       {/* Đầu khung */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-5 py-4 border-b border-slate-800">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 px-5 py-4 border-b border-ink-200">
         <div className="min-w-0">
-          <h2 className="text-base text-white flex flex-wrap items-center gap-2">
+          <h2 className="text-base text-ink-950 flex flex-wrap items-center gap-2">
             <span>Nguồn tồn kho: Google Sheet</span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Chỉ đọc</span>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-ink-100 text-ink-800 border border-ink-300">Chỉ đọc</span>
           </h2>
-          <p className="text-[12px] text-slate-400 mt-1">
+          <p className="text-[12px] text-ink-700 mt-1">
             Cập nhật lúc{' '}
-            <span className="text-slate-200 text-[1.125em]">{fmtTime(status?.lastSuccessAt)}</span>
+            <span className="text-ink-950 text-[1.125em]">{fmtTime(status?.lastSuccessAt)}</span>
             {status?.lastSuccessAt ? <span> ({ago(status.lastSuccessAt, now)})</span> : null}
             {'. '}
             Web tự đọc lại sau mỗi {status?.refreshIntervalMinutes ?? 15} phút. Số lượng và lô sửa trực tiếp trong sheet, không sửa trên web.
@@ -285,7 +285,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               href={status.sheetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-xl text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
+              className="px-3.5 py-2 rounded-xl text-sm bg-ink-100 hover:bg-ink-200 text-ink-950 border border-ink-300 transition-all"
             >
               Mở sheet
             </a>
@@ -295,7 +295,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               type="button"
               onClick={handleSync}
               disabled={syncing}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-ink-950 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
               <span>{syncing ? 'Đang đọc sheet...' : 'Cập nhật ngay'}</span>
@@ -309,42 +309,42 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
         <div
           className={`px-5 py-2.5 text-xs border-b ${
             message.type === 'ok'
-              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-              : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+              ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+              : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
           }`}
         >
           {message.text}
         </div>
       )}
       {status?.lastError && (
-        <div className="px-5 py-2.5 text-xs bg-rose-500/10 text-rose-300 border-b border-rose-500/20">
+        <div className="px-5 py-2.5 text-xs bg-rose-500/10 text-rose-600 border-b border-rose-500/20">
           Lần đọc sheet gần nhất bị lỗi, web đang dùng dữ liệu của lần đọc tốt trước đó. Lý do: {status.lastError}
         </div>
       )}
       {!status?.lastError && status?.stale && (
-        <div className="px-5 py-2.5 text-xs bg-amber-500/10 text-amber-300 border-b border-amber-500/20">
+        <div className="px-5 py-2.5 text-xs bg-amber-500/10 text-amber-800 border-b border-amber-500/20">
           {status.lastSuccessAt
             ? 'Dữ liệu đã quá 60 phút chưa được làm mới. Bấm "Cập nhật ngay" hoặc kiểm tra file sheet.'
             : 'Chưa đọc được sheet lần nào. Bấm "Cập nhật ngay" để nạp tồn kho.'}
         </div>
       )}
       {data.sheetHasStore === false && (
-        <div className="px-5 py-2.5 text-xs bg-amber-500/10 text-amber-300 border-b border-amber-500/20">
+        <div className="px-5 py-2.5 text-xs bg-amber-500/10 text-amber-800 border-b border-amber-500/20">
           Sheet chưa có dòng nào cho cửa hàng {storeCode}, nên tồn hiển thị là 0. Kiểm tra mã cửa hàng (cột CH) trong sheet.
         </div>
       )}
 
       {/* Tổng quan nhanh + bộ lọc */}
-      <div className="px-5 py-3 border-b border-slate-800 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[12px] text-slate-400">
+      <div className="px-5 py-3 border-b border-ink-200 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[12px] text-ink-700">
           <span>
-            <span className="text-slate-100 text-base tabular-nums">{rows.length}</span> mặt hàng
+            <span className="text-ink-950 text-base tabular-nums">{rows.length}</span> mặt hàng
           </span>
           <span>
-            Bán được <span className="text-emerald-300 text-base tabular-nums">{totalAvailable.toLocaleString('vi-VN')}</span> chai
+            Bán được <span className="text-emerald-700 text-base tabular-nums">{totalAvailable.toLocaleString('vi-VN')}</span> chai
           </span>
           <span>
-            Đang giữ cho đơn <span className="text-slate-100 text-base tabular-nums">{totalReserved.toLocaleString('vi-VN')}</span> chai
+            Đang giữ cho đơn <span className="text-ink-950 text-base tabular-nums">{totalReserved.toLocaleString('vi-VN')}</span> chai
           </span>
         </div>
         <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Lọc mặt hàng">
@@ -356,7 +356,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               aria-selected={filter === t.key}
               onClick={() => setFilter(t.key)}
               className={`px-3 py-1.5 rounded-lg text-[12px] border transition-colors cursor-pointer ${
-                filter === t.key ? 'bg-slate-700 border-slate-600 text-white' : `bg-slate-950/40 border-slate-800 hover:bg-slate-800 ${t.tone}`
+                filter === t.key ? 'bg-ink-200 border-ink-400 text-ink-950' : `bg-ink-50 border-ink-200 hover:bg-ink-100 ${t.tone}`
               }`}
             >
               {t.label} <span className="tabular-nums opacity-80">({counts[t.key]})</span>
@@ -367,8 +367,8 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
 
       {/* Bảng tồn theo lô: 1 dòng / mặt hàng, số căn phải để dễ so */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950/60 text-slate-400 text-[11px] border-b border-slate-800">
+        <table className="w-full text-left text-xs text-ink-800">
+          <thead className="bg-ink-50 text-ink-700 text-[11px] border-b border-ink-200">
             <tr>
               <th className="py-2.5 px-4 font-normal">Sản phẩm</th>
               <th className="py-2.5 px-3 font-normal">Lô theo hạn dùng · số chai</th>
@@ -378,7 +378,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               <th className="py-2.5 px-4 font-normal text-right w-[140px]">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-ink-200">
             {visibleRows.map((r) => {
               const isBusy = busyProduct === r.productId;
               const formOpen = stopForm?.productId === r.productId;
@@ -386,35 +386,35 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               const name = r.spCode || (r.sku ? r.sku.replace(/-\d+$/, '') : shortName(r.productId, r.sku, r.productName));
               return (
                 <React.Fragment key={r.productId}>
-                  <tr className={`hover:bg-slate-800/40 transition-colors ${r.stopped ? 'opacity-70' : ''}`}>
+                  <tr className={`hover:bg-ink-100 transition-colors ${r.stopped ? 'opacity-70' : ''}`}>
                     <td className="py-2.5 px-4 min-w-[220px]">
-                      <p className="text-white text-[13.5px] truncate max-w-[340px]" title={r.productName}>
+                      <p className="text-ink-950 text-[13.5px] truncate max-w-[340px]" title={r.productName}>
                         {name}
                       </p>
-                      <p className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                      <p className="text-[11px] text-ink-600 flex items-center gap-2 mt-0.5">
                         {r.nh === 1 && (
-                          <span className="inline-flex items-center gap-1 text-emerald-300">
+                          <span className="inline-flex items-center gap-1 text-emerald-700">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden />
                             Đã nhập hôm nay
                           </span>
                         )}
-                        {r.nh === 0 && <span className="text-slate-500">Chưa nhập hôm nay</span>}
+                        {r.nh === 0 && <span className="text-ink-600">Chưa nhập hôm nay</span>}
                       </p>
                     </td>
 
                     <td className="py-2.5 px-3">
                       {r.lots.length === 0 ? (
-                        <span className="text-slate-500">Không có lô nào</span>
+                        <span className="text-ink-600">Không có lô nào</span>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">
                           {r.lots.map((l) => {
                             const tone = l.expired
-                              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30 line-through'
+                              ? 'bg-rose-500/15 text-rose-600 border-rose-500/30 line-through'
                               : l.daysLeft <= 2
-                                ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                                ? 'bg-rose-500/10 text-rose-600 border-rose-500/30'
                                 : l.daysLeft <= EXPIRING_DAYS
-                                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                                  : 'bg-slate-950/60 text-slate-300 border-slate-800';
+                                  ? 'bg-amber-500/10 text-amber-800 border-amber-500/30'
+                                  : 'bg-ink-50 text-ink-800 border-ink-200';
                             const warn = l.expired ? 'hết hạn' : l.daysLeft <= EXPIRING_DAYS ? `còn ${l.daysLeft} ngày` : '';
                             return (
                               <span
@@ -423,7 +423,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                                 title={`Sản xuất ${fmtDay(l.nsx)} · hạn dùng ${fmtDay(l.hsd)}${l.expired ? ' · đã hết hạn, không bán' : ` · còn ${l.daysLeft} ngày`}`}
                               >
                                 <span className="opacity-70">{fmtDay(l.hsd)}</span>
-                                <span className="text-slate-100">{l.qty}</span>
+                                <span className="text-ink-950">{l.qty}</span>
                                 {warn && <span className="text-[10.5px]">· {warn}</span>}
                               </span>
                             );
@@ -431,25 +431,25 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                         </div>
                       )}
                       {r.expiredQty > 0 && (
-                        <p className="text-[11px] text-rose-300 mt-1">{r.expiredQty} chai hết hạn, không tính vào bán được.</p>
+                        <p className="text-[11px] text-rose-600 mt-1">{r.expiredQty} chai hết hạn, không tính vào bán được.</p>
                       )}
                     </td>
 
-                    <td className="py-2.5 px-3 text-right tabular-nums text-[13.5px] text-slate-300">{r.sellableFromSheet}</td>
+                    <td className="py-2.5 px-3 text-right tabular-nums text-[13.5px] text-ink-800">{r.sellableFromSheet}</td>
 
-                    <td className={`py-2.5 px-3 text-right tabular-nums text-[13.5px] ${r.reserved > 0 ? 'text-amber-300' : 'text-slate-600'}`}>
+                    <td className={`py-2.5 px-3 text-right tabular-nums text-[13.5px] ${r.reserved > 0 ? 'text-amber-800' : 'text-ink-500'}`}>
                       {r.reserved}
                     </td>
 
                     <td className="py-2.5 px-3 text-right">
                       {r.stopped ? (
-                        <span className="inline-block px-2 py-0.5 rounded-md text-[11px] bg-rose-500/10 text-rose-300 border border-rose-500/30" title={[r.stopReason, r.stopBy && `bởi ${r.stopBy} lúc ${fmtTime(r.stopAt)}`].filter(Boolean).join(' · ')}>
+                        <span className="inline-block px-2 py-0.5 rounded-md text-[11px] bg-rose-500/10 text-rose-600 border border-rose-500/30" title={[r.stopReason, r.stopBy && `bởi ${r.stopBy} lúc ${fmtTime(r.stopAt)}`].filter(Boolean).join(' · ')}>
                           Tạm hết hàng
                         </span>
                       ) : (
                         <span
                           className={`tabular-nums text-[15px] ${
-                            r.available === 0 ? 'text-rose-400' : r.available <= LOW_STOCK ? 'text-amber-300' : 'text-emerald-300'
+                            r.available === 0 ? 'text-rose-600' : r.available <= LOW_STOCK ? 'text-amber-800' : 'text-emerald-700'
                           }`}
                         >
                           {r.available}
@@ -473,22 +473,22 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                             type="button"
                             disabled={isBusy}
                             onClick={() => setStopForm(formOpen ? null : { productId: r.productId, reason: '' })}
-                            className="px-2.5 py-1 rounded-lg text-[12px] text-slate-400 hover:text-rose-200 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-[12px] text-ink-700 hover:text-rose-600 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
                           >
                             {formOpen ? 'Đóng' : 'Tạm hết hàng'}
                           </button>
                         )
                       ) : (
-                        <span className="text-slate-600">—</span>
+                        <span className="text-ink-500">—</span>
                       )}
                     </td>
                   </tr>
 
                   {formOpen && (
-                    <tr className="bg-slate-950/50">
+                    <tr className="bg-ink-50">
                       <td colSpan={6} className="px-4 py-3">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                          <span className="text-xs text-slate-300">
+                          <span className="text-xs text-ink-800">
                             Chặn bán {name} tại {storeCode} cho tới khi mở bán lại. Lý do (không bắt buộc):
                           </span>
                           <input
@@ -497,7 +497,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                             maxLength={300}
                             onChange={(e) => setStopForm({ productId: r.productId, reason: e.target.value })}
                             placeholder="Ví dụ: vỡ hàng, chờ xe giao"
-                            className="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                            className="flex-1 min-w-0 bg-ink-50 border border-ink-200 rounded-xl px-3 py-1.5 text-xs text-ink-950 placeholder-ink-500 focus:outline-none focus:border-amber-500"
                           />
                           <button
                             type="button"
@@ -516,14 +516,14 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-10 text-center text-slate-500">
+                <td colSpan={6} className="py-10 text-center text-ink-600">
                   Chưa có dữ liệu. Bấm &quot;Cập nhật ngay&quot; để đọc sheet.
                 </td>
               </tr>
             )}
             {rows.length > 0 && visibleRows.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-500">
+                <td colSpan={6} className="py-8 text-center text-ink-600">
                   Không có mặt hàng nào trong nhóm này.
                 </td>
               </tr>
@@ -534,7 +534,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
 
       {/* Chi tiết lần đọc gần nhất */}
       {summary && (
-        <div className="px-5 py-3 border-t border-slate-800 text-[11px] text-slate-400">
+        <div className="px-5 py-3 border-t border-ink-200 text-[11px] text-ink-700">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span>
               Lần đọc gần nhất: {summary.mappedRows}/{summary.rowsInSheet} dòng khớp cửa hàng và sản phẩm của web, {summary.changedRows} dòng thay đổi.
@@ -543,14 +543,14 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               <button
                 type="button"
                 onClick={() => setShowWarnings((v) => !v)}
-                className="text-amber-300 hover:text-amber-200 underline underline-offset-2 cursor-pointer"
+                className="text-amber-800 hover:text-amber-800 underline underline-offset-2 cursor-pointer"
               >
                 {showWarnings ? 'Ẩn lưu ý' : `Xem ${issueCount} lưu ý về dữ liệu`}
               </button>
             )}
           </div>
           {showWarnings && (
-            <ul className="mt-2 space-y-1 list-disc pl-5 text-slate-300">
+            <ul className="mt-2 space-y-1 list-disc pl-5 text-ink-800">
               {summary.unmappedStores.length > 0 && (
                 <li>Mã cửa hàng trên sheet chưa có trên web (bỏ qua): {summary.unmappedStores.join(', ')}.</li>
               )}

@@ -2,8 +2,8 @@
 
 /**
  * 2 khối biểu đồ ở trang Tổng quan admin (shadcn/ui chart + recharts):
- *  - RevenueCard: "Biểu Đồ Doanh Thu" — area chart tương tác + KPI so với kỳ trước
- *  - TopProductsCard / TopCombosCard: "Sản Phẩm Bán Chạy" và "Combo Bán Chạy" — 2 bar chart giống nhau (cột Đặt hàng | Hoàn thành)
+ *  - RevenueCard: "Biểu Đồ Doanh Thu" — cột KPI bên trái + area chart tương tác bên phải, chọn nhanh 7/14/30/90 ngày
+ *  - TopProductsCard / TopCombosCard: "Sản Phẩm Bán Chạy" và "Combo Bán Chạy" — 1 cột Hoàn thành mỗi mã, ghi số trên đầu cột
  * Nghiệp vụ theo API /api/admin/stats?section=range:
  *  "Đặt hàng" = mọi đơn không bị huỷ (placed_*), "Hoàn thành" = đơn COMPLETED (daily_revenue / total_* / order_count).
  * Màu chỉ dùng token trong brand-tokens.css.
@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from 'recharts';
 import { AlertCircle, BarChart3, CalendarDays, Gift, RefreshCw, Sparkles, TrendingUp } from 'lucide-react';
 import { safeFetchJson } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +24,6 @@ import {
   type ChartConfig,
   type ChartTooltipItem,
 } from '@/components/ui/chart';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ---------------------------------------------------------------------------
 // Kiểu dữ liệu
@@ -53,7 +52,14 @@ export type TopItemRow = {
   placed_order_count?: number | string;
 };
 
-export type RangePreset = '7' | '30' | '90' | 'custom';
+export type RangePreset = '7' | '14' | '30' | '90' | 'custom';
+export type FixedPreset = Exclude<RangePreset, 'custom'>;
+const PRESETS: { value: FixedPreset; label: string }[] = [
+  { value: '7', label: '7 ngày' },
+  { value: '14', label: '14 ngày' },
+  { value: '30', label: '30 ngày' },
+  { value: '90', label: '90 ngày' },
+];
 
 // ---------------------------------------------------------------------------
 // Định dạng ngày / số (vi-VN, giờ Việt Nam)
@@ -150,7 +156,7 @@ function usePrefersReducedMotion() {
 }
 
 // ---------------------------------------------------------------------------
-// Bộ chọn khoảng ngày: Select (7 / 30 / 90 ngày / Tuỳ chọn) + popover chọn ngày
+// Bộ chọn khoảng ngày: nút chọn nhanh 7 / 14 / 30 / 90 ngày + "Tuỳ chọn" mở popover chọn ngày
 // ---------------------------------------------------------------------------
 
 const MAX_RANGE_DAYS = 366;
@@ -167,7 +173,7 @@ function RangeSelect({
   from: string;
   to: string;
   maxDate: string;
-  onPreset: (p: '7' | '30' | '90') => void;
+  onPreset: (p: FixedPreset) => void;
   onCustomRange: (from: string, to: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -208,44 +214,48 @@ function RangeSelect({
 
   return (
     <div ref={boxRef} className="relative flex items-center gap-2 sm:ml-auto">
-      {preset === 'custom' && (
+      {/* Nút chọn nhanh khoảng thời gian (mặc định 14 ngày); "Tuỳ chọn" mở bảng chọn ngày */}
+      <div role="group" aria-label="Chọn khoảng thời gian" className="flex flex-wrap overflow-hidden rounded-lg border border-ink-300 bg-ink-50">
+        {PRESETS.map((p, i) => {
+          const on = preset === p.value;
+          return (
+            <button
+              key={p.value}
+              type="button"
+              aria-pressed={on}
+              onClick={() => {
+                setOpen(false);
+                if (!on) onPreset(p.value);
+              }}
+              className={`h-9 px-3 text-xs transition-colors cursor-pointer ${i > 0 ? 'border-l border-ink-200' : ''} ${
+                on ? 'bg-emerald-600 text-white' : 'text-ink-800 hover:bg-ink-100 hover:text-ink-950'
+              }`}
+            >
+              {p.label}
+            </button>
+          );
+        })}
         <button
           type="button"
+          aria-pressed={preset === 'custom'}
+          aria-expanded={open}
           onClick={openCustom}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-700 px-2.5 text-xs text-slate-200 hover:border-slate-500 cursor-pointer"
-          title="Đổi khoảng ngày"
+          title="Chọn khoảng ngày bất kỳ"
+          className={`inline-flex h-9 items-center gap-1.5 border-l border-ink-200 px-3 text-xs transition-colors cursor-pointer ${
+            preset === 'custom' ? 'bg-emerald-600 text-white' : 'text-ink-800 hover:bg-ink-100 hover:text-ink-950'
+          }`}
         >
           <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-          <span className="tabular-nums">{formatRangeLabel(from, to)}</span>
+          <span className="tabular-nums">{preset === 'custom' ? formatRangeLabel(from, to) : 'Tuỳ chọn…'}</span>
         </button>
-      )}
-      <Select
-        value={preset}
-        onValueChange={(v) => {
-          if (v === 'custom') openCustom();
-          else {
-            setOpen(false);
-            onPreset(v as '7' | '30' | '90');
-          }
-        }}
-      >
-        <SelectTrigger className="w-[150px]" aria-label="Chọn khoảng thời gian">
-          <SelectValue placeholder="7 ngày qua" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="7">7 ngày qua</SelectItem>
-          <SelectItem value="30">30 ngày qua</SelectItem>
-          <SelectItem value="90">90 ngày qua</SelectItem>
-          <SelectItem value="custom">Tuỳ chọn…</SelectItem>
-        </SelectContent>
-      </Select>
+      </div>
       {open && (
         <div
           role="dialog"
           aria-label="Chọn khoảng ngày"
-          className="absolute right-0 top-full z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-slate-700 bg-slate-900 p-3 shadow-xl shadow-forest-950/40"
+          className="absolute right-0 top-full z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-ink-300 bg-white p-3 shadow-xl shadow-ink-900/10"
         >
-          <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+          <div className="grid grid-cols-2 gap-2 text-xs text-ink-800">
             <label className="space-y-1">
               <span>Từ ngày</span>
               <input
@@ -253,7 +263,7 @@ function RangeSelect({
                 value={draftFrom}
                 max={draftTo || maxDate}
                 onChange={(e) => setDraftFrom(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100 [color-scheme:dark]"
+                className="w-full rounded-lg border border-ink-300 bg-ink-50 px-2 py-1.5 text-ink-950 [color-scheme:light]"
               />
             </label>
             <label className="space-y-1">
@@ -264,15 +274,15 @@ function RangeSelect({
                 min={draftFrom}
                 max={maxDate}
                 onChange={(e) => setDraftTo(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-100 [color-scheme:dark]"
+                className="w-full rounded-lg border border-ink-300 bg-ink-50 px-2 py-1.5 text-ink-950 [color-scheme:light]"
               />
             </label>
           </div>
-          <p className={`mt-2 text-[11px] ${invalid ? 'text-crimson-200' : 'text-slate-300'}`}>
+          <p className={`mt-2 text-[11px] ${invalid ? 'text-crimson-600' : 'text-ink-800'}`}>
             {invalid || `${daysInclusive(draftFrom, draftTo)} ngày · tối đa ${MAX_RANGE_DAYS} ngày`}
           </p>
           <div className="mt-3 flex justify-end gap-2">
-            <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:text-white cursor-pointer">
+            <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-ink-300 px-3 py-1.5 text-xs text-ink-800 hover:text-ink-950 cursor-pointer">
               Huỷ
             </button>
             <button
@@ -300,16 +310,16 @@ function RangeSelect({
 type Kpi = { label: string; value: string; title: string; cur: number; prev: number | null | undefined };
 
 function DeltaBadge({ cur, prev, loading }: { cur: number; prev: number | null | undefined; loading: boolean }) {
-  if (loading) return <span className="inline-block h-4 w-10 rounded-full bg-slate-800/80 animate-pulse motion-reduce:animate-none" />;
+  if (loading) return <span className="inline-block h-4 w-10 rounded-full bg-ink-100 animate-pulse motion-reduce:animate-none" />;
   const d = compareDelta(cur, prev);
   const cls =
     d.kind === 'up'
-      ? 'bg-emerald-500/15 text-emerald-200'
+      ? 'bg-emerald-500/15 text-emerald-700'
       : d.kind === 'down'
-        ? 'bg-crimson-500/15 text-crimson-200'
+        ? 'bg-crimson-500/15 text-crimson-600'
         : d.kind === 'new'
-          ? 'bg-amber-300/15 text-amber-200'
-          : 'bg-slate-800/60 text-slate-300';
+          ? 'bg-amber-300/15 text-amber-800'
+          : 'bg-ink-100 text-ink-800';
   return (
     <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10.5px] font-medium tabular-nums ${cls}`} title="So với kỳ trước cùng độ dài">
       {d.text}
@@ -319,15 +329,15 @@ function DeltaBadge({ cur, prev, loading }: { cur: number; prev: number | null |
 
 function KpiStrip({ items, prevLoading, loading }: { items: Kpi[]; prevLoading: boolean; loading: boolean }) {
   return (
-    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <dl className="grid grid-cols-2 content-start gap-2 sm:grid-cols-4 lg:grid-cols-1">
       {items.map((k) => (
-        <div key={k.label} className="min-w-0 rounded-xl border border-slate-800/80 bg-slate-950/30 px-3 py-2.5">
-          <dt className="truncate text-[11px] text-slate-300">{k.label}</dt>
-          <dd className="mt-1 flex flex-col items-start gap-1">
+        <div key={k.label} className="min-w-0 rounded-xl border border-ink-200 bg-ink-50 px-3 py-2.5">
+          <dt className="truncate text-[11px] text-ink-800">{k.label}</dt>
+          <dd className="mt-1 flex flex-col items-start gap-1 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
             {loading ? (
-              <span className="my-1 inline-block h-4 w-24 rounded bg-slate-800/80 animate-pulse motion-reduce:animate-none" />
+              <span className="my-1 inline-block h-4 w-24 rounded bg-ink-100 animate-pulse motion-reduce:animate-none" />
             ) : (
-              <span className="max-w-full truncate text-base font-semibold tracking-tight text-white tabular-nums" title={k.title}>
+              <span className="max-w-full truncate text-base font-semibold tracking-tight text-ink-950 tabular-nums" title={k.title}>
                 {k.value}
               </span>
             )}
@@ -347,9 +357,9 @@ const SKELETON_BARS = [38, 62, 24, 80, 46, 30, 66, 52, 20, 72, 40, 58];
 
 function ChartSkeleton({ className = '' }: { className?: string }) {
   return (
-    <div className={`flex items-end gap-2 border-b border-slate-800 pl-10 pr-2 animate-pulse motion-reduce:animate-none ${className}`} role="status" aria-label="Đang tải biểu đồ">
+    <div className={`flex items-end gap-2 border-b border-ink-200 pl-10 pr-2 animate-pulse motion-reduce:animate-none ${className}`} role="status" aria-label="Đang tải biểu đồ">
       {SKELETON_BARS.map((h, i) => (
-        <div key={i} className="flex-1 rounded-t-md bg-slate-800/70" style={{ height: `${h}%` }} />
+        <div key={i} className="flex-1 rounded-t-md bg-ink-100" style={{ height: `${h}%` }} />
       ))}
     </div>
   );
@@ -367,18 +377,18 @@ function EmptyIllustration() {
 }
 
 function ChartMessage({ className = '', children }: { className?: string; children: React.ReactNode }) {
-  return <div className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-800 px-4 text-center ${className}`}>{children}</div>;
+  return <div className={`flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ink-200 px-4 text-center ${className}`}>{children}</div>;
 }
 
 function ErrorState({ text, onRetry, className }: { text: string; onRetry: () => void; className?: string }) {
   return (
     <ChartMessage className={className}>
-      <AlertCircle className="h-6 w-6 text-crimson-200" aria-hidden />
-      <p className="text-sm text-slate-200">{text}</p>
+      <AlertCircle className="h-6 w-6 text-crimson-600" aria-hidden />
+      <p className="text-sm text-ink-950">{text}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-100 hover:border-slate-500 cursor-pointer"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-ink-300 px-3 py-1.5 text-xs text-ink-950 hover:border-ink-400 cursor-pointer"
       >
         <RefreshCw className="h-3.5 w-3.5" aria-hidden /> Thử lại
       </button>
@@ -392,35 +402,35 @@ function TooltipValueRow({ name, value, sub, stacked = false }: { name: string; 
     // Khung hẹp (card bán chạy): số phụ xuống dòng để tooltip không rộng quá card
     return (
       <div className="flex flex-1 items-start justify-between gap-3">
-        <span className="whitespace-nowrap text-slate-300">{name}</span>
+        <span className="whitespace-nowrap text-ink-800">{name}</span>
         <span className="text-right tabular-nums">
-          <span className="block whitespace-nowrap font-medium text-white">{value}</span>
-          {sub && <span className="block whitespace-nowrap text-slate-300">{sub}</span>}
+          <span className="block whitespace-nowrap font-medium text-ink-950">{value}</span>
+          {sub && <span className="block whitespace-nowrap text-ink-800">{sub}</span>}
         </span>
       </div>
     );
   }
   return (
     <div className="flex flex-1 items-center justify-between gap-4">
-      <span className="whitespace-nowrap text-slate-300">{name}</span>
-      <span className="whitespace-nowrap text-right font-medium tabular-nums text-white">
+      <span className="whitespace-nowrap text-ink-800">{name}</span>
+      <span className="whitespace-nowrap text-right font-medium tabular-nums text-ink-950">
         {value}
-        {sub && <span className="font-normal text-slate-300"> · {sub}</span>}
+        {sub && <span className="font-normal text-ink-800"> · {sub}</span>}
       </span>
     </div>
   );
 }
 
 const AXIS_TICK = { fontSize: 11 };
-const GRID_PROPS = { vertical: false, stroke: 'var(--color-ink-200)', strokeOpacity: 0.12 } as const;
+const GRID_PROPS = { vertical: false, stroke: 'var(--color-ink-200)', strokeOpacity: 1 } as const;
 
 // ---------------------------------------------------------------------------
 // Card "Biểu Đồ Doanh Thu" — area chart tương tác
 // ---------------------------------------------------------------------------
 
 const revenueConfig = {
-  placed: { label: 'Đặt hàng', color: 'var(--color-leaf-300)' },
-  done: { label: 'Hoàn thành', color: 'var(--color-amber-300)' },
+  placed: { label: 'Đặt hàng', color: 'var(--color-leaf-500)' },
+  done: { label: 'Hoàn thành', color: 'var(--color-amber-500)' },
 } satisfies ChartConfig;
 
 type RevenuePoint = { date: string; placed: number; done: number; placedCount: number; doneCount: number };
@@ -447,7 +457,7 @@ export function RevenueCard({
   loading: boolean;
   error: boolean;
   onRetry: () => void;
-  onPreset: (p: '7' | '30' | '90') => void;
+  onPreset: (p: FixedPreset) => void;
   onCustomRange: (from: string, to: string) => void;
 }) {
   const reducedMotion = usePrefersReducedMotion();
@@ -521,24 +531,25 @@ export function RevenueCard({
       return h.length + 1 >= Object.keys(revenueConfig).length ? h : [...h, key];
     });
 
-  const chartHeight = 'h-[230px] sm:h-[250px]';
+  const chartHeight = 'h-[230px] sm:h-[260px] lg:h-[320px]';
 
   return (
     <Card className={`min-w-0 ${className}`}>
-      <CardHeader className="flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center">
+      <CardHeader className="flex flex-col gap-3 border-b border-ink-200 pb-4 sm:flex-row sm:items-center">
         <div className="grid flex-1 gap-1">
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-emerald-300" aria-hidden />
+            <BarChart3 className="h-4 w-4 text-emerald-700" aria-hidden />
             <span>Biểu Đồ Doanh Thu</span>
-            {loading && !showSkeleton && <RefreshCw className="h-3.5 w-3.5 animate-spin text-slate-300" aria-label="Đang cập nhật" />}
+            {loading && !showSkeleton && <RefreshCw className="h-3.5 w-3.5 animate-spin text-ink-800" aria-label="Đang cập nhật" />}
           </CardTitle>
           <CardDescription className="tabular-nums">{formatRangeLabel(from, to)} · GMT+7</CardDescription>
         </div>
         <RangeSelect preset={preset} from={from} to={to} maxDate={maxDate} onPreset={onPreset} onCustomRange={onCustomRange} />
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="grid gap-4 lg:grid-cols-[230px_minmax(0,1fr)] lg:items-start">
         <KpiStrip items={kpis} loading={showSkeleton} prevLoading={!showError && (prevTrend === undefined || showSkeleton)} />
 
+        <div className="min-w-0">
         {showError ? (
           <ErrorState text="Không tải được dữ liệu doanh thu." onRetry={onRetry} className={chartHeight} />
         ) : showSkeleton ? (
@@ -546,8 +557,8 @@ export function RevenueCard({
         ) : isEmpty ? (
           <ChartMessage className={chartHeight}>
             <EmptyIllustration />
-            <p className="text-sm text-slate-200">Chưa có doanh thu trong khoảng này</p>
-            <p className="text-xs text-slate-300">Thử chọn khoảng thời gian dài hơn</p>
+            <p className="text-sm text-ink-950">Chưa có doanh thu trong khoảng này</p>
+            <p className="text-xs text-ink-800">Thử chọn khoảng thời gian dài hơn</p>
           </ChartMessage>
         ) : (
           <ChartContainer
@@ -584,7 +595,7 @@ export function RevenueCard({
                       textAnchor="middle"
                       fontSize={11}
                       fontWeight={today ? 600 : 400}
-                      fill={today ? 'var(--color-amber-200)' : 'var(--color-ink-300)'}
+                      fill={today ? 'var(--color-amber-700)' : 'var(--color-ink-600)'}
                       style={{ fontVariantNumeric: 'tabular-nums' }}
                     >
                       {today ? 'Hôm nay' : dm(iso)}
@@ -594,7 +605,7 @@ export function RevenueCard({
               />
               <YAxis tickLine={false} axisLine={false} width={48} domain={[0, yTicks[yTicks.length - 1]]} ticks={yTicks} interval={0} tick={AXIS_TICK} tickFormatter={(v: number) => fmtShort(v)} />
               <ChartTooltip
-                cursor={{ stroke: 'var(--color-ink-300)', strokeOpacity: 0.45 }}
+                cursor={{ stroke: 'var(--color-ink-400)', strokeOpacity: 0.6 }}
                 content={
                   <ChartTooltipContent
                     indicator="dot"
@@ -609,7 +620,7 @@ export function RevenueCard({
                       const rate = p && p.placed > 0 ? fmtPct((p.done / p.placed) * 100) : '—';
                       return (
                         <>
-                          Tỷ lệ hoàn thành: <span className="font-medium text-white tabular-nums">{rate}</span>
+                          Tỷ lệ hoàn thành: <span className="font-medium text-ink-950 tabular-nums">{rate}</span>
                         </>
                       );
                     }}
@@ -626,7 +637,7 @@ export function RevenueCard({
                 strokeDasharray="5 4"
                 hide={hidden.includes('placed')}
                 dot={sparse ? { r: 2.5, fill: 'var(--color-placed)', strokeWidth: 0 } : false}
-                activeDot={{ r: 4, fill: 'var(--color-placed)', stroke: 'var(--color-forest-900)', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: 'var(--color-placed)', stroke: '#FFFFFF', strokeWidth: 2 }}
                 isAnimationActive={!reducedMotion}
                 animationDuration={500}
                 animationEasing="ease-out"
@@ -639,7 +650,7 @@ export function RevenueCard({
                 strokeWidth={2}
                 hide={hidden.includes('done')}
                 dot={sparse ? { r: 2.5, fill: 'var(--color-done)', strokeWidth: 0 } : false}
-                activeDot={{ r: 4.5, fill: 'var(--color-done)', stroke: 'var(--color-forest-900)', strokeWidth: 2 }}
+                activeDot={{ r: 4.5, fill: 'var(--color-done)', stroke: '#FFFFFF', strokeWidth: 2 }}
                 isAnimationActive={!reducedMotion}
                 animationDuration={500}
                 animationEasing="ease-out"
@@ -648,6 +659,7 @@ export function RevenueCard({
             </AreaChart>
           </ChartContainer>
         )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -660,8 +672,7 @@ export function RevenueCard({
 type Kind = 'product' | 'combo';
 
 const topConfig = {
-  placed: { label: 'Đặt hàng', color: 'var(--color-leaf-300)' },
-  done: { label: 'Hoàn thành', color: 'var(--color-amber-300)' },
+  done: { label: 'Hoàn thành', color: 'var(--color-amber-500)' },
 } satisfies ChartConfig;
 
 type TopPoint = {
@@ -731,7 +742,7 @@ function TopSellersCard({
   }, [kind, items, codeOf]);
 
   const data = all.slice(0, TOP_N);
-  const yTicks = niceTicks(Math.max(0, ...data.flatMap((p) => [p.placed, p.done])));
+  const yTicks = niceTicks(Math.max(0, ...data.map((p) => p.done)));
   const totalDone = all.reduce((s, r) => s + r.done, 0);
   const totalPlaced = all.reduce((s, r) => s + r.placed, 0);
   const leader = data[0];
@@ -746,9 +757,9 @@ function TopSellersCard({
       <CardHeader>
         <div className="grid gap-1">
           <CardTitle className="flex items-center gap-2">
-            {kind === 'product' ? <Sparkles className="h-4 w-4 text-amber-300" aria-hidden /> : <Gift className="h-4 w-4 text-amber-300" aria-hidden />}
+            {kind === 'product' ? <Sparkles className="h-4 w-4 text-amber-800" aria-hidden /> : <Gift className="h-4 w-4 text-amber-800" aria-hidden />}
             <span>{kind === 'product' ? 'Sản Phẩm Bán Chạy' : 'Combo Bán Chạy'}</span>
-            {loading && !showSkeleton && <RefreshCw className="h-3.5 w-3.5 animate-spin text-slate-300" aria-label="Đang cập nhật" />}
+            {loading && !showSkeleton && <RefreshCw className="h-3.5 w-3.5 animate-spin text-ink-800" aria-label="Đang cập nhật" />}
           </CardTitle>
           <CardDescription className="tabular-nums">
             Top {TOP_N} theo doanh thu hoàn thành · {rangeLabel}
@@ -764,7 +775,7 @@ function TopSellersCard({
         ) : isEmpty ? (
           <ChartMessage className={chartBox}>
             <EmptyIllustration />
-            <p className="text-sm text-slate-200">Chưa có {kindLabel} nào được bán trong khoảng này</p>
+            <p className="text-sm text-ink-950">Chưa có {kindLabel} nào được bán trong khoảng này</p>
           </ChartMessage>
         ) : (
           <ChartContainer
@@ -772,28 +783,33 @@ function TopSellersCard({
             className={`aspect-auto w-full transition-opacity ${chartBox} ${loading ? 'opacity-60' : ''}`}
             aria-label={`Top ${data.length} ${kindLabel} bán chạy ${rangeLabel}. Dùng phím mũi tên để xem từng ${kindLabel}.`}
           >
-            <BarChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }} barGap={3} barCategoryGap="22%" accessibilityLayer>
+            <BarChart data={data} margin={{ top: 22, right: 4, left: 0, bottom: 0 }} barCategoryGap="28%" accessibilityLayer>
               <CartesianGrid {...GRID_PROPS} />
               <XAxis dataKey="label" tickLine={false} tickMargin={10} axisLine={false} interval={0} tick={AXIS_TICK} tickFormatter={(v: string) => truncate(String(v), 10)} />
               <YAxis tickLine={false} axisLine={false} width={44} domain={[0, yTicks[yTicks.length - 1]]} ticks={yTicks} interval={0} tick={AXIS_TICK} tickFormatter={(v: number) => fmtShort(v)} />
               <ChartTooltip
-                cursor={{ fill: 'var(--color-ink-100)', fillOpacity: 0.06 }}
+                cursor={{ fill: 'var(--color-ink-200)', fillOpacity: 0.5 }}
                 content={
                   <ChartTooltipContent
                     indicator="dashed"
                     labelFormatter={(_, payload) => <span className="block max-w-[14rem]">{(payload[0]?.payload as TopPoint | undefined)?.name ?? ''}</span>}
                     formatter={(value, name, item) => {
                       const p = item.payload as TopPoint | undefined;
-                      const placed = item.dataKey === 'placed';
-                      const qty = placed ? p?.placedQty : p?.doneQty;
-                      const orders = placed ? p?.placedOrders : p?.doneOrders;
                       return (
-                        <TooltipValueRow
-                          stacked
-                          name={placed ? 'Đặt hàng' : 'Hoàn thành'}
-                          value={fmtVND(num(value))}
-                          sub={`${(qty ?? 0).toLocaleString('vi-VN')} ${p?.unit ?? ''} · ${orders ?? 0} đơn`}
-                        />
+                        <div className="grid gap-1.5">
+                          <TooltipValueRow
+                            stacked
+                            name="Hoàn thành"
+                            value={fmtVND(num(value))}
+                            sub={`${(p?.doneQty ?? 0).toLocaleString('vi-VN')} ${p?.unit ?? ''} · ${p?.doneOrders ?? 0} đơn`}
+                          />
+                          <TooltipValueRow
+                            stacked
+                            name="Đặt hàng (gồm cả đơn chưa xong)"
+                            value={fmtVND(p?.placed ?? 0)}
+                            sub={`${(p?.placedQty ?? 0).toLocaleString('vi-VN')} ${p?.unit ?? ''} · ${p?.placedOrders ?? 0} đơn`}
+                          />
+                        </div>
                       );
                     }}
                     footer={(payload: ReadonlyArray<ChartTooltipItem>) => {
@@ -801,31 +817,35 @@ function TopSellersCard({
                       const share = p && totalDone > 0 ? fmtPct((p.done / totalDone) * 100) : '—';
                       return (
                         <>
-                          Tỷ trọng doanh thu hoàn thành: <span className="font-medium text-white tabular-nums">{share}</span>
+                          Tỷ trọng doanh thu hoàn thành: <span className="font-medium text-ink-950 tabular-nums">{share}</span>
                         </>
                       );
                     }}
                   />
                 }
               />
-              <Bar dataKey="placed" fill="var(--color-placed)" fillOpacity={0.55} radius={4} minPointSize={minBar} isAnimationActive={!reducedMotion} animationDuration={500} />
-              <Bar dataKey="done" fill="var(--color-done)" radius={4} minPointSize={minBar} isAnimationActive={!reducedMotion} animationDuration={500} />
-              <ChartLegend content={<ChartLegendContent />} />
+              <Bar dataKey="done" fill="var(--color-done)" radius={4} maxBarSize={56} minPointSize={minBar} isAnimationActive={!reducedMotion} animationDuration={500}>
+                {/* Mã dẫn đầu tô đậm hơn */}
+                {data.map((p, i) => (
+                  <Cell key={p.key} fill={i === 0 && p.done > 0 ? 'var(--color-amber-700)' : 'var(--color-done)'} />
+                ))}
+                <LabelList dataKey="done" position="top" offset={6} fontSize={11} fill="var(--color-ink-950)" formatter={(v: unknown) => (num(v) > 0 ? fmtShort(num(v)) : '')} />
+              </Bar>
             </BarChart>
           </ChartContainer>
         )}
       </CardContent>
 
       {!showError && !showSkeleton && !isEmpty && leader && (
-        <CardFooter className="flex-col items-start gap-2 border-t border-slate-800 pt-4 text-sm">
-          <div className="flex min-w-0 max-w-full items-center gap-2 font-medium leading-snug text-white">
+        <CardFooter className="flex-col items-start gap-2 border-t border-ink-200 pt-4 text-sm">
+          <div className="flex min-w-0 max-w-full items-center gap-2 font-medium leading-snug text-ink-950">
             <span className="truncate" title={leader.name}>
               Dẫn đầu: {leader.name}
             </span>
-            <span className="shrink-0 tabular-nums text-amber-200">{totalDone > 0 ? fmtPct((leader.done / totalDone) * 100) : '—'}</span>
-            <TrendingUp className="h-4 w-4 shrink-0 text-amber-200" aria-hidden />
+            <span className="shrink-0 tabular-nums text-amber-800">{totalDone > 0 ? fmtPct((leader.done / totalDone) * 100) : '—'}</span>
+            <TrendingUp className="h-4 w-4 shrink-0 text-amber-800" aria-hidden />
           </div>
-          <div className="text-xs leading-snug text-slate-300 tabular-nums">
+          <div className="text-xs leading-snug text-ink-800 tabular-nums">
             {all.length} {kindLabel} · hoàn thành {fmtVND(totalDone)} · đặt hàng {fmtVND(totalPlaced)}
           </div>
         </CardFooter>

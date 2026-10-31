@@ -161,7 +161,10 @@ export async function GET(request: Request) {
 
     const filterParams = [...baseParams];
     let filterWhere = baseWhere;
-    if (status !== 'ALL') {
+    if (status === 'OPEN') {
+      // Đơn chưa hoàn thành: mọi đơn trừ Hoàn thành và Đã hủy (dùng cho bảng ở trang Tổng quan)
+      filterWhere += ` AND o.status NOT IN ('COMPLETED', 'CANCELLED')`;
+    } else if (status !== 'ALL') {
       if (!isOrderStatus(status)) {
         return NextResponse.json({ success: false, error: `Trạng thái không hợp lệ: ${status}` }, { status: 400 });
       }

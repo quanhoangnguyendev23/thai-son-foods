@@ -19,15 +19,15 @@ export function SelectTrigger({ className, children, ...props }: React.Component
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        'flex h-9 items-center justify-between gap-2 whitespace-nowrap rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 cursor-pointer',
-        'hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 data-[placeholder]:text-slate-300',
+        'flex h-9 items-center justify-between gap-2 whitespace-nowrap rounded-lg border border-ink-300 bg-ink-50 px-3 text-xs text-ink-950 cursor-pointer',
+        'hover:border-ink-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 data-[placeholder]:text-ink-800',
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDown className="h-4 w-4 text-slate-300" aria-hidden />
+        <ChevronDown className="h-4 w-4 text-ink-800" aria-hidden />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -41,7 +41,7 @@ export function SelectContent({ className, children, position = 'popper', ...pro
         position={position}
         sideOffset={6}
         className={cn(
-          'z-[1000] min-w-[8rem] overflow-hidden rounded-xl border border-slate-700 bg-slate-900 p-1 text-slate-100 shadow-xl shadow-forest-950/40',
+          'z-[1000] min-w-[8rem] overflow-hidden rounded-xl border border-ink-300 bg-white p-1 text-ink-950 shadow-xl shadow-ink-900/10',
           position === 'popper' && 'w-[var(--radix-select-trigger-width)]',
           className
         )}
@@ -59,7 +59,7 @@ export function SelectItem({ className, children, ...props }: React.ComponentPro
       data-slot="select-item"
       className={cn(
         'relative flex w-full cursor-pointer select-none items-center rounded-lg py-1.5 pl-2.5 pr-8 text-xs outline-none',
-        'data-[highlighted]:bg-slate-800 data-[state=checked]:text-amber-200 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        'data-[highlighted]:bg-ink-100 data-[state=checked]:text-amber-800 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         className
       )}
       {...props}

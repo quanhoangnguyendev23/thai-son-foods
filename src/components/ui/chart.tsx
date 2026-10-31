@@ -48,7 +48,7 @@ export function ChartContainer({
         data-chart={chartId}
         className={cn(
           'flex justify-center text-xs',
-          '[&_.recharts-cartesian-axis-tick_text]:fill-slate-300 [&_.recharts-text]:tabular-nums',
+          '[&_.recharts-cartesian-axis-tick_text]:fill-ink-800 [&_.recharts-text]:tabular-nums',
           '[&_.recharts-surface]:outline-none [&_.recharts-layer]:outline-none [&_.recharts-sector]:outline-none [&_.recharts-wrapper]:outline-none',
           className
         )}
@@ -108,11 +108,11 @@ export function ChartTooltipContent({
   return (
     <div
       className={cn(
-        'grid min-w-[11rem] max-w-[min(22rem,calc(100vw-2rem))] gap-1.5 rounded-xl border border-slate-700 bg-forest-900 px-3 py-2.5 text-[11.5px] leading-snug text-slate-100 shadow-xl shadow-forest-950/40',
+        'grid min-w-[11rem] max-w-[min(22rem,calc(100vw-2rem))] gap-1.5 rounded-xl border border-ink-300 bg-white px-3 py-2.5 text-[11.5px] leading-snug text-ink-950 shadow-xl shadow-ink-900/10',
         className
       )}
     >
-      {!hideLabel && <div className="font-medium text-slate-100">{labelFormatter ? labelFormatter(label, payload) : label}</div>}
+      {!hideLabel && <div className="font-medium text-ink-950">{labelFormatter ? labelFormatter(label, payload) : label}</div>}
       <div className="grid gap-1">
         {payload.map((item, i) => {
           const key = String(item.dataKey ?? item.name ?? i);
@@ -135,15 +135,15 @@ export function ChartTooltipContent({
                 formatter(item.value, name, item)
               ) : (
                 <div className="flex flex-1 items-center justify-between gap-4">
-                  <span className="text-slate-300">{name}</span>
-                  <span className="font-medium tabular-nums text-white">{String(item.value ?? '')}</span>
+                  <span className="text-ink-800">{name}</span>
+                  <span className="font-medium tabular-nums text-ink-950">{String(item.value ?? '')}</span>
                 </div>
               )}
             </div>
           );
         })}
       </div>
-      {footer && <div className="border-t border-slate-700/70 pt-1.5 text-slate-300">{footer(payload)}</div>}
+      {footer && <div className="border-t border-ink-300 pt-1.5 text-ink-800">{footer(payload)}</div>}
     </div>
   );
 }
@@ -188,13 +188,13 @@ export function ChartLegendContent({
               className={shape === 'square' ? 'h-2.5 w-2.5 rounded-[3px]' : 'h-0.5 w-3.5 rounded-full'}
               style={{ background: color }}
             />
-            <span className={hidden ? 'line-through decoration-slate-300/60' : ''}>{cfg?.label ?? item.value}</span>
+            <span className={hidden ? 'line-through decoration-ink-800' : ''}>{cfg?.label ?? item.value}</span>
           </>
         );
         const base = 'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors';
         if (!onItemClick) {
           return (
-            <span key={key} className={cn(base, 'border-slate-800 text-slate-200')}>
+            <span key={key} className={cn(base, 'border-ink-200 text-ink-950')}>
               {content}
             </span>
           );
@@ -209,7 +209,7 @@ export function ChartLegendContent({
             className={cn(
               base,
               'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200',
-              hidden ? 'border-slate-800 text-slate-300 opacity-60 hover:opacity-90' : 'border-slate-700 bg-slate-950/30 text-slate-100'
+              hidden ? 'border-ink-200 text-ink-800 opacity-60 hover:opacity-90' : 'border-ink-300 bg-ink-50 text-ink-950'
             )}
           >
             {content}
