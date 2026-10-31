@@ -315,6 +315,8 @@ export async function POST(request: Request) {
       // 3. SERVER TỰ TÍNH LẠI GIÁ (không tin client)
       let serverCalculatedSubtotal = 0;
       const revalidatedItems = [];
+      // Mã ngắn (sku) theo productId — chỉ dùng cho tin báo đơn Zalo
+      const skuByProductId = new Map<string, string>();
 
       const { extractBottleMultiplier } = await import('@/lib/inventory');
       const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
@@ -368,8 +370,9 @@ export async function POST(request: Request) {
             );
           }
           canonicalProductId = prodInfo.id;
-          const thumbRes = await client.query('SELECT thumbnail FROM products WHERE id = $1 LIMIT 1;', [prodInfo.id]);
+          const thumbRes = await client.query('SELECT thumbnail, sku FROM products WHERE id = $1 LIMIT 1;', [prodInfo.id]);
           itemThumbnail = thumbRes.rows[0]?.thumbnail || null;
+          if (thumbRes.rows[0]?.sku) skuByProductId.set(prodInfo.id, String(thumbRes.rows[0].sku));
 
           if (prodInfo.variant) {
             const v = prodInfo.variant;
@@ -837,7 +840,14 @@ export async function POST(request: Request) {
         paymentMethod,
         total: serverTotal,
         note,
-        items: revalidatedItems.map((it: any) => ({ name: it.name, quantity: it.quantity, unit: it.unit })),
+        items: revalidatedItems.map((it: any) => ({
+          name: it.name,
+          quantity: it.quantity,
+          unit: it.unit,
+          productId: it.canonicalProductId || it.productId,
+          sku: it.canonicalProductId ? skuByProductId.get(it.canonicalProductId) || null : null,
+          isCombo: !it.canonicalProductId,
+        })),
       }).catch(() => {});
 
       return NextResponse.json({

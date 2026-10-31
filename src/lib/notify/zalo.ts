@@ -20,7 +20,30 @@ export interface ZaloOrderNotice {
   paymentMethod?: string | null;
   total: number;
   note?: string | null;
-  items: { name: string; quantity: number; unit?: string | null }[];
+  items: {
+    name: string;
+    quantity: number;
+    unit?: string | null;
+    /** productId chuẩn trong DB — fallback mã khi không có sku */
+    productId?: string | null;
+    /** products.sku (vd "TSG-01") — giống cách admin hiển thị mã */
+    sku?: string | null;
+    isCombo?: boolean;
+  }[];
+}
+
+const cut = (s: string, max = 30) => (s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s);
+
+/** Mã ngắn như admin: sku bỏ hậu tố "-01" → id bỏ "prod-" → tên cắt gọn. Combo: tên bỏ chữ "Combo", cắt gọn. */
+export function shortItemCode(it: ZaloOrderNotice['items'][number]): string {
+  const name = String(it.name || '').trim();
+  if (it.isCombo) return cut(name.replace(/^combo\s+/i, '') || name || 'Combo');
+  const sku = String(it.sku || '').trim();
+  if (sku) return sku.replace(/-\d+$/, '');
+  const id = String(it.productId || '').trim();
+  if (/^prod-/i.test(id)) return id.replace(/^prod-/i, '').replace(/-\d+$/, '').toUpperCase();
+  // Bỏ phần quy cách "(...)" ở cuối tên vì đã in riêng
+  return cut(name.replace(/\s*\([^)]*\)\s*$/, '') || 'Sản phẩm');
 }
 
 const vnd = (n: number) => `${Math.round(Number(n) || 0).toLocaleString('vi-VN')}đ`;
@@ -32,7 +55,7 @@ export function buildOrderText(o: ZaloOrderNotice): string {
     `Địa chỉ: ${o.address}`,
     o.storeCode ? `Chi nhánh: ${o.storeCode}` : '',
     '',
-    ...o.items.slice(0, 20).map((it) => `• ${it.name} x${it.quantity}${it.unit ? ` (${it.unit})` : ''}`),
+    ...o.items.slice(0, 20).map((it) => `• ${shortItemCode(it)}${it.unit ? ` (${it.unit})` : ''} x${it.quantity}`),
     o.items.length > 20 ? `… và ${o.items.length - 20} dòng khác` : '',
     '',
     `Tổng: ${vnd(o.total)} - ${String(o.paymentMethod || 'cod').toUpperCase()}`,
