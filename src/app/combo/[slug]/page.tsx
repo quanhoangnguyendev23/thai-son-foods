@@ -9,6 +9,12 @@ import ProductCarousel from '@/components/product/ProductCarousel';
 import ProductReviewsSection from '@/components/product/ProductReviewsSection';
 import ProductDescription from '@/components/product/ProductDescription';
 import ProductSponsoredBanner from '@/components/product/ProductSponsoredBanner';
+import ProductComboStrip from '@/components/product/ProductComboStrip';
+import ProductInlineSuggestions, { productToInlineItem, comboToInlineItem } from '@/components/product/ProductInlineSuggestions';
+import { categories } from '@/data/products';
+import { getActiveCombos, rankCombosForProducts, combosContaining } from '@/lib/combo-suggestions';
+import { getBestSellerRanking, getTopRatedProducts } from '@/lib/product-stats';
+import { Product } from '@/types';
 
 import { query } from '@/lib/db';
 import { Combo } from '@/types';
@@ -174,15 +180,97 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
     };
   });
 
+  // ── Dữ liệu cho các khối gợi ý (chỉ dữ liệu thật) ──
+  const activeCatalog = products.filter((p) => p.isActive !== false);
+  const comboProductIds = comboProductsWithDetail.map((d) => d.product?.id).filter((id): id is string => Boolean(id));
+  const activeCombos = await getActiveCombos();
+  // Combo khác gần nhất (có chung sản phẩm, giảm nhiều) cho dải trên cùng và dải cuối trang
+  const relatedCombos = rankCombosForProducts(activeCombos, comboProductIds, combo.id);
+  const topStripCombo = relatedCombos[0];
+  const bottomStripCombo = relatedCombos[1];
+  const sharedProductCombos = combosContaining(activeCombos, comboProductIds, combo.id).filter(
+    (c) => c.id !== topStripCombo?.id && c.id !== bottomStripCombo?.id
+  );
+  const productsInCombo = comboProductsWithDetail
+    .map((d) => d.product)
+    .filter((p, i, arr): p is Product => Boolean(p) && arr.findIndex((x) => x?.id === p!.id) === i);
+
+  let bestSellerProducts: Product[] = [];
+  let bestSellerRanks: number[] = [];
+  let topRatedProducts: Product[] = [];
+  try {
+    const [ranking, topRated] = await Promise.all([
+      getBestSellerRanking(activeCatalog),
+      getTopRatedProducts(activeCatalog, 4),
+    ]);
+    const rankedList = ranking
+      .map((r, i) => ({ product: activeCatalog.find((p) => p.id === r.productId), rank: i + 1 }))
+      .filter((r): r is { product: Product; rank: number } => Boolean(r.product))
+      .slice(0, 10);
+    bestSellerProducts = rankedList.map((r) => r.product);
+    bestSellerRanks = rankedList.map((r) => r.rank);
+    topRatedProducts = topRated
+      .map((r) => activeCatalog.find((p) => p.id === r.productId))
+      .filter((p): p is Product => Boolean(p));
+  } catch (err) {
+    console.error('Không thể lấy gợi ý bán chạy / đánh giá cao cho trang combo:', err);
+  }
+  const flaggedProducts = activeCatalog.filter((p) => p.isNew || p.isBestSeller);
+  // Khám phá theo dòng: mỗi danh mục một hàng (danh mục có trong combo đứng trước)
+  const comboCategoryIds = new Set(productsInCombo.map((p) => p.categoryId));
+  const categoryRows = [...categories]
+    .sort((a, b) => Number(comboCategoryIds.has(b.id)) - Number(comboCategoryIds.has(a.id)))
+    .map((c) => ({ category: c, items: activeCatalog.filter((p) => p.categoryId === c.id) }))
+    .filter((row) => row.items.length > 0);
+
   return (
     <div className="bg-white min-h-screen">
       <div className="w-full">
+        {/* Dải combo gợi ý phía trên (kiểu dải Sponsored của Amazon) */}
+        {topStripCombo && <ProductComboStrip combo={topStripCombo} catalog={products} />}
+
         {/* Cột nội dung chính */}
         <ComboDetailView
           combo={combo}
           productsDetail={comboProductsWithDetail}
           initialStock={initialStock}
           initialStockDetails={initialStockDetails}
+        />
+
+        {/* ── KHỐI NHỎ: TỪNG SẢN PHẨM TRONG COMBO (mua lẻ) ── */}
+        <ProductInlineSuggestions
+          title="Mua lẻ từng sản phẩm trong combo"
+          items={productsInCombo.map(productToInlineItem)}
+          minItems={1}
+        />
+
+        {/* ── BÁN CHẠY NHẤT (xếp hạng theo số đã bán thật) ── */}
+        {bestSellerProducts.length >= 3 && (
+          <div className="border-t border-gray-200 bg-white">
+            <ProductCarousel
+              title="Bán chạy nhất tại Thái Sơn Foods"
+              subtitle="Xếp hạng theo số lượng đã bán"
+              products={bestSellerProducts}
+              mobileGrid
+              wide
+              ranks={bestSellerRanks}
+            />
+          </div>
+        )}
+
+        {/* ── COMBO NỔI BẬT ── */}
+        <div className="border-t border-gray-200 bg-white">
+          <div className="max-sm:px-2.5 py-8 sm:py-10 max-w-[1800px] mx-auto px-4 sm:px-6">
+            <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
+          </div>
+        </div>
+
+        {/* ── KHỐI NHỎ: COMBO CÓ CÙNG SẢN PHẨM ── */}
+        <ProductInlineSuggestions
+          title="Combo có cùng sản phẩm"
+          items={sharedProductCombos.map(comboToInlineItem)}
+          label="Combo gợi ý"
+          minItems={2}
         />
 
         {/* ── CÁC SẢN PHẨM BẠN CÓ THỂ THÍCH (cùng bố cục trang chi tiết sản phẩm) ── */}
@@ -192,14 +280,8 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
             subtitle="Các dòng thức uống khác của Thái Sơn Foods"
             products={products.filter((p) => p.isActive !== false)}
             mobileGrid
+            wide
           />
-        </div>
-
-        {/* ── COMBO NỔI BẬT ── */}
-        <div className="border-t border-gray-200 bg-white">
-          <div className="section-container max-sm:px-2.5 py-8 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6">
-            <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
-          </div>
         </div>
 
         {/* ── BANNER SHOWCASE THƯƠNG HIỆU ── */}
@@ -208,6 +290,16 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
             <ProductSponsoredBanner hideUnverifiedStats randomize />
           </div>
         </div>
+
+        {/* ── KHỐI NHỎ: SẢN PHẨM MỚI & BÁN CHẠY (do admin đánh dấu) ── */}
+        <ProductInlineSuggestions title="Sản phẩm mới và bán chạy" items={flaggedProducts.map(productToInlineItem)} />
+
+        {/* ── KHÁM PHÁ THEO DÒNG: mỗi danh mục một hàng ── */}
+        {categoryRows.map(({ category: cat, items }) => (
+          <div key={cat.id} className="border-t border-gray-200 bg-white">
+            <ProductCarousel title={`Khám phá dòng ${cat.name}`} products={items} mobileGrid wide />
+          </div>
+        ))}
 
         {/* ── MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG ── */}
         <ProductDescription
@@ -223,6 +315,20 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
             showCustomerImages
           />
         </div>
+
+        {/* ── KHỐI NHỎ: KHÁCH ĐÁNH GIÁ 4 SAO TRỞ LÊN (dữ liệu thật) ── */}
+        <ProductInlineSuggestions
+          title="Được khách đánh giá từ 4 sao"
+          items={topRatedProducts.map(productToInlineItem)}
+          minItems={2}
+        />
+
+        {/* ── DẢI COMBO CUỐI TRANG ── */}
+        {bottomStripCombo && (
+          <div className="pb-2">
+            <ProductComboStrip combo={bottomStripCombo} catalog={products} />
+          </div>
+        )}
 
 
       </div>
