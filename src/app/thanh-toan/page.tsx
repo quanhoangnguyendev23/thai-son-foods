@@ -30,6 +30,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useUserAuth } from '@/context/UserAuthContext';
 import { products } from '@/data/products';
 import { combos } from '@/data/combos';
+import { getCartSavings, useComboCatalog } from '@/lib/savings';
 import { useBranchStore } from '@/store/branch';
 import { calculateShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
 import { calculateHaversineDistance, estimateCoordinatesFromAddress, findNearestStore, removeKhuPho } from '@/lib/geo';
@@ -231,6 +232,8 @@ const MIN_ORDER_THRESHOLD = 120000;
 export default function CheckoutPage() {
   const { language } = useLanguage();
   const { user, openAuthModal } = useUserAuth();
+  // Giá combo từ DB cho dòng "Bạn tiết kiệm được" (Túi tiết kiệm)
+  const comboCatalog = useComboCatalog();
   const [isMounted, setIsMounted] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [saveDefaultAddress, setSaveDefaultAddress] = useState(false);
@@ -933,10 +936,7 @@ export default function CheckoutPage() {
   const missingForMinOrder = Math.max(0, MIN_ORDER_THRESHOLD - subtotal);
 
   // Túi tiết kiệm: tiền tiết kiệm trong đơn đang đặt (giá gốc combo - giá bán); sản phẩm lẻ chưa có giá gốc
-  const orderSavings = items.reduce((t, i) => {
-    const c = combos.find((sc) => sc.id === i.productId || sc.slug === i.slug);
-    return c ? t + Math.max(0, (Number(c.originalPrice) || 0) - i.price) * i.quantity : t;
-  }, 0);
+  const orderSavings = getCartSavings(items, comboCatalog);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -1170,14 +1170,27 @@ export default function CheckoutPage() {
 
           {/* Túi tiết kiệm: tiền tiết kiệm của đơn vừa đặt */}
           {(completedOrder.savings ?? 0) > 0 && (
-            <p className="mb-4 text-sm text-text-body">
-              {en ? 'You saved ' : 'Bạn đã tiết kiệm '}
-              <strong className="text-green-primary">{formatPrice(completedOrder.savings ?? 0)}đ</strong>
-              {en ? ' on this order. ' : ' với đơn này. '}
-              <Link href="/tai-khoan/tui-tiet-kiem" className="text-green-primary underline">
-                {en ? 'View your savings bag' : 'Xem Túi tiết kiệm'}
+            <div className="mb-4 rounded-2xl border border-green-primary/25 bg-green-primary/5 px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-base text-text-dark">
+                  <span className="text-green-primary tabular-nums">+{formatPrice(completedOrder.savings ?? 0)}đ</span>{' '}
+                  {user
+                    ? en ? 'added to your savings bag' : 'đã vào Túi tiết kiệm'
+                    : en ? 'saved on this order' : 'tiết kiệm với đơn này'}
+                </p>
+                <p className="text-xs text-text-muted mt-0.5">
+                  {user
+                    ? en ? 'Versus list price. Your bag adds up every order.' : 'So với giá gốc. Túi cộng dồn qua mọi đơn của bạn.'
+                    : en ? 'Sign in before your next order so savings add up in your bag.' : 'Lần sau hãy đăng nhập trước khi đặt để tiền tiết kiệm được cộng dồn vào túi.'}
+                </p>
+              </div>
+              <Link
+                href="/tai-khoan/tui-tiet-kiem"
+                className="h-9 px-4 rounded-full bg-green-primary text-white text-sm inline-flex items-center hover:bg-green-dark"
+              >
+                {en ? 'View bag' : 'Xem túi'}
               </Link>
-            </p>
+            </div>
           )}
 
           {/* Chi tiết nhận hàng: 2 cột trên màn hình lớn */}
@@ -2152,9 +2165,23 @@ export default function CheckoutPage() {
                   <span className="font-medium">{formatPrice(subtotal)}đ</span>
                 </div>
                 {orderSavings > 0 && (
-                  <div className="flex justify-between text-green-primary">
-                    <span>{language === 'en' ? 'You save' : 'Bạn tiết kiệm được'}</span>
-                    <span className="font-medium">{formatPrice(orderSavings)}đ</span>
+                  <div className="rounded-xl bg-green-primary/10 px-3 py-2.5 text-green-primary">
+                    <div className="flex justify-between">
+                      <span>{language === 'en' ? 'You save' : 'Bạn tiết kiệm được'}</span>
+                      <span className="font-medium tabular-nums">{formatPrice(orderSavings)}đ</span>
+                    </div>
+                    {user ? (
+                      <p className="text-xs mt-0.5 opacity-80">
+                        {language === 'en' ? 'Will be added to your savings bag.' : 'Sẽ được cộng vào Túi tiết kiệm của bạn.'}
+                      </p>
+                    ) : (
+                      <p className="text-xs mt-0.5">
+                        <button type="button" onClick={() => openAuthModal('login')} className="underline">
+                          {language === 'en' ? 'Sign in' : 'Đăng nhập'}
+                        </button>{' '}
+                        {language === 'en' ? 'to add this to your savings bag.' : 'để cộng khoản này vào Túi tiết kiệm.'}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div className="flex justify-between">

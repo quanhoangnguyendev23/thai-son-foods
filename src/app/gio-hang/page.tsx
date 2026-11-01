@@ -963,12 +963,18 @@ export default function CartPage() {
                 </div>
 
                 {cartSavings > 0 && (
-                  <div className="flex justify-between items-center text-emerald-700">
-                    <Link href="/tai-khoan/tui-tiet-kiem" className="hover:underline">
-                      {language === 'en' ? 'You save:' : 'Bạn tiết kiệm được:'}
-                    </Link>
-                    <span className="text-[1.125em]">{formatPrice(cartSavings)}đ</span>
-                  </div>
+                  <Link
+                    href="/tai-khoan/tui-tiet-kiem"
+                    className="group flex justify-between items-start gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-emerald-800"
+                  >
+                    <span>
+                      <span className="block">{language === 'en' ? 'You save' : 'Bạn tiết kiệm được'}</span>
+                      <span className="block text-[11px] text-emerald-700 group-hover:underline">
+                        {language === 'en' ? 'Added to your savings bag when you order' : 'Cộng vào Túi tiết kiệm khi đặt hàng'}
+                      </span>
+                    </span>
+                    <span className="text-[1.125em] tabular-nums">{formatPrice(cartSavings)}đ</span>
+                  </Link>
                 )}
 
                 <div className="flex justify-between items-center text-gray-600">

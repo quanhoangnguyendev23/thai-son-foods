@@ -26,7 +26,6 @@ import {
   User,
   Package,
   Leaf,
-  PiggyBank,
 } from 'lucide-react';
 import { useBranchStore } from '@/store/branch';
 import { useCartStore } from '@/store/cart';
@@ -38,6 +37,7 @@ import { MEMBERSHIP_CONFIG } from '@/config/membership';
 import { ENABLE_COMBOS } from '@/config/features';
 import { DELIVER_TO_PLACEHOLDER } from '@/data/homepage-placeholders';
 import CategorySidebar from '@/components/home/CategorySidebar';
+import SavingsBagButton from '@/components/layout/SavingsBagButton';
 
 /**
  * HEADER BIẾN THỂ AMAZON — chỉ dùng cho trang chủ mới (AppLayout chọn khi ở "/" và cờ bật).
@@ -261,24 +261,6 @@ export default function HeaderAmazon() {
   const branchName = selectedBranch?.name || 'Cửa Hàng NH - Phú Thọ Hòa';
   const firstName = user?.fullName ? user.fullName.split(' ').slice(-1)[0] : '';
   const cartCount = isMounted ? totalQuantity : 0;
-
-  // Túi tiết kiệm: tổng tiền đã tiết kiệm qua các đơn (chỉ tải khi đã đăng nhập)
-  const [totalSaved, setTotalSaved] = useState(0);
-  useEffect(() => {
-    if (!user) {
-      setTotalSaved(0);
-      return;
-    }
-    let cancelled = false;
-    safeFetchJson<{ success: boolean; totalSaved?: number }>('/api/user/savings')
-      .then((data) => {
-        if (!cancelled && data?.success) setTotalSaved(Number(data.totalSaved) || 0);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
 
   /* ─────────── Khối con ─────────── */
 
@@ -579,26 +561,7 @@ export default function HeaderAmazon() {
             </button>
 
             {/* Túi tiết kiệm — cạnh Giỏ hàng */}
-            <Link
-              href="/tai-khoan/tui-tiet-kiem"
-              className={cn(navBtn, 'gap-1 px-1.5 lg:px-2 py-1 max-lg:min-h-11 max-lg:min-w-11 max-lg:justify-center')}
-              aria-label={
-                totalSaved > 0
-                  ? isEn ? `Savings bag, saved ${formatPrice(totalSaved)}đ` : `Túi tiết kiệm, đã tiết kiệm ${formatPrice(totalSaved)}đ`
-                  : isEn ? 'Savings bag' : 'Túi tiết kiệm'
-              }
-              title={isEn ? 'Savings bag' : 'Túi tiết kiệm'}
-            >
-              <PiggyBank className="w-6 h-6 xl:hidden" />
-              <span className="hidden xl:block leading-tight text-left">
-                <span className="block text-[11px] text-white/70 max-w-[130px] truncate">
-                  {totalSaved > 0
-                    ? `${isEn ? 'Saved' : 'Đã tiết kiệm'} ${formatPrice(totalSaved)}đ`
-                    : isEn ? 'Your' : 'Của bạn'}
-                </span>
-                <span className="block text-[15px]">{isEn ? 'Savings bag' : 'Túi tiết kiệm'}</span>
-              </span>
-            </Link>
+            <SavingsBagButton isEn={isEn} navBtn={navBtn} />
 
             {/* Giỏ hàng — giữ id cho hiệu ứng bay vào giỏ */}
             <Link
