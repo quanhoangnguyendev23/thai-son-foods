@@ -22,6 +22,10 @@ interface ProductReviewsSectionProps {
   className?: string;
   /** Hiển thị khối "Hình ảnh từ khách hàng" ngay trong mục đánh giá */
   showCustomerImages?: boolean;
+  /** Ô gợi ý đặt dưới khung "Đánh giá chung" (cột trái), ví dụ một sản phẩm gợi ý */
+  sidebarSlot?: React.ReactNode;
+  /** Dải gợi ý đặt cuối danh sách đánh giá (cột phải), ví dụ một combo gợi ý */
+  bottomSlot?: React.ReactNode;
 }
 
 const MAX_REVIEW_IMAGES = 3;
@@ -95,6 +99,8 @@ export default function ProductReviewsSection({
   productName = 'Sản phẩm',
   className = '',
   showCustomerImages = false,
+  sidebarSlot,
+  bottomSlot,
 }: ProductReviewsSectionProps) {
   const { user } = useUserAuth();
 
@@ -367,7 +373,8 @@ export default function ProductReviewsSection({
         {/* 2. BỐ CỤC 2 CỘT CHÍNH (GRID 12 CỘT) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* ── CỘT TRÁI (TỔNG QUAN ĐÁNH GIÁ - 4 CỘT) ── */}
-          <div className="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 lg:sticky lg:top-[168px] z-10">
+          <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-[168px] z-10">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5">
             <h3 className="text-gray-900 text-lg">
               Đánh giá chung
             </h3>
@@ -436,6 +443,8 @@ export default function ProductReviewsSection({
               <Edit3 className="w-4 h-4" />
               <span>Viết đánh giá của bạn</span>
             </button>
+          </div>
+          {sidebarSlot}
           </div>
 
           {/* ── CỘT PHẢI (BỘ LỌC & DANH SÁCH REVIEW - 8 CỘT) ── */}
@@ -678,6 +687,7 @@ export default function ProductReviewsSection({
               </div>
             );
           })()}
+          {bottomSlot && <div className="mt-6">{bottomSlot}</div>}
           </div>
         </div>
       </div>

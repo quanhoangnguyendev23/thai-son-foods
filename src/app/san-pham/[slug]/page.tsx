@@ -32,6 +32,7 @@ import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalS
 import ProductComboStrip from '@/components/product/ProductComboStrip';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 import { brands } from '@/data/brands';
+import { ReviewProductAd, ReviewComboAd } from '@/components/product/ProductReviewAds';
 import { combos as staticCombos } from '@/data/combos';
 import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
@@ -296,8 +297,15 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   let stripCombo: StripCombo | undefined;
   let stripRating: { averageRating: number; totalReviews: number } | null = null;
   let stripSold = 0;
+  let reviewCombo: StripCombo | undefined;
   if (ENABLE_COMBOS && useNewLayout) {
-    stripCombo = pickComboForProduct(await getActiveCombos(), product.id);
+    const activeCombos = await getActiveCombos();
+    stripCombo = pickComboForProduct(activeCombos, product.id);
+    // Combo trong mục Đánh giá: ngẫu nhiên trong các combo có sản phẩm này (khác combo ở dải trên); không có thì ngẫu nhiên
+    const otherCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug && c.id !== stripCombo?.id);
+    const withProduct = otherCombos.filter((c) => c.products.some((it) => it.productId === product.id));
+    const comboPool = withProduct.length > 0 ? withProduct : otherCombos;
+    reviewCombo = comboPool[Math.floor(Math.random() * comboPool.length)];
     if (stripCombo) {
       const picked = stripCombo;
       const [summary, sold] = await Promise.all([
@@ -308,6 +316,24 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       stripSold = sold;
     }
   }
+
+  // Sản phẩm lẻ trong mục Đánh giá: một thương hiệu ngẫu nhiên → một sản phẩm ngẫu nhiên của thương hiệu đó (khác sản phẩm đang xem)
+  const brandPool = brands
+    .map((b) => ({ brand: b, items: b.productIds.map((id) => findActive(id)).filter((p): p is Product => Boolean(p)) }))
+    .filter((x) => x.items.length > 0);
+  const pickedBrand = brandPool[Math.floor(Math.random() * brandPool.length)];
+  const reviewAdProduct = pickedBrand?.items[Math.floor(Math.random() * pickedBrand.items.length)];
+  const reviewAdRating = reviewAdProduct
+    ? await getProductReviewSummary(reviewAdProduct.slug || reviewAdProduct.id).catch(() => null)
+    : null;
+  // Logo cho dải combo: thương hiệu chiếm nhiều chai nhất trong combo
+  const reviewComboBrand = reviewCombo
+    ? [...brands].sort(
+        (a, b) =>
+          reviewCombo!.products.filter((it) => b.productIds.includes(it.productId)).reduce((s, it) => s + it.quantity, 0) -
+          reviewCombo!.products.filter((it) => a.productIds.includes(it.productId)).reduce((s, it) => s + it.quantity, 0)
+      )[0]
+    : undefined;
 
   // "Khám phá dòng khác": mỗi danh mục còn lại một hàng
   const otherCategoryRows = categories
@@ -506,7 +532,21 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
         {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (ảnh khách hàng = placeholder, gộp trong mục; đánh giá = dữ liệu thật) */}
         <div className="border-t border-gray-200 bg-white" id="danh-gia-khach-hang">
-          <ProductReviewsSection productId={product.slug || product.id} productName={product.name} showCustomerImages />
+          <ProductReviewsSection
+            productId={product.slug || product.id}
+            productName={product.name}
+            showCustomerImages
+            sidebarSlot={
+              reviewAdProduct ? (
+                <ReviewProductAd
+                  product={reviewAdProduct}
+                  brand={pickedBrand?.brand}
+                  rating={reviewAdRating ? { averageRating: reviewAdRating.averageRating, totalReviews: reviewAdRating.totalReviews } : null}
+                />
+              ) : undefined
+            }
+            bottomSlot={reviewCombo ? <ReviewComboAd combo={reviewCombo} brand={reviewComboBrand} /> : undefined}
+          />
         </div>
 
         {/* ── KHÁCH HÀNG CŨNG XEM (dữ liệu thật; ẩn khi chưa đủ 3 sản phẩm gợi ý) ── */}
