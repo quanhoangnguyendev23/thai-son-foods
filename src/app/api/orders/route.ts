@@ -324,6 +324,8 @@ export async function POST(request: Request) {
       for (const rawItem of normalizedItems) {
         const pId = rawItem.productId;
         let itemPrice = rawItem.price;
+        // Giá gốc (niêm yết) lấy từ DB cho Túi tiết kiệm; không có thì coi như bằng giá bán
+        let itemOriginalPrice: number | null = null;
         // Tên/đơn vị do trình duyệt gửi chỉ dùng cho combo tự chọn (đang chờ xử lý riêng) và luôn được lọc HTML
         let itemName = stripHtml(rawItem.name.toString()).slice(0, 255) || 'Sản phẩm';
         let itemUnit = rawItem.unit ? stripHtml(rawItem.unit.toString()).slice(0, 50) : rawItem.unit;
@@ -343,11 +345,12 @@ export async function POST(request: Request) {
             );
           }
           const comboRes = await client.query(
-            `SELECT name, sale_price, image FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;`,
+            `SELECT name, sale_price, original_price, image FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;`,
             [pId]
           );
           if (comboRes.rows.length > 0) {
             itemPrice = comboRes.rows[0].sale_price;
+            itemOriginalPrice = Number(comboRes.rows[0].original_price) || null;
             itemName = comboRes.rows[0].name;
             itemThumbnail = comboRes.rows[0].image || null;
           } else if (!ENABLE_CUSTOM_COMBOS) {
@@ -415,6 +418,7 @@ export async function POST(request: Request) {
           name: itemName,
           unit: itemUnit,
           price: itemPrice,
+          originalPrice: itemOriginalPrice && itemOriginalPrice > itemPrice ? itemOriginalPrice : itemPrice,
           thumbnail: itemThumbnail,
           canonicalProductId,
           bottleMultiplier,
@@ -686,8 +690,8 @@ export async function POST(request: Request) {
             }
 
             await client.query(
-              `INSERT INTO order_items (id, order_id, product_id, name, price, quantity, unit, thumbnail, combo_snapshot, canonical_product_id, bottle_multiplier, total_bottles, cost_price)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+              `INSERT INTO order_items (id, order_id, product_id, name, price, quantity, unit, thumbnail, combo_snapshot, canonical_product_id, bottle_multiplier, total_bottles, cost_price, original_price)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
               [
                 itemId,
                 orderId,
@@ -702,6 +706,7 @@ export async function POST(request: Request) {
                 bottleMultiplier,
                 totalBottlesVal,
                 itemCostPriceSnapshot,
+                item.originalPrice ?? item.price,
               ]
             );
           }
@@ -858,6 +863,11 @@ export async function POST(request: Request) {
         subtotal: serverCalculatedSubtotal,
         shippingFee: serverShippingFee,
         total: serverTotal,
+        // Số tiền khách tiết kiệm trong đơn này (giá gốc - giá bán), dùng cho màn đặt hàng thành công
+        savings: revalidatedItems.reduce(
+          (sum: number, it: any) => sum + Math.max(0, (Number(it.originalPrice) || 0) - (Number(it.price) || 0)) * (Number(it.quantity) || 0),
+          0
+        ),
         savedToPostgres: true,
         order: {
           id: orderId,

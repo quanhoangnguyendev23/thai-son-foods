@@ -257,6 +257,8 @@ export default function CheckoutPage() {
     total: number;
     paymentMethod: string;
     storeAddress?: string;
+    /** Túi tiết kiệm: tiền tiết kiệm của đơn do server tính */
+    savings?: number;
   } | null>(null);
 
   // Chi nhánh phục vụ: MẶC ĐỊNH lấy từ chi nhánh đang chọn toàn site
@@ -930,6 +932,12 @@ export default function CheckoutPage() {
   const isEligibleToOrder = subtotal >= MIN_ORDER_THRESHOLD || hasCombo;
   const missingForMinOrder = Math.max(0, MIN_ORDER_THRESHOLD - subtotal);
 
+  // Túi tiết kiệm: tiền tiết kiệm trong đơn đang đặt (giá gốc combo - giá bán); sản phẩm lẻ chưa có giá gốc
+  const orderSavings = items.reduce((t, i) => {
+    const c = combos.find((sc) => sc.id === i.productId || sc.slug === i.slug);
+    return c ? t + Math.max(0, (Number(c.originalPrice) || 0) - i.price) * i.quantity : t;
+  }, 0);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -1106,6 +1114,7 @@ export default function CheckoutPage() {
             ? 'Cash on Delivery (COD)'
             : 'Thanh toán tiền mặt khi nhận hàng (COD)',
         storeAddress: targetStore?.address,
+        savings: Math.max(0, Number(data?.savings) || 0),
       });
       setIsSubmitted(true);
       clearCart();
@@ -1158,6 +1167,18 @@ export default function CheckoutPage() {
               <p className="text-sm text-green-primary leading-snug">{completedOrder.paymentMethod}</p>
             </div>
           </div>
+
+          {/* Túi tiết kiệm: tiền tiết kiệm của đơn vừa đặt */}
+          {(completedOrder.savings ?? 0) > 0 && (
+            <p className="mb-4 text-sm text-text-body">
+              {en ? 'You saved ' : 'Bạn đã tiết kiệm '}
+              <strong className="text-green-primary">{formatPrice(completedOrder.savings ?? 0)}đ</strong>
+              {en ? ' on this order. ' : ' với đơn này. '}
+              <Link href="/tai-khoan/tui-tiet-kiem" className="text-green-primary underline">
+                {en ? 'View your savings bag' : 'Xem Túi tiết kiệm'}
+              </Link>
+            </p>
+          )}
 
           {/* Chi tiết nhận hàng: 2 cột trên màn hình lớn */}
           <div className="bg-ivory/60 rounded-2xl p-4 text-sm border border-border-light grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 mb-4">
@@ -2130,6 +2151,12 @@ export default function CheckoutPage() {
                   <span className="text-text-body">{language === 'en' ? 'Subtotal' : 'Tạm tính'}</span>
                   <span className="font-medium">{formatPrice(subtotal)}đ</span>
                 </div>
+                {orderSavings > 0 && (
+                  <div className="flex justify-between text-green-primary">
+                    <span>{language === 'en' ? 'You save' : 'Bạn tiết kiệm được'}</span>
+                    <span className="font-medium">{formatPrice(orderSavings)}đ</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-text-body">{language === 'en' ? 'Shipping Fee' : 'Phí vận chuyển'}</span>
                   <span className="font-medium">

@@ -465,6 +465,8 @@ async function runInitDatabase() {
       ALTER TABLE products ADD COLUMN IF NOT EXISTS energy_kcal NUMERIC(6,1);
       ALTER TABLE combos ADD COLUMN IF NOT EXISTS sold_offset INTEGER NOT NULL DEFAULT 0;
       ALTER TABLE order_items ADD COLUMN IF NOT EXISTS cost_price INTEGER;
+      -- Túi tiết kiệm: giá gốc (niêm yết) của dòng hàng lúc đặt; tiết kiệm = (original_price - price) * quantity
+      ALTER TABLE order_items ADD COLUMN IF NOT EXISTS original_price INTEGER;
 
       -- =========================================================================
       -- PARTNER MODULE (CTV & ĐẠI LÝ) - EXTENDED SCHEMA

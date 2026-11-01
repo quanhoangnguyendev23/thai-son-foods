@@ -166,6 +166,14 @@ export default function CartPage() {
   const isEligibleToOrder = subtotal >= MIN_ORDER_THRESHOLD || hasCombo;
   const missingForMinOrder = Math.max(0, MIN_ORDER_THRESHOLD - subtotal);
 
+  // Túi tiết kiệm: tiền khách tiết kiệm trong giỏ này (giá gốc combo - giá bán); sản phẩm lẻ chưa có giá gốc
+  const cartSavings = items.reduce((t, i) => {
+    const c: any =
+      promoCombos.find((pc: any) => pc.id === i.productId || pc.slug === i.slug) ||
+      combos.find((sc) => sc.id === i.productId || sc.slug === i.slug);
+    return c ? t + Math.max(0, (Number(c.originalPrice) || 0) - i.price) * i.quantity : t;
+  }, 0);
+
   // Loading skeleton trong lúc client hydrate
   if (!isMounted) {
     return (
@@ -953,6 +961,15 @@ export default function CartPage() {
                   <span>{language === 'en' ? 'Items Subtotal:' : 'Tạm tính tiền hàng:'}</span>
                   <span className="text-gray-900 text-[1.125em]">{formatPrice(subtotal)}đ</span>
                 </div>
+
+                {cartSavings > 0 && (
+                  <div className="flex justify-between items-center text-emerald-700">
+                    <Link href="/tai-khoan/tui-tiet-kiem" className="hover:underline">
+                      {language === 'en' ? 'You save:' : 'Bạn tiết kiệm được:'}
+                    </Link>
+                    <span className="text-[1.125em]">{formatPrice(cartSavings)}đ</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center text-gray-600">
                   <div className="flex items-center gap-1.5">
