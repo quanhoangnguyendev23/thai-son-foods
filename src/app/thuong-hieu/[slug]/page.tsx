@@ -8,6 +8,9 @@ import { Product } from '@/types';
 import ProductCard from '@/components/product/ProductCard';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 
+// Ảnh thẻ thương hiệu chọn ngẫu nhiên mỗi lần tải trang
+export const dynamic = 'force-dynamic';
+
 interface BrandPageProps {
   params: Promise<{ slug: string }>;
 }
@@ -75,7 +78,7 @@ export default async function BrandPage({ params }: BrandPageProps) {
 
       {/* Các thương hiệu khác */}
       <div className="border-t border-gray-200">
-        <BrandCardsSection brands={otherBrands} title="Thương hiệu khác của Thái Sơn Foods" />
+        <BrandCardsSection brands={otherBrands} products={products} title="Thương hiệu khác của Thái Sơn Foods" />
       </div>
     </div>
   );

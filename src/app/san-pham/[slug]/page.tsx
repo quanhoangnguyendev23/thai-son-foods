@@ -485,6 +485,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             brands={[...brands].sort(
               (a, b) => Number(b.productIds.includes(product.id)) - Number(a.productIds.includes(product.id))
             )}
+            products={products}
           />
         </div>
 
