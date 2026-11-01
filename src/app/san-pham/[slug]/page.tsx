@@ -34,6 +34,7 @@ import BrandCardsSection from '@/components/product/BrandCardsSection';
 import { brands } from '@/data/brands';
 import { ReviewProductAd, ReviewComboAd } from '@/components/product/ProductReviewAds';
 import ComboCarousel from '@/components/product/ComboCarousel';
+import { PersonalizedSignInPrompt, BackToTopBar } from '@/components/product/ProductPageEndBlocks';
 import { combos as staticCombos } from '@/data/combos';
 import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
@@ -576,6 +577,10 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             />
           </div>
         )}
+
+        {/* ── CUỐI TRANG (giống Amazon): mời đăng nhập để xem gợi ý riêng (chỉ khách chưa đăng nhập) + thanh Lên đầu trang ── */}
+        <PersonalizedSignInPrompt />
+        <BackToTopBar />
       </div>
       ) : (
       /* ═══ GIAO DIỆN CŨ (đang hiển thị mặc định) ═══ */
