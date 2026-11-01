@@ -448,7 +448,7 @@ export default function ProductReviewsSection({
           </div>
 
           {/* ── CỘT PHẢI (BỘ LỌC & DANH SÁCH REVIEW - 8 CỘT) ── */}
-          <div className="lg:col-span-8">
+          <div className={bottomSlot ? 'lg:col-span-8 lg:self-stretch lg:flex lg:flex-col' : 'lg:col-span-8'}>
             {/* Thanh lọc Pill Tabs */}
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -687,7 +687,8 @@ export default function ProductReviewsSection({
               </div>
             );
           })()}
-          {bottomSlot && <div className="mt-6">{bottomSlot}</div>}
+          {/* Desktop: dải gợi ý luôn nằm sát đáy cột phải, ngang với đáy cột trái */}
+          {bottomSlot && <div className="mt-6 lg:mt-auto lg:pt-6">{bottomSlot}</div>}
           </div>
         </div>
       </div>
