@@ -30,6 +30,8 @@ import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
 import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold } from '@/lib/product-stats';
 import ProductComboStrip from '@/components/product/ProductComboStrip';
+import BrandCardsSection from '@/components/product/BrandCardsSection';
+import { brands } from '@/data/brands';
 import { combos as staticCombos } from '@/data/combos';
 import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
@@ -475,6 +477,15 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <ProductSponsoredBanner product={product} hideUnverifiedStats randomize />
           </div>
+        </div>
+
+        {/* ── THƯƠNG HIỆU (thẻ ảnh lớn + logo; thương hiệu của sản phẩm đang xem đứng đầu) ── */}
+        <div className="border-t border-gray-200 bg-white">
+          <BrandCardsSection
+            brands={[...brands].sort(
+              (a, b) => Number(b.productIds.includes(product.id)) - Number(a.productIds.includes(product.id))
+            )}
+          />
         </div>
 
         {/* ── KHÁM PHÁ DÒNG KHÁC: mỗi danh mục còn lại một hàng ── */}
