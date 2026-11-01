@@ -614,13 +614,16 @@ export default function ProductGallery({
           {/* Bottom Caption / Indicator */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/15 backdrop-blur-md px-5 py-2 rounded-full text-white text-sm font-medium border border-white/10 flex items-center gap-2"
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] sm:max-w-3xl bg-white/15 backdrop-blur-md px-4 sm:px-5 py-2 rounded-full text-white text-sm font-medium border border-white/10 flex items-center gap-2"
           >
-            <span className="text-orange-400 text-[1.125em]">{activeIndex + 1}</span>
-            <span className="text-white/60">/</span>
-            <span>{displayImages.length}</span>
-            <span className="text-white/40">•</span>
-            <span>{productName}</span>
+            {/* Bộ đếm không co lại; tên sản phẩm dài cắt gọn 1 dòng để khung không bị bóp thành nhiều dòng trên điện thoại */}
+            <span className="shrink-0 whitespace-nowrap">
+              <span className="text-orange-400 text-[1.125em]">{activeIndex + 1}</span>
+              <span className="text-white/60"> / </span>
+              <span>{displayImages.length}</span>
+            </span>
+            <span className="shrink-0 text-white/40">•</span>
+            <span className="min-w-0 truncate" title={productName}>{productName}</span>
           </div>
         </div>,
         document.body
