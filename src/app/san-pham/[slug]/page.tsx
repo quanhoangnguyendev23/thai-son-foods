@@ -28,7 +28,7 @@ import ProductCompareTable from '@/components/product/ProductCompareTable';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
-import { getAlsoViewedIds } from '@/lib/product-stats';
+import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds } from '@/lib/product-stats';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
 
@@ -212,6 +212,35 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     .map((id) => products.find((p) => p.id === id && p.isActive !== false))
     .filter((p): p is Product => Boolean(p) && p!.id !== product.id);
 
+  // "Bán chạy nhất" và "Khách mua sản phẩm này cũng mua": dữ liệu THẬT từ đơn hàng; thiếu dữ liệu thì ẩn khối
+  const activeCatalog = products.filter((p) => p.isActive !== false);
+  const findActive = (id: string) => activeCatalog.find((p) => p.id === id && p.id !== product.id);
+  let bestSellerProducts: Product[] = [];
+  let bestSellerRanks: number[] = [];
+  let boughtTogetherProducts: Product[] = [];
+  try {
+    const [ranking, togetherIds] = await Promise.all([
+      getBestSellerRanking(activeCatalog),
+      getBoughtTogetherIds(product.id, activeCatalog, 12),
+    ]);
+    // Giữ đúng thứ hạng thật (sản phẩm đang xem bị ẩn khỏi hàng nhưng vẫn giữ vị trí của nó)
+    const ranked = ranking
+      .map((r, i) => ({ product: findActive(r.productId), rank: i + 1 }))
+      .filter((r): r is { product: Product; rank: number } => Boolean(r.product))
+      .slice(0, 10);
+    bestSellerProducts = ranked.map((r) => r.product);
+    bestSellerRanks = ranked.map((r) => r.rank);
+    boughtTogetherProducts = togetherIds.map(findActive).filter((p): p is Product => Boolean(p));
+  } catch (err) {
+    console.error('Không thể lấy gợi ý bán chạy / mua cùng:', err);
+  }
+
+  // "Khám phá dòng khác": mỗi danh mục còn lại một hàng
+  const otherCategoryRows = categories
+    .filter((c) => c.id !== cleanCatId)
+    .map((c) => ({ category: c, items: activeCatalog.filter((p) => p.categoryId === c.id) }))
+    .filter((row) => row.items.length > 0);
+
   const reviewSummary = await getProductReviewSummary(product.slug || product.id);
   let latestReviews: any[] = [];
   if (reviewSummary.totalReviews > 0) {
@@ -280,7 +309,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         <AmazonProductBreadcrumb product={product} category={category} />
 
         {/* ── KHU VỰC SẢN PHẨM CHÍNH: Gallery | Thông tin | Buy Box ── */}
-        <div className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-3 pb-8 lg:pb-10">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-8 lg:pb-10">
           <ProductMainSection
             product={product}
             siblingProducts={siblingProducts}
@@ -301,6 +330,20 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <ProductBundleSuggestions currentProduct={product} />
         </div>
 
+        {/* ── BÁN CHẠY NHẤT (xếp hạng theo số đã bán thật; ẩn khi chưa đủ 3 sản phẩm) ── */}
+        {bestSellerProducts.length >= 3 && (
+          <div className="border-t border-gray-200 bg-white">
+            <ProductCarousel
+              title="Bán chạy nhất tại Thái Sơn Foods"
+              subtitle="Xếp hạng theo số lượng đã bán"
+              products={bestSellerProducts}
+              mobileGrid
+              wide
+              ranks={bestSellerRanks}
+            />
+          </div>
+        )}
+
         {/* ── CÁC SẢN PHẨM BẠN CÓ THỂ THÍCH (sản phẩm liên quan) ── */}
         <div className="border-t border-gray-200 bg-white">
           <ProductCarousel
@@ -308,6 +351,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             subtitle={category ? `Cùng danh mục ${category.name} và các dòng thức uống khác của Thái Sơn Foods` : undefined}
             products={similarProducts}
             mobileGrid
+            wide
           />
         </div>
 
@@ -316,10 +360,22 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <ProductCompareTable current={product} others={similarProducts} />
         </div>
 
+        {/* ── KHÁCH MUA SẢN PHẨM NÀY CŨNG MUA (từ các đơn có nhiều món; ẩn khi chưa đủ 3 sản phẩm) ── */}
+        {boughtTogetherProducts.length >= 3 && (
+          <div className="border-t border-gray-200 bg-white">
+            <ProductCarousel
+              title="Khách mua sản phẩm này cũng mua"
+              products={boughtTogetherProducts}
+              mobileGrid
+              wide
+            />
+          </div>
+        )}
+
         {/* ── COMBO ── */}
         {ENABLE_COMBOS && (
           <div className="border-t border-gray-200 bg-white">
-            <div className="section-container max-sm:px-2.5 py-8 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="max-sm:px-2.5 py-8 sm:py-10 max-w-[1800px] mx-auto px-4 sm:px-6">
               <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
             </div>
           </div>
@@ -344,6 +400,13 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           </div>
         </div>
 
+        {/* ── KHÁM PHÁ DÒNG KHÁC: mỗi danh mục còn lại một hàng ── */}
+        {otherCategoryRows.map(({ category: other, items }) => (
+          <div key={other.id} className="border-t border-gray-200 bg-white">
+            <ProductCarousel title={`Khám phá dòng ${other.name}`} products={items} mobileGrid wide />
+          </div>
+        ))}
+
         {/* ── MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG ── */}
         <ProductDescription
           productName={product.name}
@@ -365,6 +428,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               title="Khách hàng đã xem sản phẩm này cũng xem"
               products={alsoViewedProducts}
               mobileGrid
+              wide
             />
           </div>
         )}

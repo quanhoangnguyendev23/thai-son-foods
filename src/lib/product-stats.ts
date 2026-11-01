@@ -39,6 +39,95 @@ export async function getTotalSold(
   return Number(res.rows[0]?.web_total || 0) + Number(res.rows[0]?.offline_total || 0);
 }
 
+/**
+ * Dòng đơn hàng lưu mã sản phẩm theo nhiều dạng: id web ("sua-bap-nep"), id CSDL ("prod-sb-01"),
+ * hoặc kèm mã quy cách ("sua-bap-nep-sb-7chai"). Ghép về đúng sản phẩm trong danh mục web
+ * theo bí danh dài nhất khớp được (tránh nhận nhầm khi một bí danh là tiền tố của bí danh khác).
+ */
+type CatalogItem = { id: string; slug: string; sku?: string };
+
+function buildAliasResolver(catalog: CatalogItem[], dbRows: { id: string; slug: string }[]) {
+  const aliases: { alias: string; productId: string }[] = [];
+  for (const p of catalog) {
+    const dbIds = dbRows.filter((r) => r.slug === p.slug).map((r) => r.id);
+    const list = [p.id, p.slug, ...(p.sku ? [`prod-${p.sku.toLowerCase()}`] : []), ...dbIds];
+    for (const alias of new Set(list.filter(Boolean))) aliases.push({ alias, productId: p.id });
+  }
+  aliases.sort((a, b) => b.alias.length - a.alias.length);
+  return (orderProductId: string): string | null => {
+    const hit = aliases.find((a) => orderProductId === a.alias || orderProductId.startsWith(`${a.alias}-`));
+    return hit ? hit.productId : null;
+  };
+}
+
+/**
+ * Xếp hạng bán chạy THẬT: số gói đã đặt trên web (không tính đơn hủy) + số bán kênh ngoài (sold_offset).
+ * Trả về id sản phẩm trong danh mục web, chỉ gồm sản phẩm đã bán được ít nhất 1 gói.
+ */
+export async function getBestSellerRanking(catalog: CatalogItem[]): Promise<{ productId: string; sold: number }[]> {
+  await initDatabase();
+  const [itemsRes, productsRes] = await Promise.all([
+    query(
+      `SELECT oi.product_id, SUM(oi.quantity)::int AS qty
+         FROM order_items oi JOIN orders o ON o.id = oi.order_id
+        WHERE o.status <> 'CANCELLED'
+        GROUP BY oi.product_id`
+    ),
+    query(`SELECT id, slug, COALESCE(sold_offset, 0)::int AS sold_offset FROM products`),
+  ]);
+  const resolve = buildAliasResolver(catalog, productsRes.rows);
+  const totals = new Map<string, number>();
+  for (const row of itemsRes.rows) {
+    const id = resolve(String(row.product_id));
+    if (id) totals.set(id, (totals.get(id) || 0) + Number(row.qty || 0));
+  }
+  for (const row of productsRes.rows) {
+    const id = resolve(String(row.slug)) || resolve(String(row.id));
+    if (id && Number(row.sold_offset) > 0) totals.set(id, (totals.get(id) || 0) + Number(row.sold_offset));
+  }
+  return [...totals.entries()]
+    .filter(([, sold]) => sold > 0)
+    .map(([productId, sold]) => ({ productId, sold }))
+    .sort((a, b) => b.sold - a.sold || a.productId.localeCompare(b.productId));
+}
+
+/**
+ * "Khách mua sản phẩm này cũng mua": sản phẩm khác nằm chung đơn với sản phẩm hiện tại
+ * (đơn không hủy), xếp theo số đơn chung. Bỏ qua dòng combo.
+ */
+export async function getBoughtTogetherIds(productId: string, catalog: CatalogItem[], limit = 12): Promise<string[]> {
+  await initDatabase();
+  const [itemsRes, productsRes] = await Promise.all([
+    query(
+      `SELECT oi.order_id, oi.product_id
+         FROM order_items oi JOIN orders o ON o.id = oi.order_id
+        WHERE o.status <> 'CANCELLED'
+          AND oi.order_id IN (SELECT order_id FROM order_items GROUP BY order_id HAVING COUNT(DISTINCT product_id) > 1)`
+    ),
+    query(`SELECT id, slug FROM products`),
+  ]);
+  const resolve = buildAliasResolver(catalog, productsRes.rows);
+  const byOrder = new Map<string, Set<string>>();
+  for (const row of itemsRes.rows) {
+    const id = resolve(String(row.product_id));
+    if (!id) continue;
+    const key = String(row.order_id);
+    if (!byOrder.has(key)) byOrder.set(key, new Set());
+    byOrder.get(key)!.add(id);
+  }
+  const counts = new Map<string, number>();
+  for (const ids of byOrder.values()) {
+    if (!ids.has(productId)) continue;
+    for (const other of ids) {
+      if (other !== productId) counts.set(other, (counts.get(other) || 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([id]) => id);
+}
+
 /** Sản phẩm được xem nhiều nhất bởi những khách cũng xem `productId` (30 ngày gần nhất) */
 export async function getAlsoViewedIds(productId: string, limit = 12): Promise<string[]> {
   if (!isSafeItemId(productId)) return [];

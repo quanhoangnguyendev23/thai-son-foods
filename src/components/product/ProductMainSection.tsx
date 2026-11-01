@@ -622,7 +622,7 @@ export function AmazonProductBreadcrumb({
   const categoryName = isEn ? (category?.nameEn || category?.name) : category?.name;
 
   return (
-    <div className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-3 pb-1 text-xs">
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-1 text-xs">
       <nav aria-label="Breadcrumb">
         <ol className="flex items-center gap-1 text-gray-600 min-w-0">
           <li className="shrink-0">

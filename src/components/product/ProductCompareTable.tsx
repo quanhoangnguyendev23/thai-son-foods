@@ -257,7 +257,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
   const currentTint = 'bg-green-primary/[0.035]';
 
   return (
-    <section className="max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8" aria-labelledby="compare-title">
+    <section className="max-w-[1800px] mx-auto px-4 sm:px-6 py-6 md:py-8" aria-labelledby="compare-title">
       <h2 id="compare-title" className="text-xl md:text-2xl text-ink-950 mb-4">
         {isEn ? 'Compare with similar items' : 'So sánh với sản phẩm tương tự'}
       </h2>

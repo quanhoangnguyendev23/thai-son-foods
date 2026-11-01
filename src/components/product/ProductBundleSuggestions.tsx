@@ -82,7 +82,7 @@ export default function ProductBundleSuggestions({
   if (bundleItems.length < 2) return null;
 
   return (
-    <section className={cn('max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8', className)}>
+    <section className={cn('max-w-[1800px] mx-auto px-4 sm:px-6 py-6 md:py-8', className)}>
       <h2 className="text-xl md:text-2xl text-ink-950 mb-1">
         {isEn ? 'Frequently paired' : 'Gợi ý mua kèm'}
       </h2>

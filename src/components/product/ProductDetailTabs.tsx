@@ -65,7 +65,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
   );
 
   return (
-    <section className="max-w-[1456px] mx-auto px-4 sm:px-6 py-8 md:py-10" aria-labelledby={`${baseId}-title`}>
+    <section className="max-w-[1800px] mx-auto px-4 sm:px-6 py-8 md:py-10" aria-labelledby={`${baseId}-title`}>
       <h2 id={`${baseId}-title`} className="text-2xl md:text-2xl text-ink-950 mb-4">
         {isEn ? 'Product information' : 'Thông tin sản phẩm'}
       </h2>

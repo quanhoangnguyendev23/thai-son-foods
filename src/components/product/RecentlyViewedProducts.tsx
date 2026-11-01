@@ -49,6 +49,7 @@ export default function RecentlyViewedProducts({ currentSlug }: { currentSlug: s
         title={language === 'en' ? 'Your recently viewed items' : 'Sản phẩm bạn đã xem gần đây'}
         products={items}
         mobileGrid
+        wide
       />
     </div>
   );

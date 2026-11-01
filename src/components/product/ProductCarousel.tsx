@@ -17,6 +17,10 @@ interface ProductCarouselProps {
   mobileGrid?: boolean;
   /** Số sản phẩm hiện ban đầu ở chế độ mobileGrid (mặc định 4) */
   mobileInitialCount?: number;
+  /** Trang chi tiết sản phẩm: khung rộng hơn (lề hai bên hẹp) và thêm 1 thẻ mỗi hàng trên màn hình rất lớn */
+  wide?: boolean;
+  /** Thứ hạng thật của từng thẻ (#1, #2...) hiện phía trên thẻ — dùng cho khối Bán chạy */
+  ranks?: number[];
 }
 
 /**
@@ -31,6 +35,8 @@ export default function ProductCarousel({
   className,
   mobileGrid = false,
   mobileInitialCount = 4,
+  wide = false,
+  ranks,
 }: ProductCarouselProps) {
   const { language } = useLanguage();
   const [expanded, setExpanded] = useState(false);
@@ -65,7 +71,7 @@ export default function ProductCarousel({
 
   if (products.length === 0) return null;
   return (
-    <section className={cn('max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8', className)}>
+    <section className={cn(wide ? 'max-w-[1800px]' : 'max-w-[1456px]', 'mx-auto px-4 sm:px-6 py-6 md:py-8', className)}>
       <div className="flex items-end justify-between gap-3 mb-3">
         <div className="min-w-0">
           <h2 className="text-xl md:text-2xl text-ink-950">{title}</h2>
@@ -87,10 +93,14 @@ export default function ProductCarousel({
               key={p.id}
               className={cn(
                 'snap-start sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%]',
+                wide && '2xl:w-[13.3%]',
                 mobileGrid ? 'min-w-0' : 'shrink-0 w-[46%]',
                 mobileGrid && !expanded && idx >= mobileInitialCount && 'max-sm:hidden'
               )}
             >
+              {ranks?.[idx] && (
+                <p className="mb-1.5 text-xs font-semibold text-brand-copper">#{ranks[idx]}</p>
+              )}
               {/* Bố cục compact + tên giới hạn 2 dòng để các thẻ đồng bộ chiều cao */}
               <ProductCard product={p} layout="compact" isHomepage />
             </div>
