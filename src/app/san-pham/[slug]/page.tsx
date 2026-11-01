@@ -26,12 +26,12 @@ import ProductCarousel from '@/components/product/ProductCarousel';
 import RecentlyViewedProducts from '@/components/product/RecentlyViewedProducts';
 import ProductCompareTable from '@/components/product/ProductCompareTable';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
-import { getSiblingProducts, getSimilarProducts, getShortProductName } from '@/lib/product-detail';
+import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
-import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold, getTopRatedProducts } from '@/lib/product-stats';
+import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold } from '@/lib/product-stats';
 import ProductComboStrip from '@/components/product/ProductComboStrip';
-import ProductInlineSuggestions, { productToInlineItem, comboToInlineItem } from '@/components/product/ProductInlineSuggestions';
-import { getActiveCombos, rankCombosForProducts, combosContaining, SuggestCombo } from '@/lib/combo-suggestions';
+import { combos as staticCombos } from '@/data/combos';
+import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
 
@@ -153,6 +153,58 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
   return baseProduct;
 }
 
+type StripCombo = Combo & { isBestSeller?: boolean };
+
+/** Combo đang bán (CSDL do admin quản lý; CSDL trống thì dùng dữ liệu mẫu trong combos.ts) */
+async function getActiveCombos(): Promise<StripCombo[]> {
+  try {
+    const res = await query(
+      `SELECT c.*,
+         COALESCE((SELECT json_agg(json_build_object('product_id', ci.product_id, 'quantity', ci.quantity))
+                   FROM combo_items ci WHERE ci.combo_id = c.id), '[]') AS items
+       FROM combos c WHERE c.is_active = true ORDER BY c.created_at ASC`
+    );
+    if (res.rows.length > 0) {
+      return res.rows.map((row: any) => {
+        const base = staticCombos.find((c) => c.id === row.id || c.slug === row.slug);
+        return {
+          ...(base || {}),
+          id: row.id,
+          slug: row.slug || base?.slug || row.id,
+          name: row.name || base?.name || '',
+          description: row.description || base?.description || '',
+          image: row.image || base?.image || '/images/combos/combo-1.jpg',
+          originalPrice: Number(row.original_price) || base?.originalPrice || 0,
+          salePrice: Number(row.sale_price) || base?.salePrice || 0,
+          totalItems: Number(row.total_items) || base?.totalItems || 0,
+          discount: Number(row.discount) || 0,
+          isActive: true,
+          isBestSeller: Boolean(row.is_best_seller),
+          products: Array.isArray(row.items) && row.items.length > 0
+            ? row.items.map((it: any) => ({ productId: String(it.product_id), quantity: Number(it.quantity) || 1 }))
+            : base?.products || [],
+        } as StripCombo;
+      });
+    }
+  } catch (err) {
+    console.error('Không thể lấy combo cho dải gợi ý:', err);
+  }
+  return staticCombos.filter((c) => c.isActive);
+}
+
+/** Ưu tiên combo có sản phẩm đang xem, rồi combo giảm nhiều nhất, rồi combo nhiều sản phẩm đang xem hơn */
+function pickComboForProduct(list: StripCombo[], productId: string): StripCombo | undefined {
+  const qtyOf = (c: StripCombo) => c.products.find((it) => it.productId === productId)?.quantity || 0;
+  return [...list]
+    .filter((c) => c.salePrice > 0 && c.slug)
+    .sort(
+      (a, b) =>
+        Number(qtyOf(b) > 0) - Number(qtyOf(a) > 0) ||
+        (b.discount || 0) - (a.discount || 0) ||
+        qtyOf(b) - qtyOf(a)
+    )[0];
+}
+
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
@@ -239,42 +291,20 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   }
 
   // Dải combo phía trên breadcrumb: combo chứa sản phẩm đang xem, kèm đánh giá và số đã bán thật
-  let stripCombo: SuggestCombo | undefined;
-  let secondStripCombo: SuggestCombo | undefined;
-  let combosWithProduct: SuggestCombo[] = [];
-  let bestDealCombos: SuggestCombo[] = [];
+  let stripCombo: StripCombo | undefined;
   let stripRating: { averageRating: number; totalReviews: number } | null = null;
   let stripSold = 0;
   if (ENABLE_COMBOS && useNewLayout) {
-    const activeCombos = await getActiveCombos();
-    const ranked = rankCombosForProducts(activeCombos, [product.id]);
-    stripCombo = ranked[0];
-    secondStripCombo = ranked[1];
-    // Khối nhỏ: combo có chứa sản phẩm này (bỏ 2 combo đã hiện ở dải) và combo giảm sâu nhất
-    combosWithProduct = combosContaining(activeCombos, [product.id]).filter(
-      (c) => c.id !== stripCombo?.id && c.id !== secondStripCombo?.id
-    );
-    bestDealCombos = [...activeCombos]
-      .filter((c) => c.salePrice > 0 && c.discount > 0)
-      .sort((a, b) => b.discount - a.discount || a.salePrice - b.salePrice);
-  }
-  // Khối nhỏ: sản phẩm khách đánh giá 4 sao trở lên (dữ liệu thật) và sản phẩm mới / bán chạy do admin đánh dấu
-  let topRatedProducts: Product[] = [];
-  try {
-    const topRated = await getTopRatedProducts(activeCatalog, 4);
-    topRatedProducts = topRated.map((r) => findActive(r.productId)).filter((p): p is Product => Boolean(p));
-  } catch (err) {
-    console.error('Không thể lấy sản phẩm đánh giá cao:', err);
-  }
-  const flaggedProducts = activeCatalog.filter((p) => p.id !== product.id && (p.isNew || p.isBestSeller));
-  if (stripCombo) {
-    const picked = stripCombo;
-    const [summary, sold] = await Promise.all([
-      getProductReviewSummary(`combo:${picked.slug}`).catch(() => null),
-      getTotalSold(picked.id, 'combo', picked.slug).catch(() => 0),
-    ]);
-    stripRating = summary ? { averageRating: summary.averageRating, totalReviews: summary.totalReviews } : null;
-    stripSold = sold;
+    stripCombo = pickComboForProduct(await getActiveCombos(), product.id);
+    if (stripCombo) {
+      const picked = stripCombo;
+      const [summary, sold] = await Promise.all([
+        getProductReviewSummary(`combo:${picked.slug}`).catch(() => null),
+        getTotalSold(picked.id, 'combo', picked.slug).catch(() => 0),
+      ]);
+      stripRating = summary ? { averageRating: summary.averageRating, totalReviews: summary.totalReviews } : null;
+      stripSold = sold;
+    }
   }
 
   // "Khám phá dòng khác": mỗi danh mục còn lại một hàng
@@ -433,23 +463,12 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <ProductDetailTabs product={product} categoryName={category?.name} />
         </div>
 
-        {/* ── KHỐI NHỎ: COMBO CÓ SẢN PHẨM NÀY ── */}
-        <ProductInlineSuggestions
-          title={`Combo có ${getShortProductName(product)}`}
-          items={combosWithProduct.map(comboToInlineItem)}
-          label="Combo gợi ý"
-          minItems={2}
-        />
-
         {/* ── NỘI DUNG THƯƠNG HIỆU (A+): 2 BANNER ĐẶC TÍNH SẢN PHẨM ── */}
         <ProductFeatureShowcase
           product={product}
           productName={product.name}
           productThumbnail={product.thumbnail}
         />
-
-        {/* ── KHỐI NHỎ: SẢN PHẨM MỚI & BÁN CHẠY (do admin đánh dấu) ── */}
-        <ProductInlineSuggestions title="Sản phẩm mới và bán chạy" items={flaggedProducts.map(productToInlineItem)} />
 
         {/* ── BANNER SHOWCASE THƯƠNG HIỆU ── */}
         <div className="border-t border-gray-200 bg-white">
@@ -473,31 +492,10 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           energyKcal={product.energyKcal}
         />
 
-        {/* ── KHỐI NHỎ: COMBO TIẾT KIỆM NHẤT ── */}
-        <ProductInlineSuggestions
-          title="Combo tiết kiệm nhất"
-          items={bestDealCombos.map(comboToInlineItem)}
-          label="Combo gợi ý"
-        />
-
         {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (ảnh khách hàng = placeholder, gộp trong mục; đánh giá = dữ liệu thật) */}
         <div className="border-t border-gray-200 bg-white" id="danh-gia-khach-hang">
           <ProductReviewsSection productId={product.slug || product.id} productName={product.name} showCustomerImages />
         </div>
-
-        {/* ── KHỐI NHỎ: KHÁCH ĐÁNH GIÁ 4 SAO TRỞ LÊN (dữ liệu thật) ── */}
-        <ProductInlineSuggestions
-          title="Được khách đánh giá từ 4 sao"
-          items={topRatedProducts.map(productToInlineItem)}
-          minItems={2}
-        />
-
-        {/* ── DẢI COMBO THỨ HAI ── */}
-        {secondStripCombo && (
-          <div className="pb-2">
-            <ProductComboStrip combo={secondStripCombo} catalog={products} />
-          </div>
-        )}
 
         {/* ── KHÁCH HÀNG CŨNG XEM (dữ liệu thật; ẩn khi chưa đủ 3 sản phẩm gợi ý) ── */}
         <ProductViewTracker productId={product.id} />

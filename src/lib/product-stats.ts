@@ -128,37 +128,6 @@ export async function getBoughtTogetherIds(productId: string, catalog: CatalogIt
     .map(([id]) => id);
 }
 
-/**
- * Sản phẩm được khách đánh giá cao THẬT (đánh giá đã duyệt, trung bình >= minRating).
- * Trả về id sản phẩm web kèm điểm trung bình và số đánh giá, xếp điểm cao trước.
- */
-export async function getTopRatedProducts(
-  catalog: CatalogItem[],
-  minRating = 4
-): Promise<{ productId: string; averageRating: number; totalReviews: number }[]> {
-  await initDatabase();
-  const [reviewsRes, productsRes] = await Promise.all([
-    query(
-      `SELECT product_id, SUM(rating)::float AS total, COUNT(*)::int AS n
-         FROM product_reviews WHERE status = 'APPROVED' AND product_id NOT LIKE 'combo%'
-        GROUP BY product_id`
-    ),
-    query(`SELECT id, slug FROM products`),
-  ]);
-  const resolve = buildAliasResolver(catalog, productsRes.rows);
-  const agg = new Map<string, { total: number; n: number }>();
-  for (const row of reviewsRes.rows) {
-    const id = resolve(String(row.product_id).toLowerCase());
-    if (!id) continue;
-    const cur = agg.get(id) || { total: 0, n: 0 };
-    agg.set(id, { total: cur.total + Number(row.total || 0), n: cur.n + Number(row.n || 0) });
-  }
-  return [...agg.entries()]
-    .map(([productId, { total, n }]) => ({ productId, averageRating: n > 0 ? total / n : 0, totalReviews: n }))
-    .filter((r) => r.totalReviews > 0 && r.averageRating >= minRating)
-    .sort((a, b) => b.averageRating - a.averageRating || b.totalReviews - a.totalReviews);
-}
-
 /** Sản phẩm được xem nhiều nhất bởi những khách cũng xem `productId` (30 ngày gần nhất) */
 export async function getAlsoViewedIds(productId: string, limit = 12): Promise<string[]> {
   if (!isSafeItemId(productId)) return [];

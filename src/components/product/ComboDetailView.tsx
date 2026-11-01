@@ -324,7 +324,7 @@ export default function ComboDetailView({
   return (
     <div className="w-full">
       {/* ─── Breadcrumb (đồng bộ chi tiết sản phẩm) ─── */}
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-1 text-xs">
+      <div className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-3 pb-1 text-xs">
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-1 text-gray-600 min-w-0">
             <li className="shrink-0">
@@ -347,7 +347,7 @@ export default function ComboDetailView({
       </div>
 
       {/* ─── Khu vực chính: Gallery | Thông tin | Buy Box (cùng lưới với chi tiết sản phẩm) ─── */}
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-8 lg:pb-10">
+      <div className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-3 pb-8 lg:pb-10">
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 md:grid-rows-[auto_auto_1fr] xl:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,3fr)] xl:grid-rows-[auto_1fr] xl:gap-x-8">
           {/* ── VÙNG 1: GALLERY ── */}
           <div className="min-w-0 md:col-start-1 md:row-start-1 md:row-span-3 xl:row-span-2 md:sticky md:top-[168px] md:self-start">
