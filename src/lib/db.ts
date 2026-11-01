@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
+import { products as defaultProducts } from '@/data/products';
 
 const rawDbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 const isRemoteUrl = Boolean(
@@ -699,9 +700,71 @@ async function runInitDatabase() {
       CREATE INDEX IF NOT EXISTS idx_product_views_session ON product_views(session_id, viewed_on);
     `);
 
+    // Ảnh sản phẩm: khôi phục bộ ảnh gallery chuẩn nếu DB đang giữ bộ ảnh cũ (không chặn khởi tạo nếu lỗi)
+    try {
+      await restoreDefaultProductGallery(client);
+    } catch (err) {
+      console.error('[DB] Không khôi phục được bộ ảnh sản phẩm:', err);
+    }
+
     console.log('Database tables verified/created successfully!');
   } finally {
     client.release();
+  }
+}
+
+/**
+ * DB cloud (Vercel) từng bị nạp lại bộ ảnh cũ (1200x900-*, 02-sb, video...) nên trang sản phẩm hiện ảnh cũ dù code đúng.
+ * Sản phẩm nào chưa có ảnh nào trong /images/products/gallery/ VÀ không có ảnh admin tự tải lên (/uploads/ hoặc URL ngoài)
+ * thì thay bằng bộ ảnh gallery chuẩn trong src/data/products.ts (giống DB máy chủ nội bộ).
+ * Sản phẩm đã có ảnh gallery hoặc ảnh admin tải lên được giữ nguyên.
+ */
+async function restoreDefaultProductGallery(client: PoolClient) {
+  const isCustom = (u: string) => /^https?:\/\//i.test(u) || u.includes('/uploads/');
+  const isGallery = (u: string) => u.includes('/images/products/gallery/');
+
+  const res = await client.query(
+    `SELECT p.id, p.slug, p.sku, p.thumbnail,
+            COALESCE(array_agg(pi.url) FILTER (WHERE pi.is_active = true), '{}') AS urls
+       FROM products p
+       LEFT JOIN product_images pi ON pi.product_id = p.id
+      GROUP BY p.id;`
+  );
+
+  for (const row of res.rows) {
+    const base = defaultProducts.find((d) => d.slug === row.slug || d.sku === row.sku || d.id === row.id);
+    const galleryImages = (base?.images || []).filter((img) => isGallery(img.url));
+    if (!base || galleryImages.length === 0) continue;
+
+    const urls: string[] = row.urls || [];
+    const thumb: string = row.thumbnail || '';
+    const fixImages = !urls.some(isGallery) && !urls.some(isCustom);
+    const fixThumb = !isGallery(thumb) && !isCustom(thumb) && isGallery(base.thumbnail);
+    if (!fixImages && !fixThumb) continue;
+
+    await client.query('BEGIN');
+    try {
+      if (fixImages) {
+        await client.query('DELETE FROM product_images WHERE product_id = $1;', [row.id]);
+        for (const img of galleryImages) {
+          await client.query(
+            `INSERT INTO product_images (id, product_id, url, alt, sort_order, image_type, is_active)
+             VALUES ($1, $2, $3, $4, $5, 'gallery', true)
+             ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, url = EXCLUDED.url, alt = EXCLUDED.alt,
+               sort_order = EXCLUDED.sort_order, is_active = true, updated_at = CURRENT_TIMESTAMP;`,
+            [`gal-${img.id}`.slice(0, 50), row.id, img.url, img.alt || base.name, img.sortOrder || 1]
+          );
+        }
+      }
+      if (fixThumb) {
+        await client.query('UPDATE products SET thumbnail = $1 WHERE id = $2;', [base.thumbnail, row.id]);
+      }
+      await client.query('COMMIT');
+      console.log(`[DB] Đã khôi phục bộ ảnh chuẩn cho sản phẩm ${row.slug}`);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    }
   }
 }
 
