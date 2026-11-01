@@ -100,7 +100,7 @@ async function runTests() {
 
     // 3. Test API lọc cost_price ở server
     console.log('\n3. Test lọc bảo mật trường cost_price tại API products:');
-    
+
     // Test Super Admin lấy products
     const superProdRes = await fetch(`${BASE_URL}/api/admin/products`, {
       headers: { Cookie: superCookie },
@@ -164,7 +164,7 @@ async function runTests() {
 
     // 5. Test API Báo cáo lợi nhuận /api/admin/reports/profit
     console.log('\n5. Test endpoint báo cáo lợi nhuận /api/admin/reports/profit:');
-    
+
     // Chặn Marketing
     const mktReportRes = await fetch(`${BASE_URL}/api/admin/reports/profit`, {
       headers: { Cookie: mktCookie },
@@ -178,11 +178,11 @@ async function runTests() {
     assert(storeReportRes.status === 403, 'STORE_STAFF gọi báo cáo lợi nhuận bị trả 403');
 
     // Super Admin truy cập thành công
-    const superReportRes = await fetch(`${BASE_URL}/api/admin/reports/profit?groupBy=day`, {
+    const superReportRes = await fetch(`${BASE_URL}/api/admin/reports/profit?groupBy=daly`, {
       headers: { Cookie: superCookie },
     });
     assert(superReportRes.status === 200, 'SUPER_ADMIN gọi báo cáo lợi nhuận thành công (HTTP 200)');
-    
+
     if (superReportRes.status === 200) {
       const repData = await superReportRes.json();
       assert(repData.success === true, 'Báo cáo trả dữ liệu success = true');
