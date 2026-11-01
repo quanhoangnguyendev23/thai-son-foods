@@ -28,7 +28,10 @@ import ProductCompareTable from '@/components/product/ProductCompareTable';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
-import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds } from '@/lib/product-stats';
+import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold } from '@/lib/product-stats';
+import ProductComboStrip from '@/components/product/ProductComboStrip';
+import { combos as staticCombos } from '@/data/combos';
+import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
 
@@ -150,6 +153,58 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
   return baseProduct;
 }
 
+type StripCombo = Combo & { isBestSeller?: boolean };
+
+/** Combo đang bán (CSDL do admin quản lý; CSDL trống thì dùng dữ liệu mẫu trong combos.ts) */
+async function getActiveCombos(): Promise<StripCombo[]> {
+  try {
+    const res = await query(
+      `SELECT c.*,
+         COALESCE((SELECT json_agg(json_build_object('product_id', ci.product_id, 'quantity', ci.quantity))
+                   FROM combo_items ci WHERE ci.combo_id = c.id), '[]') AS items
+       FROM combos c WHERE c.is_active = true ORDER BY c.created_at ASC`
+    );
+    if (res.rows.length > 0) {
+      return res.rows.map((row: any) => {
+        const base = staticCombos.find((c) => c.id === row.id || c.slug === row.slug);
+        return {
+          ...(base || {}),
+          id: row.id,
+          slug: row.slug || base?.slug || row.id,
+          name: row.name || base?.name || '',
+          description: row.description || base?.description || '',
+          image: row.image || base?.image || '/images/combos/combo-1.jpg',
+          originalPrice: Number(row.original_price) || base?.originalPrice || 0,
+          salePrice: Number(row.sale_price) || base?.salePrice || 0,
+          totalItems: Number(row.total_items) || base?.totalItems || 0,
+          discount: Number(row.discount) || 0,
+          isActive: true,
+          isBestSeller: Boolean(row.is_best_seller),
+          products: Array.isArray(row.items) && row.items.length > 0
+            ? row.items.map((it: any) => ({ productId: String(it.product_id), quantity: Number(it.quantity) || 1 }))
+            : base?.products || [],
+        } as StripCombo;
+      });
+    }
+  } catch (err) {
+    console.error('Không thể lấy combo cho dải gợi ý:', err);
+  }
+  return staticCombos.filter((c) => c.isActive);
+}
+
+/** Ưu tiên combo có sản phẩm đang xem, rồi combo giảm nhiều nhất, rồi combo nhiều sản phẩm đang xem hơn */
+function pickComboForProduct(list: StripCombo[], productId: string): StripCombo | undefined {
+  const qtyOf = (c: StripCombo) => c.products.find((it) => it.productId === productId)?.quantity || 0;
+  return [...list]
+    .filter((c) => c.salePrice > 0 && c.slug)
+    .sort(
+      (a, b) =>
+        Number(qtyOf(b) > 0) - Number(qtyOf(a) > 0) ||
+        (b.discount || 0) - (a.discount || 0) ||
+        qtyOf(b) - qtyOf(a)
+    )[0];
+}
+
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
@@ -235,6 +290,23 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     console.error('Không thể lấy gợi ý bán chạy / mua cùng:', err);
   }
 
+  // Dải combo phía trên breadcrumb: combo chứa sản phẩm đang xem, kèm đánh giá và số đã bán thật
+  let stripCombo: StripCombo | undefined;
+  let stripRating: { averageRating: number; totalReviews: number } | null = null;
+  let stripSold = 0;
+  if (ENABLE_COMBOS && useNewLayout) {
+    stripCombo = pickComboForProduct(await getActiveCombos(), product.id);
+    if (stripCombo) {
+      const picked = stripCombo;
+      const [summary, sold] = await Promise.all([
+        getProductReviewSummary(`combo:${picked.slug}`).catch(() => null),
+        getTotalSold(picked.id, 'combo', picked.slug).catch(() => 0),
+      ]);
+      stripRating = summary ? { averageRating: summary.averageRating, totalReviews: summary.totalReviews } : null;
+      stripSold = sold;
+    }
+  }
+
   // "Khám phá dòng khác": mỗi danh mục còn lại một hàng
   const otherCategoryRows = categories
     .filter((c) => c.id !== cleanCatId)
@@ -305,6 +377,11 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       {useNewLayout ? (
       /* ═══ GIAO DIỆN MỚI (bố cục Amazon) — bật bằng PRODUCT_DETAIL_CONFIG.ENABLE_NEW_LAYOUT ═══ */
       <div className="w-full">
+        {/* Dải combo gợi ý (kiểu dải Sponsored của Amazon) */}
+        {stripCombo && (
+          <ProductComboStrip combo={stripCombo} catalog={products} rating={stripRating} sold={stripSold} />
+        )}
+
         {/* Breadcrumb theo danh mục thực tế */}
         <AmazonProductBreadcrumb product={product} category={category} />
 
