@@ -20,7 +20,7 @@ interface BrandCover {
 
 /**
  * Chọn ngẫu nhiên một ảnh của một sản phẩm thuộc thương hiệu (mỗi lần tải trang một ảnh khác).
- * Lấy ảnh sản phẩm, ảnh sử dụng, ảnh lợi ích (4 ảnh đầu gallery) và banner đặc tính nếu có;
+ * Lấy ảnh sản phẩm, ảnh sử dụng, ảnh lợi ích (4 ảnh đầu gallery, cùng tỉ lệ 4:3 nên khớp khung, không bị cắt);
  * bỏ ảnh kế hoạch sử dụng và ảnh nhãn thành phần. Không có ảnh nào thì dùng ảnh bìa khai báo sẵn.
  */
 function pickBrandCover(brand: Brand, products: Product[]): BrandCover {
@@ -31,9 +31,6 @@ function pickBrandCover(brand: Brand, products: Product[]): BrandCover {
     const href = `/san-pham/${product.slug}`;
     for (const img of product.images || []) {
       if ((img.sortOrder || 0) <= 4 && img.url) candidates.push({ image: img.url, alt: img.alt || product.name, href });
-    }
-    if (product.featureBanners?.banner1) {
-      candidates.push({ image: product.featureBanners.banner1, alt: product.name, href });
     }
   }
   if (candidates.length === 0) {
@@ -65,13 +62,13 @@ export default function BrandCardsSection({
             key={brand.slug}
             className="snap-start shrink-0 w-[82%] sm:w-[60%] md:w-auto overflow-hidden rounded-md border border-gray-200 bg-white hover:shadow-md transition-shadow"
           >
-            <Link href={cover.href} title={cover.alt} className="group relative block aspect-[2/1] overflow-hidden bg-ivory">
+            <Link href={cover.href} title={cover.alt} className="group relative block aspect-[4/3] overflow-hidden bg-ivory">
               <Image
                 src={cover.image}
                 alt={cover.alt}
                 fill
                 sizes="(max-width: 768px) 82vw, 33vw"
-                className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                className="object-cover group-hover:opacity-90 transition-opacity"
               />
             </Link>
             <Link
