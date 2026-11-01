@@ -14,9 +14,11 @@ interface ProductCardProps {
   product: Product;
   layout?: 'vertical' | 'horizontal' | 'compact';
   isHomepage?: boolean;
+  /** Số dòng tối đa của tên ở bố cục compact (mặc định 2; trang chi tiết dùng 4 giống Amazon) */
+  titleLines?: 2 | 4;
 }
 
-export default function ProductCard({ product, layout = 'vertical', isHomepage = false }: ProductCardProps) {
+export default function ProductCard({ product, layout = 'vertical', isHomepage = false, titleLines = 2 }: ProductCardProps) {
   const { language } = useLanguage();
   const addItem = useCartStore((s) => s.addItem);
   const { flyToCart } = useFlyToCart();
@@ -228,7 +230,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               <h3
                 title={fullName}
                 className={`text-[15px] sm:text-[15px] text-text-dark mb-1 leading-snug group-hover:text-leaf-900 transition-colors ${
-                  isHomepage ? 'line-clamp-2' : ''
+                  isHomepage ? (titleLines === 4 ? 'line-clamp-4' : 'line-clamp-2') : ''
                 }`}
               >
                 {fullName}

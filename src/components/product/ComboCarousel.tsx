@@ -61,7 +61,7 @@ function ComboCard({ combo }: { combo: Combo }) {
 
         {/* Thông tin: cùng cỡ chữ, cách dòng với thẻ sản phẩm */}
         <div className="p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col justify-between">
-          <h3 title={combo.name} className="text-[15px] text-text-dark mb-1 leading-snug line-clamp-2 group-hover:text-leaf-900 transition-colors">
+          <h3 title={combo.name} className="text-[15px] text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 transition-colors">
             {combo.name}
           </h3>
 

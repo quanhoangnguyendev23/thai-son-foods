@@ -17,7 +17,7 @@ interface ProductCarouselProps {
   mobileGrid?: boolean;
   /** Số sản phẩm hiện ban đầu ở chế độ mobileGrid (mặc định 4) */
   mobileInitialCount?: number;
-  /** Trang chi tiết sản phẩm: khung rộng hơn (lề hai bên hẹp) và thêm 1 thẻ mỗi hàng trên màn hình rất lớn */
+  /** Trang chi tiết sản phẩm: khung rộng hơn (lề hai bên hẹp), thêm 1 thẻ mỗi hàng trên màn hình rất lớn, tên hiện tối đa 4 dòng */
   wide?: boolean;
   /** Thứ hạng thật của từng thẻ (#1, #2...) hiện phía trên thẻ — dùng cho khối Bán chạy */
   ranks?: number[];
@@ -102,7 +102,7 @@ export default function ProductCarousel({
                 <p className="mb-1.5 text-xs font-semibold text-brand-copper">#{ranks[idx]}</p>
               )}
               {/* Bố cục compact + tên giới hạn 2 dòng để các thẻ đồng bộ chiều cao */}
-              <ProductCard product={p} layout="compact" isHomepage />
+              <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} />
             </div>
           ))}
         </div>
