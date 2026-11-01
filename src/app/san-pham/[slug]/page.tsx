@@ -33,6 +33,7 @@ import ProductComboStrip from '@/components/product/ProductComboStrip';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 import { brands } from '@/data/brands';
 import { ReviewProductAd, ReviewComboAd } from '@/components/product/ProductReviewAds';
+import ComboCarousel from '@/components/product/ComboCarousel';
 import { combos as staticCombos } from '@/data/combos';
 import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
@@ -298,8 +299,10 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   let stripRating: { averageRating: number; totalReviews: number } | null = null;
   let stripSold = 0;
   let reviewCombo: StripCombo | undefined;
+  let featuredCombos: StripCombo[] = [];
   if (ENABLE_COMBOS && useNewLayout) {
     const activeCombos = await getActiveCombos();
+    featuredCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug);
     stripCombo = pickComboForProduct(activeCombos, product.id);
     // Combo trong mục Đánh giá: ngẫu nhiên trong các combo có sản phẩm này (khác combo ở dải trên); không có thì ngẫu nhiên
     const otherCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug && c.id !== stripCombo?.id);
@@ -478,11 +481,10 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         )}
 
         {/* ── COMBO ── */}
-        {ENABLE_COMBOS && (
+        {/* Dùng ComboCarousel để cùng kiểu tiêu đề, thẻ và mũi tên với các hàng sản phẩm khác */}
+        {ENABLE_COMBOS && featuredCombos.length > 0 && (
           <div className="border-t border-gray-200 bg-white">
-            <div className="max-sm:px-2.5 py-8 sm:py-10 max-w-[1800px] mx-auto px-4 sm:px-6">
-              <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
-            </div>
+            <ComboCarousel title="Các combo nổi bật đáng cân nhắc" combos={featuredCombos} />
           </div>
         )}
 
