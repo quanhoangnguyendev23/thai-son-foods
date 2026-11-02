@@ -60,7 +60,8 @@ export function buildOrderHtml(o: TelegramOrderNotice): string {
     const icon = it.isCombo ? '🎁' : '🥛';
     const price = Number(it.price);
     const lineTotal = Number.isFinite(price) && price > 0 ? `  →  <b>${vnd(price * qty)}</b>` : '';
-    return `${icon} <b>${i + 1}. ${esc(it.name)}</b>\n      <code>${esc(code)}</code> · SL <b>${qty}</b>${lineTotal}`;
+    const unit = it.unit && !it.isCombo ? ` (${esc(it.unit)})` : '';
+    return `${icon} ${i + 1}. <code>${esc(code)}</code>${unit} · SL <b>${qty}</b>${lineTotal}`;
   });
   if (items.length > MAX_ITEMS) itemLines.push(`… và ${items.length - MAX_ITEMS} dòng khác`);
 
@@ -90,13 +91,34 @@ export function buildOrderHtml(o: TelegramOrderNotice): string {
   return html.length > MAX_TEXT ? '' : html;
 }
 
+// Group Telegram chỉ nhận ~20 tin/phút: nhiều đơn dồn cùng lúc sẽ bị 429 kèm retry_after (giây).
+// Chờ đúng thời gian Telegram yêu cầu rồi gửi lại, tối đa RETRY_BUDGET_MS để không vượt thời gian chạy của hàm Vercel.
+const RETRY_BUDGET_MS = 200_000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function send(token: string, chatId: string, payload: Record<string, unknown>) {
-  return fetch(`${API_BASE}/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, disable_web_page_preview: true, ...payload }),
-    signal: AbortSignal.timeout(8000),
-  });
+  const started = Date.now();
+  for (;;) {
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, disable_web_page_preview: true, ...payload }),
+        signal: AbortSignal.timeout(20000),
+      });
+    } catch (err) {
+      // Mạng chập chờn / Telegram trả lời chậm lúc đông: thử lại sau vài giây (thà trùng tin còn hơn mất đơn)
+      if (Date.now() - started + 5000 > RETRY_BUDGET_MS) throw err;
+      await sleep(3000 + Math.random() * 4000);
+      continue;
+    }
+    if (res.status !== 429) return res;
+    const body = await res.clone().json().catch(() => null);
+    const waitMs = (Math.max(1, Number(body?.parameters?.retry_after) || 5) + Math.random() * 5) * 1000;
+    if (Date.now() - started + waitMs > RETRY_BUDGET_MS) return res;
+    await sleep(waitMs);
+  }
 }
 
 /** Gửi báo đơn tới mọi chat_id đã cấu hình. Không bao giờ ném lỗi ra ngoài. */
