@@ -146,13 +146,13 @@ export default function ProductSponsoredMiniCard({
             )}
           </div>
 
-          {/* Hàng điều hướng: Shop now > bên trái & Được tài trợ bên phải */}
+          {/* Hàng điều hướng: Mua ngay > bên trái & Được tài trợ bên phải */}
           <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-50">
             <Link
               href={productLink}
               className="text-xs text-forest-700 hover:text-copper-600 hover:underline font-medium inline-flex items-center gap-0.5"
             >
-              Shop now ›
+              Mua ngay ›
             </Link>
             <span className="text-[10px] text-gray-400 flex items-center gap-0.5 select-none">
               <span>Được tài trợ</span>
