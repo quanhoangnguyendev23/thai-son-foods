@@ -48,3 +48,4 @@ Trước và sau mỗi lần chỉnh sửa:
 - Nguồn duy nhất khai báo màu: `src/app/brand-tokens.css`. Trong component chỉ dùng class/biến token, **không** viết mã HEX/rgb/hsl hay `bg-[#...]`.
 - **Không** thêm, bớt, đổi, pha hay tinh chỉnh màu; không dùng màu đen và màu tím. Chỉ đổi khi chủ dự án yêu cầu rõ ràng bằng mã HEX mới.
 - Chi tiết, ngoại lệ (logo Google/Facebook/Zalo) và lệnh kiểm tra: `.agents/rules/brand-colors.md`.
+- Trước khi bàn giao thay đổi giao diện: chạy `npm run lint:colors` (phải báo "Màu NGOÀI bảng: 0"). Thấy màu ngoài bảng thì thay bằng màu gần nhất trong 7 màu (script có gợi ý), không tự thêm màu mới.

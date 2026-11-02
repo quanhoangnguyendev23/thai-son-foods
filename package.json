@@ -14,7 +14,8 @@
     "purge-sample-data": "node scripts/purge_sample_data.mjs",
     "db:init": "node scripts/init_webtsf_db.mjs",
     "db:verify": "node scripts/verify_db.mjs",
-    "test:rbac": "node scripts/test_phase6_master_audit.mjs"
+    "test:rbac": "node scripts/test_phase6_master_audit.mjs",
+    "lint:colors": "node scripts/brand-color-lint.mjs"
   },
   "dependencies": {
     "@prisma/client": "^7.10.0",

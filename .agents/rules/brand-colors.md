@@ -37,7 +37,8 @@ Chỉ được đổi bảng màu khi chủ dự án yêu cầu rõ ràng bằng
 
 - Chạy `npm run build` rồi `node scripts/brand-color-audit.mjs`: phải báo **"Màu NGOÀI bảng: 0"** (thoát mã 0).
   Script kiểm mọi màu trong CSS đã build (gồm CSS thư viện Leaflet/Swiper) và email.
-- Chạy: `grep -rnE "#[0-9A-Fa-f]{3,8}\b|rgb\(|hsl\(" src/app src/components --include=*.tsx` và bảo đảm không có màu mới ngoài các ngoại lệ ở mục 5.
+- Chạy `npm run lint:colors` (quét mã HEX/rgb viết tay trong `src/`, không cần build): phải báo **"Màu NGOÀI bảng: 0"**.
+  Mỗi màu sai được in kèm màu gần nhất trong 7 màu; thay bằng token của màu đó, không thêm màu mới.
 - Không thay đổi giá trị trong `src/app/brand-tokens.css` nếu chưa được chủ dự án duyệt bằng văn bản.
 
 ## Độ tương phản chữ (bắt buộc)
@@ -47,3 +48,7 @@ Chỉ được đổi bảng màu khi chủ dự án yêu cầu rõ ràng bằng
 - Nền tối `#22544C` / `#236E45`: **không** dùng `text-corn`/`amber-500` cho chữ nhỏ; dùng `text-amber-300` (rêu) hoặc `text-amber-200` (lục bảo).
   Icon được phép giữ amber gốc (đồ hoạ chỉ cần 3:1).
 - Trang quản trị nền tối có lớp `admin-theme`, nền sáng có lớp `admin-light`; các quy tắc tương phản riêng nằm cuối `brand-tokens.css`.
+
+## Trang ngoại lệ
+
+- `src/app/2010/` (trang quà tặng riêng "Một món quà nhỏ", không mang tên cửa hàng, không lập chỉ mục) dùng bảng màu riêng; `npm run lint:colors` bỏ qua thư mục này. Không thêm trang ngoại lệ mới nếu chủ dự án chưa duyệt.
