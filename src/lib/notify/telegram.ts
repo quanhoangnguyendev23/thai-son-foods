@@ -4,15 +4,103 @@
  * Cấu hình (.env.local / Vercel env, KHÔNG commit giá trị thật):
  *   TELEGRAM_BOT_TOKEN        — token bot lấy từ @BotFather, dạng "123456789:AA..."
  *   TELEGRAM_ORDER_CHAT_IDS   — danh sách chat_id nhận báo đơn, cách nhau bằng dấu phẩy
- *                               (người nhận /start bot, rồi mở https://api.telegram.org/bot<TOKEN>/getUpdates)
+ *                               (group có id âm, vd -5123220583; lấy qua https://api.telegram.org/bot<TOKEN>/getUpdates)
  * Thiếu 1 trong 2 biến → bỏ qua, không ảnh hưởng đặt hàng.
+ *
+ * Tin gửi dạng HTML của Telegram (in đậm, khung trích dẫn, chữ đơn cách bấm để sao chép).
+ * Telegram không cho đổi màu chữ, nên dùng biểu tượng màu để phân nhóm thông tin.
+ * Nếu Telegram từ chối HTML thì gửi lại bản chữ thường (buildOrderText) để không mất tin.
  */
-import { buildOrderText, type ZaloOrderNotice } from './zalo';
+import { buildOrderText, shortItemCode, type ZaloOrderNotice } from './zalo';
 
 const API_BASE = 'https://api.telegram.org';
+const MAX_TEXT = 4000; // Telegram giới hạn 4096 ký tự / tin
+const MAX_ITEMS = 25;
+const LINE = '━━━━━━━━━━━━━━━━';
+
+export interface TelegramOrderNotice extends Omit<ZaloOrderNotice, 'items'> {
+  subtotal?: number | null;
+  shippingFee?: number | null;
+  createdAt?: Date;
+  items: (ZaloOrderNotice['items'][number] & { price?: number | null })[];
+}
+
+const esc = (v: unknown) =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+const vnd = (n: number) => `${Math.round(Number(n) || 0).toLocaleString('vi-VN')}đ`;
+
+const PAYMENT_LABEL: Record<string, string> = {
+  cod: '💵 COD · thu tiền khi giao',
+  bank: '🏦 Chuyển khoản',
+  transfer: '🏦 Chuyển khoản',
+};
+
+function vnTime(d: Date): string {
+  return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(d);
+}
+
+export function buildOrderHtml(o: TelegramOrderNotice): string {
+  const items = o.items || [];
+  const totalQty = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+
+  const itemLines = items.slice(0, MAX_ITEMS).map((it, i) => {
+    const qty = Number(it.quantity) || 0;
+    const code = shortItemCode(it);
+    const icon = it.isCombo ? '🎁' : '🥛';
+    const price = Number(it.price);
+    const lineTotal = Number.isFinite(price) && price > 0 ? `  →  <b>${vnd(price * qty)}</b>` : '';
+    return `${icon} <b>${i + 1}. ${esc(it.name)}</b>\n      <code>${esc(code)}</code> · SL <b>${qty}</b>${lineTotal}`;
+  });
+  if (items.length > MAX_ITEMS) itemLines.push(`… và ${items.length - MAX_ITEMS} dòng khác`);
+
+  const pay = PAYMENT_LABEL[String(o.paymentMethod || 'cod').toLowerCase()] || `💳 ${esc(String(o.paymentMethod).toUpperCase())}`;
+  const hasBreakdown = o.subtotal != null || o.shippingFee != null;
+  const ship = Number(o.shippingFee) || 0;
+
+  const parts = [
+    `🟢 <b>ĐƠN HÀNG MỚI</b>`,
+    `🧾 Mã đơn: <code>${esc(o.orderCode)}</code>`,
+    `🕒 ${esc(vnTime(o.createdAt || new Date()))}`,
+    LINE,
+    `👤 <b>KHÁCH HÀNG</b>`,
+    `<blockquote>👤 ${esc(o.fullName)}\n📞 <code>${esc(o.phone)}</code>\n📍 ${esc(o.address)}${o.storeCode ? `\n🏪 Chi nhánh: <b>${esc(o.storeCode)}</b>` : ''}</blockquote>`,
+    `📦 <b>SẢN PHẨM</b> (${items.length} dòng · ${totalQty} món)`,
+    `<blockquote>${itemLines.join('\n')}</blockquote>`,
+    LINE,
+    hasBreakdown ? `Tạm tính: ${vnd(Number(o.subtotal) || 0)}` : '',
+    hasBreakdown ? `Phí giao: ${ship > 0 ? vnd(ship) : 'Miễn phí'}` : '',
+    `💰 <b>TỔNG THU: ${vnd(o.total)}</b>`,
+    pay,
+    o.note ? `\n📝 <b>Ghi chú:</b> <i>${esc(o.note)}</i>` : '',
+  ].filter(Boolean);
+
+  const html = parts.join('\n');
+  // Quá dài thì để bản chữ thường lo (cắt HTML giữa chừng sẽ vỡ thẻ)
+  return html.length > MAX_TEXT ? '' : html;
+}
+
+async function send(token: string, chatId: string, payload: Record<string, unknown>) {
+  return fetch(`${API_BASE}/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, disable_web_page_preview: true, ...payload }),
+    signal: AbortSignal.timeout(8000),
+  });
+}
 
 /** Gửi báo đơn tới mọi chat_id đã cấu hình. Không bao giờ ném lỗi ra ngoài. */
-export async function notifyNewOrderTelegram(order: ZaloOrderNotice): Promise<void> {
+export async function notifyNewOrderTelegram(order: TelegramOrderNotice): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
   const chatIds = (process.env.TELEGRAM_ORDER_CHAT_IDS || '')
     .split(',')
@@ -20,24 +108,30 @@ export async function notifyNewOrderTelegram(order: ZaloOrderNotice): Promise<vo
     .filter(Boolean);
   if (!token || chatIds.length === 0) return;
 
-  let text: string;
+  let html = '';
+  let plain = '';
   try {
-    text = buildOrderText(order);
+    html = buildOrderHtml(order);
+  } catch (err) {
+    console.error('[TelegramNotify] Không tạo được tin HTML:', (err as Error)?.message || err);
+  }
+  try {
+    plain = buildOrderText(order);
   } catch (err) {
     console.error('[TelegramNotify] Không tạo được nội dung báo đơn:', (err as Error)?.message || err);
-    return;
+    if (!html) return;
   }
 
   await Promise.all(
     chatIds.map(async (chatId) => {
       try {
-        const res = await fetch(`${API_BASE}/bot${token}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!res.ok) {
+        let res = html ? await send(token, chatId, { text: html, parse_mode: 'HTML' }) : null;
+        // HTML bị từ chối (400) hoặc không có HTML → gửi bản chữ thường
+        if ((!res || res.status === 400) && plain) {
+          if (res) console.error(`[TelegramNotify] HTML bị từ chối cho #${order.orderCode}, gửi lại dạng chữ thường`);
+          res = await send(token, chatId, { text: plain });
+        }
+        if (res && !res.ok) {
           console.error(`[TelegramNotify] Gửi báo đơn #${order.orderCode} tới ${chatId} lỗi HTTP ${res.status}`);
         }
       } catch (err) {

@@ -857,7 +857,13 @@ export async function POST(request: Request) {
       };
       notifyNewOrderZalo(orderNotice).catch(() => {});
       // Báo đơn mới qua Telegram — chạy sau khi đã trả phản hồi cho khách, lỗi Telegram không ảnh hưởng đặt đơn
-      after(() => notifyNewOrderTelegram(orderNotice).catch(() => {}));
+      const telegramNotice = {
+        ...orderNotice,
+        subtotal: serverCalculatedSubtotal,
+        shippingFee: serverShippingFee,
+        items: revalidatedItems.map((it: any, i: number) => ({ ...orderNotice.items[i], price: Number(it.price) || 0 })),
+      };
+      after(() => notifyNewOrderTelegram(telegramNotice).catch(() => {}));
 
       return NextResponse.json({
         success: true,
