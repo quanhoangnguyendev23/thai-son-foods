@@ -1,10 +1,11 @@
 import crypto from 'node:crypto';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { query, initDatabase, pool } from '@/lib/db';
 import { getUserSession } from '@/lib/auth';
 import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area';
 import { sendOrderEmail } from '@/lib/email/service';
 import { notifyNewOrderZalo } from '@/lib/notify/zalo';
+import { notifyNewOrderTelegram } from '@/lib/notify/telegram';
 import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
@@ -836,7 +837,7 @@ export async function POST(request: Request) {
       }
 
       // Báo đơn mới về Zalo của Marketing (không chặn phản hồi; thiếu cấu hình thì bỏ qua)
-      notifyNewOrderZalo({
+      const orderNotice = {
         orderCode,
         fullName,
         phone,
@@ -853,7 +854,10 @@ export async function POST(request: Request) {
           sku: it.canonicalProductId ? skuByProductId.get(it.canonicalProductId) || null : null,
           isCombo: !it.canonicalProductId,
         })),
-      }).catch(() => {});
+      };
+      notifyNewOrderZalo(orderNotice).catch(() => {});
+      // Báo đơn mới qua Telegram — chạy sau khi đã trả phản hồi cho khách, lỗi Telegram không ảnh hưởng đặt đơn
+      after(() => notifyNewOrderTelegram(orderNotice).catch(() => {}));
 
       return NextResponse.json({
         success: true,
