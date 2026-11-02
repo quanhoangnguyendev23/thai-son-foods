@@ -169,7 +169,7 @@ export default function LogoPreloader() {
               <span className="w-8 sm:w-12 h-[1px] bg-gradient-to-r from-transparent via-forest-700/30 to-transparent inline-block" />
               <span
                 className="text-base sm:text-lg md:text-xl italic font-medium tracking-wide text-forest-700"
-                style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
+                style={{ fontFamily: 'var(--font-fira-sans), sans-serif' }}
               >
                 Uống một bữa ăn ngon lành
               </span>

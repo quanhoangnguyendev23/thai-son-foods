@@ -52,3 +52,11 @@ Chỉ được đổi bảng màu khi chủ dự án yêu cầu rõ ràng bằng
 ## Trang ngoại lệ
 
 - `src/app/2010/` (trang quà tặng riêng "Một món quà nhỏ", không mang tên cửa hàng, không lập chỉ mục) dùng bảng màu riêng; `npm run lint:colors` bỏ qua thư mục này. Không thêm trang ngoại lệ mới nếu chủ dự án chưa duyệt.
+
+## Phông chữ (bắt buộc)
+
+- Chỉ 2 phông: **Roboto** (chữ thường) và **Fira Sans** (tiêu đề, h1–h6, `.font-heading`). Nạp trong `src/app/layout.tsx` bằng `next/font/google`.
+- `font-sans` và `font-mono` = Roboto, `font-serif` = Fira Sans (token trong `src/app/globals.css`). Không đặt lại các token này.
+- Không thêm phông mới, không viết `fontFamily`/`font-family` với tên phông khác, không dùng `font-[...]` tuỳ ý.
+- Email (`src/lib/email/templates.ts`) giữ bộ phông hệ thống có Roboto vì trình đọc email không tải được phông web.
+- Kiểm tra: `npm run lint:fonts` phải báo **"Phông NGOÀI quy định: 0"**. Trang `src/app/2010/` là ngoại lệ.

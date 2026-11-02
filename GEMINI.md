@@ -49,3 +49,10 @@ Trước và sau mỗi lần chỉnh sửa:
 - **Không** thêm, bớt, đổi, pha hay tinh chỉnh màu; không dùng màu đen và màu tím. Chỉ đổi khi chủ dự án yêu cầu rõ ràng bằng mã HEX mới.
 - Chi tiết, ngoại lệ (logo Google/Facebook/Zalo) và lệnh kiểm tra: `.agents/rules/brand-colors.md`.
 - Trước khi bàn giao thay đổi giao diện: chạy `npm run lint:colors` (phải báo "Màu NGOÀI bảng: 0"). Thấy màu ngoài bảng thì thay bằng màu gần nhất trong 7 màu (script có gợi ý), không tự thêm màu mới.
+
+---
+
+## 6. PHÔNG CHỮ CÔNG TY — KHÔNG ĐƯỢC TỰ Ý THAY ĐỔI
+- Chỉ dùng 2 phông: **Roboto** cho chữ thường (`font-body`, `font-sans`, `var(--font-roboto)`) và **Fira Sans** cho tiêu đề (`font-heading`, `var(--font-fira-sans)`). Cả hai đã nạp sẵn trong `src/app/layout.tsx`.
+- **Không** thêm phông mới (Google Fonts, `@font-face`, `font-[...]`, `fontFamily` viết tay). Các lớp `font-serif`, `font-mono` đã được trỏ về 2 phông này trong `src/app/globals.css`.
+- Trước khi bàn giao thay đổi giao diện: chạy `npm run lint:fonts` (phải báo "Phông NGOÀI quy định: 0").

@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-          font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+          font-family: Roboto, system-ui, sans-serif;
           background: #FAF7F0;
           color: #2E5E56;
           min-height: 100vh;

@@ -134,7 +134,7 @@ export default function BrandBadge() {
               fontWeight="700"
               letterSpacing="0.09em"
               style={{
-                fontFamily: "'Inter', sans-serif",
+                fontFamily: 'var(--font-roboto), sans-serif',
                 textTransform: 'uppercase',
               }}
             >
@@ -186,7 +186,7 @@ export default function BrandBadge() {
               fontSize="15"
               fontWeight="bold"
               style={{
-                fontFamily: "'Queens Condensed', 'Playfair Display', Georgia, serif",
+                fontFamily: 'var(--font-fira-sans), sans-serif',
                 letterSpacing: '-0.02em',
               }}
             >

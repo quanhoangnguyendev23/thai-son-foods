@@ -42,8 +42,10 @@
   --font-body: var(--font-roboto), sans-serif;
   --font-fira: var(--font-fira-sans), sans-serif;
   --font-roboto: var(--font-roboto), sans-serif;
-  --font-serif: var(--font-playfair), Georgia, serif;
-  --font-playfair: var(--font-playfair), Georgia, serif;
+  /* Phông công ty: chỉ Roboto (chữ thường) và Fira Sans (tiêu đề). Các lớp font-sans/mono/serif đều trỏ về 2 phông này. */
+  --font-sans: var(--font-roboto), sans-serif;
+  --font-mono: var(--font-roboto), sans-serif;
+  --font-serif: var(--font-fira-sans), sans-serif;
 }
 
 /* ===== BASE STYLES ===== */

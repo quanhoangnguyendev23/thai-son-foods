@@ -15,7 +15,8 @@
     "db:init": "node scripts/init_webtsf_db.mjs",
     "db:verify": "node scripts/verify_db.mjs",
     "test:rbac": "node scripts/test_phase6_master_audit.mjs",
-    "lint:colors": "node scripts/brand-color-lint.mjs"
+    "lint:colors": "node scripts/brand-color-lint.mjs",
+    "lint:fonts": "node scripts/brand-font-lint.mjs"
   },
   "dependencies": {
     "@prisma/client": "^7.10.0",
