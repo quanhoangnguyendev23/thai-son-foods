@@ -1,0 +1,58 @@
+@startuml usecase-chua-ro
+title Chức năng có trong code nhưng đang TẮT hoặc chưa rõ
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F3F8F1
+  BorderColor #22544C
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #22544C
+}
+skinparam rectangle {
+  BorderColor #22544C
+}
+left to right direction
+
+actor "Khách hàng" as KH
+actor "Đối tác (CTV)" as CTV
+actor "Đại lý" as DL
+DL -up-|> CTV
+actor "Super Admin" as SA
+actor "Bộ hẹn giờ (Cron)" as Cron <<hệ thống ngoài>>
+
+rectangle "Chương trình Đối tác (NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM, mặc định tắt) (chưa rõ)" {
+  usecase "Đăng ký đối tác (OTP)" as P1
+  usecase "Theo dõi mã giới thiệu ?ref=" as P2
+  usecase "Xem thống kê, sổ cái hoa hồng" as P3
+  usecase "Yêu cầu rút tiền" as P4
+  usecase "Nâng cấp lên Đại lý" as P5
+  usecase "Đặt đơn đại lý" as P6
+  usecase "Duyệt / tạm ngưng đối tác" as P7
+  usecase "Duyệt yêu cầu rút tiền" as P8
+}
+rectangle "Hội viên & Giao định kỳ (ENABLE_MEMBERSHIP / ENABLE_SUBSCRIBE_SAVE = false) (chưa rõ)" {
+  usecase "Đăng ký hội viên" as M1
+  usecase "Tạm dừng / Hủy hội viên" as M2
+  usecase "Quản lý đơn giao định kỳ\n(bỏ qua kỳ, đổi tần suất, đổi địa chỉ)" as M3
+  usecase "Tự tạo đơn định kỳ" as M4
+  usecase "Gửi nhắc lịch giao" as M5
+}
+
+CTV --> P1
+CTV --> P3
+CTV --> P4
+CTV --> P5
+DL --> P6
+KH --> P2
+SA --> P7
+SA --> P8
+KH --> M1
+KH --> M2
+KH --> M3
+Cron --> M4
+Cron --> M5
+P8 .up.> P4 : <<include>>
+@enduml

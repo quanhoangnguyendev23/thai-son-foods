@@ -1,0 +1,120 @@
+@startuml usecase
+title Sơ đồ use case tổng quan - Website Thái Sơn Foods
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F3F8F1
+  BorderColor #22544C
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #22544C
+}
+skinparam rectangle {
+  BorderColor #22544C
+}
+left to right direction
+
+actor "Khách vãng lai" as Khach
+actor "Khách hàng\n(đã đăng nhập)" as KH
+actor "Nhân viên quản trị" as NV
+actor "Nhân viên cửa hàng" as NVCH
+actor "Marketing" as MKT
+actor "Super Admin" as SA
+
+KH -up-|> Khach
+NVCH -up-|> NV
+MKT -up-|> NV
+SA -up-|> NV
+
+actor "Zalo Bot" as Zalo <<hệ thống ngoài>>
+actor "Dịch vụ email\n(SMTP / Resend)" as Mail <<hệ thống ngoài>>
+actor "Google / Facebook\n(OAuth)" as OAuth <<hệ thống ngoài>>
+actor "Google Maps /\nNominatim" as Maps <<hệ thống ngoài>>
+actor "Google Sheet\n(tồn kho)" as Sheet <<hệ thống ngoài>>
+actor "Bộ hẹn giờ (Cron)" as Cron <<hệ thống ngoài>>
+
+rectangle "Hệ thống Website Thái Sơn Foods" {
+  package "Mua sắm (công khai)" {
+    usecase "Xem & tìm sản phẩm / combo" as U1
+    usecase "Quản lý giỏ hàng" as U2
+    usecase "Chọn chi nhánh nhận hàng" as U3
+    usecase "Đặt hàng (COD)" as U4
+    usecase "Tra cứu đơn hàng" as U5
+    usecase "Xem đánh giá sản phẩm" as U6
+  }
+  package "Tài khoản khách hàng" {
+    usecase "Đăng ký / Đăng nhập" as U7
+    usecase "Đăng nhập bằng Google / Facebook" as U8
+    usecase "Quản lý hồ sơ" as U9
+    usecase "Xem lịch sử đơn hàng" as U10
+    usecase "Viết đánh giá sản phẩm" as U11
+    usecase "Quản lý danh sách yêu thích" as U12
+  }
+  package "Quản trị" {
+    usecase "Đăng nhập quản trị / Đổi mật khẩu" as A1
+    usecase "Xem Dashboard" as A2
+    usecase "Quản lý đơn hàng" as A3
+    usecase "Quản lý tồn kho" as A4
+    usecase "Quản lý sản phẩm, combo, danh mục" as A5
+    usecase "Quản lý nội dung (banner, slide, ảnh)" as A6
+    usecase "Xem báo cáo lợi nhuận" as A7
+    usecase "Quản lý tài khoản quản trị" as A8
+    usecase "Kiểm duyệt đánh giá" as A9
+    usecase "Xem nhật ký thao tác" as A10
+    usecase "Quản lý cửa hàng" as A11
+  }
+  package "Tác vụ tự động" {
+    usecase "Dọn giữ chỗ tồn kho quá hạn" as S1
+    usecase "Đồng bộ tồn kho từ Google Sheet" as S2
+  }
+}
+
+Khach --> U1
+Khach --> U2
+Khach --> U3
+Khach --> U4
+Khach --> U5
+Khach --> U6
+Khach --> U7
+KH --> U9
+KH --> U10
+KH --> U11
+KH --> U12
+
+U8 .up.> U7 : <<extend>>
+OAuth -- U8
+U4 .> U3 : <<include>>
+U4 ..> U2 : <<include>>
+U3 -- Maps
+U4 -- Zalo
+U4 -- Mail
+
+NV --> A1
+NV --> A2
+NV --> A3
+NV --> A4
+NV --> A11
+MKT --> A5
+MKT --> A6
+MKT --> A9
+SA --> A5
+SA --> A6
+SA --> A7
+SA --> A8
+SA --> A9
+SA --> A10
+A3 -- Mail
+
+Cron --> S1
+Cron --> S2
+S2 -- Sheet
+A4 .> S2 : <<extend>>
+
+note right of NV
+  Phân quyền chi tiết theo vai trò:
+  xem sơ đồ usecase-quan-tri.puml
+  và bảng usecase-bang-tom-tat.md
+end note
+@enduml

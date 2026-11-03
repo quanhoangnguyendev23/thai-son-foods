@@ -1,0 +1,87 @@
+@startuml usecase-mua-hang
+title Chi tiết: Mua sắm và Đặt hàng
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F3F8F1
+  BorderColor #22544C
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #22544C
+}
+skinparam rectangle {
+  BorderColor #22544C
+}
+left to right direction
+
+actor "Khách vãng lai" as Khach
+actor "Khách hàng\n(đã đăng nhập)" as KH
+KH -up-|> Khach
+actor "Zalo Bot" as Zalo <<hệ thống ngoài>>
+actor "Dịch vụ email" as Mail <<hệ thống ngoài>>
+actor "Google Maps /\nNominatim" as Maps <<hệ thống ngoài>>
+actor "Google / Facebook" as OAuth <<hệ thống ngoài>>
+
+rectangle "Hệ thống Website Thái Sơn Foods" {
+  usecase "Xem & tìm sản phẩm / combo" as U1
+  usecase "So sánh sản phẩm" as U1a
+  usecase "Quản lý giỏ hàng" as U2
+  usecase "Chọn chi nhánh nhận hàng" as U3
+  usecase "Gợi ý chi nhánh gần nhất" as U3a
+  usecase "Xác định vị trí giao hàng" as U3b
+  usecase "Đặt hàng (COD)" as U4
+  usecase "Kiểm tra tồn kho" as U4a
+  usecase "Giữ chỗ tồn kho" as U4b
+  usecase "Kiểm tra rủi ro COD\n(giá trị tối đa, độ dài địa chỉ, giới hạn tần suất)" as U4c
+  usecase "Gửi tin báo đơn Zalo" as U4d
+  usecase "Gửi email xác nhận đơn" as U4e
+  usecase "Tra cứu đơn hàng\n(mã đơn + số điện thoại)" as U5
+  usecase "Xem đánh giá" as U6
+  usecase "Đăng ký / Đăng nhập" as U7
+  usecase "Đăng nhập Google / Facebook" as U8
+  usecase "Quản lý hồ sơ" as U9
+  usecase "Xem lịch sử đơn hàng" as U10
+  usecase "Viết đánh giá" as U11
+  usecase "Bình chọn đánh giá hữu ích" as U11a
+  usecase "Quản lý danh sách yêu thích" as U12
+}
+
+Khach --> U1
+Khach --> U2
+Khach --> U3
+Khach --> U4
+Khach --> U5
+Khach --> U6
+Khach --> U7
+Khach --> U11a
+KH --> U9
+KH --> U10
+KH --> U11
+KH --> U12
+
+U1a .up.> U1 : <<extend>>
+U3a .up.> U3 : <<extend>>
+U3b .up.> U3 : <<extend>>
+U4 ..> U2 : <<include>>
+U4 ..> U3 : <<include>>
+U4 ..> U4a : <<include>>
+U4 ..> U4b : <<include>>
+U4 ..> U4c : <<include>>
+U4d .up.> U4 : <<extend>>
+U4e .up.> U4 : <<extend>>
+U8 .up.> U7 : <<extend>>
+
+U3b -- Maps
+U4d -- Zalo
+U4e -- Mail
+U8 -- OAuth
+
+note bottom of U4
+  Ghi chú: chỉ hỗ trợ thanh toán COD
+  (SUPPORTED_PAYMENT_METHODS = ['cod']).
+  Mã giới thiệu đối tác (?ref=) được xử lý trong
+  POST /api/orders nhưng chương trình Đối tác đang TẮT.
+end note
+@enduml

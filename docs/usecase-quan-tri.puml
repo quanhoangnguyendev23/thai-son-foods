@@ -1,0 +1,128 @@
+@startuml usecase-quan-tri
+title Chi tiết: Quản trị và Phân quyền (RBAC)
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F3F8F1
+  BorderColor #22544C
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #22544C
+}
+skinparam rectangle {
+  BorderColor #22544C
+}
+left to right direction
+
+actor "Nhân viên quản trị" as NV
+actor "Nhân viên cửa hàng\n(STORE_STAFF)" as NVCH
+actor "Marketing\n(MARKETING)" as MKT
+actor "Super Admin\n(SUPER_ADMIN)" as SA
+NVCH -up-|> NV
+MKT -up-|> NV
+SA -up-|> NV
+
+actor "Dịch vụ email" as Mail <<hệ thống ngoài>>
+actor "Google Sheet" as Sheet <<hệ thống ngoài>>
+actor "Bộ hẹn giờ (Cron)" as Cron <<hệ thống ngoài>>
+
+rectangle "Hệ thống Website Thái Sơn Foods - Khu vực /admin" {
+  package "Truy cập" {
+    usecase "Đăng nhập quản trị" as A1
+    usecase "Đổi mật khẩu\n(bắt buộc lần đầu)" as A1a
+    usecase "Đăng ký quản trị viên đầu tiên\n(cần ADMIN_REGISTER_KEY)" as A1b
+  }
+  package "Đơn hàng" {
+    usecase "Quản lý đơn hàng\n(xem, lọc, đổi trạng thái, xóa)" as O1
+    usecase "Xem đơn chưa hoàn thành" as O2
+    usecase "Xuất Excel đơn hàng" as O3
+    usecase "Xác nhận thanh toán chuyển khoản" as O4
+    usecase "Chuyển đơn sang chi nhánh khác" as O5
+    usecase "Đối soát COD / xử lý hàng hoàn" as O6
+    usecase "Gửi email giao hàng / hoàn thành" as O7
+  }
+  package "Kho hàng" {
+    usecase "Quản lý tồn kho\n(xem, điều chỉnh)" as K1
+    usecase "Nhập lô hàng" as K2
+    usecase "Xem nhật ký kho" as K3
+    usecase "Xem tồn kho từ Google Sheet" as K4
+    usecase "Ngừng / mở bán theo chi nhánh" as K5
+    usecase "Đồng bộ tồn kho từ Google Sheet" as K6
+    usecase "Dọn giữ chỗ quá hạn" as K7
+  }
+  package "Hàng hóa & nội dung" {
+    usecase "Quản lý sản phẩm" as H1
+    usecase "Quản lý combo" as H2
+    usecase "Quản lý danh mục" as H3
+    usecase "Quản lý banner & slide thương hiệu" as H4
+    usecase "Tải ảnh lên" as H5
+    usecase "Kiểm duyệt / trả lời đánh giá" as H6
+  }
+  package "Báo cáo & hệ thống" {
+    usecase "Xem Dashboard" as B1
+    usecase "Xem báo cáo lợi nhuận\n(xuất Excel)" as B2
+    usecase "Xem giá vốn" as B3
+    usecase "Xem nhật ký thao tác" as B4
+    usecase "Quản lý tài khoản quản trị" as B5
+    usecase "Quản lý cửa hàng" as B6
+    usecase "Quản lý hội viên (đang tắt)" as B7
+  }
+}
+
+NV --> A1
+A1a .up.> A1 : <<extend>>
+A1b .up.> A1 : <<extend>>
+
+NVCH --> O1 : chỉ chi nhánh mình
+NVCH --> K1 : chỉ chi nhánh mình
+NVCH --> K2 : chỉ chi nhánh mình
+NVCH --> K4
+NVCH --> B1 : theo chi nhánh
+NVCH --> B6 : chỉ chi nhánh mình
+
+MKT --> H1
+MKT --> H2
+MKT --> H3
+MKT --> H4
+MKT --> H5
+MKT --> H6
+
+SA --> O1 : toàn công ty
+SA --> O5
+SA --> O6
+SA --> K1 : toàn công ty
+SA --> B1 : toàn công ty
+SA --> B2
+SA --> B3
+SA --> B4
+SA --> B5
+SA --> B6 : tất cả chi nhánh
+SA --> B7
+SA --> H1
+SA --> H2
+SA --> H3
+SA --> H4
+SA --> H5
+SA --> H6
+
+O2 .up.> O1 : <<extend>>
+O3 .up.> O1 : <<extend>>
+O4 .up.> O1 : <<extend>>
+O5 .up.> O1 : <<extend>>
+O6 .up.> O1 : <<extend>>
+O7 .up.> O1 : <<extend>>
+O7 -- Mail
+
+K2 .up.> K1 : <<extend>>
+K3 .up.> K1 : <<extend>>
+K4 .up.> K1 : <<extend>>
+K5 .up.> K4 : <<extend>>
+K6 .up.> K4 : <<extend>>
+K6 -- Sheet
+Cron --> K6
+Cron --> K7
+
+B3 .up.> B2 : <<include>>
+@enduml
