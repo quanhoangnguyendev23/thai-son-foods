@@ -68,7 +68,7 @@ export default function Footer() {
             <div>
               <h3
                 className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-4"
-                style={{ color: 'var(--color-amber-300)' }}
+                style={{ color: 'var(--color-brand-amber)' }}
               >
                 {language === 'en' ? 'Company' : 'Công ty'}
               </h3>
@@ -99,7 +99,7 @@ export default function Footer() {
             <div>
               <h3
                 className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-4"
-                style={{ color: 'var(--color-amber-300)' }}
+                style={{ color: 'var(--color-brand-amber)' }}
               >
                 {language === 'en' ? 'Products' : 'Sản phẩm'}
               </h3>
@@ -129,7 +129,7 @@ export default function Footer() {
                 <>
                   <h3
                     className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-4"
-                    style={{ color: 'var(--color-amber-300)' }}
+                    style={{ color: 'var(--color-brand-amber)' }}
                   >
                     {language === 'en' ? 'Support' : 'Hỗ trợ'}
                   </h3>
@@ -145,7 +145,7 @@ export default function Footer() {
               {/* Social */}
               <h3
                 className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-3.5"
-                style={{ color: 'var(--color-amber-300)' }}
+                style={{ color: 'var(--color-brand-amber)' }}
               >
                 {language === 'en' ? 'Follow Us' : 'Kết nối'}
               </h3>

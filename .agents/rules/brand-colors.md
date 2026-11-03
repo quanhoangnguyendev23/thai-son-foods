@@ -60,3 +60,10 @@ Chỉ được đổi bảng màu khi chủ dự án yêu cầu rõ ràng bằng
 - Không thêm phông mới, không viết `fontFamily`/`font-family` với tên phông khác, không dùng `font-[...]` tuỳ ý.
 - Email (`src/lib/email/templates.ts`) giữ bộ phông hệ thống có Roboto vì trình đọc email không tải được phông web.
 - Kiểm tra: `npm run lint:fonts` phải báo **"Phông NGOÀI quy định: 0"**. Trang `src/app/2010/` là ngoại lệ.
+
+## Màu chữ (bắt buộc, cập nhật 03/11/2026)
+
+- Chữ chỉ được là **đúng 1 trong 7 màu gốc hoặc trắng**. Màu pha nhạt (tint) chỉ dùng cho nền, viền, đổ bóng.
+- `postcss-brand-colors.cjs` tự ép mọi `color` trong CSS: tint ít → đúng màu gốc; tint nhiều (chữ sáng) → trắng; bỏ độ trong suốt (trừ `::placeholder`, `:disabled`).
+  Chữ xám nhạt `text-gray/slate-100…400` nằm trong khối nền tối (`bg-forest-950`, `bg-green-primary`…) thành trắng nhờ quy tắc ngữ cảnh cuối `brand-tokens.css`.
+- `style={{ color: ... }}` không đi qua plugin: chỉ được dùng `var(--color-brand-*)`, `#FFFFFF` hoặc token bước gốc (forest/emerald/chestnut-700, copper-600, leaf/amber/crimson-500). `npm run lint:colors` báo lỗi nếu dùng bước pha nhạt.

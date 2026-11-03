@@ -49,13 +49,25 @@ for (const f of files) {
   const rel = f.split(path.sep).join('/');
   if (TOKEN_FILES.includes(rel)) continue;
   const isExempt = EXEMPT_DIRS.some((d) => rel.startsWith(d));
-  fs.readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+  fs.readFileSync(f, 'utf8').split('\n').forEach((line, i, arr) => {
     const found = [];
     for (const m of line.matchAll(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-zA-Z_-])/g)) {
       let h = m[1]; if (h.length === 3) h = h.split('').map((c) => c + c).join('');
       found.push(['#' + h.toUpperCase(), hex2rgb('#' + h)]);
     }
     for (const m of line.matchAll(/rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/g)) found.push([m[0] + ')', [+m[1], +m[2], +m[3]]]);
+    // style={{ color: 'var(--color-x-N)' }} không đi qua plugin PostCSS: chỉ cho phép bước đúng màu gốc
+    const inStyle = /style\s*=|style:/.test(arr.slice(Math.max(0, i - 4), i + 1).join(' '));
+    if (!isExempt && inStyle && /\.(tsx|jsx)$/.test(rel)) {
+      const BASE_STEP = { forest: 700, emerald: 700, chestnut: 700, ink: 950, copper: 600, leaf: 500, amber: 500, crimson: 500 };
+      for (const m of line.matchAll(/(?<![a-zA-Z])color\s*:\s*['"`]var\(--color-([a-z]+)-(\d+)\)/g)) {
+        const fam = m[1], step = +m[2];
+        if (BASE_STEP[fam] === undefined || (step < BASE_STEP[fam] && !(fam === 'ink' && step >= 800))) {
+          off++;
+          console.log(`${rel}:${i + 1}  chữ inline var(--color-${fam}-${step}) là màu pha nhạt → dùng var(--color-brand-*) hoặc #FFFFFF`);
+        }
+      }
+    }
     for (const [label, rgb] of found) {
       if (isAllowed(rgb)) continue;
       if (isExempt) { exempt++; continue; }
