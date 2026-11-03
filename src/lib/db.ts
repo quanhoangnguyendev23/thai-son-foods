@@ -225,6 +225,11 @@ async function runInitDatabase() {
           ALTER TABLE product_variants ADD CONSTRAINT chk_product_variants_bottle_multiplier CHECK (bottle_multiplier > 0);
         END IF;
       END $$;
+      -- Sửa dữ liệu cũ: cột bottle_multiplier được thêm sau với mặc định 1, nên các quy cách lốc/thùng
+      -- (vd "7 chai" quantity = 7) bị lưu là 1 chai và đơn hàng bị chặn. Đồng bộ lại theo quantity.
+      UPDATE product_variants
+         SET bottle_multiplier = quantity
+       WHERE quantity IS NOT NULL AND quantity > 1 AND bottle_multiplier <> quantity;
     `);
 
     // Create store inventory table

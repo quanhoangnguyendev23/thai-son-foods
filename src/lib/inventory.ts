@@ -617,6 +617,9 @@ export async function expandComboItems(
           const pvRes = client ? await client.query(pvSql, [rawId, variantKey, resolvedVariantId]) : await query(pvSql, [rawId, variantKey, resolvedVariantId]);
           if (pvRes.rows.length > 0 && pvRes.rows[0].bottle_multiplier > 0) {
             dbMultiplier = Number(pvRes.rows[0].bottle_multiplier);
+            // Dữ liệu cũ: lốc/thùng bị lưu bottle_multiplier = 1 (mặc định) → lấy theo quantity
+            const pvQty = Number(pvRes.rows[0].quantity) || 0;
+            if (dbMultiplier === 1 && pvQty > 1) dbMultiplier = pvQty;
           }
         } catch {
           // Bỏ qua nếu query lỗi hoặc DB chưa có cột

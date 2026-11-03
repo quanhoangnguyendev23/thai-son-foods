@@ -379,7 +379,12 @@ export async function POST(request: Request) {
           if (thumbRes.rows[0]?.sku) skuByProductId.set(prodInfo.id, String(thumbRes.rows[0].sku));
 
           if (prodInfo.variant) {
-            const v = prodInfo.variant;
+            const v = { ...prodInfo.variant };
+            // Dữ liệu cũ: cột bottle_multiplier được thêm sau với mặc định 1 → lốc/thùng (quantity > 1) bị lưu là 1.
+            // Khi đó lấy số chai theo quantity thay vì chặn đơn.
+            if (v.quantity && v.quantity > 1 && (!v.bottleMultiplier || v.bottleMultiplier === 1)) {
+              v.bottleMultiplier = v.quantity;
+            }
             // Nguồn chuẩn của số chai là product_variants.bottle_multiplier (admin bắt buộc nhập > 0).
             // Từ chối nếu lệch với quantity để không bán/giữ chỗ sai số chai khi dữ liệu quy cách bị nhập sai.
             if (!v.bottleMultiplier || v.bottleMultiplier <= 0 || (v.quantity && v.quantity > 0 && v.quantity !== v.bottleMultiplier)) {
