@@ -15,19 +15,31 @@ function stripHtmlTags(input: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate Limiting: tối đa 5 lần đăng ký / giờ / IP
+    // Rate Limiting: tối đa 5 lần đăng ký / giờ / IP.
+    // Không biết IP (TRUSTED_PROXY_COUNT=0 → mọi khách đều là "unknown"): nếu vẫn đếm theo IP thì cả web
+    // chỉ được 5 lượt đăng ký / giờ. Khi đó đếm 5 lần / giờ / email + trần chung 200 lần / giờ.
     const ip = getClientIp(req.headers) ?? UNKNOWN_CLIENT_IP;
-    const rl = checkRequestRateLimit(`register:ip:${ip}`, 5, 60 * 60 * 1000);
-    if (rl.isBlocked) {
-      return NextResponse.json(
+    const tooMany = (resetInSeconds: number) =>
+      NextResponse.json(
         { success: false, error: 'Bạn đã đăng ký quá nhiều lần. Vui lòng thử lại sau.' },
-        { status: 429, headers: { 'Retry-After': String(rl.resetInSeconds) } }
+        { status: 429, headers: { 'Retry-After': String(resetInSeconds) } }
       );
+    if (ip !== UNKNOWN_CLIENT_IP) {
+      const rl = checkRequestRateLimit(`register:ip:${ip}`, 5, 60 * 60 * 1000);
+      if (rl.isBlocked) return tooMany(rl.resetInSeconds);
+    } else {
+      const rlAll = checkRequestRateLimit('register:unknown-ip', 200, 60 * 60 * 1000);
+      if (rlAll.isBlocked) return tooMany(rlAll.resetInSeconds);
     }
 
     await initDatabase();
     const body = await req.json();
     const { email, password, fullName, phone, address, province, district, ward } = body;
+
+    if (ip === UNKNOWN_CLIENT_IP && typeof email === 'string') {
+      const rlEmail = checkRequestRateLimit(`register:email:${email.trim().toLowerCase()}`, 5, 60 * 60 * 1000);
+      if (rlEmail.isBlocked) return tooMany(rlEmail.resetInSeconds);
+    }
 
     // 1. Validation - Email
     if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 320) {

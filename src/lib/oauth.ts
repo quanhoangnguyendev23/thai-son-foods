@@ -31,6 +31,22 @@ export function isProviderConfigured(provider: OAuthProvider): boolean {
   return isRealValue(process.env.FACEBOOK_CLIENT_ID) && isRealValue(process.env.FACEBOOK_CLIENT_SECRET);
 }
 
+/**
+ * Google chỉ chấp nhận địa chỉ quay về là http://localhost hoặc tên miền https (không nhận địa chỉ IP,
+ * không nhận http với tên miền khác) — gặp các địa chỉ đó Google báo "Lỗi 400: invalid_request".
+ */
+export function isGoogleAllowedOrigin(origin: string): boolean {
+  try {
+    const u = new URL(origin);
+    const host = u.hostname.replace(/^\[|\]$/g, '');
+    if (host === 'localhost') return true;
+    const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':');
+    return u.protocol === 'https:' && !isIp;
+  } catch {
+    return false;
+  }
+}
+
 /** Chế độ đăng nhập giả lập chỉ dành cho máy phát triển (không bao giờ bật ở production) */
 export function isMockOAuthEnabled(): boolean {
   return process.env.NODE_ENV !== 'production' && process.env.ENABLE_MOCK_OAUTH === 'true';

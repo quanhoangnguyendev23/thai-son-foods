@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSafeAppOrigin } from '@/lib/auth';
 import {
+  isGoogleAllowedOrigin,
   isMockOAuthEnabled,
   isProviderConfigured,
   newOAuthState,
@@ -23,6 +24,13 @@ export async function GET(req: NextRequest) {
       mockUrl.searchParams.set('returnUrl', returnUrl);
       return NextResponse.redirect(mockUrl.toString());
     }
+    const errorUrl = new URL('/?auth=login', origin);
+    errorUrl.searchParams.set('error', 'oauth_not_configured');
+    return NextResponse.redirect(errorUrl.toString());
+  }
+
+  // Web đang mở bằng địa chỉ IP / http: Google sẽ chặn với "Lỗi 400" → báo lỗi tại web thay vì đưa khách sang trang lỗi của Google
+  if (!isGoogleAllowedOrigin(origin)) {
     const errorUrl = new URL('/?auth=login', origin);
     errorUrl.searchParams.set('error', 'oauth_not_configured');
     return NextResponse.redirect(errorUrl.toString());
