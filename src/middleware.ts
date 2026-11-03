@@ -230,7 +230,15 @@ export async function middleware(req: NextRequest) {
   // 0. GLOBAL RATE LIMITING cho mọi public API (60 req/phút/IP)
   // ═══════════════════════════════════════════════════════════════
   // /api/admin/* (đã yêu cầu đăng nhập) miễn giới hạn chung, trừ nhóm /api/admin/auth/* là cửa đăng nhập công khai
-  if (isApiRoute && (!pathname.startsWith('/api/admin/') || pathname.startsWith('/api/admin/auth/'))) {
+  // Chạy thử trên máy (npm run dev) với TRUSTED_PROXY_COUNT=0: mọi request đều là "unknown", dùng chung một bộ đếm,
+  // nên vài lần đặt đơn thử / tải trang là tự chặn chính mình (429). Bỏ giới hạn chung trong trường hợp này.
+  // Bản build production (npm start) vẫn giữ nguyên giới hạn; các kiểm tra riêng trong route vẫn chạy.
+  const skipGlobalLimitInDev = process.env.NODE_ENV !== 'production' && !clientIp;
+  if (
+    !skipGlobalLimitInDev &&
+    isApiRoute &&
+    (!pathname.startsWith('/api/admin/') || pathname.startsWith('/api/admin/auth/'))
+  ) {
     const strict = STRICT_API_LIMITS.find((r) => r.methods.includes(req.method) && r.regex.test(pathname));
     const isReadOnlyExempt = req.method === 'GET' && READ_ONLY_EXEMPT_API_REGEX.test(pathname);
     const rl = strict
