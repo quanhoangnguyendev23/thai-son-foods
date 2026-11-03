@@ -17,47 +17,21 @@ import { useLanguage } from '@/context/LanguageContext';
 
 type ItemType = 'product' | 'combo';
 
-/** Chỉ hiện khi đủ lớn, làm tròn xuống để không phóng đại */
-const MIN_SALES_TO_SHOW = 10;
-function roundDown(n: number): number {
-  if (n < 100) return Math.floor(n / 10) * 10;
-  if (n < 500) return Math.floor(n / 50) * 50;
-  return Math.floor(n / 100) * 100;
-}
-
-export function MonthlySalesInfo({
-  itemId,
-  itemType = 'product',
-  slug,
-}: {
+/**
+ * Dòng năng lực giao hàng của công ty (thay cho số đã bán từng sản phẩm).
+ * Giữ nguyên tên và props để các trang đang dùng không phải đổi.
+ */
+export function MonthlySalesInfo(_props: {
   itemId: string;
   itemType?: ItemType;
   slug?: string;
 }) {
   const { language } = useLanguage();
-  const [count, setCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    const slugParam = slug ? `&slug=${encodeURIComponent(slug)}` : '';
-    fetch(`/api/products/sales?itemId=${encodeURIComponent(itemId)}&itemType=${itemType}${slugParam}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (active && data.success) setCount(Number(data.count) || 0);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [itemId, itemType, slug]);
-
-  if (count === null || count < MIN_SALES_TO_SHOW) return null;
-  const shown = roundDown(count).toLocaleString('vi-VN');
   return (
     <p className="text-[13px] text-gray-600">
       {language === 'en'
-        ? `${shown}+ sold`
-        : `Hơn ${shown} ${itemType === 'combo' ? 'combo' : 'sản phẩm'} đã được bán`}
+        ? 'Thái Sơn Foods delivers 10,000+ bottles every week'
+        : 'Hơn 10.000 chai được Thái Sơn Foods giao mỗi tuần'}
     </p>
   );
 }

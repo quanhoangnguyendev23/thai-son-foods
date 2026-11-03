@@ -460,7 +460,8 @@ let hasSeededSampleReviews = false;
 
 // ── In-Memory Resilient Store for 100% Uptime on Cloud / Vercel ──
 // Đảm bảo hệ thống đánh giá hoạt động trơn tru ngay cả khi DB chưa cấu hình hoặc rớt kết nối
-const memoryReviews: ReviewItem[] = SAMPLE_REVIEWS_SEED.map((item) => ({
+// 2026-11-03: không còn nạp đánh giá mẫu vào bộ nhớ dự phòng — chỉ hiện đánh giá thật của khách.
+const memoryReviews: ReviewItem[] = ([] as typeof SAMPLE_REVIEWS_SEED).map((item) => ({
   id: item.id,
   productId: item.productId,
   userId: null,
@@ -597,6 +598,8 @@ export function getAdminMemoryReviews(options: {
  * Tự động chèn đánh giá mẫu nếu cơ sở dữ liệu chưa có
  */
 export async function seedSampleReviewsIfEmpty(): Promise<void> {
+  // 2026-11-03: tắt chèn đánh giá mẫu (gây hiểu lầm cho khách). Bỏ dòng return này nếu cần bật lại.
+  hasSeededSampleReviews = true;
   if (hasSeededSampleReviews) return;
   try {
     for (const item of SAMPLE_REVIEWS_SEED) {

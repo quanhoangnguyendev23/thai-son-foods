@@ -410,7 +410,6 @@ export default function ProductMainSection({
                 {isEn ? 'No reviews yet — be the first' : 'Chưa có đánh giá — hãy là người đầu tiên'}
               </a>
             )}
-            <span className="text-xs text-gray-500 font-mono">SKU: {product.sku}</span>
           </div>
 
           <MonthlySalesInfo itemId={product.id} itemType="product" slug={product.slug} />
