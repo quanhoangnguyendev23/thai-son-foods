@@ -54,14 +54,14 @@ export function buildOrderHtml(o: TelegramOrderNotice): string {
   const items = o.items || [];
   const totalQty = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
 
+  // Dòng sản phẩm: không icon cho đỡ rối, chỉ STT · mã · quy cách · số lượng · thành tiền
   const itemLines = items.slice(0, MAX_ITEMS).map((it, i) => {
     const qty = Number(it.quantity) || 0;
     const code = shortItemCode(it);
-    const icon = it.isCombo ? '🎁' : '🥛';
     const price = Number(it.price);
-    const lineTotal = Number.isFinite(price) && price > 0 ? `  →  <b>${vnd(price * qty)}</b>` : '';
-    const unit = it.unit && !it.isCombo ? ` (${esc(it.unit)})` : '';
-    return `${icon} ${i + 1}. <code>${esc(code)}</code>${unit} · SL <b>${qty}</b>${lineTotal}`;
+    const lineTotal = Number.isFinite(price) && price > 0 ? `  =  <b>${vnd(price * qty)}</b>` : '';
+    const spec = it.isCombo ? 'Combo' : it.unit ? esc(it.unit) : '';
+    return `${i + 1}. <b>${esc(code)}</b>${spec ? ` · ${spec}` : ''} × ${qty}${lineTotal}`;
   });
   if (items.length > MAX_ITEMS) itemLines.push(`… và ${items.length - MAX_ITEMS} dòng khác`);
 
@@ -69,21 +69,31 @@ export function buildOrderHtml(o: TelegramOrderNotice): string {
   const hasBreakdown = o.subtotal != null || o.shippingFee != null;
   const ship = Number(o.shippingFee) || 0;
 
+  const customer = [
+    `<b>${esc(o.fullName)}</b>`,
+    `📞 <code>${esc(o.phone)}</code>`,
+    `📍 ${esc(o.address)}`,
+    o.storeCode ? `🏪 Chi nhánh <b>${esc(o.storeCode)}</b>` : '',
+  ].filter(Boolean);
+
+  const money = [
+    hasBreakdown ? `Tạm tính:  ${vnd(Number(o.subtotal) || 0)}` : '',
+    hasBreakdown ? `Phí giao:  ${ship > 0 ? vnd(ship) : 'Miễn phí'}` : '',
+    `<b>TỔNG THU:  ${vnd(o.total)}</b>`,
+    pay,
+  ].filter(Boolean);
+
   const parts = [
-    `🟢 <b>ĐƠN HÀNG MỚI</b>`,
-    `🧾 Mã đơn: <code>${esc(o.orderCode)}</code>`,
+    `🟢 <b>ĐƠN HÀNG MỚI</b>  <code>${esc(o.orderCode)}</code>`,
     `🕒 ${esc(vnTime(o.createdAt || new Date()))}`,
     LINE,
     `👤 <b>KHÁCH HÀNG</b>`,
-    `<blockquote>👤 ${esc(o.fullName)}\n📞 <code>${esc(o.phone)}</code>\n📍 ${esc(o.address)}${o.storeCode ? `\n🏪 Chi nhánh: <b>${esc(o.storeCode)}</b>` : ''}</blockquote>`,
-    `📦 <b>SẢN PHẨM</b> (${items.length} dòng · ${totalQty} món)`,
+    `<blockquote>${customer.join('\n')}</blockquote>`,
+    `📦 <b>SẢN PHẨM</b>  ·  ${items.length} dòng, ${totalQty} món`,
     `<blockquote>${itemLines.join('\n')}</blockquote>`,
-    LINE,
-    hasBreakdown ? `Tạm tính: ${vnd(Number(o.subtotal) || 0)}` : '',
-    hasBreakdown ? `Phí giao: ${ship > 0 ? vnd(ship) : 'Miễn phí'}` : '',
-    `💰 <b>TỔNG THU: ${vnd(o.total)}</b>`,
-    pay,
-    o.note ? `\n📝 <b>Ghi chú:</b> <i>${esc(o.note)}</i>` : '',
+    `💰 <b>THANH TOÁN</b>`,
+    `<blockquote>${money.join('\n')}</blockquote>`,
+    o.note ? `📝 <b>Ghi chú:</b> <i>${esc(o.note)}</i>` : '',
   ].filter(Boolean);
 
   const html = parts.join('\n');
