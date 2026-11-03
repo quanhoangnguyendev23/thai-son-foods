@@ -141,11 +141,15 @@ export default function AuthModal() {
       setErrorMsg(language === 'en' ? 'Please enter a valid email' : 'Vui lòng nhập email hợp lệ');
       return;
     }
-    if (!registerForm.password || registerForm.password.length < 6) {
+    // Cùng quy tắc với server (/api/auth/register PASSWORD_REGEX)
+    if (
+      !registerForm.password ||
+      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/.test(registerForm.password)
+    ) {
       setErrorMsg(
         language === 'en'
-          ? 'Password must be at least 6 characters'
-          : 'Mật khẩu phải có ít nhất 6 ký tự'
+          ? 'Password needs at least 8 characters with upper case, lower case, a number and a symbol (e.g. MyPass@123)'
+          : 'Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt (VD: MyPass@123)'
       );
       return;
     }
@@ -392,7 +396,7 @@ export default function AuthModal() {
                     type="tel"
                     value={registerForm.phone}
                     onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
-                    placeholder="0123456789"
+                    placeholder="0901 234 567"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 transition-colors"
                   />
                   <Phone className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
@@ -401,14 +405,16 @@ export default function AuthModal() {
 
               <div>
                 <label className="block text-sm text-gray-700 mb-1">
-                  {language === 'en' ? 'Password (min 6 characters)' : 'Mật khẩu (tối thiểu 6 ký tự)'}{' '}
+                  {language === 'en'
+                    ? 'Password (8+ characters, upper & lower case, number, symbol)'
+                    : 'Mật khẩu (từ 8 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt)'}{' '}
                   <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    minLength={6}
+                    minLength={8}
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                     placeholder="••••••••"

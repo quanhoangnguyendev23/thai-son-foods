@@ -28,6 +28,10 @@ import { combos } from '@/data/combos';
 import { ENABLE_COMBOS } from '@/config/features';
 import { getShortProductName } from '@/lib/product-detail';
 import { useCartInventory } from '@/hooks/useCartInventory';
+import { INVENTORY_CONFIG } from '@/config/inventory';
+
+// Trần giá trị đơn COD — cùng số server dùng để từ chối đơn (/api/orders)
+const COD_MAX_ORDER_VALUE = INVENTORY_CONFIG.COD_VALIDATION.MAX_ORDER_VALUE;
 
 const MIN_ORDER_THRESHOLD = 120000;
 const FREE_SHIPPING_THRESHOLD = 200000;
@@ -636,7 +640,7 @@ export default function CartPage() {
                           <span className="text-emerald-700 text-[1.125em]">
                             {formatPrice(remainingForFreeShip)}đ
                           </span>{' '}
-                          more for <span className="text-emerald-800 underline">Nationwide Free Shipping</span>
+                          more for <span className="text-emerald-800 underline">free delivery in Ho Chi Minh City</span>
                         </>
                       ) : (
                         <>
@@ -644,7 +648,7 @@ export default function CartPage() {
                           <span className="text-emerald-700 text-[1.125em]">
                             {formatPrice(remainingForFreeShip)}đ
                           </span>{' '}
-                          để được nhận <span className="text-emerald-800 underline">Freeship toàn quốc</span>
+                          để được <span className="text-emerald-800 underline">miễn phí giao hàng nội thành TP.HCM</span>
                         </>
                       )}
                     </span>
@@ -834,23 +838,31 @@ export default function CartPage() {
                               <button
                                 type="button"
                                 onClick={() => decreaseQuantity(item.productId)}
-                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-emerald-800 hover:bg-white active:scale-95 transition-all cursor-pointer"
+                                className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-emerald-800 hover:bg-white active:scale-95 transition-all cursor-pointer"
                                 aria-label={language === 'en' ? 'Decrease 1' : 'Giảm 1'}
                               >
                                 <Minus className="w-3.5 h-3.5" />
                               </button>
                               <input
-                                type="number"
-                                min={1}
-                                max={maxAllowed}
-                                value={item.quantity}
-                                onChange={(e) => {
-                                  const raw = e.target.value;
-                                  if (raw === '') return;
-                                  const val = parseInt(raw, 10);
-                                  if (!isNaN(val) && val > 0) {
-                                    setQuantity(item.productId, Math.min(maxAllowed, val));
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                // Ô tự do khi đang gõ, chỉ chốt số lượng khi rời ô/Enter (key đổi → ô nhận lại số đã chốt)
+                                key={`${item.productId}-${item.quantity}`}
+                                defaultValue={item.quantity}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') e.currentTarget.blur();
+                                }}
+                                onBlur={(e) => {
+                                  // Chỉ nhận số nguyên dương: "-5", "1.5", "0" giữ nguyên số cũ thay vì đoán thành số khác
+                                  const text = e.target.value.trim();
+                                  const val = /^\d+$/.test(text) ? parseInt(text, 10) : NaN;
+                                  if (isNaN(val) || val < 1) {
+                                    e.target.value = String(item.quantity);
+                                    return;
                                   }
+                                  setQuantity(item.productId, Math.min(maxAllowed, val));
+                                  if (val > maxAllowed) e.target.value = String(maxAllowed);
                                 }}
                                 className="w-12 sm:w-14 text-center text-lg sm:text-sm sm:text-base text-gray-900 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 aria-label={language === 'en' ? 'Product quantity' : 'Số lượng sản phẩm'}
@@ -859,13 +871,18 @@ export default function CartPage() {
                                 type="button"
                                 onClick={() => increaseQuantity(item.productId)}
                                 disabled={isAtMax}
-                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-emerald-800 hover:bg-white active:scale-95 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-emerald-800 hover:bg-white active:scale-95 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                 aria-label={language === 'en' ? 'Increase 1' : 'Tăng 1'}
                                 title={isAtMax ? (atStockLimit ? (language === 'en' ? 'Reached the stock available at this store' : 'Đã đạt số lượng còn tại kho này') : (language === 'en' ? 'Reached 1,000 bottles limit' : 'Đã đạt giới hạn tối đa 1.000 chai')) : undefined}
                               >
                                 <Plus className="w-3.5 h-3.5" />
                               </button>
                             </div>
+                            {isAtMax && (
+                              <span className="text-[11px] text-amber-700">
+                                {language === 'en' ? `Max ${maxAllowed}` : `Tối đa ${maxAllowed}`}
+                              </span>
+                            )}
                           </div>
                         );
                       })()}
@@ -1042,8 +1059,35 @@ export default function CartPage() {
                 </div>
               ) : null}
 
+              {/* Cảnh báo vượt trần đơn COD (server sẽ từ chối ở bước đặt hàng) */}
+              {total > COD_MAX_ORDER_VALUE && (
+                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1" role="alert">
+                  <div className="flex items-center gap-1.5 text-amber-800 text-[1.125em]">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>
+                      {language === 'en'
+                        ? `COD orders are limited to ${formatPrice(COD_MAX_ORDER_VALUE)}đ`
+                        : `Đơn COD tối đa ${formatPrice(COD_MAX_ORDER_VALUE)}đ`}
+                    </span>
+                  </div>
+                  <p className="text-amber-700 text-[11px] leading-relaxed">
+                    {language === 'en'
+                      ? 'Please reduce the quantity or call 028 6291 5024 for large orders.'
+                      : 'Vui lòng giảm số lượng hoặc gọi hotline 028 6291 5024 để đặt đơn lớn.'}
+                  </p>
+                </div>
+              )}
+
               {/* Nút hành động thanh toán */}
-              {isEligibleToOrder && isMounted && checkFailed ? (
+              {total > COD_MAX_ORDER_VALUE ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-3 px-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-sm text-center leading-snug cursor-not-allowed"
+                >
+                  {language === 'en' ? 'Order exceeds the COD limit' : 'Đơn vượt mức tối đa cho COD'}
+                </button>
+              ) : isEligibleToOrder && isMounted && checkFailed ? (
                 <button
                   type="button"
                   disabled
@@ -1085,8 +1129,8 @@ export default function CartPage() {
 
               <p className="text-center text-[10.5px] text-gray-400">
                 {language === 'en'
-                  ? 'Cash on Delivery (COD) & QR Bank Transfer'
-                  : 'Thanh toán khi nhận hàng (COD) hoặc Chuyển khoản QR'}
+                  ? 'Cash on Delivery (COD)'
+                  : 'Thanh toán tiền mặt khi nhận hàng (COD)'}
               </p>
             </div>
 

@@ -175,7 +175,7 @@ export async function POST(request: Request) {
     const cleanPhone = phone.replace(/[\s\-\.]/g, '');
     if (!codConfig.PHONE_REGEX.test(cleanPhone)) {
       return NextResponse.json(
-        { success: false, error: 'Số điện thoại không hợp lệ. Vui lòng nhập SĐT Việt Nam (VD: 0123456789)' },
+        { success: false, error: 'Số điện thoại không hợp lệ. Vui lòng nhập SĐT Việt Nam 10 số (VD: 0901 234 567)' },
         { status: 400 }
       );
     }
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng liên hệ hotline để đặt đơn lớn hoặc chọn phương thức thanh toán khác.`,
+          error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng giảm số lượng hoặc liên hệ hotline 028 6291 5024 để đặt đơn lớn.`,
           maxValue: codConfig.MAX_ORDER_VALUE,
         },
         { status: 400 }
@@ -475,7 +475,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             success: false,
-            error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng liên hệ hotline để đặt đơn lớn hoặc chọn phương thức thanh toán khác.`,
+            error: `Đơn hàng COD không được vượt quá ${codConfig.MAX_ORDER_VALUE.toLocaleString('vi-VN')} ₫. Vui lòng giảm số lượng hoặc liên hệ hotline 028 6291 5024 để đặt đơn lớn.`,
             maxValue: codConfig.MAX_ORDER_VALUE,
           },
           { status: 400 }

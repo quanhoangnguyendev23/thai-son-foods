@@ -459,8 +459,9 @@ export default function HeaderAmazon() {
           ref={tier1Ref}
           className={cn('sticky top-0 z-50 bg-green-primary transition-shadow', isScrolled && (isNavHidden ? 'shadow-md' : ''))}
         >
-        <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5">
-          <div className="flex items-center gap-2 lg:gap-3 h-14 lg:h-16">
+        <div className="max-w-[1500px] mx-auto px-2 min-[360px]:px-3 sm:px-4 lg:px-5">
+          {/* Dưới 360px thu khoảng cách + logo để icon giỏ hàng không bị đẩy ra ngoài màn hình */}
+          <div className="flex items-center gap-1 min-[360px]:gap-2 lg:gap-3 h-14 lg:h-16">
             {/* Nút "Tất cả" (mobile/tablet) */}
             <button
               type="button"
@@ -474,7 +475,7 @@ export default function HeaderAmazon() {
 
             {/* Logo — bấm để tải lại trang chủ (giống Header gốc) */}
             <Link href="/" onClick={handleLogoClick} className={cn(navBtn, 'shrink-0 px-1 py-1')} aria-label="Thái Sơn Foods - Trang chủ">
-              <span className="relative block h-10 w-[118px] sm:h-11 sm:w-[140px] lg:h-12 lg:w-[160px]">
+              <span className="relative block h-10 w-[96px] min-[360px]:w-[118px] sm:h-11 sm:w-[140px] lg:h-12 lg:w-[160px]">
                 <Image src="/images/logo-vien-trang.png" alt="Thái Sơn Foods - Món ngon quê Việt" fill sizes="160px" className="object-contain object-left" priority />
               </span>
             </Link>
@@ -537,7 +538,8 @@ export default function HeaderAmazon() {
                 aria-expanded={user ? isUserOpen : undefined}
               >
                 <User className="w-5 h-5 lg:hidden" />
-                <span className="hidden min-[400px]:block lg:block leading-tight">
+                {/* Chữ "Xin chào, đăng nhập" chỉ hiện khi đủ chỗ (từ 768px), tránh đẩy giỏ hàng ra ngoài ở 400–767px */}
+                <span className="hidden md:block leading-tight">
                   <span className="block text-[11px] text-white/70 max-w-[110px] truncate">
                     {user ? `${isEn ? 'Hello' : 'Xin chào'}, ${firstName}` : isEn ? 'Hello, sign in' : 'Xin chào, đăng nhập'}
                   </span>

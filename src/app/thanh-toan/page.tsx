@@ -1045,7 +1045,8 @@ export default function CheckoutPage() {
     }
     if (!form.phone.trim()) {
       newErrors.phone = language === 'en' ? 'Please enter phone number' : 'Vui lòng nhập số điện thoại';
-    } else if (!/^(0|\+84)\d{9,10}$/.test(form.phone.replace(/\s/g, ''))) {
+    } else if (!INVENTORY_CONFIG.COD_VALIDATION.PHONE_REGEX.test(form.phone.replace(/[\s\-.]/g, ''))) {
+      // Cùng quy tắc và cùng cách bỏ dấu cách/gạch/chấm như server (/api/orders)
       newErrors.phone = language === 'en' ? 'Invalid phone number' : 'Số điện thoại không hợp lệ';
     }
     if (!form.province.trim()) {
@@ -1064,6 +1065,17 @@ export default function CheckoutPage() {
       newErrors.address = language === 'en' ? 'Please enter street address' : 'Vui lòng nhập địa chỉ';
     }
     setErrors(newErrors);
+    // Đưa khách tới ô lỗi đầu tiên (form nằm phía trên, nút Đặt hàng ở cuối trang)
+    const firstErrorField = Object.keys(newErrors)[0];
+    if (firstErrorField) {
+      requestAnimationFrame(() => {
+        const el = document.querySelector<HTMLElement>(`[name="${firstErrorField}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus({ preventScroll: true });
+        }
+      });
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -1567,7 +1579,7 @@ export default function CheckoutPage() {
                     'w-full px-4 py-3 rounded-xl border bg-white text-text-dark text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-primary/30 focus:border-green-primary transition-colors',
                     errors.phone ? 'border-sale' : 'border-border'
                   )}
-                  placeholder="0123456789"
+                  placeholder="0901 234 567"
                 />
                 {errors.phone && (
                   <p className="mt-1 text-xs text-sale">{errors.phone}</p>
