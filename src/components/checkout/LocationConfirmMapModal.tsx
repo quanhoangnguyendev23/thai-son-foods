@@ -15,6 +15,69 @@ import {
 import { cn, safeFetchJson } from '@/lib/utils';
 import { calculateHaversineDistance } from '@/lib/geo';
 
+type AddressComponents = { province?: string; district?: string; ward?: string; street?: string };
+
+/** Tách "Số 12A/3 Phổ Quang" -> { house: "12A/3", rest: "Phổ Quang" } */
+function splitHouseNumber(text?: string): { house: string; rest: string } {
+  const t = (text || '').trim();
+  const m = t.match(/^(?:số\s*)?(\d+[A-Za-z0-9\/\-\.]*)\s+(.+)$/i);
+  return m ? { house: m[1], rest: m[2].trim() } : { house: '', rest: t };
+}
+
+function normalizeRoad(text?: string): string {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/^(duong|pho)\s+/, '')
+    .split(',')[0]
+    .trim();
+}
+
+/** Cùng 1 con đường (bỏ dấu, bỏ chữ "Đường/Phố", chấp nhận "Hẻm 12 Phổ Quang" ~ "Phổ Quang") */
+function isSameRoad(a?: string, b?: string): boolean {
+  const x = normalizeRoad(a);
+  const y = normalizeRoad(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  return (x.length >= 4 && y.includes(x)) || (y.length >= 4 && x.includes(y));
+}
+
+/**
+ * Dòng "Số nhà, tên đường" theo điểm ghim.
+ * - Khách chưa dời ghim mà đã gõ địa chỉ: giữ nguyên (trả undefined).
+ * - Bản đồ có số nhà tại điểm ghim: dùng số nhà đó (ghim lại số 2 -> "2 abc").
+ * - Bản đồ không có số nhà nhưng vẫn cùng con đường khách gõ: giữ số nhà khách gõ (khách chỉ chỉnh ghim cho đúng chỗ).
+ * - Sang đường khác mà không có số nhà: chỉ điền tên đường, nhắc khách gõ thêm số nhà.
+ */
+function buildStreetFromPin(
+  rev: { street?: string; houseNumber?: string; road?: string },
+  typedAddress: string,
+  shiftMeters: number
+): { street?: string; houseNote: 'none' | 'missing' | 'kept' } {
+  const typed = (typedAddress || '').trim();
+  if (typed && shiftMeters < 5) return { street: undefined, houseNote: 'none' };
+
+  const revSplit = splitHouseNumber(rev.street);
+  const road = rev.road || revSplit.rest;
+  const revHouse = rev.houseNumber || revSplit.house;
+  if (!road) return { street: undefined, houseNote: 'none' };
+
+  const t = splitHouseNumber(typed);
+  // Chỉ nhích ghim vài mét trên cùng con đường: khách đang canh lại cửa nhà, giữ số nhà đã gõ
+  if (t.house && shiftMeters < 15 && isSameRoad(t.rest, road)) {
+    return { street: typed, houseNote: 'none' };
+  }
+  if (revHouse) return { street: `${revHouse} ${road}`, houseNote: 'none' };
+
+  if (t.house && isSameRoad(t.rest, road)) {
+    // Giữ nguyên cách khách viết tên đường (vd. hẻm "12/5 Phổ Quang")
+    return { street: typed, houseNote: 'kept' };
+  }
+  return { street: road, houseNote: 'missing' };
+}
+
 interface LocationConfirmMapModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -59,6 +122,15 @@ export default function LocationConfirmMapModal({
   const [userPos, setUserPos] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const userDotRef = useRef<any>(null);
+  // Điểm ghim chưa có số nhà trên bản đồ: nhắc khách tự bổ sung / kiểm tra số nhà đang giữ
+  const [houseNote, setHouseNote] = useState<'none' | 'missing' | 'kept'>('none');
+  const [isConfirming, setIsConfirming] = useState(false);
+  // Phân giải địa chỉ tại 1 tọa độ; bỏ kết quả cũ nếu khách đã kéo tiếp
+  const resolveAtRef = useRef<
+    ((lat: number, lng: number) => Promise<{ components: AddressComponents; display: string } | null>) | null
+  >(null);
+  const resolvedForRef = useRef<{ lat: number; lng: number; components: AddressComponents; display: string } | null>(null);
+  const reverseSeqRef = useRef(0);
 
   const originalCoords = useRef<{ lat: number; lng: number }>(
     initialCoords || { lat: 10.7769, lng: 106.7009 }
@@ -89,6 +161,12 @@ export default function LocationConfirmMapModal({
       const startLat = initialCoords?.lat || 10.7769;
       const startLng = initialCoords?.lng || 106.7009;
       originalCoords.current = { lat: startLat, lng: startLng };
+      // Mở lại popup: bắt đầu từ điểm ghim hiện tại, bỏ kết quả của lần mở trước
+      setCenterCoords({ lat: startLat, lng: startLng });
+      setDistanceShiftMeters(0);
+      setAddressComponents({});
+      setResolvedAddress(initialAddress || '');
+      setHouseNote('none');
 
       // Hủy map cũ nếu đã tồn tại
       if (mapInstanceRef.current) {
@@ -134,46 +212,61 @@ export default function LocationConfirmMapModal({
         }
       });
 
+      // Reverse geocode 1 điểm ghim -> số nhà, tên đường, phường, quận
+      const resolveAt = async (lat: number, lng: number) => {
+        const seq = ++reverseSeqRef.current;
+        setIsReverseGeocoding(true);
+        try {
+          const rev = await safeFetchJson<any>(`/api/geo/reverse?lat=${lat}&lng=${lng}`);
+          if (!isMounted || seq !== reverseSeqRef.current || !rev?.success) return null;
+          const shiftMeters = Math.round(
+            calculateHaversineDistance(originalCoords.current.lat, originalCoords.current.lng, lat, lng) * 1000
+          );
+          const { street, houseNote: note } = buildStreetFromPin(
+            rev.components || {},
+            initialAddress || '',
+            shiftMeters
+          );
+          const components: AddressComponents = {
+            province: rev.components?.province,
+            district: rev.components?.district,
+            ward: rev.components?.ward,
+            street,
+          };
+          const display =
+            [street || initialAddress, components.ward, components.district, components.province]
+              .filter((part, i, arr) => !!part && arr.indexOf(part) === i)
+              .join(', ') || rev.formattedAddress || '';
+          setAddressComponents(components);
+          setResolvedAddress(display);
+          setHouseNote(note);
+          resolvedForRef.current = { lat, lng, components, display };
+          return { components, display };
+        } catch {
+          // Khi reverse geocoding lỗi, vẫn giữ nguyên tọa độ ghim và địa chỉ thủ công của khách
+          return null;
+        } finally {
+          if (isMounted && seq === reverseSeqRef.current) setIsReverseGeocoding(false);
+        }
+      };
+      resolveAtRef.current = resolveAt;
+      resolvedForRef.current = null;
+
       map.on('moveend', async () => {
         if (!isMounted) return;
         setIsDragging(false);
         const c = map.getCenter();
         setCenterCoords({ lat: c.lat, lng: c.lng });
-
         // Reverse geocode khi dừng kéo
-        setIsReverseGeocoding(true);
-        try {
-          const rev = await safeFetchJson<any>(`/api/geo/reverse?lat=${c.lat}&lng=${c.lng}`);
-          if (rev?.success) {
-            // Giữ lại số nhà/hẻm khách đã nhập trước đó nếu reverse geocode chỉ trả về tên đường chung chung
-            let finalStreet = rev.components?.street || '';
-            const houseMatch = (initialAddress || '').match(/^([0-9]+[A-Za-z0-9\/\-\.]*)/);
-            if (houseMatch && houseMatch[1] && finalStreet && !finalStreet.startsWith(houseMatch[1])) {
-              finalStreet = `${houseMatch[1]} ${finalStreet}`;
-            }
-
-            const updatedComponents = {
-              ...rev.components,
-              street: finalStreet || rev.components?.street,
-            };
-            setAddressComponents(updatedComponents);
-
-            if (rev.formattedAddress) {
-              let displayAddr = rev.formattedAddress;
-              if (houseMatch && houseMatch[1] && !displayAddr.startsWith(houseMatch[1])) {
-                displayAddr = `${houseMatch[1]} ${displayAddr}`;
-              }
-              setResolvedAddress(displayAddr);
-            }
-          }
-        } catch {
-          // Khi reverse geocoding lỗi, vẫn giữ nguyên tọa độ ghim và địa chỉ thủ công của khách
-        } finally {
-          setIsReverseGeocoding(false);
-        }
+        await resolveAt(c.lat, c.lng);
       });
 
       if (isMounted) setMapReady(true);
+
+      // Đã có tọa độ sẵn: lấy luôn địa chỉ tại điểm ghim hiện tại (khách xác nhận ngay không cần kéo)
+      if (initialCoords) {
+        resolveAt(startLat, startLng);
+      }
     }
 
     initMap();
@@ -288,13 +381,31 @@ export default function LocationConfirmMapModal({
     );
   }, []);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const confidence = distanceShiftMeters > 200 ? 'medium' : 'high';
+    let components = addressComponents;
+    let display = resolvedAddress;
+    // Địa chỉ chưa kịp cập nhật theo điểm ghim cuối cùng: đợi phân giải xong rồi mới xác nhận
+    const done = resolvedForRef.current;
+    const isFresh =
+      done && Math.abs(done.lat - centerCoords.lat) < 1e-6 && Math.abs(done.lng - centerCoords.lng) < 1e-6;
+    if (isFresh && done) {
+      components = done.components;
+      display = done.display;
+    } else if (resolveAtRef.current) {
+      setIsConfirming(true);
+      const r = await resolveAtRef.current(centerCoords.lat, centerCoords.lng);
+      setIsConfirming(false);
+      if (r) {
+        components = r.components;
+        display = r.display;
+      }
+    }
     onConfirm({
       lat: centerCoords.lat,
       lng: centerCoords.lng,
-      formattedAddress: resolvedAddress || initialAddress || '',
-      components: addressComponents,
+      formattedAddress: display || initialAddress || '',
+      components,
       confidence,
     });
     onClose();
@@ -441,6 +552,13 @@ export default function LocationConfirmMapModal({
             <p className="text-base text-gray-900 truncate">
               {resolvedAddress || initialAddress || 'Đang cập nhật địa chỉ...'}
             </p>
+            {houseNote !== 'none' && !isReverseGeocoding && (
+              <p className="text-[11px] text-amber-800 mt-0.5">
+                {houseNote === 'kept'
+                  ? 'Bản đồ chưa có số nhà tại điểm này nên đang giữ số nhà bạn đã gõ. Nếu khác, bạn sửa lại trong ô địa chỉ nhé.'
+                  : 'Bản đồ chưa có số nhà tại điểm này. Sau khi xác nhận, bạn gõ thêm số nhà vào ô địa chỉ nhé.'}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -454,9 +572,10 @@ export default function LocationConfirmMapModal({
             <button
               type="button"
               onClick={handleConfirm}
-              className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-base shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              disabled={isConfirming}
+              className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-base shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
             >
-              <Check className="w-4 h-4" />
+              {isConfirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               <span>Xác nhận vị trí</span>
             </button>
           </div>

@@ -61,6 +61,7 @@ function DeliveryMiniMap({
 }: DeliveryMiniMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const coordsRef = useRef(coords);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -76,16 +77,12 @@ function DeliveryMiniMap({
 
     async function setupMiniMap() {
       const L = (await import('leaflet')).default;
-      if (isCancelled || !containerRef.current) return;
+      if (isCancelled || !containerRef.current || mapInstanceRef.current) return;
 
-      const targetLat = coords?.lat || 10.7769;
-      const targetLng = coords?.lng || 106.7009;
-      const targetZoom = coords ? 16 : 13;
-
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.setView([targetLat, targetLng], targetZoom, { animate: true });
-        return;
-      }
+      const startCoords = coordsRef.current;
+      const targetLat = startCoords?.lat || 10.7769;
+      const targetLng = startCoords?.lng || 106.7009;
+      const targetZoom = startCoords ? 17 : 13;
 
       const map = L.map(containerRef.current, {
         center: [targetLat, targetLng],
@@ -120,7 +117,21 @@ function DeliveryMiniMap({
         mapInstanceRef.current = null;
       }
     };
-  }, [mounted, coords]);
+  }, [mounted]);
+
+  // Tọa độ đổi (chọn gợi ý, ghim lại, GPS): nhảy ghim tới vị trí mới, không dựng lại bản đồ
+  const pinLat = coords?.lat;
+  const pinLng = coords?.lng;
+  useEffect(() => {
+    coordsRef.current = pinLat !== undefined && pinLng !== undefined ? { lat: pinLat, lng: pinLng } : null;
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    if (pinLat !== undefined && pinLng !== undefined) {
+      map.flyTo([pinLat, pinLng], 17, { duration: 0.6 });
+    } else {
+      map.setView([10.7769, 106.7009], 13);
+    }
+  }, [pinLat, pinLng]);
 
   if (!mounted) {
     return (
@@ -302,6 +313,17 @@ export default function CheckoutPage() {
   });
   // Địa chỉ do ghim điền vào: không bật gợi ý / không hiện khung xác định lại
   const pinAddressRef = useRef<string | null>(null);
+  // Địa chỉ khách đã chốt (chọn gợi ý / ghim / GPS): không gợi ý thêm, không geocode lại đè tọa độ
+  const chosenAddressRef = useRef<string | null>(null);
+  // Nội dung ô "Số nhà, tên đường" mới nhất (đọc trong các hàm khai báo trước biến form)
+  const latestAddressRef = useRef('');
+  // Thời điểm vừa chọn gợi ý: chặn việc rời ô nhập tự chọn gợi ý đầu tiên đè lên lựa chọn của khách
+  const lastPickAtRef = useRef(0);
+  // Tọa độ hiện tại (đọc trong các bước bất đồng bộ)
+  const customerCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    customerCoordsRef.current = customerCoords;
+  }, [customerCoords]);
   // Tọa độ geocode của địa chỉ gõ tay (chỉ dùng để cảnh báo lệch so với ghim)
   const [typedAddrCoords, setTypedAddrCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Khoảng cách (km) giữa ghim khách chấm và địa chỉ gõ tay; > 1km coi là lệch
@@ -407,7 +429,10 @@ export default function CheckoutPage() {
     setCustomerCoords({ lat: confirmed.lat, lng: confirmed.lng });
     setLocationConfirmed(true);
     setLocationConfirmedBy('USER_MAP_PIN');
-    pinAddressRef.current = confirmed.components?.street || null;
+    // Địa chỉ sau khi ghim: theo điểm ghim nếu có, không thì giữ địa chỉ khách đã gõ
+    const pinnedAddress = confirmed.components?.street || latestAddressRef.current || null;
+    pinAddressRef.current = pinnedAddress;
+    chosenAddressRef.current = pinnedAddress;
     setTypedAddrCoords(null);
     setShowSuggestions(false);
     setSuggestions([]);
@@ -472,6 +497,10 @@ export default function CheckoutPage() {
           }>(`/api/geo/reverse?lat=${coords.lat}&lng=${coords.lng}`);
 
           if (revData?.success && revData.components) {
+            // Tọa độ GPS là chuẩn nhất: không để bước gợi ý / geocode địa chỉ gõ tay đè lên
+            chosenAddressRef.current = revData.components.street || latestAddressRef.current || null;
+            setShowSuggestions(false);
+            setSuggestions([]);
             setForm((prev) => ({
               ...prev,
               province: revData.components?.province || prev.province,
@@ -520,6 +549,9 @@ export default function CheckoutPage() {
     address: '',
     note: '',
   });
+  useEffect(() => {
+    latestAddressRef.current = form.address;
+  }, [form.address]);
 
   // Danh mục tỉnh / thành phố hành chính Việt Nam
   // Hiện chỉ giao tại TP. Hồ Chí Minh
@@ -616,12 +648,17 @@ export default function CheckoutPage() {
       setIsSearchingAddress(false);
       return;
     }
-    if (pinLockedRef.current && form.address === pinAddressRef.current) {
+    if (
+      (pinLockedRef.current && form.address === pinAddressRef.current) ||
+      form.address === chosenAddressRef.current
+    ) {
+      // Khách đã chọn xong địa chỉ: không gợi ý thêm
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
+    let cancelled = false;
     const timer = setTimeout(async () => {
       setIsSearchingAddress(true);
       try {
@@ -634,6 +671,8 @@ export default function CheckoutPage() {
         const data = await safeFetchJson<{ success: boolean; predictions?: AutocompleteSuggestion[] }>(
           `/api/geo/autocomplete?${params.toString()}`
         );
+        // Kết quả về muộn sau khi khách đã chọn / gõ tiếp: bỏ qua
+        if (cancelled) return;
         if (data?.success && Array.isArray(data.predictions)) {
           setSuggestions(data.predictions);
           if (data.predictions.length > 0) {
@@ -643,11 +682,15 @@ export default function CheckoutPage() {
       } catch (err) {
         console.error('Error fetching address suggestions:', err);
       } finally {
-        setIsSearchingAddress(false);
+        if (!cancelled) setIsSearchingAddress(false);
       }
     }, 350);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      setIsSearchingAddress(false);
+    };
   }, [form.address, form.ward, form.district, form.province]);
 
   // Geocode ngầm địa chỉ tự động chọn Tỉnh, Quận, Phường khi người dùng gõ số nhà tên đường
@@ -656,7 +699,12 @@ export default function CheckoutPage() {
       setTypedAddrCoords(null);
       return;
     }
+    // Địa chỉ đã chốt từ gợi ý / ghim / GPS đã có tọa độ chuẩn: không geocode lại đè lên
+    if (form.address && form.address === chosenAddressRef.current) {
+      return;
+    }
     if (form.address && form.address.trim().length >= 4) {
+      let cancelled = false;
       const timer = setTimeout(async () => {
         try {
           const defaultProv = form.province || 'TP. Hồ Chí Minh';
@@ -667,11 +715,13 @@ export default function CheckoutPage() {
             formattedAddress?: string;
             components?: { province?: string; district?: string; ward?: string; street?: string };
             source?: string;
+            precision?: 'house' | 'street' | 'area';
           }>(
             `/api/geo/geocode?address=${encodeURIComponent(form.address)}&ward=${encodeURIComponent(
               form.ward
             )}&district=${encodeURIComponent(form.district)}&province=${encodeURIComponent(defaultProv)}`
           );
+          if (cancelled || form.address === chosenAddressRef.current) return;
           if (data?.success) {
             if (pinLockedRef.current) {
               // Khách đã ghim: chỉ so sánh địa chỉ gõ tay với ghim, không dời ghim, không đổi Tỉnh/Quận/Phường
@@ -680,7 +730,8 @@ export default function CheckoutPage() {
               return;
             }
             setTypedAddrCoords(null);
-            if (data.lat && data.lng) {
+            // Kết quả chỉ ở mức phường/quận thì không dời ghim đang có (tránh ghim nhảy xa nhà khách)
+            if (data.lat && data.lng && !(data.precision === 'area' && customerCoordsRef.current)) {
               setCustomerCoords({ lat: data.lat, lng: data.lng });
             }
             if (data.components) {
@@ -724,28 +775,50 @@ export default function CheckoutPage() {
           // ignore
         }
       }, 500);
-      return () => clearTimeout(timer);
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
     }
   }, [form.address, form.ward, form.district, form.province]);
 
   // Chọn một địa chỉ từ gợi ý Google Maps / Nominatim / Tuyến đường GPS
   const handleSelectSuggestion = async (suggestion: AutocompleteSuggestion) => {
+    const targetAddress = removeKhuPho(suggestion.main_text || form.address);
+    // Đã chọn xong: chốt địa chỉ này, không hiện thêm gợi ý nào nữa
+    chosenAddressRef.current = targetAddress;
+    lastPickAtRef.current = Date.now();
     setShowSuggestions(false);
     setSuggestions([]);
+    setTypedAddrCoords(null);
     setIsSearchingAddress(true);
+
+    // Khách đã tự ghim và gợi ý nằm gần ghim (≤ 300m): giữ ghim của khách vì chính xác hơn
+    const pinned = pinLockedRef.current ? customerCoordsRef.current : null;
+    const keepUserPin =
+      !!pinned &&
+      (!suggestion.lat ||
+        !suggestion.lng ||
+        calculateHaversineDistance(pinned.lat, pinned.lng, suggestion.lat, suggestion.lng) <= 0.3);
+    if (keepUserPin) pinAddressRef.current = targetAddress;
+
+    const moveSuggestionPin = (lat: number, lng: number) => {
+      if (keepUserPin) return;
+      setCustomerCoords({ lat, lng });
+      setLocationConfirmed(false);
+      setLocationConfirmedBy('AUTOCOMPLETE_SUGGESTION');
+    };
+
     try {
-      // 1. Áp dụng ngay tọa độ GPS chính xác từ gợi ý (không để bước sau làm lệch tọa độ thực)
+      // 1. Áp dụng ngay tọa độ GPS từ gợi ý để ghim trên bản đồ nhỏ nhảy tới vị trí này
       if (suggestion.lat && suggestion.lng) {
-        setCustomerCoords({ lat: suggestion.lat, lng: suggestion.lng });
-        setLocationConfirmed(false);
-        setLocationConfirmedBy('AUTOCOMPLETE_SUGGESTION');
+        moveSuggestionPin(suggestion.lat, suggestion.lng);
       }
 
       // 2. Tự động điền đầy đủ và chọn ngay Tỉnh/Thành, Quận/Huyện, Phường/Xã cho người dùng (loại bỏ hoàn toàn Khu phố)
       const targetProv = suggestion.province || form.province || 'TP. Hồ Chí Minh';
       const targetDist = suggestion.district || form.district;
       const targetWard = removeKhuPho(suggestion.ward) || form.ward;
-      const targetAddress = removeKhuPho(suggestion.main_text || form.address);
 
       setForm((prev) => ({
         ...prev,
@@ -765,8 +838,12 @@ export default function CheckoutPage() {
         address: '',
       }));
 
-      // 3. Nếu còn thiếu Quận hoặc Phường từ nguồn gợi ý, gọi geocode chuyên sâu để tự động bổ sung
-      if (!targetDist || !targetWard) {
+      // 3. Gọi geocode chuyên sâu khi: còn thiếu Quận/Phường, gợi ý chưa có tọa độ,
+      //    hoặc địa chỉ có số nhà (thử tìm đúng vị trí căn nhà thay vì điểm giữa con đường)
+      const missingAdmin = !targetDist || !targetWard;
+      const missingCoords = !suggestion.lat || !suggestion.lng;
+      const hasHouseNumber = /^\d/.test(targetAddress);
+      if (missingAdmin || missingCoords || hasHouseNumber) {
         const data = await safeFetchJson<any>(
           `/api/geo/geocode?place_id=${encodeURIComponent(suggestion.place_id)}&address=${encodeURIComponent(
             suggestion.description
@@ -775,8 +852,19 @@ export default function CheckoutPage() {
           )}&ward=${encodeURIComponent(targetWard || '')}`
         );
 
+        // Khách đã chọn địa chỉ khác trong lúc chờ: bỏ kết quả này
+        if (chosenAddressRef.current !== targetAddress) return;
         if (data?.success) {
-          if (data.components) {
+          if (data.lat && data.lng) {
+            const nearSuggestion =
+              missingCoords ||
+              calculateHaversineDistance(data.lat, data.lng, suggestion.lat!, suggestion.lng!) <= 2;
+            // Chỉ thay tọa độ gợi ý khi gợi ý chưa có tọa độ, hoặc tìm được đúng căn nhà gần đó
+            if (missingCoords || (data.precision === 'house' && nearSuggestion)) {
+              moveSuggestionPin(data.lat, data.lng);
+            }
+          }
+          if (missingAdmin && data.components) {
             setForm((prev) => ({
               ...prev,
               province: data.components.province || targetProv,
@@ -785,7 +873,7 @@ export default function CheckoutPage() {
               address: targetAddress,
             }));
           }
-          if (data.formattedAddress) {
+          if (missingAdmin && data.formattedAddress) {
             setGeoResolvedDesc(removeKhuPho(data.formattedAddress));
           }
         }
@@ -793,14 +881,14 @@ export default function CheckoutPage() {
     } catch (err) {
       console.error('Error handling selected suggestion:', err);
       if (suggestion.lat && suggestion.lng) {
-        setCustomerCoords({ lat: suggestion.lat, lng: suggestion.lng });
+        moveSuggestionPin(suggestion.lat, suggestion.lng);
       }
       setForm((prev) => ({
         ...prev,
         province: suggestion.province || prev.province || 'TP. Hồ Chí Minh',
         district: suggestion.district || prev.district,
         ward: suggestion.ward || prev.ward,
-        address: suggestion.main_text || prev.address,
+        address: targetAddress || prev.address,
       }));
       setGeoResolvedDesc(suggestion.description);
     } finally {
@@ -861,6 +949,8 @@ export default function CheckoutPage() {
         note: prev.note || '',
       }));
       if (user.latitude && user.longitude && !customerCoords) {
+        // Địa chỉ đã lưu kèm tọa độ: không bật gợi ý, không geocode lại đè tọa độ đã lưu
+        if (user.address) chosenAddressRef.current = user.address;
         setCustomerCoords({ lat: Number(user.latitude), lng: Number(user.longitude) });
         setLocationConfirmed(true);
         setLocationConfirmedBy('USER_SAVED_PROFILE');
@@ -1658,6 +1748,8 @@ export default function CheckoutPage() {
                     onBlur={() => {
                       // Nếu khách hàng gõ số nhà tên đường xong mà rời ô input, tự động chọn gợi ý VIP số 1 nếu chưa có quận/phường
                       setTimeout(() => {
+                        // Khách vừa bấm chọn 1 gợi ý: giữ đúng lựa chọn đó, không tự chọn gợi ý đầu tiên đè lên
+                        if (Date.now() - lastPickAtRef.current < 1500) return;
                         if (suggestions.length > 0 && (!form.district || !form.ward)) {
                           handleSelectSuggestion(suggestions[0]);
                         }
@@ -1832,6 +1924,13 @@ export default function CheckoutPage() {
                   addressText={form.address ? `${form.address}, ${form.ward || ''}` : undefined}
                   onOpenModal={() => setIsMapModalOpen(true)}
                 />
+                {customerCoords && !locationConfirmed && locationConfirmedBy === 'AUTOCOMPLETE_SUGGESTION' && (
+                  <p className="mt-1.5 text-[11px] text-amber-800">
+                    {language === 'en'
+                      ? 'Is the pin on your house? If not, tap the map to move it — the address will update to the new pin.'
+                      : 'Ghim đã đúng nhà bạn chưa? Nếu chưa, chạm vào bản đồ để chấm lại, ô số nhà tên đường sẽ tự đổi theo ghim mới.'}
+                  </p>
+                )}
 
                 {/* Tùy chọn lưu làm địa chỉ mặc định cho tài khoản đã đăng nhập */}
                 {user && (

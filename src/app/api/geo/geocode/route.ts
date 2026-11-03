@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findPreciseCoordinates, VIETNAM_ADDRESSES } from '@/data/vietnam-addresses';
-import { findStreetCoordinates } from '@/data/vietnam-streets';
+import { findStreetCoordinates, extractHouseNumberAndStreet } from '@/data/vietnam-streets';
 import { matchStandardAdministrative, isKhuPho, removeKhuPho } from '@/lib/geo';
 
 export const dynamic = 'force-dynamic';
@@ -91,6 +91,7 @@ export async function GET(req: NextRequest) {
                 ...matched,
                 street: street || undefined,
               },
+              precision: rawStreetNum ? 'house' : rawRoute ? 'street' : 'area',
               source: 'google',
             });
           }
@@ -159,6 +160,12 @@ export async function GET(req: NextRequest) {
                 ...matched,
                 street: street || undefined,
               },
+              precision:
+                rawStreetNum && ['ROOFTOP', 'RANGE_INTERPOLATED'].includes(result.geometry?.location_type)
+                  ? 'house'
+                  : rawRoute
+                  ? 'street'
+                  : 'area',
               source: 'google',
             });
           }
@@ -226,7 +233,15 @@ export async function GET(req: NextRequest) {
 
             const matched = matchStandardAdministrative(rawProv, rawDist, rawWard, address);
 
+            // Độ chính xác: chỉ coi là "đúng nhà" khi OSM trả đúng số nhà khách nhập
+            const typedHouse = address ? extractHouseNumberAndStreet(address).houseNumber : '';
+            const sameHouse =
+              !!addr.house_number &&
+              (!typedHouse || String(addr.house_number).trim().toLowerCase() === typedHouse.toLowerCase());
+            const precision = sameHouse ? 'house' : addr.road ? 'street' : 'area';
+
             return NextResponse.json({
+              precision,
               success: true,
               lat,
               lng,
@@ -283,6 +298,7 @@ export async function GET(req: NextRequest) {
             ward: resolvedWard,
             street: resolvedStreet,
           },
+          precision: 'street',
           source: 'local',
         });
       }
@@ -306,6 +322,7 @@ export async function GET(req: NextRequest) {
           ...matched,
           street: extractStreetFromAddress(address) || address,
         },
+        precision: 'area',
         source: 'local',
       });
     }

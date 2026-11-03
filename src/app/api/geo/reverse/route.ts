@@ -4,6 +4,56 @@ import { calculateHaversineDistance, matchStandardAdministrative, isKhuPho, remo
 
 export const dynamic = 'force-dynamic';
 
+function normalizeText(str: string): string {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/^(duong|pho)\s+/, '')
+    .trim();
+}
+
+/**
+ * Tìm số nhà OSM gần điểm ghim nhất (trong bán kính 30m) qua Overpass.
+ * Ưu tiên nhà ghi cùng tên đường. Không có dữ liệu hoặc lỗi mạng thì trả null.
+ */
+async function findNearbyHouseNumber(lat: number, lng: number, road?: string): Promise<string | null> {
+  try {
+    const query = `[out:json][timeout:3];nwr(around:30,${lat},${lng})["addr:housenumber"];out center 20;`;
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'ThaiSonFoodsWeb/1.0 (contact@thaisonfoods.vn)',
+      },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const roadNorm = road ? normalizeText(road) : '';
+    let best: { num: string; dist: number; sameRoad: boolean } | null = null;
+    for (const el of data?.elements || []) {
+      const num = el.tags?.['addr:housenumber'];
+      const eLat = el.lat ?? el.center?.lat;
+      const eLng = el.lon ?? el.center?.lon;
+      if (!num || typeof eLat !== 'number' || typeof eLng !== 'number') continue;
+      const elStreet = el.tags?.['addr:street'];
+      // Nhà ghi tên đường khác hẳn đường đang ghim thì bỏ qua
+      if (roadNorm && elStreet && normalizeText(elStreet) !== roadNorm) continue;
+      const sameRoad = !!(roadNorm && elStreet);
+      const dist = calculateHaversineDistance(lat, lng, eLat, eLng);
+      if (!best || (sameRoad && !best.sameRoad) || (sameRoad === best.sameRoad && dist < best.dist)) {
+        best = { num: String(num).trim(), dist, sameRoad };
+      }
+    }
+    return best ? best.num : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -39,7 +89,14 @@ export async function GET(req: NextRequest) {
         if (gRes.ok) {
           const gData = await gRes.json();
           if (gData.status === 'OK' && gData.results?.[0]) {
-            const first = gData.results[0];
+            // Ưu tiên kết quả có số nhà, rồi tới kết quả có tên đường (results[0] đôi khi chỉ là plus code)
+            const results: any[] = gData.results;
+            const hasType = (r: any, t: string) =>
+              (r.address_components || []).some((c: any) => (c.types || []).includes(t));
+            const first =
+              results.find((r) => hasType(r, 'street_number')) ||
+              results.find((r) => hasType(r, 'route')) ||
+              results[0];
             const components = first.address_components || [];
 
             let rawProv = '';
@@ -77,6 +134,8 @@ export async function GET(req: NextRequest) {
               components: {
                 ...matched,
                 street: street || undefined,
+                houseNumber: rawStreetNum || undefined,
+                road: rawRoute || undefined,
               },
               source: 'google',
             });
@@ -89,7 +148,7 @@ export async function GET(req: NextRequest) {
 
     // 2. OpenStreetMap Reverse Geocode
     try {
-      const nomUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=vi`;
+      const nomUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&zoom=18&accept-language=vi`;
       const nRes = await fetch(nomUrl, {
         headers: {
           'User-Agent': 'ThaiSonFoodsWeb/1.0 (contact@thaisonfoods.vn)',
@@ -118,7 +177,12 @@ export async function GET(req: NextRequest) {
           }
           if (isKhuPho(rawWard)) rawWard = '';
 
-          const rawStreet = [addr.house_number, addr.road].filter(Boolean).join(' ');
+          let houseNumber: string = addr.house_number || '';
+          // OSM thường thiếu số nhà ngay điểm ghim: tìm số nhà gần nhất quanh điểm ghim
+          if (!houseNumber) {
+            houseNumber = (await findNearbyHouseNumber(lat, lng, addr.road)) || '';
+          }
+          const rawStreet = [houseNumber, addr.road].filter(Boolean).join(' ');
           const matched = matchStandardAdministrative(rawProv, rawDist, rawWard);
 
           return NextResponse.json({
@@ -130,6 +194,8 @@ export async function GET(req: NextRequest) {
               ...matched,
               ward: matched.ward && !isKhuPho(matched.ward) ? removeKhuPho(matched.ward) : undefined,
               street: removeKhuPho(rawStreet) || undefined,
+              houseNumber: houseNumber || undefined,
+              road: addr.road ? removeKhuPho(addr.road) : undefined,
             },
             source: 'nominatim',
           });
