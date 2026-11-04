@@ -13,7 +13,17 @@ import {
   Building,
 } from 'lucide-react';
 import { cn, safeFetchJson } from '@/lib/utils';
-import { calculateHaversineDistance } from '@/lib/geo';
+
+/** Khoảng cách chính xác tới từng mét (hàm dùng chung làm tròn 0,1 km nên không đo được vài chục mét) */
+function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
 
 type AddressComponents = { province?: string; district?: string; ward?: string; street?: string };
 
@@ -55,14 +65,15 @@ function buildStreetFromPin(
   rev: { street?: string; houseNumber?: string; road?: string },
   typedAddress: string,
   shiftMeters: number
-): { street?: string; houseNote: 'none' | 'missing' | 'kept' } {
+): { street?: string; houseNote: 'none' | 'missing' | 'kept' | 'noRoad' } {
   const typed = (typedAddress || '').trim();
   if (typed && shiftMeters < 5) return { street: undefined, houseNote: 'none' };
 
   const revSplit = splitHouseNumber(rev.street);
   const road = rev.road || revSplit.rest;
   const revHouse = rev.houseNumber || revSplit.house;
-  if (!road) return { street: undefined, houseNote: 'none' };
+  // Điểm ghim không nằm trên con đường nào (quảng trường, vòng xoay...): giữ địa chỉ cũ nhưng nhắc kiểm tra
+  if (!road) return { street: undefined, houseNote: shiftMeters >= 30 ? 'noRoad' : 'none' };
 
   const t = splitHouseNumber(typed);
   // Chỉ nhích ghim vài mét trên cùng con đường: khách đang canh lại cửa nhà, giữ số nhà đã gõ
@@ -123,7 +134,7 @@ export default function LocationConfirmMapModal({
   const [locationDenied, setLocationDenied] = useState(false);
   const userDotRef = useRef<any>(null);
   // Điểm ghim chưa có số nhà trên bản đồ: nhắc khách tự bổ sung / kiểm tra số nhà đang giữ
-  const [houseNote, setHouseNote] = useState<'none' | 'missing' | 'kept'>('none');
+  const [houseNote, setHouseNote] = useState<'none' | 'missing' | 'kept' | 'noRoad'>('none');
   const [isConfirming, setIsConfirming] = useState(false);
   // Phân giải địa chỉ tại 1 tọa độ; bỏ kết quả cũ nếu khách đã kéo tiếp
   const resolveAtRef = useRef<
@@ -202,13 +213,9 @@ export default function LocationConfirmMapModal({
         const c = map.getCenter();
         if (isMounted) {
           setCenterCoords({ lat: c.lat, lng: c.lng });
-          const distKm = calculateHaversineDistance(
-            originalCoords.current.lat,
-            originalCoords.current.lng,
-            c.lat,
-            c.lng
+          setDistanceShiftMeters(
+            distanceMeters(originalCoords.current.lat, originalCoords.current.lng, c.lat, c.lng)
           );
-          setDistanceShiftMeters(Math.round(distKm * 1000));
         }
       });
 
@@ -219,9 +226,7 @@ export default function LocationConfirmMapModal({
         try {
           const rev = await safeFetchJson<any>(`/api/geo/reverse?lat=${lat}&lng=${lng}`);
           if (!isMounted || seq !== reverseSeqRef.current || !rev?.success) return null;
-          const shiftMeters = Math.round(
-            calculateHaversineDistance(originalCoords.current.lat, originalCoords.current.lng, lat, lng) * 1000
-          );
+          const shiftMeters = distanceMeters(originalCoords.current.lat, originalCoords.current.lng, lat, lng);
           const { street, houseNote: note } = buildStreetFromPin(
             rev.components || {},
             initialAddress || '',
@@ -556,6 +561,8 @@ export default function LocationConfirmMapModal({
               <p className="text-[11px] text-amber-800 mt-0.5">
                 {houseNote === 'kept'
                   ? 'Bản đồ chưa có số nhà tại điểm này nên đang giữ số nhà bạn đã gõ. Nếu khác, bạn sửa lại trong ô địa chỉ nhé.'
+                  : houseNote === 'noRoad'
+                  ? 'Điểm ghim không nằm trên con đường nào nên đang giữ địa chỉ cũ. Hãy kéo ghim vào đúng cửa nhà hoặc sửa lại ô địa chỉ.'
                   : 'Bản đồ chưa có số nhà tại điểm này. Sau khi xác nhận, bạn gõ thêm số nhà vào ô địa chỉ nhé.'}
               </p>
             )}

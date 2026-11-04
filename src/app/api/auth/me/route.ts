@@ -75,7 +75,10 @@ export async function PUT(req: NextRequest) {
     const latVal = typeof latitude === 'number' && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 ? latitude : null;
     const lngVal = typeof longitude === 'number' && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180 ? longitude : null;
 
-    if (latVal !== null && lngVal !== null) {
+    // Gửi rõ latitude = null và longitude = null: khách đổi địa chỉ mà chưa ghim lại → xóa tọa độ cũ cho khỏi lệch
+    const clearLocation = latitude === null && longitude === null;
+
+    if ((latVal !== null && lngVal !== null) || clearLocation) {
       await query(
         `UPDATE users
          SET full_name = $1, phone = $2, address = $3, province = $4, district = $5, ward = $6, latitude = $7, longitude = $8, updated_at = CURRENT_TIMESTAMP

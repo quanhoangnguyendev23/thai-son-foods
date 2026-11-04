@@ -37,6 +37,9 @@ export interface UpdateProfileInput {
   province?: string;
   district?: string;
   ward?: string;
+  /** Tọa độ vị trí giao hàng cố định; null = xóa tọa độ cũ, bỏ trống = giữ nguyên */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface UserAuthContextType {
