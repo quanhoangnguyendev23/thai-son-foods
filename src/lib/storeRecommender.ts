@@ -447,7 +447,10 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
   }
 
   // 3. Sắp xếp các cửa hàng hợp lệ theo điểm Score tăng dần
-  processedItems.sort((a, b) => a.score - b.score);
+  // Chi nhánh đủ hàng luôn đứng trước chi nhánh thiếu hàng; cùng nhóm thì xét điểm (gần, nhanh, không phụ thu)
+  const stockRank = (st: StoreRecommendationItem) =>
+    st.stockStatus === 'partial' ? 1 : st.stockStatus === 'out_of_stock' ? 2 : 0;
+  processedItems.sort((a, b) => stockRank(a) - stockRank(b) || a.score - b.score);
 
   // Gắn nhãn badge cho Top đề xuất
   if (processedItems.length > 0) {

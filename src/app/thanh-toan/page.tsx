@@ -290,7 +290,7 @@ export default function CheckoutPage() {
   } | null>(null);
 
   // Chi nhánh phục vụ: MẶC ĐỊNH lấy từ chi nhánh đang chọn toàn site
-  const { selectedBranch, setSelectedBranch, branchChosenManually } = useBranchStore();
+  const { selectedBranch, setSelectedBranch } = useBranchStore();
   const [stores, setStores] = useState<any[]>([]);
   const [selectedStoreCode, setSelectedStoreCode] = useState<string>(
     selectedBranch?.code || 'NH'
@@ -355,6 +355,11 @@ export default function CheckoutPage() {
   } | null>(null);
   const [isLoadingRecommend, setIsLoadingRecommend] = useState(false);
   const recommendSeqRef = useRef(0);
+  // Tọa độ mà khách đã tự đổi chi nhánh ở trang này (đổi địa chỉ thì hệ thống lại tự chọn chi nhánh gần nhất)
+  const storePickedForCoordsRef = useRef<string | null>(null);
+  const coordsKey = (c: { lat: number; lng: number }) => `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`;
+  // Dòng giải thích vì sao hệ thống tự chọn chi nhánh
+  const [autoPickNote, setAutoPickNote] = useState<string | null>(null);
 
   // Nạp danh sách stores và đồng bộ chi nhánh đang chọn
   useEffect(() => {
@@ -399,14 +404,29 @@ export default function CheckoutPage() {
             unavailable: res.unavailable || [],
           });
 
-          // Tự động gán chi nhánh tối ưu nếu người dùng chưa can thiệp thủ công
-          // Khách đã tự chọn chi nhánh (vd. D1 ở thanh trên) thì giữ nguyên, chỉ hiển thị đề xuất để khách cân nhắc
-          if (res.recommended && !wasOverridden && !branchChosenManually) {
-            setSelectedStoreCode(res.recommended.code);
-            const matched = stores.find((s) => s.code === res.recommended.code);
+          // Khách đã có địa chỉ giao: tự chọn chi nhánh gần nhất còn đủ hàng (thay cho chi nhánh chọn sẵn ở thanh trên).
+          // Chỉ giữ lựa chọn tay nếu khách tự đổi chi nhánh ở trang này cho đúng địa chỉ hiện tại.
+          const pickedByHand = storePickedForCoordsRef.current === coordsKey(coords);
+          if (res.recommended && !pickedByHand) {
+            const rec = res.recommended as StoreRecommendationItem;
+            setSelectedStoreCode(rec.code);
+            setWasOverridden(false);
+            const matched = stores.find((s) => s.code === rec.code);
             if (matched) {
               setSelectedBranch(matched, 'auto');
             }
+            // Giải thích vì sao chọn chi nhánh này (gần nhất, hoặc chi nhánh gần hơn đang thiếu hàng)
+            const candidates: StoreRecommendationItem[] = [
+              rec,
+              ...(res.alternatives || []),
+              ...(res.others || []),
+            ];
+            const nearest = candidates.reduce((a, b) => (b.roadKm < a.roadKm ? b : a), rec);
+            setAutoPickNote(
+              nearest.code !== rec.code && (nearest.stockStatus === 'partial' || nearest.stockStatus === 'out_of_stock')
+                ? `Đã tự chọn ${rec.name} (~${rec.roadKm} km) vì ${nearest.name} gần hơn (~${nearest.roadKm} km) nhưng không đủ hàng cho giỏ của bạn.`
+                : `Đã tự chọn chi nhánh gần bạn nhất còn đủ hàng: ${rec.name} (~${rec.roadKm} km).`
+            );
           }
         }
       } catch (err) {
@@ -415,7 +435,7 @@ export default function CheckoutPage() {
         if (seq === recommendSeqRef.current) setIsLoadingRecommend(false);
       }
     },
-    [fulfillmentMode, items, wasOverridden, branchChosenManually, stores, setSelectedBranch]
+    [fulfillmentMode, items, stores, setSelectedBranch]
   );
 
   // Tự động gọi API đề xuất khi có tọa độ GPS khách hàng hoặc khi đổi chế độ giao hàng
@@ -426,6 +446,9 @@ export default function CheckoutPage() {
   }, [customerCoords, fulfillmentMode, fetchStoreRecommendation]);
 
   const handleSelectStore = (storeCode: string) => {
+    // Khách tự đổi chi nhánh: giữ lựa chọn này cho tới khi khách đổi địa chỉ / ghim
+    storePickedForCoordsRef.current = customerCoords ? coordsKey(customerCoords) : null;
+    setAutoPickNote(null);
     setSelectedStoreCode(storeCode);
     setSuggestedCloserStore(null);
     if (recommendData?.recommended && recommendData.recommended.code !== storeCode) {
@@ -2166,6 +2189,14 @@ export default function CheckoutPage() {
                   )}
                 </div>
               </div>
+
+              {/* Vì sao hệ thống tự chọn chi nhánh này theo địa chỉ khách */}
+              {autoPickNote && fulfillmentMode === 'delivery' && (
+                <p className="flex items-start gap-1.5 text-xs text-emerald-800">
+                  <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>{autoPickNote}</span>
+                </p>
+              )}
 
               {/* Cảnh báo nếu nằm ngoài bán kính phục vụ chuẩn của chi nhánh */}
               {/* Giao xa hơn 10 km: báo phụ thu, hoặc quá bán kính tối đa thì không nhận giao */}
