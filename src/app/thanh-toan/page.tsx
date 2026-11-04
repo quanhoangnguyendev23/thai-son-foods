@@ -340,6 +340,7 @@ export default function CheckoutPage() {
     unavailable: Array<{ store: Partial<StoreRecommendationItem>; reason: string }>;
   } | null>(null);
   const [isLoadingRecommend, setIsLoadingRecommend] = useState(false);
+  const recommendSeqRef = useRef(0);
 
   // Nạp danh sách stores và đồng bộ chi nhánh đang chọn
   useEffect(() => {
@@ -360,6 +361,8 @@ export default function CheckoutPage() {
   // Gọi API đề xuất chi nhánh thông minh tối ưu (Mục 18.3)
   const fetchStoreRecommendation = useCallback(
     async (coords: { lat: number; lng: number }, mode: 'delivery' | 'pickup' = fulfillmentMode) => {
+      // Khách đổi vị trí liên tục: chỉ nhận kết quả của lần gọi mới nhất
+      const seq = ++recommendSeqRef.current;
       setIsLoadingRecommend(true);
       try {
         const res = await safeFetchJson<any>('/api/stores/recommend', {
@@ -373,6 +376,7 @@ export default function CheckoutPage() {
           }),
         });
 
+        if (seq !== recommendSeqRef.current) return;
         if (res?.success) {
           setRecommendData({
             recommended: res.recommended || null,
@@ -394,7 +398,7 @@ export default function CheckoutPage() {
       } catch (err) {
         console.error('Error fetching store recommendations:', err);
       } finally {
-        setIsLoadingRecommend(false);
+        if (seq === recommendSeqRef.current) setIsLoadingRecommend(false);
       }
     },
     [fulfillmentMode, items, wasOverridden, branchChosenManually, stores, setSelectedBranch]
