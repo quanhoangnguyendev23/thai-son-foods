@@ -16,6 +16,7 @@ import {
 import { useBranchStore, StoreBranch } from '@/store/branch';
 import { calculateHaversineDistance } from '@/lib/geo';
 import { cn, safeFetchJson } from '@/lib/utils';
+import { sortDistrictNames } from '@/lib/sortDistricts';
 
 interface BranchSelectorModalProps {
   productId?: string; // Tùy chọn nếu đang mở từ trang sản phẩm để hiển thị tồn kho của món đó
@@ -86,7 +87,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
         if (b.district) set.add(b.district);
       }
     });
-    return Array.from(set);
+    return sortDistrictNames(Array.from(set));
   }, [branches, selectedProvince]);
 
   // Xử lý lấy vị trí GPS từ trình duyệt

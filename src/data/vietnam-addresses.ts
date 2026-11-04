@@ -5,6 +5,8 @@
  * Kèm tọa độ GPS trung tâm từng khu vực để ước tính khoảng cách chính xác đến chuỗi cửa hàng Thái Sơn Foods.
  */
 
+import { sortDistrictsByName } from '@/lib/sortDistricts';
+
 export interface WardItem {
   name: string;
   lat?: number;
@@ -1031,7 +1033,7 @@ export function getDistrictsByProvince(provinceName: string): DistrictItem[] {
               item.name.toLowerCase().includes(provinceName.toLowerCase()) ||
               provinceName.toLowerCase().includes(item.name.toLowerCase())
   );
-  return p ? p.districts : [];
+  return p ? sortDistrictsByName(p.districts) : [];
 }
 
 /**
