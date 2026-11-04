@@ -615,7 +615,7 @@ export default function HeaderAmazon() {
           onFocusCapture={() => setIsNavHidden(false)}
         >
           <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-11 lg:h-10">
-            <nav className="flex w-full lg:w-auto flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
+            <nav className="flex w-full lg:w-auto lg:flex-[0_1_auto] flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(true)}
@@ -651,23 +651,23 @@ export default function HeaderAmazon() {
               ))}
             </nav>
 
-            {/* Dải tin cậy: cam kết + hotline (từ Header gốc & BranchTopBar), chữ ≥ 13px */}
-            <div className="hidden xl:flex items-center gap-2.5 ml-auto text-[13px] text-white/90 shrink-0" aria-label={isEn ? 'Our commitments' : 'Cam kết'}>
-              {/* 1280–1439px chỉ đủ chỗ cho hotline; từ 1440px hiện đủ 3 mục */}
-              <span className="hidden min-[1440px]:flex items-center gap-1">
-                <Leaf className="w-3.5 h-3.5 text-corn" aria-hidden />
-                {t('naturalIngredients')}
-              </span>
-              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
-              <span className="hidden min-[1440px]:flex items-center gap-1">
-                <Truck className="w-3.5 h-3.5 text-corn" aria-hidden />
-                {t('fastDelivery')}
-              </span>
-              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
-              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 hover:text-corn cursor-pointer">
+            {/* Dải tin cậy: menu bên trái luôn hiện đủ, dải này chỉ lấp phần còn trống.
+                Xếp từ phải sang trái (hotline ưu tiên nhất); mục nào không đủ chỗ sẽ rơi xuống dòng 2 và bị ẩn. */}
+            <div className="hidden xl:flex flex-[1_1_0%] min-w-0 h-10 flex-row-reverse flex-wrap justify-start items-center gap-x-2.5 overflow-hidden text-[13px] text-white/90" aria-label={isEn ? 'Our commitments' : 'Cam kết'}>
+              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex h-10 shrink-0 items-center gap-1 whitespace-nowrap hover:text-corn cursor-pointer">
                 <Headphones className="w-3.5 h-3.5 text-corn" />
                 {t('support247')}: <strong className="text-white font-normal">028 6291 5024</strong>
               </button>
+              <span className="flex h-10 shrink-0 items-center gap-1 whitespace-nowrap">
+                <Truck className="w-3.5 h-3.5 text-corn" aria-hidden />
+                {t('fastDelivery')}
+                <span className="ml-1.5 text-white/40" aria-hidden>•</span>
+              </span>
+              <span className="flex h-10 shrink-0 items-center gap-1 whitespace-nowrap">
+                <Leaf className="w-3.5 h-3.5 text-corn" aria-hidden />
+                {t('naturalIngredients')}
+                <span className="ml-1.5 text-white/40" aria-hidden>•</span>
+              </span>
             </div>
           </div>
         </div>
