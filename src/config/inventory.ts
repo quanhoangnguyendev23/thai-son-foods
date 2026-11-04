@@ -34,26 +34,38 @@ export const INVENTORY_CONFIG = {
     DEFAULT_FEE: 30000,
     FREE_SHIPPING_THRESHOLD: 200000,
 
-    // GIAI ĐOẠN 5: Cấu trúc tính phí theo khoảng cách km (chuẩn bị sẵn sàng)
+    // Phí theo khoảng cách (chốt 04/11/2026): km = quãng đường đi thật từ cửa hàng phục vụ tới ghim của khách
+    // - Trong 10 km: đơn dưới 200.000đ phí 30.000đ, đơn từ 200.000đ miễn phí
+    // - Vùng đệm: 10 km đến dưới 11 km chưa phụ thu (bản đồ có thể lệch vài trăm mét)
+    // - Phụ thu xa (cộng thêm cho mọi đơn): từ 11 km +20.000đ, từ 15 km +35.000đ
+    // - Trên 20 km: không nhận giao
     DISTANCE_BASED: {
-      ENABLED: false, // Mặc định FALSE cho đến khi có chỉ định bật từ người dùng
-      MAX_DELIVERY_RADIUS_KM: 25, // Bán kính giao hàng tối đa 25km
-      TIERS: [
-        { maxKm: 3, fee: 15000 }, // Bậc 1: Dưới 3km
-        { maxKm: 6, fee: 25000 }, // Bậc 2: 3 - 6km
-        { maxKm: 10, fee: 35000 }, // Bậc 3: 6 - 10km
-        { maxKm: 25, fee: 50000 }, // Bậc 4: 10 - 25km
+      ENABLED: true,
+      FREE_RADIUS_KM: 10, // Mốc hiển thị cho khách: "miễn phí ship trong 10 km"
+      MAX_DELIVERY_RADIUS_KM: 20,
+      SURCHARGE_TIERS: [
+        { fromKm: 15, fee: 35000 },
+        { fromKm: 11, fee: 20000 },
       ],
-      EXTRA_FEE_PER_KM: 5000, // Phụ thu nếu có km vượt mức
     },
   },
 } as const;
 
+/** Phụ thu xa theo km (0 nếu chưa tới 11 km) */
+export function getDistanceSurcharge(distanceKm?: number | null): number {
+  if (typeof distanceKm !== 'number' || !Number.isFinite(distanceKm) || distanceKm < 0) return 0;
+  // Làm tròn lên 0,1 km (10,95 km -> 11,0 km)
+  const km = Math.ceil(distanceKm * 10) / 10;
+  for (const tier of INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED.SURCHARGE_TIERS) {
+    if (km >= tier.fromKm) return tier.fee;
+  }
+  return 0;
+}
+
 /**
  * Hàm tính phí vận chuyển dùng chung cho Client & Server
- * Đảm bảo: Nếu đơn đạt ngưỡng miễn phí -> 0đ.
- * Nếu chưa bật khoảng cách -> 30.000đ.
- * Nếu bật khoảng cách -> tra cứu theo bậc km tương ứng.
+ * Phí = phí cơ bản (30.000đ, hoặc 0đ nếu đơn từ 200.000đ) + phụ thu xa theo km.
+ * Không có km (chưa có vị trí) -> chỉ tính phí cơ bản.
  */
 export function calculateShippingFee(
   subtotal: number,
@@ -63,35 +75,26 @@ export function calculateShippingFee(
   isFree: boolean;
   isBeyondRadius: boolean;
   reason?: string;
+  baseFee: number;
+  surcharge: number;
 } {
-  // 1. Kiểm tra chính sách miễn phí giao hàng theo giá trị đơn
-  if (subtotal >= INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD) {
-    return { fee: 0, isFree: true, isBeyondRadius: false };
+  const shipping = INVENTORY_CONFIG.SHIPPING;
+  const distConfig = shipping.DISTANCE_BASED;
+  const baseFee = subtotal >= shipping.FREE_SHIPPING_THRESHOLD ? 0 : shipping.DEFAULT_FEE;
+  const hasKm = distConfig.ENABLED && typeof distanceKm === 'number' && Number.isFinite(distanceKm) && distanceKm >= 0;
+
+  if (hasKm && (distanceKm as number) > distConfig.MAX_DELIVERY_RADIUS_KM) {
+    return {
+      fee: baseFee,
+      isFree: false,
+      isBeyondRadius: true,
+      reason: `Khoảng cách (${(distanceKm as number).toFixed(1)} km) vượt quá bán kính giao tối đa (${distConfig.MAX_DELIVERY_RADIUS_KM} km). Vui lòng chọn cửa hàng gần hơn hoặc tự đến lấy.`,
+      baseFee,
+      surcharge: 0,
+    };
   }
 
-  // 2. Nếu cấu trúc tính phí theo khoảng cách được kích hoạt
-  const distConfig = INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED;
-  if (distConfig.ENABLED && typeof distanceKm === 'number' && distanceKm >= 0) {
-    if (distanceKm > distConfig.MAX_DELIVERY_RADIUS_KM) {
-      return {
-        fee: INVENTORY_CONFIG.SHIPPING.DEFAULT_FEE,
-        isFree: false,
-        isBeyondRadius: true,
-        reason: `Khoảng cách (${distanceKm.toFixed(1)}km) vượt quá bán kính giao tối đa (${distConfig.MAX_DELIVERY_RADIUS_KM}km)`,
-      };
-    }
-
-    for (const tier of distConfig.TIERS) {
-      if (distanceKm <= tier.maxKm) {
-        return { fee: tier.fee, isFree: false, isBeyondRadius: false };
-      }
-    }
-  }
-
-  // 3. Mặc định áp dụng mức phí cố định 30.000đ
-  return {
-    fee: INVENTORY_CONFIG.SHIPPING.DEFAULT_FEE,
-    isFree: false,
-    isBeyondRadius: false,
-  };
+  const surcharge = hasKm ? getDistanceSurcharge(distanceKm) : 0;
+  const fee = baseFee + surcharge;
+  return { fee, isFree: fee === 0, isBeyondRadius: false, baseFee, surcharge };
 }

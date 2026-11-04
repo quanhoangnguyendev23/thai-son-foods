@@ -1014,7 +1014,15 @@ export default function CheckoutPage() {
   }, [recommendData, selectedStoreCode]);
 
   // Tính phí vận chuyển theo config (hỗ trợ cả bậc khoảng cách km khi bật cấu hình hoặc theo đề xuất)
-  const shippingInfo = calculateShippingFee(subtotal, currentStoreDistanceKm);
+  // km tính phí = quãng đường đi thật tới chi nhánh đang chọn (cùng cách server tính khi đặt đơn);
+  // chưa có kết quả đường đi thì tạm ước đường chim bay × 1,35
+  const shippingDistanceKm =
+    typeof activeRecommendedItem?.roadKm === 'number'
+      ? activeRecommendedItem.roadKm
+      : currentStoreDistanceKm !== null
+      ? Math.round(currentStoreDistanceKm * 1.35 * 10) / 10
+      : null;
+  const shippingInfo = calculateShippingFee(subtotal, shippingDistanceKm);
   // Phép tính nhẹ, không cần useMemo
   const calculatedShippingFee =
     fulfillmentMode === 'pickup'
@@ -1194,6 +1202,10 @@ export default function CheckoutPage() {
 
       const data = await safeParseJson<any>(res);
       if (!res.ok || !data?.success || data?.savedToPostgres === false) {
+        // Phí ship đo lại cao hơn số khách đang thấy: tải lại đề xuất chi nhánh để cập nhật phí
+        if (data?.code === 'SHIPPING_FEE_CHANGED' && customerCoords) {
+          fetchStoreRecommendation(customerCoords);
+        }
         alert(
           data?.error ||
             data?.message ||
@@ -2136,17 +2148,33 @@ export default function CheckoutPage() {
               </div>
 
               {/* Cảnh báo nếu nằm ngoài bán kính phục vụ chuẩn của chi nhánh */}
+              {/* Giao xa hơn 10 km: báo phụ thu, hoặc quá bán kính tối đa thì không nhận giao */}
               {fulfillmentMode === 'delivery' &&
-                currentStoreDistanceKm !== null &&
+                shippingDistanceKm !== null &&
                 selectedStore &&
-                currentStoreDistanceKm > (selectedStore.delivery_radius_km ? Number(selectedStore.delivery_radius_km) : 10) && (
+                (shippingInfo.isBeyondRadius || shippingInfo.surcharge > 0) && (
                   <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5 animate-in fade-in duration-200">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[1.125em]">Địa chỉ nhận hàng nằm ngoài bán kính giao nhanh tiêu chuẩn:</p>
-                      <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                        Khoảng cách ước tính ~{currentStoreDistanceKm.toFixed(1)} km vượt quá bán kính phục vụ chuẩn ({selectedStore.delivery_radius_km || 10} km) của {selectedStore.name}. Quý khách vẫn có thể hoàn tất đặt đơn; nhân viên sẽ liên hệ để xác nhận thời gian &amp; cước vận chuyển phù hợp nhất.
-                      </p>
+                      {shippingInfo.isBeyondRadius ? (
+                        <>
+                          <p className="text-[1.125em]">Địa chỉ nằm ngoài phạm vi giao hàng của {selectedStore.name}</p>
+                          <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                            Khoảng cách ~{shippingDistanceKm.toFixed(1)} km, vượt quá{' '}
+                            {INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED.MAX_DELIVERY_RADIUS_KM} km. Vui lòng đổi sang chi nhánh gần hơn.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-[1.125em]">
+                            Phụ thu giao xa {shippingInfo.surcharge.toLocaleString('vi-VN')}đ
+                          </p>
+                          <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                            {selectedStore.name} cách bạn ~{shippingDistanceKm.toFixed(1)} km. Miễn phí ship chỉ áp dụng trong{' '}
+                            {INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED.FREE_RADIUS_KM} km; chọn chi nhánh gần hơn để không mất phụ thu.
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}

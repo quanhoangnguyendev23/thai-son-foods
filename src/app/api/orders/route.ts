@@ -434,13 +434,23 @@ export async function POST(request: Request) {
       // 4. SERVER TỰ TÍNH PHÍ VẬN CHUYỂN
       const { calculateShippingFee } = await import('@/config/inventory');
       let customerDistanceKm: number | null = null;
-      if (customerCoords && targetStoreLat !== null && targetStoreLng !== null) {
-        customerDistanceKm = calculateHaversineDistance(
-          customerCoords.lat,
-          customerCoords.lng,
-          targetStoreLat,
-          targetStoreLng
-        );
+      // Phí theo km dùng quãng đường đi thật (cùng nguồn với khung "Chi nhánh phục vụ" ở trang thanh toán).
+      // Chỉ tính khi khách gửi tọa độ thật; tọa độ ước từ tên quận/phường quá thô để thu phụ phí.
+      if (rawLat !== null && rawLng !== null && targetStoreLat !== null && targetStoreLng !== null) {
+        try {
+          const { getRoadDistanceAndDuration } = await import('@/lib/storeRecommender');
+          const road = await getRoadDistanceAndDuration(
+            rawLat,
+            rawLng,
+            targetStoreLat,
+            targetStoreLng,
+            targetStoreCode || ''
+          );
+          customerDistanceKm = road.roadKm;
+        } catch {
+          customerDistanceKm =
+            Math.round(calculateHaversineDistance(rawLat, rawLng, targetStoreLat, targetStoreLng) * 1.35 * 10) / 10;
+        }
       }
       const shippingCalc = calculateShippingFee(serverCalculatedSubtotal, customerDistanceKm);
       if (shippingCalc.isBeyondRadius && INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED.ENABLED) {
@@ -453,6 +463,25 @@ export async function POST(request: Request) {
         );
       }
       const serverShippingFee = shippingCalc.fee;
+      // Phí thật cao hơn phí khách đang thấy (vd. vừa đổi ghim/cửa hàng, km đo lại vượt mốc 11 km):
+      // dừng lại báo khách xem phí mới, không tự thu nhiều hơn số đã hiển thị (422: 409 đã dùng cho lỗi tồn kho)
+      if (
+        typeof body.shippingFee === 'number' &&
+        Number.isFinite(body.shippingFee) &&
+        serverShippingFee > Math.round(body.shippingFee)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'SHIPPING_FEE_CHANGED',
+            shippingFee: serverShippingFee,
+            error: `Phí giao hàng đã cập nhật theo khoảng cách thực tế${
+              customerDistanceKm !== null ? ` (~${customerDistanceKm} km)` : ''
+            }: ${serverShippingFee.toLocaleString('vi-VN')}đ. Vui lòng kiểm tra lại rồi đặt hàng.`,
+          },
+          { status: 422 }
+        );
+      }
       const serverTotal = serverCalculatedSubtotal + serverShippingFee;
 
       // 5. BÓC TÁCH COMBO VÀ CHUẨN BỊ ĐƠN HÀNG

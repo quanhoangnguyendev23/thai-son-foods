@@ -11,7 +11,7 @@
 import { query } from '@/lib/db';
 import { calculateHaversineDistance } from '@/lib/geo';
 import { getSellableQuantity } from '@/lib/inventory';
-import { calculateShippingFee as calculatePolicyShippingFee } from '@/config/inventory';
+import { calculateShippingFee as calculatePolicyShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
 
 export interface RecommenderInput {
   lat: number;
@@ -346,7 +346,11 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
 
     const prepMin = s.prep_minutes ? Number(s.prep_minutes) : 15;
     const openingCheck = checkStoreOpening(s.opening_hours, prepMin, durationMin);
-    const maxRadiusKm = s.delivery_radius_km ? Number(s.delivery_radius_km) : 10.0;
+    // Bán kính giao tối đa theo chính sách phí ship (20 km); cửa hàng đặt bán kính riêng lớn hơn thì dùng số đó
+    const maxRadiusKm = Math.max(
+      s.delivery_radius_km ? Number(s.delivery_radius_km) : 0,
+      INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED.MAX_DELIVERY_RADIUS_KM
+    );
 
     // Kiểm tra hàng tồn kho cho chi nhánh này
     let missingItemsCount = 0;
@@ -393,13 +397,15 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
     // Tính ETA: prep + duration × hệ số giờ cao điểm
     const etaMinutes = Math.round(prepMin + durationMin * peakMultiplier);
     // Cùng chính sách phí với lúc đặt đơn (/api/orders) để phí khách thấy khi chọn cửa hàng = phí thật bị tính
-    // (server tính km theo đường chim bay nên ở đây cũng dùng straightKm)
-    const shippingFee = calculatePolicyShippingFee(subtotalEstimate, item.straightKm).fee;
+    // (server cũng tính phí theo quãng đường đi thật khi đặt đơn)
+    const shippingFee = calculatePolicyShippingFee(subtotalEstimate, roadKm).fee;
 
     // Tính điểm xếp hạng (Mục 18.3: Điểm càng thấp càng ưu tiên)
     // Điểm = ETA + 15 × số món thiếu + 2 × đơn quá tải + 10 nếu sắp đóng cửa
     let score = etaMinutes;
     score += missingItemsCount * 15;
+    // Phụ thu giao xa: mỗi 1.000đ phụ thu tính như 1 phút chậm, để ưu tiên chi nhánh không phát sinh phụ thu
+    score += Math.round(calculatePolicyShippingFee(subtotalEstimate, roadKm).surcharge / 1000);
     if (openingCheck.isClosingSoon) score += 10;
     if (previousStoreCode && previousStoreCode === s.code) score -= 3; // Ưu tiên nhẹ cửa hàng khách từng chọn
 

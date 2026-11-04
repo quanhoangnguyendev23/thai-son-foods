@@ -177,7 +177,7 @@ export default function StoreRecommendationSheet({
               <span className="text-[12px] text-gray-500 uppercase tracking-wider">
                 Gợi ý giao hàng tối ưu nhất ({topStores.length})
               </span>
-              <span className="text-[11px] text-emerald-800 font-medium">Bán kính ≤ 10 km</span>
+              <span className="text-[11px] text-emerald-800 font-medium">Miễn phí ship trong 10 km</span>
             </div>
 
             {topStores.filter(filterByKeyword).length === 0 ? (
