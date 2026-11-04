@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { cleanupExpiredReservations } from '@/lib/inventory';
 import { publicErrorMessage } from '@/lib/apiError';
+import { pruneOldLogs } from '@/lib/logRetention';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,10 +44,18 @@ export async function GET(request: Request) {
     const timestamp = new Date().toISOString();
     console.log(`[Cron Cleanup] ${timestamp} | Released: ${result.releasedReservationsCount} reservations | Cancelled: ${result.cancelledOrdersCount} orders`);
 
+    // Dọn nhật ký quá hạn (xuất file lưu trữ trước rồi mới xoá). Lỗi ở bước này không ảnh hưởng việc nhả giữ hàng ở trên.
+    const logRetention = await pruneOldLogs();
+    const deletedLogs = logRetention.reduce((sum, r) => sum + r.deleted, 0);
+    if (deletedLogs > 0) {
+      console.log(`[Cron Cleanup] ${timestamp} | Đã lưu trữ và xoá ${deletedLogs} dòng nhật ký quá hạn`);
+    }
+
     return NextResponse.json({
       success: true,
       timestamp,
       ...result,
+      logRetention,
     });
   } catch (error: any) {
     console.error('[Cron Cleanup] Error releasing expired reservations:', error);

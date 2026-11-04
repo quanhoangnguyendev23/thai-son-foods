@@ -61,6 +61,34 @@ export function sanitizeAuditData(data: unknown): unknown {
   return sanitized;
 }
 
+/** Trường định danh luôn giữ lại để đọc log còn biết là bản ghi nào */
+const IDENTITY_KEYS = ['id', 'name', 'title', 'code', 'slug', 'username', 'order_code', 'store_code'];
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/**
+ * Khi có cả dữ liệu trước và sau (thao tác sửa), chỉ giữ các trường thực sự thay đổi
+ * (cộng trường định danh) thay vì lưu nguyên cả bản ghi hai lần.
+ * Tạo mới (không có trước) hoặc xoá (không có sau) vẫn lưu đầy đủ để còn khôi phục được.
+ */
+export function compactAuditDiff(before: unknown, after: unknown): { before: unknown; after: unknown } {
+  if (!isPlainObject(before) || !isPlainObject(after)) return { before, after };
+
+  const b: Record<string, unknown> = {};
+  const a: Record<string, unknown> = {};
+  const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
+  for (const key of keys) {
+    const changed = JSON.stringify(before[key]) !== JSON.stringify(after[key]);
+    if (changed || IDENTITY_KEYS.includes(key)) {
+      if (key in before) b[key] = before[key];
+      if (key in after) a[key] = after[key];
+    }
+  }
+  return { before: b, after: a };
+}
+
 /**
  * Ghi nhật ký hoạt động quản trị viên (Audit Log)
  * Tuyệt đối không lưu mật khẩu, hash hoặc token.
@@ -68,8 +96,9 @@ export function sanitizeAuditData(data: unknown): unknown {
 export async function writeAuditLog(params: AuditLogParams): Promise<void> {
   try {
     const id = `audit_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const sanitizedBefore = params.beforeJson ? JSON.stringify(sanitizeAuditData(params.beforeJson)) : null;
-    const sanitizedAfter = params.afterJson ? JSON.stringify(sanitizeAuditData(params.afterJson)) : null;
+    const diff = compactAuditDiff(params.beforeJson, params.afterJson);
+    const sanitizedBefore = diff.before ? JSON.stringify(sanitizeAuditData(diff.before)) : null;
+    const sanitizedAfter = diff.after ? JSON.stringify(sanitizeAuditData(diff.after)) : null;
 
     await query(
       `INSERT INTO audit_logs (

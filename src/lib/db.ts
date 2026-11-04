@@ -703,6 +703,14 @@ async function runInitDatabase() {
       );
       CREATE INDEX IF NOT EXISTS idx_product_views_product ON product_views(product_id, viewed_on);
       CREATE INDEX IF NOT EXISTS idx_product_views_session ON product_views(session_id, viewed_on);
+
+      -- Nhật ký tồn kho: trang admin lọc theo chi nhánh rồi lấy mới nhất, nên cần chỉ mục ghép (chi nhánh, thời gian)
+      DO $$
+      BEGIN
+        IF to_regclass('public.inventory_logs') IS NOT NULL THEN
+          CREATE INDEX IF NOT EXISTS idx_inv_logs_store_created ON inventory_logs(store_code, created_at DESC);
+        END IF;
+      END $$;
     `);
 
     // Ảnh sản phẩm: khôi phục bộ ảnh gallery chuẩn nếu DB đang giữ bộ ảnh cũ (không chặn khởi tạo nếu lỗi)

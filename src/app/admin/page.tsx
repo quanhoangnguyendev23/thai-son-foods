@@ -896,6 +896,25 @@ export default function AdminPage() {
     }
   };
 
+  // Mở hộp "Xem thay đổi": danh sách không kèm dữ liệu trước/sau, nên tải riêng dòng được chọn
+  const openAuditLogDetail = async (log: any) => {
+    setSelectedAuditLog({ ...log, _loadingDetail: true });
+    setIsAuditModalOpen(true);
+    try {
+      const res = await fetch(`/api/admin/audit?id=${encodeURIComponent(log.id)}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setSelectedAuditLog((prev: any) => (prev && prev.id === log.id ? { ...data.data } : prev));
+      } else {
+        setSelectedAuditLog((prev: any) => (prev && prev.id === log.id ? { ...prev, _loadingDetail: false } : prev));
+        showToast(data.error || 'Lỗi khi tải chi tiết nhật ký', 'error');
+      }
+    } catch (err: any) {
+      setSelectedAuditLog((prev: any) => (prev && prev.id === log.id ? { ...prev, _loadingDetail: false } : prev));
+      showToast('Lỗi khi tải chi tiết nhật ký: ' + err.message, 'error');
+    }
+  };
+
   // Xuất file CSV danh sách nhật ký hoạt động
   const handleExportAuditCSV = () => {
     if (auditLogs.length === 0) {
@@ -6426,10 +6445,7 @@ export default function AdminPage() {
                               {/* Nút xem JSON */}
                               <td className="py-3 px-4 text-right whitespace-nowrap">
                                 <button
-                                  onClick={() => {
-                                    setSelectedAuditLog(log);
-                                    setIsAuditModalOpen(true);
-                                  }}
+                                  onClick={() => openAuditLogDetail(log)}
                                   className="px-2.5 py-1 rounded-lg text-[12px] bg-ink-100 hover:bg-ink-200 text-leaf-700 hover:text-ink-950 border border-ink-300 transition-colors cursor-pointer"
                                 >
                                   Xem thay đổi
@@ -9321,6 +9337,8 @@ export default function AdminPage() {
                                 catch { return selectedAuditLog.before_json; }
                               })()
                             : JSON.stringify(selectedAuditLog.before_json, null, 2))
+                        : selectedAuditLog._loadingDetail
+                        ? 'Đang tải...'
                         : '<Không có dữ liệu trước thay đổi (Tạo mới hoặc không áp dụng)>'}
                     </pre>
                   </div>
@@ -9360,6 +9378,8 @@ export default function AdminPage() {
                                 catch { return selectedAuditLog.after_json; }
                               })()
                             : JSON.stringify(selectedAuditLog.after_json, null, 2))
+                        : selectedAuditLog._loadingDetail
+                        ? 'Đang tải...'
                         : '<Không có dữ liệu sau thay đổi (Đã xóa hoặc không áp dụng)>'}
                     </pre>
                   </div>
