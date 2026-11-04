@@ -53,7 +53,7 @@ function DealTile({ combo, className }: { combo: Combo; className?: string }) {
   return (
     <Link
       href={`/combo/${combo.slug}`}
-      className={`group snap-start min-w-0 sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%] flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${className || ''}`}
+      className={`group snap-start min-w-0 sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%] flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:shadow-md ${className || ''}`}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-ivory">
         <Image
@@ -61,7 +61,7 @@ function DealTile({ combo, className }: { combo: Combo; className?: string }) {
           alt={name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
-          className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          className="object-cover object-top transition-transform duration-500"
           onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
         />
         {combo.discount > 0 && (

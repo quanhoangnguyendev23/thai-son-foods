@@ -126,7 +126,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                   }}
                   className="h-full"
                 >
-                  <article className="group h-full flex flex-col bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                  <article className="group h-full flex flex-col bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:shadow-md">
                     {/* Phần trên: Ảnh + Tiêu đề mô tả (Bọc trong thẻ Link điều hướng vào chi tiết combo) */}
                     <Link
                       href={targetLink}
@@ -143,7 +143,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           src={combo.image}
                           alt={comboName}
                           fill
-                          className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                          className="object-cover object-top transition-transform duration-500"
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
                           loading="lazy"
                         />

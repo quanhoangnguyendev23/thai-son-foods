@@ -27,7 +27,7 @@ function TileImage({ tile }: { tile: Banner }) {
       fill
       // Ảnh chiếm ~48% ô: desktop ô rộng ~476px; tablet 2 ô chia đôi; mobile ô ~82vw
       sizes="(min-width: 1024px) 240px, (min-width: 640px) 25vw, 42vw"
-      className="object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
+      className="object-cover transition-transform duration-500 motion-reduce:transition-none"
       style={{ objectPosition: tile.objectPosition || 'center' }}
       onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
     />

@@ -207,7 +207,7 @@ export default function BrandShowcase() {
                 >
                   <span>{language === 'en' ? 'About Us' : 'Về chúng tôi'}</span>
                   <ArrowRight
-                    className="transition-transform duration-200 group-hover:translate-x-1 w-4 h-4 sm:w-5 sm:h-5"
+                    className="transition-transform duration-200 w-4 h-4 sm:w-5 sm:h-5"
                   />
                 </Link>
               </motion.div>

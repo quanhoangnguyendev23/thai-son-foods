@@ -315,7 +315,7 @@ export default function ProductGallery({
               className={cn(
                 "relative w-full h-full overflow-hidden",
                 !isVideo && "cursor-zoom-in",
-                !isVideo && !canHoverZoom && "transition-transform duration-300 group-hover:scale-[1.02]"
+                !isVideo && !canHoverZoom && "transition-transform duration-300"
               )}
             >
               {isVideo ? (
@@ -336,7 +336,7 @@ export default function ProductGallery({
                   fill
                   className={cn(
                     "object-contain transition-transform duration-200 ease-out",
-                    !canHoverZoom && "duration-300 group-hover:scale-[1.02]"
+                    !canHoverZoom && "duration-300"
                   )}
                   style={
                     canHoverZoom && lens

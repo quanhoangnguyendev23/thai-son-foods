@@ -40,7 +40,7 @@ function ComboCard({ combo }: { combo: Combo }) {
     <article ref={cardRef} className="group h-full flex flex-col">
       <Link
         href={href}
-        className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+        className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none"
       >
         {/* Ảnh: cùng khung 4:3 với thẻ sản phẩm */}
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-ivory">
@@ -50,7 +50,7 @@ function ComboCard({ combo }: { combo: Combo }) {
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
             loading="lazy"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover transition-transform duration-500"
           />
           {combo.discount > 0 && (
             <span className="absolute top-1 left-1 sm:top-2 sm:left-2 px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-sale text-white rounded shadow-xs">

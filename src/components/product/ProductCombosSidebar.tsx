@@ -143,7 +143,7 @@ export default function ProductCombosSidebar({
         key={combo.id}
         className={`snap-start max-sm:min-w-0 sm:shrink-0 sm:w-[calc((100%-16px)/3)] md:w-[calc((100%-36px)/4)] lg:w-[calc((100%-72px)/7)] self-stretch flex flex-col ${!showAllMobile && index >= 4 ? 'max-sm:hidden' : ''}`}
       >
-        <article className="group h-full flex flex-col bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+        <article className="group h-full flex flex-col bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:shadow-md">
           {/* Link toàn bộ phần trên thẻ đến trang chi tiết combo */}
           <Link
             href={`/combo/${combo.slug}`}
@@ -156,7 +156,7 @@ export default function ProductCombosSidebar({
                 src={combo.image}
                 alt={comboTitle}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                className="object-cover transition-transform duration-500"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
                 loading="lazy"
               />

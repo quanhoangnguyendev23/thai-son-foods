@@ -1,17 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function BrandBadge() {
   const { language } = useLanguage();
-  const [isHovered, setIsHovered] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   // Animation variants
-  // 1. Hover rotation speeds: standard ~26s, hover ~8s per revolution
-  const rotationDuration = isHovered ? 8 : 26;
+  // Vòng chữ quay đều ~26s/vòng, hover không đổi tốc độ
+  const rotationDuration = 26;
 
   return (
     <motion.div
@@ -42,17 +40,6 @@ export default function BrandBadge() {
               },
             }
         }
-        // 5. Hover: scale 1.06, 300ms transition
-        whileHover={
-          shouldReduceMotion
-            ? {}
-            : {
-              scale: 1.06,
-              transition: { duration: 0.3, ease: 'easeOut' },
-            }
-        }
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         className="relative w-[56px] h-[56px] sm:w-[72px] sm:h-[72px] lg:w-[100px] lg:h-[100px] cursor-pointer"
       >
         <svg

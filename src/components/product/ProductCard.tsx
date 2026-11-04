@@ -161,7 +161,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
         fill
         sizes={sizes}
         loading="lazy"
-        className="pointer-events-none object-cover opacity-0 scale-105 transition-[opacity,transform] duration-500 ease-out group-hover:opacity-100 group-hover:scale-100 motion-reduce:transition-none [@media(hover:none)]:hidden"
+        className="pointer-events-none object-cover opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100 motion-reduce:transition-none [@media(hover:none)]:hidden"
       />
     ) : null;
 
@@ -181,7 +181,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
       <article ref={cardRef} className="group h-full flex flex-col">
         <Link
           href={`/san-pham/${product.slug}`}
-          className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none"
         >
           {/* Khung thẻ ảnh */}
           <div
@@ -199,7 +199,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
                 isBottle
                   ? 'object-contain p-2 sm:p-3'
                   : 'object-cover object-top'
-              } transition-transform duration-500 group-hover:scale-105`}
+              } transition-transform duration-500`}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
               loading="lazy"
             />
@@ -273,7 +273,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
       <article ref={cardRef} className="group h-full flex flex-col">
         <Link
           href={`/san-pham/${product.slug}`}
-          className="flex flex-row h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="flex flex-row h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none"
         >
           {/* 1 BÊN LÀ SẢN PHẨM (Khung ảnh) — Đồng bộ chuẩn tỷ lệ 4:3 (1200x900px) giống hệt hàng 3 sản phẩm */}
           <div
@@ -291,7 +291,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
                 isBottle
                   ? 'object-contain p-1.5 sm:p-4 md:p-5'
                   : 'object-cover object-center'
-              } transition-transform duration-500 group-hover:scale-105`}
+              } transition-transform duration-500`}
               sizes="(max-width: 640px) 50vw, 35vw"
               loading="lazy"
             />
@@ -364,7 +364,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
     <article className="group h-full flex flex-col">
       <Link
         href={`/san-pham/${product.slug}`}
-        className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+        className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none"
       >
         {/* Khung thẻ ảnh — Tỷ lệ chuẩn 4:3 khớp hoàn hảo với poster cánh đồng và chai đơn */}
         <div
@@ -382,7 +382,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               isBottle
                 ? 'object-contain p-1.5 sm:p-4 md:p-6'
                 : 'object-cover object-top'
-            } transition-transform duration-500 group-hover:scale-105`}
+            } transition-transform duration-500`}
             sizes="(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 25vw"
             loading="lazy"
           />

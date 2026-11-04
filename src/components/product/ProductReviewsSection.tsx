@@ -732,7 +732,7 @@ export default function ProductReviewsSection({
                       onMouseEnter={() => setFormHoverRating(s)}
                       onMouseLeave={() => setFormHoverRating(0)}
                       onClick={() => setFormRating(s)}
-                      className="p-1 text-2xl transition-transform hover:scale-125 focus:outline-hidden cursor-pointer"
+                      className="p-1 text-2xl transition-transform focus:outline-hidden cursor-pointer"
                     >
                       <Star
                         className={`w-8 h-8 ${

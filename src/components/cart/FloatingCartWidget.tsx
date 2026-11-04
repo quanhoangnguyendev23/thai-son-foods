@@ -135,7 +135,6 @@ export default function FloatingCartWidget() {
             : { scale: 1 }
         }
         transition={{ duration: 0.45, ease: 'easeOut' }}
-        whileHover={{ scale: 1.04, y: -2 }}
         whileTap={{ scale: 0.96 }}
         className="pointer-events-auto"
       >
