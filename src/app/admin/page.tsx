@@ -982,19 +982,23 @@ export default function AdminPage() {
         columns: [
           { header: 'Tiêu chí / Đối tượng', width: 32 },
           { header: isProduct ? 'Số lượng bán' : 'Số đơn', width: 13, type: 'number' },
-          { header: 'Doanh thu (₫)', width: 16, type: 'money' },
+          { header: 'Tổng doanh thu (₫)', width: 16, type: 'money' },
+          { header: 'Doanh thu có giá vốn (₫)', width: 18, type: 'money' },
           { header: 'Giá vốn (₫)', width: 16, type: 'money' },
           { header: 'Lợi nhuận gộp (₫)', width: 18, type: 'money' },
-          { header: 'Tỷ suất', width: 10, type: 'percent' },
-          { header: 'Số mục chưa có giá vốn', width: 14, type: 'number' },
+          { header: 'Tỷ suất (trên DT có giá vốn)', width: 14, type: 'percent' },
+          { header: 'Doanh thu chưa có giá vốn (₫)', width: 18, type: 'money' },
+          { header: 'Số dòng hàng chưa có giá vốn', width: 14, type: 'number' },
         ],
         rows: profitData.breakdown.map((r: any) => [
           r.label || r.name || r.store_name || r.period || '',
-          r.orders_count !== undefined ? r.orders_count : r.quantity_sold,
+          r.orders_count != null ? r.orders_count : r.quantity_sold,
           r.revenue,
+          r.revenue_with_cost,
           r.cost,
           r.profit,
           Number.isFinite(Number(r.margin)) ? Number(r.margin) / 100 : '',
+          r.revenue_without_cost || 0,
           r.missing_cost_items || 0,
         ]),
       },
@@ -4648,49 +4652,65 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* Profit Overview Cards */}
+                  {/* Profit Overview Cards: Tổng DT = DT có giá vốn + DT chưa có giá vốn; LN gộp = DT có giá vốn − Giá vốn */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="p-4 rounded-xl bg-ink-50 border border-ink-200">
-                      <p className="text-[11px] font-medium text-ink-700">Doanh Thu Ghi Nhận</p>
+                      <p className="text-[11px] font-medium text-ink-700">Tổng Doanh Thu</p>
                       <p className="text-xl text-ink-950 mt-1">
                         {formatVND(profitData?.summary?.totalRevenue || 0)}
                       </p>
-                      <p className="text-[10px] text-ink-700 mt-1">{profitData?.summary?.totalOrders || 0} đơn hàng thành công</p>
+                      <p className="text-[10px] text-ink-700 mt-1">{profitData?.summary?.totalOrders || 0} đơn hoàn tất</p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-ink-50 border border-ink-200">
+                      <p className="text-[11px] font-medium text-ink-700">Doanh Thu Có Giá Vốn</p>
+                      <p className="text-xl text-ink-950 mt-1">
+                        {formatVND(profitData?.summary?.revenueWithCost || 0)}
+                      </p>
+                      <p className="text-[11px] text-ink-700 mt-1">
+                        {profitData?.summary?.costCoveragePercent || 0}% tổng doanh thu · dùng để tính lợi nhuận
+                      </p>
                     </div>
 
                     <div className="p-4 rounded-xl bg-ink-50 border border-amber-200">
-                      <p className="text-[11px] font-medium text-amber-700/90">Tổng Giá Vốn (COGS)</p>
+                      <p className="text-[11px] font-medium text-amber-700/90">Giá Vốn (COGS)</p>
                       <p className="text-xl text-amber-800 mt-1">
                         {formatVND(profitData?.summary?.totalCost || 0)}
                       </p>
-                      <p className="text-[10px] text-ink-700 mt-1">{profitData?.summary?.itemsWithCost || 0} mục có giá vốn</p>
+                      <p className="text-[10px] text-ink-700 mt-1">{profitData?.summary?.itemsWithCost || 0} dòng hàng có giá vốn</p>
                     </div>
 
                     <div className="p-4 rounded-xl bg-ink-50 border border-emerald-200">
-                      <p className="text-[11px] font-medium text-emerald-700">Lợi Nhuận Gộp (Gross Profit)</p>
+                      <p className="text-[11px] font-medium text-emerald-700">Lợi Nhuận Gộp</p>
                       <p className="text-xl text-emerald-700 mt-1">
                         {formatVND(profitData?.summary?.grossProfit || 0)}
+                        <span className="ml-2 text-sm text-cyan-700">{profitData?.summary?.marginPercent || 0}%</span>
                       </p>
-                      <p className="text-[10px] text-emerald-700 mt-1">Doanh thu - Giá vốn</p>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-ink-50 border border-cyan-200">
-                      <p className="text-[11px] font-medium text-cyan-700">Tỷ Suất Lợi Nhuận Gộp</p>
-                      <p className="text-xl text-cyan-700 mt-1">
-                        {profitData?.summary?.marginPercent || 0}%
-                      </p>
-                      <p className="text-[10px] text-ink-700 mt-1">Trên danh mục có giá vốn</p>
+                      <p className="text-[10px] text-emerald-700 mt-1">= Doanh thu có giá vốn − Giá vốn</p>
                     </div>
                   </div>
 
-                  {/* Alert banner if historical items lack cost data */}
+                  {/* Phần doanh thu chưa có giá vốn: tách riêng, không tính vào lợi nhuận */}
                   {profitData?.summary?.hasMissingCostData && (
                     <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-500/30 flex items-start gap-3">
                       <AlertCircle className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
-                      <div className="text-xs text-amber-800">
-                        <span className="text-amber-800 text-[1.125em]">Lưu ý dữ liệu lịch sử: </span>
-                        <span>{profitData?.summary?.note} </span>
-                        <span>Doanh thu các mục này: <strong className="font-mono text-ink-950 text-[1.125em]">{formatVND(profitData?.summary?.revenueWithoutCost || 0)}</strong>.</span>
+                      <div className="text-xs text-amber-800 space-y-1">
+                        <p>
+                          <span className="text-[1.125em]">Chưa tính lợi nhuận: </span>
+                          <strong className="font-mono text-ink-950 text-[1.125em]">{formatVND(profitData?.summary?.revenueWithoutCost || 0)}</strong>
+                          <span> doanh thu ({profitData?.summary?.itemsWithoutCost || 0} dòng hàng) chưa có giá vốn lúc đặt đơn, nên không nằm trong giá vốn và lợi nhuận gộp ở trên.</span>
+                        </p>
+                        {Array.isArray(profitData?.summary?.missingCostProducts) && profitData.summary.missingCostProducts.length > 0 && (
+                          <p>
+                            <span>Món cần nhập giá vốn: </span>
+                            {profitData.summary.missingCostProducts.map((m: any, i: number) => (
+                              <span key={i}>
+                                {i > 0 && ', '}
+                                {m.name} <span className="font-mono">({formatVND(m.revenue)})</span>
+                              </span>
+                            ))}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -4720,24 +4740,25 @@ export default function AdminPage() {
                             <th className="py-2.5 px-4 text-center">
                               {profitGroupBy === 'product' ? 'Số Lượng Bán' : 'Số Đơn'}
                             </th>
-                            <th className="py-2.5 px-4 text-right">Doanh Thu</th>
+                            <th className="py-2.5 px-4 text-right">Tổng Doanh Thu</th>
+                            <th className="py-2.5 px-4 text-right">DT Có Giá Vốn</th>
                             <th className="py-2.5 px-4 text-right">Giá Vốn</th>
                             <th className="py-2.5 px-4 text-right">Lợi Nhuận Gộp</th>
                             <th className="py-2.5 px-4 text-center">Tỷ Suất (%)</th>
-                            <th className="py-2.5 px-4 text-center">Dữ Liệu Giá Vốn</th>
+                            <th className="py-2.5 px-4 text-right">DT Chưa Có Giá Vốn</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-ink-200">
                           {profitLoading ? (
                             <tr>
-                              <td colSpan={7} className="py-8 text-center text-ink-600">
+                              <td colSpan={8} className="py-8 text-center text-ink-600">
                                 <RefreshCw className="w-5 h-5 animate-spin mx-auto text-amber-700 mb-2" />
                                 <span>Đang tính toán báo cáo lợi nhuận...</span>
                               </td>
                             </tr>
                           ) : !profitData?.breakdown || profitData.breakdown.length === 0 ? (
                             <tr>
-                              <td colSpan={7} className="py-8 text-center text-ink-600">
+                              <td colSpan={8} className="py-8 text-center text-ink-600">
                                 Không có dữ liệu đơn hàng trong phạm vi được chọn.
                               </td>
                             </tr>
@@ -4753,10 +4774,13 @@ export default function AdminPage() {
                                   )}
                                 </td>
                                 <td className="py-3 px-4 text-center font-mono text-ink-800">
-                                  {row.orders_count !== undefined ? row.orders_count : row.quantity_sold}
+                                  {row.orders_count != null ? row.orders_count : row.quantity_sold}
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono text-ink-950 text-[1.125em]">
                                   {formatVND(row.revenue)}
+                                </td>
+                                <td className="py-3 px-4 text-right font-mono text-ink-800">
+                                  {formatVND(row.revenue_with_cost || 0)}
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono text-amber-800">
                                   {formatVND(row.cost)}
@@ -4770,13 +4794,14 @@ export default function AdminPage() {
                                     row.margin > 0 ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20' :
                                     'bg-ink-100 text-ink-700'
                                   }`}>
-                                    {row.margin}%
+                                    {row.revenue_with_cost > 0 ? `${row.margin}%` : '—'}
                                   </span>
                                 </td>
-                                <td className="py-3 px-4 text-center">
+                                <td className="py-3 px-4 text-right">
                                   {row.missing_cost_items > 0 ? (
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200" title={`${row.missing_cost_items} mục chưa có vốn`}>
-                                      Chưa đủ ({row.missing_cost_items})
+                                    <span className="font-mono text-amber-700" title={`${row.missing_cost_items} dòng hàng chưa có giá vốn, không tính vào lợi nhuận`}>
+                                      {formatVND(row.revenue_without_cost || 0)}
+                                      <span className="ml-1 text-[11px]">({row.missing_cost_items} dòng)</span>
                                     </span>
                                   ) : (
                                     <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">

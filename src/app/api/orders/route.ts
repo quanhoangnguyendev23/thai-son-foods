@@ -9,6 +9,7 @@ import { notifyNewOrderTelegram } from '@/lib/notify/telegram';
 import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
+import { computeLineUnitCosts } from '@/lib/costSnapshot';
 
 /** Số dòng sản phẩm tối đa trong 1 đơn (sau đó mới gộp dòng trùng) */
 const MAX_ORDER_LINES = 50;
@@ -693,6 +694,17 @@ export async function POST(request: Request) {
             ]
           );
 
+          // Số chai dùng tính giá vốn: sản phẩm lẻ/lốc theo đúng hệ số chai đã dùng tính giá bán; combo theo thành phần đã bóc tách
+          const costBottles = revalidatedItems.flatMap((it: any, idx: number) =>
+            it.canonicalProductId
+              ? [{ productId: it.canonicalProductId, bottleQuantity: (it.bottleMultiplier || 1) * Math.max(1, Math.round(Number(it.quantity) || 1)), originalItemIndex: idx }]
+              : expandedBottles.filter((b: any) => b.originalItemIndex === idx)
+          );
+          const lineUnitCosts = await computeLineUnitCosts(
+            client,
+            revalidatedItems.map((it: any) => it.quantity),
+            costBottles
+          );
           for (let i = 0; i < revalidatedItems.length; i++) {
             const item = revalidatedItems[i];
             const itemId = `item_${Date.now()}_${crypto.randomBytes(3).toString('hex')}_${i}`;
@@ -703,7 +715,8 @@ export async function POST(request: Request) {
             let canonicalProductId: string | null = null;
             let bottleMultiplier = 1;
             let totalBottlesVal = item.quantity || 1;
-            let itemCostPriceSnapshot: number | null = null;
+            // Giá vốn/đơn vị dòng hàng: tính từ giá vốn từng chai đã bóc tách (chai lẻ, lốc, combo đều cùng cách)
+            let itemCostPriceSnapshot: number | null = lineUnitCosts[i] ?? null;
 
             if (rawPId && !rawPId.startsWith('combo-')) {
               // Đã resolve và tính hệ số chai từ DB ở bước tính giá phía trên
@@ -711,17 +724,15 @@ export async function POST(request: Request) {
                 canonicalProductId = item.canonicalProductId;
                 bottleMultiplier = item.bottleMultiplier;
                 totalBottlesVal = bottleMultiplier * (item.quantity || 1);
-
-                const prodCostRes = await client.query('SELECT cost_price FROM products WHERE id = $1 LIMIT 1;', [canonicalProductId]);
-                if (prodCostRes.rows.length > 0 && prodCostRes.rows[0].cost_price !== null && prodCostRes.rows[0].cost_price !== undefined) {
-                  itemCostPriceSnapshot = (Number(prodCostRes.rows[0].cost_price) || 0) * bottleMultiplier;
-                }
               }
-            } else if (rawPId && (rawPId.startsWith('combo-') || rawPId.includes('combo'))) {
+            } else if (itemCostPriceSnapshot === null && rawPId && (rawPId.startsWith('combo-') || rawPId.includes('combo'))) {
+              // Dự phòng: thành phần combo chưa đủ giá vốn nhưng combo có nhập giá vốn riêng
               const comboCostRes = await client.query('SELECT cost_price FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;', [rawPId]);
-              if (comboCostRes.rows.length > 0 && comboCostRes.rows[0].cost_price !== null && comboCostRes.rows[0].cost_price !== undefined) {
-                itemCostPriceSnapshot = Number(comboCostRes.rows[0].cost_price) || 0;
-              }
+              const comboCost = Number(comboCostRes.rows[0]?.cost_price) || 0;
+              if (comboCost > 0) itemCostPriceSnapshot = comboCost;
+            }
+            if (itemCostPriceSnapshot === null) {
+              console.warn(`[Orders] Đơn ${orderCode}: dòng "${item.name}" (${rawPId}) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.`);
             }
 
             await client.query(
