@@ -29,6 +29,7 @@ import {
   Send,
   Plus
 } from 'lucide-react';
+import { showAlert } from '@/components/ui/AppDialog';
 
 interface PartnerProfile {
   id: string;
@@ -301,7 +302,7 @@ export default function PartnerPortalPage() {
 
     const totalBottles = items.reduce((sum, it) => sum + it.quantity, 0);
     if (totalBottles < 50) {
-      alert(`Đơn sỉ đại lý yêu cầu tối thiểu 50 chai. Hiện tại bạn đang chọn ${totalBottles} chai.`);
+      showAlert(`Đơn sỉ đại lý yêu cầu tối thiểu 50 chai. Hiện tại bạn đang chọn ${totalBottles} chai.`, { tone: 'warning' });
       setDealerOrderLoading(false);
       return;
     }
@@ -325,7 +326,7 @@ export default function PartnerPortalPage() {
       setDealerQuantities({});
       setDealerShippingAddress('');
     } catch (e: any) {
-      alert(e.message || 'Lỗi tạo đơn hàng sỉ');
+      showAlert(e.message || 'Lỗi tạo đơn hàng sỉ', { tone: 'error' });
     } finally {
       setDealerOrderLoading(false);
     }

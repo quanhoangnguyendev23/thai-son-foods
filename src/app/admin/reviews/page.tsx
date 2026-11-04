@@ -18,6 +18,7 @@ import {
   Clock,
   AlertTriangle,
 } from 'lucide-react';
+import { showAlert, showConfirm } from '@/components/ui/AppDialog';
 
 interface AdminReviewRow {
   id: string;
@@ -100,18 +101,19 @@ export default function AdminReviewsPage() {
         );
         fetchReviews();
       } else {
-        alert(data.error || 'Cập nhật thất bại');
+        showAlert(data.error || 'Cập nhật thất bại', { tone: 'error' });
       }
     } catch {
-      alert('Lỗi kết nối máy chủ');
+      showAlert('Lỗi kết nối máy chủ', { tone: 'error' });
     }
   };
 
   const handleDeleteReview = async (id: string) => {
     if (
-      !window.confirm(
-        'Bạn có chắc chắn muốn xóa đánh giá này không? Thao tác này sẽ xóa vĩnh viễn đánh giá và các lượt bình chọn liên quan.'
-      )
+      !(await showConfirm(
+        'Bạn có chắc chắn muốn xóa đánh giá này không? Thao tác này sẽ xóa vĩnh viễn đánh giá và các lượt bình chọn liên quan.',
+        { tone: 'danger', title: 'Xóa đánh giá?', okText: 'Xóa đánh giá' }
+      ))
     ) {
       return;
     }
@@ -124,10 +126,10 @@ export default function AdminReviewsPage() {
         setReviews((prev) => prev.filter((r) => r.id !== id));
         fetchReviews();
       } else {
-        alert(data.error || 'Xóa đánh giá thất bại');
+        showAlert(data.error || 'Xóa đánh giá thất bại', { tone: 'error' });
       }
     } catch {
-      alert('Lỗi kết nối máy chủ khi xóa đánh giá');
+      showAlert('Lỗi kết nối máy chủ khi xóa đánh giá', { tone: 'error' });
     }
   };
 
@@ -161,10 +163,10 @@ export default function AdminReviewsPage() {
         setActiveReview(null);
         setReplyText('');
       } else {
-        alert(data.error || 'Lỗi gửi phản hồi');
+        showAlert(data.error || 'Lỗi gửi phản hồi', { tone: 'error' });
       }
     } catch {
-      alert('Lỗi kết nối máy chủ');
+      showAlert('Lỗi kết nối máy chủ', { tone: 'error' });
     } finally {
       setActionLoading(false);
     }

@@ -23,6 +23,7 @@ import {
   Mail,
   UserCheck
 } from 'lucide-react';
+import { showAlert } from '@/components/ui/AppDialog';
 
 interface PartnerRow {
   id: string;
@@ -85,15 +86,15 @@ export default function AdminPartnersPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert(data.error || 'Thao tác thất bại');
+        showAlert(data.error || 'Thao tác thất bại', { tone: 'error' });
         return;
       }
 
-      alert('Cập nhật trạng thái đối tác thành công!');
+      showAlert('Cập nhật trạng thái đối tác thành công!', { tone: 'success' });
       setSelectedPartner(null);
       fetchPartners();
     } catch (e: any) {
-      alert(e.message || 'Lỗi xử lý');
+      showAlert(e.message || 'Lỗi xử lý', { tone: 'error' });
     } finally {
       setActionLoading(false);
     }

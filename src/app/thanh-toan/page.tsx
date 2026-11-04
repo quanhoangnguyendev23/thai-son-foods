@@ -45,6 +45,20 @@ import LocationConfirmMapModal from '@/components/checkout/LocationConfirmMapMod
 import { SERVICE_AREA, isHcmProvince } from '@/config/service-area';
 import StoreRecommendationSheet from '@/components/checkout/StoreRecommendationSheet';
 import type { StoreRecommendationItem } from '@/lib/storeRecommender';
+import { showAlert, type DialogTone } from '@/components/ui/AppDialog';
+
+// Tiêu đề + nút của popup thông báo theo ngôn ngữ đang chọn
+const dialogOpts = (language: string, tone: DialogTone) => {
+  const en = language === 'en';
+  const titles: Record<DialogTone, [string, string]> = {
+    info: ['Notice', 'Thông báo'],
+    success: ['Success', 'Thành công'],
+    warning: ['Please note', 'Lưu ý'],
+    error: ['Something went wrong', 'Có lỗi xảy ra'],
+    danger: ['Confirm', 'Xác nhận'],
+  };
+  return { tone, title: titles[tone][en ? 0 : 1], okText: en ? 'Got it' : 'Đã hiểu' };
+};
 
 interface DeliveryMiniMapProps {
   coords: { lat: number; lng: number } | null;
@@ -481,7 +495,7 @@ export default function CheckoutPage() {
 
   const handleLocateGPS = () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      alert(language === 'en' ? 'Geolocation is not supported by your browser.' : 'Trình duyệt không hỗ trợ định vị GPS.');
+      showAlert(language === 'en' ? 'Geolocation is not supported by your browser.' : 'Trình duyệt không hỗ trợ định vị GPS.', dialogOpts(language, 'warning'));
       return;
     }
     setIsLocating(true);
@@ -533,10 +547,11 @@ export default function CheckoutPage() {
       },
       (err) => {
         setIsLocating(false);
-        alert(
+        showAlert(
           language === 'en'
             ? 'Unable to retrieve your GPS location. Nearest branch will be estimated from your address.'
-            : 'Không thể lấy vị trí GPS. Hệ thống sẽ ước tính kho gần nhất theo địa chỉ bạn nhập.'
+            : 'Không thể lấy vị trí GPS. Hệ thống sẽ ước tính kho gần nhất theo địa chỉ bạn nhập.',
+        dialogOpts(language, 'warning')
         );
       },
       { timeout: 8000, enableHighAccuracy: true }
@@ -1094,10 +1109,11 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEligibleToOrder) {
-      alert(
+      showAlert(
         language === 'en'
           ? 'Minimum order value is 120,000đ to proceed with ordering.'
-          : 'Đơn hàng tối thiểu từ 120.000đ mới có thể tiến hành đặt hàng.'
+          : 'Đơn hàng tối thiểu từ 120.000đ mới có thể tiến hành đặt hàng.',
+        dialogOpts(language, 'warning')
       );
       return;
     }
@@ -1105,10 +1121,11 @@ export default function CheckoutPage() {
 
     // Chặn gửi đơn nếu chi nhánh thiếu hàng
     if (!isStockAvailable) {
-      alert(
+      showAlert(
         language === 'en'
           ? 'The selected store does not have enough stock. Please choose an alternative store.'
-          : 'Chi nhánh hiện tại không đủ tồn kho cho các món trong giỏ. Vui lòng đổi chi nhánh còn hàng bên dưới.'
+          : 'Chi nhánh hiện tại không đủ tồn kho cho các món trong giỏ. Vui lòng đổi chi nhánh còn hàng bên dưới.',
+        dialogOpts(language, 'warning')
       );
       return;
     }
@@ -1195,7 +1212,7 @@ export default function CheckoutPage() {
         }
 
         setStockConflictError(friendlyMsg);
-        alert(friendlyMsg);
+        showAlert(friendlyMsg, dialogOpts(language, 'error'));
         checkCartStock(selectedStoreCode);
         return;
       }
@@ -1206,12 +1223,14 @@ export default function CheckoutPage() {
         if (data?.code === 'SHIPPING_FEE_CHANGED' && customerCoords) {
           fetchStoreRecommendation(customerCoords);
         }
-        alert(
+        showAlert(
           data?.error ||
             data?.message ||
             (language === 'en'
               ? 'An error occurred while saving your order. Please try again!'
-              : 'Có lỗi xảy ra khi lưu đơn hàng vào hệ thống. Vui lòng thử lại!')
+              : 'Có lỗi xảy ra khi lưu đơn hàng vào hệ thống. Vui lòng thử lại!'),
+        // Lỗi nghiệp vụ từ máy chủ (vượt bán kính giao, đổi phí ship...) → popup "Lưu ý"
+        dialogOpts(language, 'warning')
         );
         return;
       }
@@ -1238,10 +1257,11 @@ export default function CheckoutPage() {
       clearCart();
     } catch (err) {
       console.error('Order sync error:', err);
-      alert(
+      showAlert(
         language === 'en'
           ? 'Unable to connect to server. Please try again shortly!'
-          : 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau ít phút!'
+          : 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau ít phút!',
+        dialogOpts(language, 'error')
       );
     } finally {
       setIsSubmitting(false);

@@ -73,6 +73,7 @@ type OpenOrderFilter = 'OPEN' | 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPI
 const OPEN_ORDER_STATUSES: Exclude<OpenOrderFilter, 'OPEN'>[] = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPING'];
 import { banners as defaultHeroBanners } from '@/data/banners';
 import { HERO_PLACEHOLDER_SLIDES } from '@/data/homepage-placeholders';
+import { showAlert, showConfirm } from '@/components/ui/AppDialog';
 
 // ==================== INTERFACES ====================
 export interface AdminUser {
@@ -1107,7 +1108,7 @@ export default function AdminPage() {
   const handleTransferOrderStore = async (orderId: string, newStoreCode: string) => {
     if (!orderId || !newStoreCode) return;
     const storeName = storeList.find((s) => s.code === newStoreCode)?.name || newStoreCode;
-    if (!confirm(`Bạn có chắc chắn muốn chuyển đơn hàng này sang chi nhánh: ${storeName}?`)) {
+    if (!(await showConfirm(`Bạn có chắc chắn muốn chuyển đơn hàng này sang chi nhánh: ${storeName}?`, { tone: 'warning', title: 'Chuyển chi nhánh?', okText: 'Chuyển đơn' }))) {
       return;
     }
     setIsTransferringOrder(true);
@@ -1130,11 +1131,11 @@ export default function AdminPage() {
           });
         }
       } else {
-        alert(data.error || 'Lỗi khi chuyển chi nhánh');
+        showAlert(data.error || 'Lỗi khi chuyển chi nhánh', { tone: 'error' });
       }
     } catch (err) {
       console.error('Error transferring order:', err);
-      alert('Không thể kết nối đến máy chủ khi chuyển chi nhánh.');
+      showAlert('Không thể kết nối đến máy chủ khi chuyển chi nhánh.', { tone: 'error' });
     } finally {
       setIsTransferringOrder(false);
     }
@@ -1414,7 +1415,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteBanner = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa banner này?')) return;
+    if (!(await showConfirm('Bạn có chắc chắn muốn xóa banner này?', { tone: 'danger', title: 'Xóa banner?', okText: 'Xóa' }))) return;
     setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/banners?id=${id}`, { method: 'DELETE' });
@@ -1585,7 +1586,7 @@ export default function AdminPage() {
     const confirmMsg = nextStatus
       ? `Kích hoạt lại tài khoản "${user.username}"?`
       : `Tạm khóa tài khoản "${user.username}"? Tài khoản này sẽ không thể đăng nhập.`;
-    if (!confirm(confirmMsg)) return;
+    if (!(await showConfirm(confirmMsg, { tone: 'warning', okText: 'Xác nhận' }))) return;
 
     try {
       const res = await fetch('/api/admin/users', {
@@ -1611,7 +1612,7 @@ export default function AdminPage() {
       showToast('Bạn không thể xóa tài khoản của chính mình', 'error');
       return;
     }
-    if (!confirm(`Bạn có chắc muốn xóa tài khoản "${user.username}" (${user.full_name})? Hành động này không thể hoàn tác.`)) {
+    if (!(await showConfirm(`Bạn có chắc muốn xóa tài khoản "${user.username}" (${user.full_name})? Hành động này không thể hoàn tác.`, { tone: 'danger', title: 'Xóa tài khoản?', okText: 'Xóa tài khoản' }))) {
       return;
     }
     try {
@@ -1654,7 +1655,7 @@ export default function AdminPage() {
     const confirmMsg = nextStatus
       ? `Kích hoạt lại tài khoản thành viên "${member.full_name}" (${member.email})?`
       : `Tạm khóa tài khoản thành viên "${member.full_name}" (${member.email})? Khách hàng này sẽ không thể đăng nhập hoặc đặt đơn bằng tài khoản.`;
-    if (!confirm(confirmMsg)) return;
+    if (!(await showConfirm(confirmMsg, { tone: 'warning', okText: 'Xác nhận' }))) return;
 
     try {
       const res = await fetch('/api/admin/members', {
@@ -1679,7 +1680,7 @@ export default function AdminPage() {
 
   // Xóa tài khoản thành viên
   const handleDeleteMember = async (member: MemberUser) => {
-    if (!confirm(`Bạn có chắc muốn xóa tài khoản thành viên "${member.full_name}" (${member.email})? Dữ liệu lịch sử đơn hàng của khách vẫn được lưu giữ.`)) {
+    if (!(await showConfirm(`Bạn có chắc muốn xóa tài khoản thành viên "${member.full_name}" (${member.email})? Dữ liệu lịch sử đơn hàng của khách vẫn được lưu giữ.`, { tone: 'danger', title: 'Xóa thành viên?', okText: 'Xóa tài khoản' }))) {
       return;
     }
     try {
@@ -1915,7 +1916,7 @@ export default function AdminPage() {
   };
 
   const handleLogout = async () => {
-    if (!confirm('Bạn có chắc muốn đăng xuất khỏi hệ thống quản trị?')) return;
+    if (!(await showConfirm('Bạn có chắc muốn đăng xuất khỏi hệ thống quản trị?', { tone: 'warning', title: 'Đăng xuất?', okText: 'Đăng xuất' }))) return;
     try {
       await fetch('/api/admin/auth/logout', { method: 'POST' });
       window.location.href = '/admin/login';
@@ -2120,7 +2121,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${name}"?`)) return;
+    if (!(await showConfirm(`Bạn có chắc muốn xóa sản phẩm "${name}"?`, { tone: 'danger', title: 'Xóa sản phẩm?', okText: 'Xóa' }))) return;
     setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/products?id=${id}`, { method: 'DELETE' });
@@ -2281,7 +2282,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteOrder = async (id: string, code: string) => {
-    if (!confirm(`Bạn có chắc muốn xóa đơn hàng #${code}? Hành động này không thể hoàn tác.`)) return;
+    if (!(await showConfirm(`Bạn có chắc muốn xóa đơn hàng #${code}? Hành động này không thể hoàn tác.`, { tone: 'danger', title: 'Xóa đơn hàng?', okText: 'Xóa đơn' }))) return;
     setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/orders?id=${id}`, { method: 'DELETE' });
@@ -2361,7 +2362,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteCategory = async (id: string, name: string) => {
-    if (!confirm(`Xóa danh mục "${name}"? Các sản phẩm thuộc danh mục này sẽ chuyển về chưa phân loại.`)) return;
+    if (!(await showConfirm(`Xóa danh mục "${name}"? Các sản phẩm thuộc danh mục này sẽ chuyển về chưa phân loại.`, { tone: 'danger', title: 'Xóa danh mục?', okText: 'Xóa' }))) return;
     setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/categories?id=${id}`, { method: 'DELETE' });
@@ -2470,7 +2471,7 @@ export default function AdminPage() {
   };
 
   const handleDeleteCombo = async (id: string, name: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa combo "${name}" khỏi cơ sở dữ liệu?`)) return;
+    if (!(await showConfirm(`Bạn có chắc chắn muốn xóa combo "${name}" khỏi cơ sở dữ liệu?`, { tone: 'danger', title: 'Xóa combo?', okText: 'Xóa' }))) return;
     try {
       const res = await fetch(`/api/admin/combos?id=${id}`, { method: 'DELETE' });
       const data = await res.json();

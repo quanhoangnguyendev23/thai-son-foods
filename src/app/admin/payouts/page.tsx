@@ -18,6 +18,7 @@ import {
   Building2,
   Check
 } from 'lucide-react';
+import { showAlert } from '@/components/ui/AppDialog';
 
 interface PayoutRow {
   id: string;
@@ -76,14 +77,14 @@ export default function AdminPayoutsPage() {
       const body: any = { action: actionType };
       if (actionType === 'MARK_AS_PAID') {
         if (!bankReference.trim()) {
-          alert('Vui lòng nhập Mã tham chiếu ngân hàng');
+          showAlert('Vui lòng nhập Mã tham chiếu ngân hàng', { tone: 'warning' });
           setActionLoading(false);
           return;
         }
         body.bankReference = bankReference.trim();
       } else if (actionType === 'REJECT') {
         if (!rejectReason.trim()) {
-          alert('Vui lòng nhập lý do từ chối để đối tác nắm thông tin');
+          showAlert('Vui lòng nhập lý do từ chối để đối tác nắm thông tin', { tone: 'warning' });
           setActionLoading(false);
           return;
         }
@@ -100,14 +101,14 @@ export default function AdminPayoutsPage() {
         throw new Error(data.error || 'Thao tác không thành công');
       }
 
-      alert('Đã xử lý lệnh rút tiền thành công!');
+      showAlert('Đã xử lý lệnh rút tiền thành công!', { tone: 'success' });
       setSelectedPayout(null);
       setActionType(null);
       setBankReference('');
       setRejectReason('');
       fetchPayouts();
     } catch (e: any) {
-      alert(e.message || 'Lỗi xử lý rút tiền');
+      showAlert(e.message || 'Lỗi xử lý rút tiền', { tone: 'error' });
     } finally {
       setActionLoading(false);
     }

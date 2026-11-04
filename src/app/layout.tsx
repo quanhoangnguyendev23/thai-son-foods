@@ -4,6 +4,7 @@ import './globals.css';
 import 'leaflet/dist/leaflet.css';
 import LogoPreloader from '@/components/layout/LogoPreloader';
 import AppLayout from '@/components/layout/AppLayout';
+import AppDialogHost from '@/components/ui/AppDialog';
 
 const firaSans = Fira_Sans({
   subsets: ['latin', 'vietnamese'],
@@ -73,6 +74,8 @@ export default function RootLayout({
         </svg>
         <LogoPreloader />
         <AppLayout>{children}</AppLayout>
+        {/* Popup thông báo / xác nhận dùng chung (thay alert/confirm của trình duyệt) */}
+        <AppDialogHost />
       </body>
     </html>
   );

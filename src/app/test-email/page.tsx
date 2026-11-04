@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Info,
 } from 'lucide-react';
+import { showAlert } from '@/components/ui/AppDialog';
 
 type EmailTab = 'confirmation' | 'shipping' | 'completed';
 
@@ -119,7 +120,7 @@ export default function EmailTestingStudio() {
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!testEmail || !testEmail.includes('@')) {
-      alert('Vui lòng nhập địa chỉ email hợp lệ!');
+      showAlert('Vui lòng nhập địa chỉ email hợp lệ!', { tone: 'warning' });
       return;
     }
 
