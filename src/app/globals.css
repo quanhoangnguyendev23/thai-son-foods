@@ -294,8 +294,11 @@ select:-webkit-autofill {
   caret-color: var(--color-ink-950);
 }
 
+/* Chữ gợi ý (placeholder) mờ hơn chữ đã gõ: 65% màu chữ của ô (chữ xanh rêu trên nền trắng ≈ #6F908B, tương phản ~3.5:1).
+   Không dùng var(--color-ink-500): plugin postcss-brand-colors.cjs ép màu chữ về 7 màu gốc nên ink-500 bị đổi thành #22544C (đậm như chữ đã gõ).
+   currentcolor không bị plugin đổi, và trên ô nền tối (chữ trắng) gợi ý thành trắng mờ. */
 ::placeholder {
-  color: var(--color-ink-500);
+  color: color-mix(in srgb, currentcolor 65%, transparent);
   opacity: 1;
 }
 
