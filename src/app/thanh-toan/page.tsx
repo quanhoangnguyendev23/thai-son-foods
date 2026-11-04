@@ -2313,12 +2313,17 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-2xl border border-border-light sticky top-[170px] max-h-[calc(100vh-190px)] overflow-y-auto">
-              <h2 className="text-xl text-text-dark mb-5">
-                {language === 'en' ? 'Order Summary' : 'Tóm tắt đơn hàng'}
+            {/* Desktop: khung dính dưới header (tầng 1 64px + tầng 2 40px), cao tối đa bằng màn hình.
+                Danh sách sản phẩm tự cuộn bên trong, còn tổng tiền + nút Đặt hàng luôn nằm ở đáy khung, không bị che. */}
+            <div className="bg-white p-6 rounded-2xl border border-border-light flex flex-col lg:sticky lg:top-[120px] lg:max-h-[calc(100vh-136px)] lg:overflow-y-auto">
+              <h2 className="text-xl text-text-dark mb-4 shrink-0 flex items-baseline justify-between gap-2">
+                <span>{language === 'en' ? 'Order Summary' : 'Tóm tắt đơn hàng'}</span>
+                <span className="text-sm text-text-muted font-normal whitespace-nowrap">
+                  {items.reduce((sum, it) => sum + it.quantity, 0)} {language === 'en' ? 'items' : 'sản phẩm'}
+                </span>
               </h2>
 
-              <div className="space-y-3 mb-5">
+              <div className="space-y-3 mb-4 -mx-2 px-2 overflow-y-auto overscroll-contain max-h-80 lg:max-h-none lg:flex-1 lg:min-h-[120px]">
                 {items.map((item) => {
                   const productMatch = products.find((p) => p.id === item.productId || p.slug === item.slug);
                   const comboMatch = combos.find((c) => c.id === item.productId || c.slug === item.slug);
@@ -2353,6 +2358,7 @@ export default function CheckoutPage() {
                 })}
               </div>
 
+              <div className="shrink-0">
               <div className="border-t border-border-light pt-4 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-text-body">{language === 'en' ? 'Subtotal' : 'Tạm tính'}</span>
@@ -2458,6 +2464,7 @@ export default function CheckoutPage() {
                   language === 'en' ? 'Place Order' : 'Đặt hàng'
                 )}
               </button>
+              </div>
             </div>
           </div>
         </div>
