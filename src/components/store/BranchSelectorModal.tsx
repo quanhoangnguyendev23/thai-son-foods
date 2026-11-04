@@ -16,7 +16,7 @@ import {
 import { useBranchStore, StoreBranch } from '@/store/branch';
 import { calculateHaversineDistance } from '@/lib/geo';
 import { cn, safeFetchJson } from '@/lib/utils';
-import { sortDistrictNames } from '@/lib/sortDistricts';
+import { getAreaGroups, getAreaCoords, findAddressProvince } from '@/lib/areaPicker';
 
 interface BranchSelectorModalProps {
   productId?: string; // Tùy chọn nếu đang mở từ trang sản phẩm để hiển thị tồn kho của món đó
@@ -36,7 +36,9 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedProvince, setSelectedProvince] = useState<string>('ALL');
-  const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
+  // Khu vực khách tự chọn khi không bật định vị (Quận/Huyện + Phường/Xã nơi khách ở)
+  const [areaKey, setAreaKey] = useState<string>('');
+  const [areaWard, setAreaWard] = useState<string>('');
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -79,16 +81,30 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
     return Array.from(set);
   }, [branches]);
 
-  // Lấy danh sách Quận/Huyện theo Tỉnh đã chọn
-  const districts = useMemo(() => {
-    const set = new Set<string>();
-    branches.forEach((b) => {
-      if (selectedProvince === 'ALL' || b.province === selectedProvince) {
-        if (b.district) set.add(b.district);
-      }
-    });
-    return sortDistrictNames(Array.from(set));
-  }, [branches, selectedProvince]);
+  // Toàn bộ Quận/Huyện (kể cả nơi chưa có cửa hàng, và tên cũ Quận 2/Quận 9) để khách chọn nơi mình ở
+  // Chưa chọn tỉnh: chỉ hiện các tỉnh đang có chi nhánh cho gọn
+  const areaGroups = useMemo(() => {
+    const all = getAreaGroups(selectedProvince);
+    if (selectedProvince !== 'ALL') return all;
+    const served = new Set(provinces.map((p) => findAddressProvince(p)?.name).filter(Boolean));
+    const filtered = all.filter((g) => served.has(g.province));
+    return filtered.length > 0 ? filtered : all;
+  }, [selectedProvince, provinces]);
+  const selectedArea = useMemo(() => {
+    if (!areaKey) return null;
+    for (const g of areaGroups) {
+      const d = g.districts.find((x) => x.key === areaKey);
+      if (d) return d;
+    }
+    return null;
+  }, [areaGroups, areaKey]);
+  const areaCoords = useMemo(
+    () => (selectedArea ? getAreaCoords(selectedArea, areaWard) : null),
+    [selectedArea, areaWard]
+  );
+
+  // Vị trí dùng để xếp chi nhánh: GPS nếu có, không thì khu vực khách chọn
+  const originCoords = userCoords ?? areaCoords;
 
   // Xử lý lấy vị trí GPS từ trình duyệt
   const handleGetLocation = () => {
@@ -107,6 +123,8 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
           lng: position.coords.longitude,
         };
         setUserCoords(coords);
+        setAreaKey('');
+        setAreaWard('');
         setGpsLoading(false);
       },
       (error) => {
@@ -127,10 +145,10 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
   const processedBranches = useMemo(() => {
     let list = branches.map((b) => {
       let distanceKm: number | undefined = undefined;
-      if (userCoords && b.latitude && b.longitude) {
+      if (originCoords && b.latitude && b.longitude) {
         distanceKm = calculateHaversineDistance(
-          userCoords.lat,
-          userCoords.lng,
+          originCoords.lat,
+          originCoords.lng,
           b.latitude,
           b.longitude
         );
@@ -158,13 +176,8 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
       list = list.filter((b) => b.province === selectedProvince);
     }
 
-    // Lọc theo Quận
-    if (selectedDistrict !== 'ALL') {
-      list = list.filter((b) => b.district === selectedDistrict);
-    }
-
-    // Sắp xếp: Nếu có vị trí GPS -> ưu tiên gần nhất lên đầu
-    if (userCoords) {
+    // Sắp xếp: có vị trí (GPS hoặc khu vực khách chọn) -> gần nhất lên đầu
+    if (originCoords) {
       list.sort((a, b) => {
         if (a.distanceKm !== undefined && b.distanceKm !== undefined) {
           return a.distanceKm - b.distanceKm;
@@ -176,14 +189,14 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
     }
 
     return list;
-  }, [branches, userCoords, searchKeyword, selectedProvince, selectedDistrict, storeStockMap]);
+  }, [branches, originCoords, searchKeyword, selectedProvince, storeStockMap]);
 
-  // Chi nhánh gần nhất (nếu có GPS)
+  // Chi nhánh gần nhất (nếu có GPS hoặc khu vực đã chọn)
   const nearestBranchCode = useMemo(() => {
-    if (!userCoords) return null;
+    if (!originCoords) return null;
     const withDist = processedBranches.filter((b) => b.distanceKm !== undefined);
     return withDist.length > 0 ? withDist[0].code : null;
-  }, [userCoords, processedBranches]);
+  }, [originCoords, processedBranches]);
 
   const handleSelect = (branch: StoreBranch) => {
     setSelectedBranch(branch);
@@ -287,7 +300,8 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                 value={selectedProvince}
                 onChange={(e) => {
                   setSelectedProvince(e.target.value);
-                  setSelectedDistrict('ALL');
+                  setAreaKey('');
+                  setAreaWard('');
                 }}
                 className="w-full px-3 py-2 text-base sm:text-xs md:text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-hidden focus:border-forest-700"
               >
@@ -302,22 +316,64 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
 
             <div>
               <label className="block text-[12px] text-gray-500 uppercase tracking-wider mb-1">
-                Quận / Huyện
+                Bạn ở Quận / Huyện
               </label>
               <select
-                value={selectedDistrict}
-                onChange={(e) => setSelectedDistrict(e.target.value)}
+                value={areaKey}
+                onChange={(e) => {
+                  setAreaKey(e.target.value);
+                  setAreaWard('');
+                  if (e.target.value) setUserCoords(null);
+                }}
                 className="w-full px-3 py-2 text-base sm:text-xs md:text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-hidden focus:border-forest-700"
               >
-                <option value="ALL">Tất cả Quận/Huyện</option>
-                {districts.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
+                <option value="">Chọn để tìm chi nhánh gần nhất</option>
+                {areaGroups.length === 1
+                  ? areaGroups[0].districts.map((d) => (
+                      <option key={d.key} value={d.key}>
+                        {d.name}
+                      </option>
+                    ))
+                  : areaGroups.map((g) => (
+                      <optgroup key={g.province} label={g.province}>
+                        {g.districts.map((d) => (
+                          <option key={d.key} value={d.key}>
+                            {d.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Phường/Xã (không bắt buộc) để xếp chính xác hơn */}
+          {selectedArea && selectedArea.wards.length > 0 && (
+            <div>
+              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">
+                Phường / Xã (không bắt buộc)
+              </label>
+              <select
+                value={areaWard}
+                onChange={(e) => setAreaWard(e.target.value)}
+                className="w-full px-3 py-2 text-base sm:text-xs md:text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-hidden focus:border-forest-700"
+              >
+                <option value="">Cả {selectedArea.name}</option>
+                {selectedArea.wards.map((w) => (
+                  <option key={w.name} value={w.name}>
+                    {w.name}
                   </option>
                 ))}
               </select>
             </div>
-          </div>
+          )}
+
+          {selectedArea && !userCoords && (
+            <p className="text-xs text-emerald-800">
+              Đang xếp chi nhánh theo khoảng cách tới {areaWard ? `${areaWard}, ` : ''}
+              {selectedArea.name}.
+            </p>
+          )}
         </div>
 
         {/* Danh sách Chi nhánh */}
@@ -333,7 +389,8 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
               <button
                 onClick={() => {
                   setSelectedProvince('ALL');
-                  setSelectedDistrict('ALL');
+                  setAreaKey('');
+                  setAreaWard('');
                   setSearchKeyword('');
                 }}
                 className="mt-2 text-sm text-forest-700 underline cursor-pointer"

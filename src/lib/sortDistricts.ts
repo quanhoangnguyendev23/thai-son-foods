@@ -1,14 +1,15 @@
 /**
  * Sắp xếp danh sách Quận/Huyện cho đúng thực tế:
+ * (Dùng cho cả Phường/Xã: Phường 1, 2, ... rồi tới phường/xã tên chữ.)
  * 1. Quận có số đứng trước, theo số tăng dần (Quận 1, 3, ... 9, 10, 12).
  * 2. Sau đó các quận/huyện/thành phố tên chữ, theo bảng chữ cái tiếng Việt
  *    (bỏ qua tiền tố "Quận", "Huyện", "TP.", "TX."... khi so sánh).
  */
 
-const PREFIX_RE = /^(quận|q\.|huyện|h\.|thị xã|tx\.?|thành phố|tp\.?)\s*/i;
+const PREFIX_RE = /^(quận|q\.|huyện|h\.|thị xã|tx\.?|thành phố|tp\.?|phường|p\.|xã|thị trấn|tt\.?)\s*/i;
 
 function districtNumber(name: string): number | null {
-  const m = name.trim().match(/^(?:quận|q\.?)\s*(\d+)$/i) || name.trim().match(/^(\d+)$/);
+  const m = name.trim().match(/^(?:quận|q\.?|phường|p\.?)\s*(\d+)(?!\d)/i) || name.trim().match(/^(\d+)$/);
   return m ? Number(m[1]) : null;
 }
 
