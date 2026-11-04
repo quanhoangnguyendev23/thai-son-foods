@@ -144,12 +144,12 @@ export default function AuthModal() {
     // Cùng quy tắc với server (/api/auth/register PASSWORD_REGEX)
     if (
       !registerForm.password ||
-      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/.test(registerForm.password)
+      !/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(registerForm.password)
     ) {
       setErrorMsg(
         language === 'en'
-          ? 'Password needs at least 8 characters with upper case, lower case, a number and a symbol (e.g. MyPass@123)'
-          : 'Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt (VD: MyPass@123)'
+          ? 'Password needs at least 8 characters with both letters and numbers (e.g. thaison123)'
+          : 'Mật khẩu cần ít nhất 8 ký tự, có cả chữ và số (VD: thaison123)'
       );
       return;
     }
@@ -406,8 +406,8 @@ export default function AuthModal() {
               <div>
                 <label className="block text-sm text-gray-700 mb-1">
                   {language === 'en'
-                    ? 'Password (8+ characters, upper & lower case, number, symbol)'
-                    : 'Mật khẩu (từ 8 ký tự, có chữ hoa, chữ thường, số, ký tự đặc biệt)'}{' '}
+                    ? 'Password (8+ characters, letters and numbers, @ allowed)'
+                    : 'Mật khẩu (từ 8 ký tự, gồm chữ và số, được dùng thêm @)'}{' '}
                   <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
