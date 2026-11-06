@@ -3660,12 +3660,16 @@ export function findStreetCoordinates(
   }
 
   // 3. Nếu có ngữ cảnh quận/huyện, ưu tiên đường nằm đúng quận đó
+  //    So theo TỪ nguyên vẹn: "quan 1" không được khớp "quan 12" như kiểu includes trước đây.
+  const containsWords = (haystack: string, needle: string) =>
+    !!needle && (haystack === needle || (` ${haystack} `).includes(` ${needle} `));
   if (distClean) {
     const matchByDistrict = candidateStreets.find((s) => {
+      const sd = cleanAddressText(s.district);
       return (
-        distClean.includes(s.districtClean) ||
-        s.districtClean.includes(distClean) ||
-        cleanAddressText(s.district).includes(distClean)
+        containsWords(distClean, s.districtClean) ||
+        containsWords(s.districtClean, distClean) ||
+        containsWords(sd, distClean)
       );
     });
     if (matchByDistrict) {
@@ -3676,6 +3680,9 @@ export function findStreetCoordinates(
         houseNumber,
       };
     }
+    // Khách (hoặc ô chọn Quận) đã nêu quận mà không có đường cùng tên nào nằm trong quận đó:
+    // KHÔNG trả đường ở quận khác. Trước đây "101 Lê Lợi" + Quận Gò Vấp bị trả về tọa độ Lê Lợi Quận 1.
+    if (districtContext) return null;
   }
 
   // 4. Nếu có ngữ cảnh tỉnh/thành phố, ưu tiên đường nằm đúng tỉnh đó
