@@ -5,6 +5,7 @@ import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { processOrderReturn, reconcileCodPayment } from '@/lib/inventory';
 import { publicErrorMessage } from '@/lib/apiError';
+import { ensureOrderStatusHistory, setOrderStatusActor } from '@/lib/orderStatusHistory';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,9 @@ export async function POST(req: NextRequest) {
     } else {
       return NextResponse.json({ success: false, error: `Hành động không hợp lệ: ${action}` }, { status: 400 });
     }
+
+    // Tạo bảng/trigger lịch sử trạng thái (nếu chưa có) TRƯỚC khi mở transaction khoá đơn
+    if (action === 'process_return') await ensureOrderStatusHistory();
 
     const client = await pool.connect();
     try {
@@ -147,6 +151,16 @@ export async function POST(req: NextRequest) {
       if (action === 'process_return') {
         const disposition = body.disposition === 'damaged_spoilage' ? 'damaged_spoilage' : 'restocked';
         const reason = body.reason ? String(body.reason).slice(0, 500) : 'Khách từ chối nhận / bom hàng';
+        // Hoàn hàng chuyển đơn sang Đã huỷ: ghi người thao tác vào lịch sử trạng thái
+        await setOrderStatusActor(client, {
+          orderId,
+          type: 'admin',
+          id: session.id,
+          username: session.username,
+          name: session.fullName || session.username,
+          role: session.role,
+          note: `Hoàn hàng: ${reason}`,
+        });
         const res = await processOrderReturn(orderId, client, {
           disposition,
           reason,

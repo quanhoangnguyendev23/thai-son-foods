@@ -754,6 +754,19 @@ async function runInitDatabase(dryRunClient?: PoolClient) {
       console.error('[DB] Không khôi phục được bộ ảnh sản phẩm:', err);
     }
 
+    // Lịch sử đổi trạng thái đơn (ai xác nhận / ai huỷ): bảng + trigger, chỉ thêm mới (xem src/lib/orderStatusHistory.ts)
+    try {
+      if (dryRunClient) {
+        // Chạy thử: không gọi thật (module này tự chạy câu lệnh qua pool); script chạy thử tự đọc DDL của module
+        await client.query('-- ensureOrderStatusHistory(): DDL + BACKFILL trong src/lib/orderStatusHistory.ts');
+      } else {
+        const { ensureOrderStatusHistory } = await import('@/lib/orderStatusHistory');
+        await ensureOrderStatusHistory();
+      }
+    } catch (err) {
+      console.error('[DB] Không tạo được lịch sử trạng thái đơn:', err);
+    }
+
     console.log('Database tables verified/created successfully!');
   } finally {
     client.release();
