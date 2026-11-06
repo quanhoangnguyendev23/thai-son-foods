@@ -43,7 +43,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
           </div>
 
           <div className="min-w-0 flex-1 max-w-[760px]">
-            <p className="text-sm sm:text-[15px] font-semibold text-ink-950 leading-snug line-clamp-2 sm:line-clamp-1 group-hover:text-green-primary">
+            <p className="text-sm sm:text-base font-semibold text-ink-950 leading-snug line-clamp-2 sm:line-clamp-1 group-hover:text-green-primary">
               {combo.name}
             </p>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-gray-600">
@@ -65,7 +65,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
                 </span>
               )}
               {combo.isBestSeller && (
-                <span className="rounded bg-forest-50 px-1.5 py-px text-[11px] text-forest-700">Bán chạy</span>
+                <span className="rounded bg-forest-50 px-1.5 py-px text-2xs text-forest-700">Bán chạy</span>
               )}
               {sold > 0 && <span>Đã bán {formatPrice(sold)}</span>}
               <span>{combo.totalItems} chai</span>
@@ -74,8 +74,8 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
             {/* Giá trên điện thoại nằm dưới tên */}
             <div className="mt-1 flex items-baseline gap-1.5 sm:hidden">
               <span className="text-sm font-semibold text-ink-950">{formatPrice(combo.salePrice)}đ</span>
-              {saving > 0 && <span className="text-[11px] text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>}
-              {combo.discount > 0 && <span className="text-[11px] text-copper-600">-{combo.discount}%</span>}
+              {saving > 0 && <span className="text-2xs text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>}
+              {combo.discount > 0 && <span className="text-2xs text-copper-600">-{combo.discount}%</span>}
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
           </div>
         </div>
       </Link>
-      <p className="mt-0.5 text-right text-[11px] text-gray-500">Combo gợi ý</p>
+      <p className="mt-0.5 text-right text-2xs text-gray-500">Combo gợi ý</p>
     </div>
   );
 }

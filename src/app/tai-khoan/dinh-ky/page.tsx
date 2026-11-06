@@ -316,7 +316,7 @@ export default function SubscriptionsManagementPage() {
                     <div className="text-xs text-gray-500 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-gray-400" />
                       Chu kỳ:{' '}
-                      <span className="text-gray-800 text-[1.125em]">
+                      <span className="text-gray-800 text-emph">
                         {sub.deliveryFrequency === '1_WEEK'
                           ? 'Mỗi tuần'
                           : sub.deliveryFrequency === '2_WEEKS'
@@ -364,11 +364,11 @@ export default function SubscriptionsManagementPage() {
                           className="flex items-center justify-between text-sm py-2 border-b border-gray-50 last:border-0"
                         >
                           <div>
-                            <span className="text-gray-900 text-[1.125em]">{it.name}</span>
+                            <span className="text-gray-900 text-emph">{it.name}</span>
                             <span className="text-xs text-gray-500 ml-2">({it.unit})</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-emerald-700 text-[1.125em]">{formatPrice(it.finalPrice)}</span>
+                            <span className="text-emerald-700 text-emph">{formatPrice(it.finalPrice)}</span>
                             <span className="text-xs text-gray-500 line-through ml-2">
                               {formatPrice(it.priceSnapshot)}
                             </span>
@@ -382,13 +382,13 @@ export default function SubscriptionsManagementPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-600 bg-gray-50 p-4 rounded-xl">
                       <div>
                         <div className="text-gray-400 font-medium">Người nhận:</div>
-                        <div className="text-gray-900 mt-0.5 text-[1.125em]">
+                        <div className="text-gray-900 mt-0.5 text-emph">
                           {sub.recipientName} — {sub.recipientPhone}
                         </div>
                       </div>
                       <div>
                         <div className="text-gray-400 font-medium">Địa chỉ giao xe lạnh:</div>
-                        <div className="text-gray-900 mt-0.5 line-clamp-1 text-[1.125em]">
+                        <div className="text-gray-900 mt-0.5 line-clamp-1 text-emph">
                           {sub.shippingAddress}, {sub.ward}, {sub.district}
                         </div>
                       </div>
@@ -509,7 +509,7 @@ export default function SubscriptionsManagementPage() {
             <p className="text-xs text-gray-500 mt-1">Hợp đồng #{cancelModalSub.subscriptionCode}</p>
 
             <p className="text-sm text-gray-600 mt-4">
-              Bạn có chắc chắn muốn hủy đăng ký nhận sữa định kỳ? Bạn hoàn toàn có thể chọn <span className="text-emerald-700 text-[1.125em]">Bỏ qua kỳ này</span> hoặc <span className="text-emerald-700 text-[1.125em]">Đổi sang 2 tuần/lần</span> thay vì hủy.
+              Bạn có chắc chắn muốn hủy đăng ký nhận sữa định kỳ? Bạn hoàn toàn có thể chọn <span className="text-emerald-700 text-emph">Bỏ qua kỳ này</span> hoặc <span className="text-emerald-700 text-emph">Đổi sang 2 tuần/lần</span> thay vì hủy.
             </p>
 
             <div className="mt-4">

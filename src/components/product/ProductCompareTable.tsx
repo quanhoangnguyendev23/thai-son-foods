@@ -187,10 +187,10 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
       label: isEn ? 'Price' : 'Giá cả',
       render: (p) => {
         const v = sortVariants(p.variants)[0];
-        if (!v) return p.price > 0 ? <span className="text-[17px] font-medium text-ink-950">{formatPrice(p.price)}đ</span> : dash;
+        if (!v) return p.price > 0 ? <span className="text-lg font-medium text-ink-950">{formatPrice(p.price)}đ</span> : dash;
         return (
           <span className="block">
-            <span className="text-[17px] font-medium text-ink-950">{formatPrice(v.price)}đ</span>
+            <span className="text-lg font-medium text-ink-950">{formatPrice(v.price)}đ</span>
             <span className="block text-xs text-gray-600">/{getVariantLabel(v, language)}</span>
             <span className="block text-xs text-gray-500">
               ({formatPrice(getUnitPrice(v))}đ/{isEn ? 'bottle' : 'chai'})
@@ -251,9 +251,9 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
     { kind: 'check', key: 'new', label: isEn ? 'New arrival' : 'Sản phẩm mới', test: (p) => Boolean(p.isNew) },
   ];
 
-  const cellBase = 'px-3 py-2.5 text-center align-middle text-[13px] text-ink-950 border-b border-gray-200';
+  const cellBase = 'px-3 py-2.5 text-center align-middle text-sm text-ink-950 border-b border-gray-200';
   const labelCell =
-    'sticky left-0 z-[1] bg-ink-50 px-3 py-2.5 text-center align-middle text-[13px] font-normal text-gray-700 border-b border-r border-gray-200';
+    'sticky left-0 z-[1] bg-ink-50 px-3 py-2.5 text-center align-middle text-sm font-normal text-gray-700 border-b border-r border-gray-200';
   const currentTint = 'bg-green-primary/[0.035]';
 
   return (
@@ -293,7 +293,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
                         <CompareImage product={p} alt={name} />
                       </span>
                       <span
-                        className="mt-3 block min-h-[2.5em] text-[15px] sm:text-base leading-tight text-forest-700 group-hover:text-copper-600 group-hover:underline line-clamp-2"
+                        className="mt-3 block min-h-[2.5em] text-base sm:text-base leading-tight text-forest-700 group-hover:text-copper-600 group-hover:underline line-clamp-2"
                         title={fullName(p)}
                       >
                         {name}
@@ -302,7 +302,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
 
                     <div className="mt-2 flex justify-center">
                       {isCurrent ? (
-                        <span className="inline-flex items-center whitespace-nowrap rounded-full border border-green-primary/40 bg-white px-3 py-1.5 text-[13px] sm:text-[15px] text-green-primary">
+                        <span className="inline-flex items-center whitespace-nowrap rounded-full border border-green-primary/40 bg-white px-3 py-1.5 text-sm sm:text-base text-green-primary">
                           {isEn ? 'This item' : 'Sản phẩm đang xem'}
                         </span>
                       ) : v ? (
@@ -310,7 +310,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
                           type="button"
                           onClick={(e) => handleAdd(p, e)}
                           className={cn(
-                            'whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] sm:text-[13px] leading-tight shadow-xs transition-colors cursor-pointer',
+                            'whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs sm:text-sm leading-tight shadow-xs transition-colors cursor-pointer',
                             justAdded ? 'bg-green-primary text-white' : 'bg-corn hover:bg-corn-dark text-ink-950'
                           )}
                           aria-label={
@@ -333,7 +333,7 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
                         // Chưa có quy cách đóng gói → chọn trên trang chi tiết
                         <Link
                           href={`/san-pham/${p.slug}`}
-                          className="whitespace-nowrap rounded-full border border-gray-400 bg-white px-3.5 py-1.5 text-[12px] sm:text-[13px] text-ink-950 hover:bg-gray-50 shadow-xs"
+                          className="whitespace-nowrap rounded-full border border-gray-400 bg-white px-3.5 py-1.5 text-xs sm:text-sm text-ink-950 hover:bg-gray-50 shadow-xs"
                         >
                           {isEn ? 'See options' : 'Tùy chọn mua'}
                         </Link>

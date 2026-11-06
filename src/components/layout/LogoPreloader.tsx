@@ -180,7 +180,7 @@ export default function LogoPreloader() {
           {/* Nút bấm bỏ qua nhanh (dành cho người dùng muốn vào web ngay lập tức) */}
           <button
             onClick={() => setPhase('done')}
-            className="absolute bottom-6 text-[11px] sm:text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest cursor-pointer px-3 py-2.5 rounded-full hover:bg-gray-100"
+            className="absolute bottom-6 text-2xs sm:text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest cursor-pointer px-3 py-2.5 rounded-full hover:bg-gray-100"
             aria-label="Bỏ qua hiệu ứng giới thiệu"
           >
             Bỏ qua

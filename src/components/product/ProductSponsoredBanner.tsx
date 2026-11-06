@@ -64,10 +64,10 @@ export default function ProductSponsoredBanner({
 
               {/* Tagline thương hiệu chuẩn Monster / Amazon */}
               <div className="mt-2.5 text-center">
-                <p className="text-[13px] sm:text-[15px] text-gray-800 tracking-tight leading-snug">
-                  Thanh Mát <span className="text-forest-700 mx-0.5 text-[1.125em]">•</span> Tự Nhiên <span className="text-forest-700 mx-0.5 text-[1.125em]">•</span> Dinh Dưỡng
+                <p className="text-sm sm:text-base text-gray-800 tracking-tight leading-snug">
+                  Thanh Mát <span className="text-forest-700 mx-0.5 text-emph">•</span> Tự Nhiên <span className="text-forest-700 mx-0.5 text-emph">•</span> Dinh Dưỡng
                 </p>
-                <span className="inline-block mt-0.5 text-[11px] text-gray-400 font-medium tracking-tight">
+                <span className="inline-block mt-0.5 text-2xs text-gray-400 font-medium tracking-tight">
                   100% Nông Sản Việt Tươi Sạch
                 </span>
               </div>
@@ -91,7 +91,7 @@ export default function ProductSponsoredBanner({
             <div className="absolute inset-0 bg-gradient-to-t from-ink-950/20 via-transparent to-transparent pointer-events-none" />
             
             {/* Tagline thương hiệu nhỏ tinh tế */}
-            <div className="absolute bottom-2.5 left-3 px-2.5 py-0.5 rounded bg-ink-950/40 backdrop-blur-xs text-white text-[11px] font-medium tracking-wide">
+            <div className="absolute bottom-2.5 left-3 px-2.5 py-0.5 rounded bg-ink-950/40 backdrop-blur-xs text-white text-2xs font-medium tracking-wide">
               Uống một bữa ăn ngon lành
             </div>
           </Link>
@@ -114,7 +114,7 @@ export default function ProductSponsoredBanner({
 
             {/* Tên sản phẩm */}
             <div
-              className="text-sm sm:text-[15px] text-gray-900 line-clamp-1 group-hover:text-forest-700 transition-colors leading-tight mb-1"
+              className="text-sm sm:text-base text-gray-900 line-clamp-1 group-hover:text-forest-700 transition-colors leading-tight mb-1"
               title={displayTitle}
             >
               {displayTitle}
@@ -148,8 +148,8 @@ export default function ProductSponsoredBanner({
               {/* Huy hiệu Prime chuẩn Amazon */}
               {!hideUnverifiedStats && (
               <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter ml-auto">
-                <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
-                <span className="text-forest-700 not-italic text-[13px] font-sans">prime</span>
+                <span className="text-forest-700 mr-0.5 not-italic text-emph">✓</span>
+                <span className="text-forest-700 not-italic text-sm font-sans">prime</span>
               </span>
               )}
             </div>
@@ -157,10 +157,10 @@ export default function ProductSponsoredBanner({
             {/* Huy hiệu Tiết kiệm 15% khi Đăng ký định kỳ (Chuẩn Ahorra 5% con Planea y ahorra) */}
             {!hideUnverifiedStats && (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="bg-crimson-600 text-white text-[11px] px-1.5 py-0.5 rounded-xs tracking-tight uppercase">
+              <span className="bg-crimson-600 text-white text-2xs px-1.5 py-0.5 rounded-xs tracking-tight uppercase">
                 Tiết kiệm 15%
               </span>
-              <span className="text-[11px] sm:text-xs text-gray-700 font-medium">
+              <span className="text-2xs sm:text-xs text-gray-700 font-medium">
                 khi Đăng ký định kỳ
               </span>
             </div>
@@ -170,7 +170,7 @@ export default function ProductSponsoredBanner({
       </div>
 
       {/* Dòng ghi chú Patrocinado / Được tài trợ góc dưới bên phải */}
-      <div className="flex items-center justify-end gap-1 mt-1 pr-1 text-[11px] text-gray-400 select-none">
+      <div className="flex items-center justify-end gap-1 mt-1 pr-1 text-2xs text-gray-400 select-none">
         <span>Được tài trợ</span>
         <Info className="w-3 h-3 text-gray-400" />
       </div>

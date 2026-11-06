@@ -28,7 +28,7 @@ export function MonthlySalesInfo(_props: {
 }) {
   const { language } = useLanguage();
   return (
-    <p className="text-[13px] text-gray-600">
+    <p className="text-sm text-gray-600">
       {language === 'en'
         ? 'Thái Sơn Foods delivers 10,000+ bottles every week'
         : 'Hơn 10.000 chai được Thái Sơn Foods giao mỗi tuần'}
@@ -48,7 +48,7 @@ export function DeliveryAddressInfo() {
     : '';
 
   return (
-    <div className="flex items-start gap-2 text-[13px]">
+    <div className="flex items-start gap-2 text-sm">
       <MapPin className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" aria-hidden />
       <span className="min-w-0 flex-1 leading-snug">
         <span className="text-gray-600">{isEn ? 'Deliver to: ' : 'Giao đến: '}</span>
@@ -73,7 +73,7 @@ export function DeliveryAddressInfo() {
             >
               {isEn ? 'Sign in to use your saved address' : 'Đăng nhập để dùng địa chỉ đã lưu'}
             </button>
-            <span className="block text-[11px] text-gray-500 mt-0.5">
+            <span className="block text-2xs text-gray-500 mt-0.5">
               {isEn ? 'Or enter it at checkout.' : 'Hoặc nhập địa chỉ ở bước thanh toán.'}
             </span>
           </>
@@ -148,7 +148,7 @@ export function WishlistButton({ itemId, itemType = 'product' }: { itemId: strin
         onClick={toggle}
         disabled={isLoading || busy}
         aria-pressed={saved}
-        className="w-full h-9 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-[13px] text-ink-950 inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+        className="w-full h-9 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-sm text-ink-950 inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
       >
         <Heart className={cn('w-4 h-4', saved ? 'fill-sale text-sale' : 'text-gray-600')} aria-hidden />
         {saved
@@ -156,11 +156,11 @@ export function WishlistButton({ itemId, itemType = 'product' }: { itemId: strin
           : isEn ? 'Add to wishlist' : 'Thêm vào danh sách yêu thích'}
       </button>
       {!user && !isLoading && (
-        <p className="text-[11px] text-gray-500 text-center">
+        <p className="text-2xs text-gray-500 text-center">
           {isEn ? 'Sign in to save products to your wishlist.' : 'Đăng nhập để lưu sản phẩm vào danh sách yêu thích.'}
         </p>
       )}
-      {error && <p className="text-[11px] text-red-600 text-center">{error}</p>}
+      {error && <p className="text-2xs text-red-600 text-center">{error}</p>}
     </div>
   );
 }

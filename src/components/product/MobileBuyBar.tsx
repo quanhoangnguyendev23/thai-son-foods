@@ -44,7 +44,7 @@ export default function MobileBuyBar({
       <div className="flex items-center gap-2 px-4 py-2.5">
         <div className="min-w-0 flex-1">
           <div className="text-lg text-ink-950 leading-tight">{formatPrice(price)}đ</div>
-          <div className="text-[11px] text-gray-600 truncate">{packLabel}</div>
+          <div className="text-2xs text-gray-600 truncate">{packLabel}</div>
         </div>
         {isOutOfStock ? (
           <button

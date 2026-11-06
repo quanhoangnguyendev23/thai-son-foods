@@ -580,10 +580,10 @@ export default function SubscribeSaveSection({
         <div>
           {/* Huy hiệu chiết khấu cố định 15% theo đặc tả nghiệp vụ */}
           <div className="flex items-center justify-between gap-0.5 mb-1">
-            <span className="px-1 py-0.5 bg-orange-600 text-white text-[9px] sm:text-[10px] rounded leading-none shrink-0">
+            <span className="px-1 py-0.5 bg-orange-600 text-white text-2xs sm:text-2xs rounded leading-none shrink-0">
               -15%
             </span>
-            <span className="text-[9px] sm:text-[10px] text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 leading-none shrink-0 truncate">
+            <span className="text-2xs sm:text-2xs text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200 leading-none shrink-0 truncate">
               Freeship
             </span>
           </div>
@@ -602,7 +602,7 @@ export default function SubscribeSaveSection({
           {/* Tên sản phẩm / combo */}
           <h4
             title={language === 'en' ? item.nameEn : item.nameVi}
-            className="text-[11px] sm:text-[12px] text-gray-900 line-clamp-2 min-h-[26px] sm:min-h-[28px] leading-tight"
+            className="text-2xs sm:text-xs text-gray-900 line-clamp-2 min-h-[26px] sm:min-h-[28px] leading-tight"
           >
             {language === 'en' ? item.nameEn : item.nameVi}
           </h4>
@@ -614,7 +614,7 @@ export default function SubscribeSaveSection({
                 <Star key={i} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
               ))}
             </div>
-            <span className="text-[8px] sm:text-[9px] text-gray-400">({item.reviewCount})</span>
+            <span className="text-2xs sm:text-2xs text-gray-400">({item.reviewCount})</span>
           </div>
         </div>
 
@@ -622,14 +622,14 @@ export default function SubscribeSaveSection({
           {/* Khung Giá bán */}
           <div className="mt-1 pt-1 border-t border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
-              <span className="text-[12px] sm:text-sm text-crimson-600 whitespace-nowrap">
+              <span className="text-xs sm:text-sm text-crimson-600 whitespace-nowrap">
                 {formatPrice(subPrice)} ₫
               </span>
-              <span className="text-[8px] sm:text-[9px] text-gray-400 line-through whitespace-nowrap">
+              <span className="text-2xs sm:text-2xs text-gray-400 line-through whitespace-nowrap">
                 {formatPrice(item.retailPrice)} ₫
               </span>
             </div>
-            <div className="text-[9px] sm:text-[10px] text-emerald-700 truncate">
+            <div className="text-2xs sm:text-2xs text-emerald-700 truncate">
               {language === 'en'
                 ? `-${item.discountRate}%`
                 : `Giảm ${formatPrice(savingAmount)} ₫`}
@@ -638,7 +638,7 @@ export default function SubscribeSaveSection({
 
           {/* Dropdown chọn tần suất giao hàng */}
           <div className="mt-1">
-            <label className="block text-[9px] sm:text-[10px] text-gray-500 mb-0.5 truncate">
+            <label className="block text-2xs sm:text-2xs text-gray-500 mb-0.5 truncate">
               {language === 'en' ? 'Deliver:' : 'Chu kỳ:'}
             </label>
             <select
@@ -649,7 +649,7 @@ export default function SubscribeSaveSection({
                   [item.id]: e.target.value,
                 }))
               }
-              className="w-full text-[8px] sm:text-[9px] font-medium text-gray-800 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer transition-colors"
+              className="w-full text-2xs sm:text-2xs font-medium text-gray-800 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer transition-colors"
             >
               {FREQUENCY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -663,7 +663,7 @@ export default function SubscribeSaveSection({
           <button
             onClick={() => handleSubscribeClick(item)}
             type="button"
-            className="w-full mt-1.5 py-1.5 px-1 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-gray-900 text-[10px] sm:text-[11px] rounded border border-amber-700 shadow-2xs flex items-center justify-center gap-0.5 transition-all cursor-pointer whitespace-nowrap"
+            className="w-full mt-1.5 py-1.5 px-1 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-gray-900 text-2xs sm:text-2xs rounded border border-amber-700 shadow-2xs flex items-center justify-center gap-0.5 transition-all cursor-pointer whitespace-nowrap"
           >
             <RefreshCw className="w-2.5 h-2.5 text-gray-800 shrink-0" />
             <span>{language === 'en' ? 'Subscribe' : 'Đăng ký ngay'}</span>
@@ -679,13 +679,13 @@ export default function SubscribeSaveSection({
       <div className="w-full px-2 sm:px-3 md:px-4 lg:px-5 xl:px-6">
         {/* Header Section phong cách Amazon Subscribe & Save */}
         <div className="mb-4">
-          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] sm:text-sm uppercase tracking-wider mb-1">
+          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-2xs sm:text-sm uppercase tracking-wider mb-1">
             <span>{badgeText || 'Subscribe & Save • Tiết kiệm 15%'}</span>
           </div>
           <h2 className="text-xl sm:text-2xl lg:text-2xl text-gray-900 tracking-tight font-heading">
             {displayTitle}
           </h2>
-          <p className="text-[11px] sm:text-xs text-gray-600 mt-0.5 max-w-4xl">
+          <p className="text-2xs sm:text-xs text-gray-600 mt-0.5 max-w-4xl">
             {displaySubtitle}
           </p>
         </div>
@@ -697,7 +697,7 @@ export default function SubscribeSaveSection({
             <h3 className="text-sm sm:text-base uppercase tracking-wider text-gray-800 font-heading">
               {language === 'en' ? '12 Fresh Nut Milk & Herbal Products' : '12 Sản Phẩm Sữa Hạt & Giải Khát Nấu Mới'}
             </h3>
-            <span className="text-[10px] sm:text-[11px] text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full">
+            <span className="text-2xs sm:text-2xs text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full">
               {language === 'en' ? 'Save 15%' : 'Tiết kiệm 15%'}
             </span>
           </div>
@@ -714,7 +714,7 @@ export default function SubscribeSaveSection({
             <h3 className="text-sm sm:text-base uppercase tracking-wider text-gray-800 font-heading">
               {language === 'en' ? '12 Family & Office Value Combos' : '12 Combo Tiết Kiệm Gia Đình & Văn Phòng'}
             </h3>
-            <span className="text-[10px] sm:text-[11px] text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full">
+            <span className="text-2xs sm:text-2xs text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full">
               {language === 'en' ? 'Freeship 100%' : 'Freeship 100%'}
             </span>
           </div>
@@ -746,23 +746,23 @@ export default function SubscribeSaveSection({
                   Đăng Ký Thành Công!
                 </h3>
                 <p className="text-sm text-gray-600 mt-2">
-                  Hợp đồng định kỳ <span className="text-emerald-800 text-[1.125em]">#{createdSub.subscriptionCode}</span> đã được kích hoạt.
+                  Hợp đồng định kỳ <span className="text-emerald-800 text-emph">#{createdSub.subscriptionCode}</span> đã được kích hoạt.
                 </p>
 
                 <div className="my-5 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs text-emerald-950 space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-500">Kỳ giao đầu tiên:</span>
-                    <span className="text-[1.125em]">
+                    <span className="text-emph">
                       {new Date(createdSub.nextDeliveryDate).toLocaleDateString('vi-VN')}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Chu kỳ:</span>
-                    <span className="text-[1.125em]">{activeModalItem.freqLabel}</span>
+                    <span className="text-emph">{activeModalItem.freqLabel}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Địa chỉ giao:</span>
-                    <span className="line-clamp-1 text-[1.125em]">{createdSub.shippingAddress}</span>
+                    <span className="line-clamp-1 text-emph">{createdSub.shippingAddress}</span>
                   </div>
                 </div>
 
@@ -800,13 +800,13 @@ export default function SubscribeSaveSection({
                 <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2 text-xs text-gray-700 mb-5">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Sản phẩm:</span>
-                    <span className="text-gray-900 text-right line-clamp-1 max-w-[220px] text-[1.125em]">
+                    <span className="text-gray-900 text-right line-clamp-1 max-w-[220px] text-emph">
                       {activeModalItem.item.nameVi}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">Chu kỳ:</span>
-                    <span className="text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md text-[1.125em]">
+                    <span className="text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md text-emph">
                       {activeModalItem.freqLabel}
                     </span>
                   </div>
@@ -970,7 +970,7 @@ export default function SubscribeSaveSection({
                   </div>
                 )}
 
-                <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-gray-500">
+                <div className="mt-3 flex items-center justify-center gap-2 text-2xs text-gray-500">
                   <span>Bỏ qua kỳ hoặc hủy hợp đồng dễ dàng trong 1 chạm tại trang cá nhân.</span>
                 </div>
               </div>

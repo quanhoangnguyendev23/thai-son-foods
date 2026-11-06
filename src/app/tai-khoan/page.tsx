@@ -398,6 +398,7 @@ function AccountContent() {
     );
   };
 
+
   // Sync tab from query param if available
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -588,7 +589,7 @@ function AccountContent() {
             </Link>
           </li>
           <li>/</li>
-          <li className="text-gray-900 text-[1.125em]">
+          <li className="text-gray-900 text-emph">
             {language === 'en' ? 'My Account' : 'Tài khoản của tôi'}
           </li>
         </ol>
@@ -774,7 +775,7 @@ function AccountContent() {
                           </span>
                           {getStatusBadge(order.status)}
                         </div>
-                        <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
+                        <p className="text-2xs text-gray-400 mt-1 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5" />
                           <span>
                             {new Date(order.created_at).toLocaleString('vi-VN', {
@@ -816,15 +817,15 @@ function AccountContent() {
                                 </div>
                               )}
                               <div>
-                                <span className="text-gray-800 line-clamp-1 text-[1.125em]">
+                                <span className="text-gray-800 line-clamp-1 text-emph">
                                   {item.name}
                                 </span>
-                                <span className="text-gray-400 text-[11px]">
+                                <span className="text-gray-400 text-2xs">
                                   {formatPrice(item.price)} ₫ x {item.quantity} {item.unit}
                                 </span>
                               </div>
                             </div>
-                            <span className="text-gray-900 shrink-0 text-[1.125em]">
+                            <span className="text-gray-900 shrink-0 text-emph">
                               {formatPrice(item.price * item.quantity)} ₫
                             </span>
                           </div>
@@ -1068,6 +1069,7 @@ function AccountContent() {
                     )}
                   </div>
 
+
                   {/* Vị trí giao hàng cố định trên bản đồ: dùng sẵn ở trang thanh toán */}
                   <div className="sm:col-span-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
@@ -1221,7 +1223,7 @@ function AccountContent() {
                                 {rev.productId}
                               </span>
                               {rev.isVerifiedBuyer && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] border border-emerald-200">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-2xs border border-emerald-200">
                                   <CheckCircle className="w-2.5 h-2.5" /> Đã mua hàng
                                 </span>
                               )}
@@ -1236,7 +1238,7 @@ function AccountContent() {
                           <div className="flex items-center gap-2">
                             <span
                               className={cn(
-                                'px-2.5 py-1 rounded-full text-[12px] border',
+                                'px-2.5 py-1 rounded-full text-xs border',
                                 rev.status === 'APPROVED'
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   : rev.status === 'PENDING'
@@ -1275,7 +1277,7 @@ function AccountContent() {
                         {/* Brand official response if exists */}
                         {rev.adminReply && (
                           <div className="bg-emerald-50/70 border-l-4 border-emerald-600 p-3 rounded-r-xl text-xs space-y-1">
-                            <div className="flex items-center gap-1 text-emerald-900 text-[1.125em]">
+                            <div className="flex items-center gap-1 text-emerald-900 text-emph">
                               <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
                               <span>Phản hồi từ Thái Sơn Foods</span>
                             </div>

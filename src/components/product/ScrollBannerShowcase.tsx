@@ -141,7 +141,7 @@ function ScrollSlide({
       {(banner.tag || banner.title || banner.subtitle) && (
         <div className="absolute left-5 right-5 sm:left-10 sm:right-auto bottom-36 sm:bottom-28 z-20 sm:max-w-xl text-white pointer-events-none">
           {banner.tag && (
-            <span className="inline-block px-3 py-1 mb-2 rounded-full bg-ink-950/45 backdrop-blur-md border border-white/15 text-[12px] uppercase tracking-wider text-emerald-300">
+            <span className="inline-block px-3 py-1 mb-2 rounded-full bg-ink-950/45 backdrop-blur-md border border-white/15 text-xs uppercase tracking-wider text-emerald-300">
               {banner.tag}
             </span>
           )}
@@ -311,7 +311,7 @@ function ScrollBannerContent({ banners: customBanners }: ScrollBannerShowcasePro
         <div className="hidden sm:block absolute top-8 left-10 z-30">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-ink-950/45 backdrop-blur-md border border-white/15 text-white/90 text-sm shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="tracking-wide uppercase text-[12px]">Thái Sơn Group • Brand Visual</span>
+            <span className="tracking-wide uppercase text-xs">Thái Sơn Group • Brand Visual</span>
           </div>
         </div>
 
@@ -322,7 +322,7 @@ function ScrollBannerContent({ banners: customBanners }: ScrollBannerShowcasePro
               style={{ opacity: hintOpacity }}
               className="pointer-events-none absolute bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2 text-white/90"
             >
-              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-ink-950/50 backdrop-blur-md border border-white/15 shadow-lg text-[13px] tracking-wide whitespace-nowrap">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-ink-950/50 backdrop-blur-md border border-white/15 shadow-lg text-sm tracking-wide whitespace-nowrap">
                 <span className="hidden sm:inline">
                   {language === 'en' ? 'Scroll down to switch banner' : 'Lướt chuột xuống để chuyển đổi banner'}
                 </span>

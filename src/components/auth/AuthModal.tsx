@@ -344,7 +344,7 @@ export default function AuthModal() {
                     setActiveTab('register');
                     setErrorMsg('');
                   }}
-                  className="text-forest-700 hover:underline cursor-pointer text-[1.125em]"
+                  className="text-forest-700 hover:underline cursor-pointer text-emph"
                 >
                   {language === 'en' ? 'Register now' : 'Đăng ký ngay'}
                 </button>
@@ -454,7 +454,7 @@ export default function AuthModal() {
                     setActiveTab('login');
                     setErrorMsg('');
                   }}
-                  className="text-forest-700 hover:underline cursor-pointer text-[1.125em]"
+                  className="text-forest-700 hover:underline cursor-pointer text-emph"
                 >
                   {language === 'en' ? 'Sign in' : 'Đăng nhập ngay'}
                 </button>
@@ -463,10 +463,10 @@ export default function AuthModal() {
           )}
 
           {/* Friendly Guest Checkout Assurance Note */}
-          <div className="mt-5 pt-4 border-t border-gray-100 flex items-start gap-2.5 text-[11px] text-gray-500 bg-gray-50/80 p-3 rounded-xl">
+          <div className="mt-5 pt-4 border-t border-gray-100 flex items-start gap-2.5 text-2xs text-gray-500 bg-gray-50/80 p-3 rounded-xl">
             <ShoppingBag className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <div>
-              <span className="text-gray-800 text-[1.125em]">
+              <span className="text-gray-800 text-emph">
                 {language === 'en' ? 'Guest Checkout Available' : 'Mua sắm không bắt buộc đăng nhập'}:
               </span>{' '}
               {language === 'en'

@@ -394,7 +394,7 @@ export default function PartnerPortalPage() {
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-sm text-slate-700">Mã OTP 6 số</label>
                   {loginDebugOtp && (
-                    <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                    <span className="text-2xs font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
                       Demo: {loginDebugOtp}
                     </span>
                   )}
@@ -421,7 +421,7 @@ export default function PartnerPortalPage() {
 
           <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-600">
             Chưa có tài khoản đối tác?{' '}
-            <Link href="/dang-ky-doi-tac" className="text-emerald-700 hover:underline text-[1.125em]">
+            <Link href="/dang-ky-doi-tac" className="text-emerald-700 hover:underline text-emph">
               Đăng ký làm CTV ngay
             </Link>
           </div>
@@ -446,7 +446,7 @@ export default function PartnerPortalPage() {
               <div className="flex items-center gap-2">
                 <span className="text-lg text-slate-900">{partner.fullName}</span>
                 <span
-                  className={`text-[12px] px-2 py-0.5 rounded-full ${
+                  className={`text-xs px-2 py-0.5 rounded-full ${
                     isDealer
                       ? 'bg-amber-100 text-amber-900 border border-amber-300'
                       : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
@@ -454,11 +454,11 @@ export default function PartnerPortalPage() {
                 >
                   {isDealer ? `ĐẠI LÝ (${partner.tierName || 'TIER 1'})` : 'CỘNG TÁC VIÊN'}
                 </span>
-                <span className="text-[12px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
                   {partner.lifecycleStatus}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">Mã đối tác: <strong className="font-mono text-emerald-800 text-[1.125em]">{partner.partnerCode}</strong> • SĐT: {partner.phone}</p>
+              <p className="text-xs text-slate-500">Mã đối tác: <strong className="font-mono text-emerald-800 text-emph">{partner.partnerCode}</strong> • SĐT: {partner.phone}</p>
             </div>
           </div>
 
@@ -565,9 +565,9 @@ export default function PartnerPortalPage() {
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-600" />
                 <div>
-                  <strong className="block text-[1.125em]">Cảnh báo: Ví hoa hồng đang có số dư âm!</strong>
+                  <strong className="block text-emph">Cảnh báo: Ví hoa hồng đang có số dư âm!</strong>
                   Do phát sinh đơn hàng trả/hủy sau khi đã nhận tiền. Số tiền cần hoàn bù qua các đơn tiếp theo:{' '}
-                  <strong className="text-[1.125em]">{stats.negativeAmountNeeded.toLocaleString('vi-VN')} đ</strong>.
+                  <strong className="text-emph">{stats.negativeAmountNeeded.toLocaleString('vi-VN')} đ</strong>.
                 </div>
               </div>
             )}
@@ -584,7 +584,7 @@ export default function PartnerPortalPage() {
                 <div className="text-2xl sm:text-2xl text-emerald-700">
                   {(stats?.availableIncome || 0).toLocaleString('vi-VN')} đ
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Đã sẵn sàng tạo lệnh rút tiền</p>
+                <p className="text-2xs text-slate-500 mt-1">Đã sẵn sàng tạo lệnh rút tiền</p>
               </div>
 
               <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
@@ -597,7 +597,7 @@ export default function PartnerPortalPage() {
                 <div className="text-2xl sm:text-2xl text-blue-700">
                   {(stats?.confirmedIncome || 0).toLocaleString('vi-VN')} đ
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Đơn giao thành công (chờ kỳ khả dụng)</p>
+                <p className="text-2xs text-slate-500 mt-1">Đơn giao thành công (chờ kỳ khả dụng)</p>
               </div>
 
               <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
@@ -610,7 +610,7 @@ export default function PartnerPortalPage() {
                 <div className="text-2xl sm:text-2xl text-amber-700">
                   {(stats?.estimatedIncome || 0).toLocaleString('vi-VN')} đ
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Đơn vừa đặt, đang chờ giao COD</p>
+                <p className="text-2xs text-slate-500 mt-1">Đơn vừa đặt, đang chờ giao COD</p>
               </div>
 
               <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
@@ -623,7 +623,7 @@ export default function PartnerPortalPage() {
                 <div className="text-2xl sm:text-2xl text-leaf-700">
                   {(stats?.paidIncome || 0).toLocaleString('vi-VN')} đ
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Đã chi trả thành công về ngân hàng</p>
+                <p className="text-2xs text-slate-500 mt-1">Đã chi trả thành công về ngân hàng</p>
               </div>
             </div>
 
@@ -670,7 +670,7 @@ export default function PartnerPortalPage() {
                   <div>
                     <div className="flex justify-between text-xs text-slate-300 mb-1.5">
                       <span>Doanh số tích lũy:</span>
-                      <strong className="text-amber-400 text-[1.125em]">
+                      <strong className="text-amber-400 text-emph">
                         {stats.dealerProgress.revenueCurrent.toLocaleString('vi-VN')} / {stats.dealerProgress.revenueTarget.toLocaleString('vi-VN')} đ
                       </strong>
                     </div>
@@ -690,7 +690,7 @@ export default function PartnerPortalPage() {
                   <div>
                     <div className="flex justify-between text-xs text-slate-300 mb-1.5">
                       <span>Số đơn hàng tích lũy:</span>
-                      <strong className="text-emerald-400 text-[1.125em]">
+                      <strong className="text-emerald-400 text-emph">
                         {stats.dealerProgress.ordersCurrent} / {stats.dealerProgress.ordersTarget} đơn
                       </strong>
                     </div>
@@ -761,19 +761,19 @@ export default function PartnerPortalPage() {
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">Ngân hàng:</span>
-                      <strong className="text-slate-800 text-[1.125em]">{partner.bankName}</strong>
+                      <strong className="text-slate-800 text-emph">{partner.bankName}</strong>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">Số tài khoản:</span>
-                      <strong className="font-mono text-slate-800 text-[1.125em]">{partner.bankAccountNumber}</strong>
+                      <strong className="font-mono text-slate-800 text-emph">{partner.bankAccountNumber}</strong>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">Chủ tài khoản:</span>
-                      <strong className="text-slate-800 uppercase text-[1.125em]">{partner.bankAccountName}</strong>
+                      <strong className="text-slate-800 uppercase text-emph">{partner.bankAccountName}</strong>
                     </div>
                     <div className="flex justify-between py-1.5">
                       <span className="text-slate-500">Định danh KYC:</span>
-                      <span className="text-emerald-700 flex items-center gap-1 text-[1.125em]">
+                      <span className="text-emerald-700 flex items-center gap-1 text-emph">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Đã gửi
                       </span>
                     </div>
@@ -821,7 +821,7 @@ export default function PartnerPortalPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-[1.125em]">
+                    <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-emph">
                       <th className="py-2.5 px-3">Mã Đơn</th>
                       <th className="py-2.5 px-3">Ngày Tạo</th>
                       <th className="py-2.5 px-3">Khách Hàng</th>
@@ -839,20 +839,20 @@ export default function PartnerPortalPage() {
                           {new Date(ord.createdAt).toLocaleDateString('vi-VN')}
                         </td>
                         <td className="py-3 px-3 font-medium text-slate-800">{ord.customerName || 'Khách lẻ'}</td>
-                        <td className="py-3 px-3 text-right text-slate-900 text-[1.125em]">
+                        <td className="py-3 px-3 text-right text-slate-900 text-emph">
                           {Number(ord.totalAmount).toLocaleString('vi-VN')} đ
                         </td>
                         <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded-md text-[12px] bg-slate-100 text-slate-700">
+                          <span className="px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-700">
                             {ord.status}
                           </span>
                         </td>
-                        <td className="py-3 px-3 text-right text-emerald-700 text-[1.125em]">
+                        <td className="py-3 px-3 text-right text-emerald-700 text-emph">
                           +{Number(ord.commissionAmount || 0).toLocaleString('vi-VN')} đ
                         </td>
                         <td className="py-3 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded-md text-[12px] ${
+                            className={`px-2 py-0.5 rounded-md text-xs ${
                               ord.commissionStatus === 'AVAILABLE'
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : ord.commissionStatus === 'CONFIRMED'
@@ -892,7 +892,7 @@ export default function PartnerPortalPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-[1.125em]">
+                    <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-emph">
                       <th className="py-2.5 px-3">Thời Gian</th>
                       <th className="py-2.5 px-3">Loại Bút Toán</th>
                       <th className="py-2.5 px-3">Mã Tham Chiếu</th>
@@ -907,7 +907,7 @@ export default function PartnerPortalPage() {
                         <td className="py-3 px-3 text-slate-500">
                           {new Date(row.createdAt).toLocaleString('vi-VN')}
                         </td>
-                        <td className="py-3 px-3 text-slate-800 text-[1.125em]">{row.entryType}</td>
+                        <td className="py-3 px-3 text-slate-800 text-emph">{row.entryType}</td>
                         <td className="py-3 px-3 font-mono text-slate-500">{row.referenceId || row.orderId || '-'}</td>
                         <td
                           className={`py-3 px-3 text-right ${
@@ -919,7 +919,7 @@ export default function PartnerPortalPage() {
                         </td>
                         <td className="py-3 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded-md text-[12px] ${
+                            className={`px-2 py-0.5 rounded-md text-xs ${
                               row.status === 'AVAILABLE'
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : row.status === 'CONFIRMED'
@@ -980,11 +980,11 @@ export default function PartnerPortalPage() {
                     onChange={(e) => setPayoutAmount(e.target.value)}
                     className="w-full px-3 py-2 text-base rounded-lg border border-slate-200 focus:outline-none focus:border-emerald-600"
                   />
-                  <p className="text-[11px] text-slate-500 mt-1">Mức rút tối thiểu: 200.000 đ</p>
+                  <p className="text-2xs text-slate-500 mt-1">Mức rút tối thiểu: 200.000 đ</p>
                 </div>
 
                 <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                  <div className="text-slate-800 text-[1.125em]">Tài khoản nhận tiền:</div>
+                  <div className="text-slate-800 text-emph">Tài khoản nhận tiền:</div>
                   <div>{partner.bankName} - {partner.bankAccountNumber}</div>
                   <div className="uppercase font-medium text-slate-700">{partner.bankAccountName}</div>
                 </div>
@@ -1011,7 +1011,7 @@ export default function PartnerPortalPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-[1.125em]">
+                      <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-emph">
                         <th className="py-2.5 px-3">Mã Lệnh</th>
                         <th className="py-2.5 px-3">Ngày Tạo</th>
                         <th className="py-2.5 px-3 text-right">Số Tiền</th>
@@ -1024,12 +1024,12 @@ export default function PartnerPortalPage() {
                         <tr key={po.id} className="hover:bg-slate-50/80">
                           <td className="py-3 px-3 font-mono font-medium text-slate-800">{po.payoutCode || po.id.slice(0, 8)}</td>
                           <td className="py-3 px-3 text-slate-500">{new Date(po.createdAt).toLocaleDateString('vi-VN')}</td>
-                          <td className="py-3 px-3 text-right text-slate-900 text-[1.125em]">
+                          <td className="py-3 px-3 text-right text-slate-900 text-emph">
                             {Number(po.amount).toLocaleString('vi-VN')} đ
                           </td>
                           <td className="py-3 px-3">
                             <span
-                              className={`px-2 py-0.5 rounded-md text-[12px] ${
+                              className={`px-2 py-0.5 rounded-md text-xs ${
                                 po.status === 'PAID'
                                   ? 'bg-emerald-100 text-emerald-800'
                                   : po.status === 'APPROVED'
@@ -1142,7 +1142,7 @@ export default function PartnerPortalPage() {
                 </span>
                 <h3 className="text-2xl text-slate-900">Bạn Hiện Đang Là Cộng Tác Viên (CTV)</h3>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Để đặt đơn hàng sỉ số lượng lớn và hưởng bảng giá chiết khấu đại lý độc quyền, hãy tích lũy doanh số đạt mốc <strong className="text-[1.125em]">20.000.000 đ</strong> hoặc hoàn tất <strong className="text-[1.125em]">30 đơn hàng</strong> để nâng cấp tài khoản!
+                  Để đặt đơn hàng sỉ số lượng lớn và hưởng bảng giá chiết khấu đại lý độc quyền, hãy tích lũy doanh số đạt mốc <strong className="text-emph">20.000.000 đ</strong> hoặc hoàn tất <strong className="text-emph">30 đơn hàng</strong> để nâng cấp tài khoản!
                 </p>
                 <div className="pt-2">
                   <button
@@ -1178,14 +1178,14 @@ export default function PartnerPortalPage() {
                     </div>
                     <p className="text-xs text-emerald-800">
                       Tổng tiền thanh toán sau chiết khấu:{' '}
-                      <strong className="text-[1.125em]">{Number(dealerOrderSuccess.totalAmount).toLocaleString('vi-VN')} đ</strong>.
+                      <strong className="text-emph">{Number(dealerOrderSuccess.totalAmount).toLocaleString('vi-VN')} đ</strong>.
                     </p>
                     <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs space-y-1">
-                      <span className="text-slate-800 text-[1.125em]">Thông tin chuyển khoản:</span>
-                      <div>Ngân hàng: <strong className="text-[1.125em]">Vietcombank - CN Tân Bình</strong></div>
-                      <div>Số tài khoản: <strong className="text-[1.125em]">0071001234567</strong></div>
-                      <div>Chủ tài khoản: <strong className="text-[1.125em]">CÔNG TY CỔ PHẦN THỰC PHẨM THÁI SƠN</strong></div>
-                      <div>Nội dung CK: <strong className="font-mono text-emerald-700 text-[1.125em]">TSF DEALER {dealerOrderSuccess.orderNumber || dealerOrderSuccess.id}</strong></div>
+                      <span className="text-slate-800 text-emph">Thông tin chuyển khoản:</span>
+                      <div>Ngân hàng: <strong className="text-emph">Vietcombank - CN Tân Bình</strong></div>
+                      <div>Số tài khoản: <strong className="text-emph">0071001234567</strong></div>
+                      <div>Chủ tài khoản: <strong className="text-emph">CÔNG TY CỔ PHẦN THỰC PHẨM THÁI SƠN</strong></div>
+                      <div>Nội dung CK: <strong className="font-mono text-emerald-700 text-emph">TSF DEALER {dealerOrderSuccess.orderNumber || dealerOrderSuccess.id}</strong></div>
                     </div>
                   </div>
                 )}
@@ -1197,7 +1197,7 @@ export default function PartnerPortalPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-[1.125em]">
+                        <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/60 text-emph">
                           <th className="py-2.5 px-3">Sản Phẩm</th>
                           <th className="py-2.5 px-3 text-right">Giá Bán Lẻ</th>
                           <th className="py-2.5 px-3 text-right">Giá Sỉ Đại Lý</th>
@@ -1211,8 +1211,8 @@ export default function PartnerPortalPage() {
                           return (
                             <tr key={p.id} className="hover:bg-slate-50/80">
                               <td className="py-3 px-3">
-                                <span className="text-slate-800 block text-[1.125em]">{p.name}</span>
-                                <span className="text-[11px] text-slate-400">Quy cách: Thùng 24 chai</span>
+                                <span className="text-slate-800 block text-emph">{p.name}</span>
+                                <span className="text-2xs text-slate-400">Quy cách: Thùng 24 chai</span>
                               </td>
                               <td className="py-3 px-3 text-right text-slate-500 line-through">
                                 {Number(p.retailPrice).toLocaleString('vi-VN')} đ
@@ -1221,7 +1221,7 @@ export default function PartnerPortalPage() {
                                 {Number(p.dealerPrice).toLocaleString('vi-VN')} đ
                               </td>
                               <td className="py-3 px-3 text-right">
-                                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[12px]">
+                                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs">
                                   -{(p.discountRate * 100).toFixed(0)}%
                                 </span>
                               </td>
@@ -1235,7 +1235,7 @@ export default function PartnerPortalPage() {
                                     const val = Math.max(0, parseInt(e.target.value) || 0);
                                     setDealerQuantities((prev) => ({ ...prev, [p.id]: val }));
                                   }}
-                                  className="w-20 px-2 py-1 text-center border border-slate-200 rounded-lg focus:border-amber-600 focus:outline-none text-[1.125em]"
+                                  className="w-20 px-2 py-1 text-center border border-slate-200 rounded-lg focus:border-amber-600 focus:outline-none text-emph"
                                 />
                               </td>
                             </tr>
