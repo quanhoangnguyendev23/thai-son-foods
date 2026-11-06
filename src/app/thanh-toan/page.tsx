@@ -52,6 +52,7 @@ import { SERVICE_AREA, isHcmProvince } from '@/config/service-area';
 import StoreRecommendationSheet from '@/components/checkout/StoreRecommendationSheet';
 import type { StoreRecommendationItem } from '@/lib/storeRecommender';
 import { showAlert, type DialogTone } from '@/components/ui/AppDialog';
+import { DELIVERY_CONFIG, formatDeliveryWindow, type DeliveryOptions } from '@/lib/deliverySlots';
 
 // Tiêu đề + nút của popup thông báo theo ngôn ngữ đang chọn
 const dialogOpts = (language: string, tone: DialogTone) => {
@@ -317,6 +318,9 @@ export default function CheckoutPage() {
     storeAddress?: string;
     /** Túi tiết kiệm: tiền tiết kiệm của đơn do server tính */
     savings?: number;
+    /** Giờ giao đã chốt do server trả về */
+    deliveryLabel?: string;
+    deliveryScheduled?: boolean;
   } | null>(null);
 
   // Chi nhánh phục vụ: MẶC ĐỊNH lấy từ chi nhánh đang chọn toàn site
@@ -1022,6 +1026,64 @@ export default function CheckoutPage() {
   const shippingFee = calculatedShippingFee;
   const total = subtotal + shippingFee;
 
+  // ===== GIỜ NHẬN HÀNG: giao ngay (trong giờ 07:00–16:30) hoặc hẹn khung giờ =====
+  const deliveryEtaMinutes = activeRecommendedItem?.etaMinutes || DELIVERY_CONFIG.DEFAULT_ETA_MINUTES;
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOptions | null>(null);
+  const [deliveryMode, setDeliveryMode] = useState<'ASAP' | 'SCHEDULED'>('ASAP');
+  const [deliverySlotStart, setDeliverySlotStart] = useState<string | null>(null);
+  const [deliveryDayKey, setDeliveryDayKey] = useState<string | null>(null);
+  // Khách đã tự bấm chọn giao ngay / khung giờ → không tự đổi lựa chọn khi tải lại danh sách khung
+  const deliveryTouchedRef = useRef(false);
+  const deliverySlotRef = useRef<string | null>(null);
+  useEffect(() => {
+    deliverySlotRef.current = deliverySlotStart;
+  }, [deliverySlotStart]);
+
+  const fetchDeliverySlots = useCallback(async () => {
+    const params = new URLSearchParams({ eta: String(deliveryEtaMinutes) });
+    if (selectedStoreCode) params.set('storeCode', selectedStoreCode);
+    const data = await safeFetchJson<any>(`/api/delivery-slots?${params.toString()}`);
+    if (!data?.success || !Array.isArray(data.days)) return;
+    const opts = data as DeliveryOptions;
+    setDeliveryOptions(opts);
+    // Giữ khung khách đang chọn nếu còn trống; không thì lấy khung trống sớm nhất
+    const prevSlot = deliverySlotRef.current;
+    const stillOk = !!prevSlot && opts.days.some((d) => d.slots.some((s) => s.start === prevSlot && s.available));
+    const nextSlot = stillOk ? prevSlot : opts.earliestSlot?.start || null;
+    const nextDay = nextSlot ? opts.days.find((d) => d.slots.some((s) => s.start === nextSlot)) : null;
+    setDeliverySlotStart(nextSlot);
+    setDeliveryDayKey(nextDay?.dateKey || opts.days[0]?.dateKey || null);
+    // Hết giờ giao hôm nay → bắt buộc hẹn khung; còn giờ thì mặc định giao ngay (trừ khi khách đã tự chọn)
+    setDeliveryMode((prevMode) => (!opts.canDeliverNow ? 'SCHEDULED' : deliveryTouchedRef.current ? prevMode : 'ASAP'));
+  }, [deliveryEtaMinutes, selectedStoreCode]);
+
+  // Tải khung giờ khi đổi chi nhánh / thời gian giao, và làm mới mỗi 2 phút để "giao ngay" tự tắt khi quá giờ
+  useEffect(() => {
+    fetchDeliverySlots();
+    const timer = setInterval(fetchDeliverySlots, 2 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [fetchDeliverySlots]);
+
+  const selectedDeliverySlot = useMemo(() => {
+    if (!deliveryOptions || !deliverySlotStart) return null;
+    for (const d of deliveryOptions.days) {
+      const hit = d.slots.find((s) => s.start === deliverySlotStart);
+      if (hit) return hit;
+    }
+    return null;
+  }, [deliveryOptions, deliverySlotStart]);
+  const asapArrivalLabel = deliveryOptions
+    ? new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hour12: false }).format(
+        new Date(Date.now() + deliveryEtaMinutes * 60000)
+      )
+    : '';
+  const deliveryButtonLabel =
+    deliveryMode === 'ASAP'
+      ? `giao ngay (~${deliveryEtaMinutes} phút)`
+      : selectedDeliverySlot
+      ? `giao ${formatDeliveryWindow(selectedDeliverySlot.start, selectedDeliverySlot.end)}`
+      : '';
+
   // Kiểm tra nếu giỏ hàng có combo -> combo tính sau (được phép đặt dù dưới 120k)
   const hasCombo = items.some((i) => i.productId.includes('combo') || i.slug?.includes('combo'));
   const isEligibleToOrder = subtotal >= MIN_ORDER_THRESHOLD || hasCombo;
@@ -1170,8 +1232,23 @@ export default function CheckoutPage() {
               }
             : null,
           referralCode: referralCode.trim() || undefined,
+          deliveryMode,
+          deliverySlotStart: deliveryMode === 'SCHEDULED' ? deliverySlotStart : null,
+          etaMinutes: deliveryEtaMinutes,
         }),
       });
+
+      // Khung giờ giao không còn kịp / không hợp lệ: báo khách và tải lại danh sách khung (không phải lỗi tồn kho)
+      if (res.status === 409 || res.status === 400) {
+        const slotErr = await safeParseJson<any>(res.clone());
+        if (typeof slotErr?.code === 'string' && slotErr.code.startsWith('DELIVERY_SLOT')) {
+          deliveryTouchedRef.current = false;
+          deliverySlotRef.current = null;
+          await fetchDeliverySlots();
+          showAlert(slotErr.error || 'Khung giờ giao không còn kịp. Vui lòng chọn khung khác.', dialogOpts(language, 'warning'));
+          return;
+        }
+      }
 
       // Bắt lỗi 409 Conflict: Có người vừa mua mất hàng
       if (res.status === 409) {
@@ -1259,6 +1336,8 @@ export default function CheckoutPage() {
             : 'Thanh toán tiền mặt khi nhận hàng (COD)',
         storeAddress: targetStore?.address,
         savings: Math.max(0, Number(data?.savings) || 0),
+        deliveryLabel: data?.delivery?.label || undefined,
+        deliveryScheduled: data?.delivery?.mode === 'SCHEDULED',
       });
       setIsSubmitted(true);
       clearCart();
@@ -1348,6 +1427,19 @@ export default function CheckoutPage() {
               <div className="min-w-0">
                 <p className="text-xs text-text-muted">{en ? 'Email' : 'Email nhận tin'}</p>
                 <p className="text-emerald-800 break-all">{completedOrder.email}</p>
+              </div>
+            )}
+            {completedOrder.deliveryLabel && (
+              <div className="md:col-span-2">
+                <p className="text-xs text-text-muted">{en ? 'Delivery time' : 'Thời gian nhận hàng dự kiến'}</p>
+                <p className="text-lg text-emerald-800">{completedOrder.deliveryLabel}</p>
+                {completedOrder.deliveryScheduled && (
+                  <p className="text-xs text-text-muted mt-0.5">
+                    {en
+                      ? 'We deliver 07:00 – 16:30 daily. The store will call before delivery.'
+                      : 'Shop giao từ 07:00 đến 16:30 mỗi ngày và sẽ gọi trước khi giao. Muốn đổi giờ, vui lòng gọi hotline chi nhánh.'}
+                  </p>
+                )}
               </div>
             )}
             <div>
@@ -2187,12 +2279,8 @@ export default function CheckoutPage() {
 
                   <div className="p-2 rounded-xl bg-white/80 border border-emerald-100 flex items-center gap-2">
                     <div>
-                      <span className="text-[10px] text-gray-400 block">Giờ phục vụ</span>
-                      <span className="text-gray-900 text-[1.125em]">
-                        {activeRecommendedItem?.closesAt
-                          ? `Mở đến ${activeRecommendedItem.closesAt}`
-                          : '07:00 - 21:30'}
-                      </span>
+                      <span className="text-2xs text-gray-400 block">Giờ giao hàng</span>
+                      <span className="text-gray-900 text-emph">07:00 - 16:30</span>
                     </div>
                   </div>
                 </div>
@@ -2324,6 +2412,135 @@ export default function CheckoutPage() {
                 </div>
               )}
             </div>
+
+            {/* THỜI GIAN NHẬN HÀNG: giao ngay hoặc hẹn khung giờ (giờ hành chính 07:00 – 16:30) */}
+            {deliveryOptions && (
+              <div className="pt-4 border-t border-border-light space-y-3">
+                <h2 className="text-xl text-text-dark flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-emerald-600" />
+                  <span>{language === 'en' ? 'Delivery Time' : 'Thời gian nhận hàng'}</span>
+                </h2>
+
+                {deliveryOptions.canDeliverNow ? (
+                  <p className="text-sm text-emerald-800">
+                    Đặt bây giờ, đơn sẽ tới khoảng <span className="text-emph">{asapArrivalLabel}</span> hôm nay. Anh/chị cũng có thể hẹn khung giờ khác.
+                  </p>
+                ) : (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <span>
+                      Shop giao hàng từ 07:00 đến 16:30. Đơn đặt lúc này không còn kịp giao trong giờ hôm nay
+                      {selectedDeliverySlot && (
+                        <>
+                          {' '}nên sẽ được giao vào{' '}
+                          <span className="text-emph">{formatDeliveryWindow(selectedDeliverySlot.start, selectedDeliverySlot.end)}</span>
+                        </>
+                      )}
+                      . Anh/chị có thể chọn khung giờ khác bên dưới.
+                    </span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    disabled={!deliveryOptions.canDeliverNow}
+                    aria-pressed={deliveryMode === 'ASAP'}
+                    onClick={() => {
+                      deliveryTouchedRef.current = true;
+                      setDeliveryMode('ASAP');
+                    }}
+                    className={cn(
+                      'p-3 rounded-xl border-2 text-left transition-colors',
+                      deliveryMode === 'ASAP' ? 'border-emerald-600 bg-emerald-50' : 'border-border-light bg-white hover:border-emerald-300',
+                      !deliveryOptions.canDeliverNow ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    )}
+                  >
+                    <span className="block text-base text-text-dark">Giao ngay</span>
+                    <span className="block text-xs text-text-muted">
+                      {deliveryOptions.canDeliverNow ? `Tới khoảng ${asapArrivalLabel} hôm nay (~${deliveryEtaMinutes} phút)` : 'Không còn kịp hôm nay'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={deliveryMode === 'SCHEDULED'}
+                    onClick={() => {
+                      deliveryTouchedRef.current = true;
+                      setDeliveryMode('SCHEDULED');
+                    }}
+                    className={cn(
+                      'p-3 rounded-xl border-2 text-left transition-colors cursor-pointer',
+                      deliveryMode === 'SCHEDULED' ? 'border-emerald-600 bg-emerald-50' : 'border-border-light bg-white hover:border-emerald-300'
+                    )}
+                  >
+                    <span className="block text-base text-text-dark">Hẹn khung giờ</span>
+                    <span className="block text-xs text-text-muted">Chọn ngày và giờ nhận bên dưới</span>
+                  </button>
+                </div>
+
+                {deliveryMode === 'SCHEDULED' && (
+                  <div className="space-y-2.5">
+                    <div className="flex flex-wrap gap-2">
+                      {deliveryOptions.days.map((d) => {
+                        const hasFree = d.slots.some((s) => s.available);
+                        const active = deliveryDayKey === d.dateKey;
+                        return (
+                          <button
+                            key={d.dateKey}
+                            type="button"
+                            disabled={!hasFree}
+                            onClick={() => {
+                              deliveryTouchedRef.current = true;
+                              setDeliveryDayKey(d.dateKey);
+                              const first = d.slots.find((s) => s.available);
+                              if (first) setDeliverySlotStart(first.start);
+                            }}
+                            className={cn(
+                              'px-3 py-2 rounded-xl border-2 text-left min-w-24 transition-colors',
+                              active ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-border-light bg-white text-text-dark',
+                              !hasFree ? 'opacity-45 cursor-not-allowed' : 'cursor-pointer'
+                            )}
+                          >
+                            <span className="block text-sm">{d.dayLabel}</span>
+                            <span className={cn('block text-xs', active ? 'text-white' : 'text-text-muted')}>
+                              {d.dayLabel === d.weekday ? d.dateLabel : `${d.weekday} ${d.dateLabel}`}
+                              {!hasFree ? ' · hết khung' : ''}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {(deliveryOptions.days.find((d) => d.dateKey === deliveryDayKey)?.slots || []).map((s) => {
+                        const active = deliverySlotStart === s.start;
+                        return (
+                          <button
+                            key={s.start}
+                            type="button"
+                            disabled={!s.available}
+                            aria-pressed={active}
+                            onClick={() => {
+                              deliveryTouchedRef.current = true;
+                              setDeliverySlotStart(s.start);
+                            }}
+                            className={cn(
+                              'px-2.5 py-2 rounded-xl border-2 text-left tabular-nums transition-colors',
+                              active ? 'border-emerald-600 bg-emerald-50' : 'border-border-light bg-white',
+                              s.available ? 'cursor-pointer hover:border-emerald-300' : 'opacity-45 cursor-not-allowed'
+                            )}
+                          >
+                            <span className="block text-sm text-text-dark">
+                              {s.startLabel} – {s.endLabel}
+                            </span>
+                            {s.reason === 'TOO_LATE' && <span className="block text-xs text-text-muted">Không kịp</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Payment Method - Tiền mặt khi nhận hàng (COD) */}
             <div className="pt-4 border-t border-border-light">
@@ -2498,7 +2715,11 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 ) : (
-                  language === 'en' ? 'Place Order' : 'Đặt hàng'
+                  language === 'en'
+                    ? 'Place Order'
+                    : deliveryButtonLabel
+                    ? `Đặt hàng · ${deliveryButtonLabel}`
+                    : 'Đặt hàng'
                 )}
               </button>
               </div>

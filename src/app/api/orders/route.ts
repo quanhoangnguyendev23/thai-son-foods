@@ -10,6 +10,7 @@ import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 import { computeLineUnitCosts } from '@/lib/costSnapshot';
+import { getDeliveryOptions, findSlot, describeOrderDelivery, type DeliveryMode } from '@/lib/deliverySlots';
 import { logAddressEvent } from '@/lib/address/anonymousLog';
 import { hasRealCoords } from '@/lib/address/normalize';
 import { isSavedPinValid, readSavedPin } from '@/lib/address/savedAddressPin';
@@ -433,6 +434,51 @@ export async function POST(request: Request) {
         }
       }
 
+      // 2.5. GIỜ GIAO HÀNG (giờ hành chính 07:00–16:30, giờ VN). Máy chủ tự kiểm tra, không tin đồng hồ trình duyệt.
+      // Khách chọn "Giao ngay" mà đã quá giờ (trang mở lâu / bản trang cũ) → tự xếp vào khung trống sớm nhất.
+      const deliveryNow = new Date();
+      const deliveryOptions = getDeliveryOptions(deliveryNow, body.etaMinutes ?? body.eta_minutes);
+      const requestedDeliveryMode = String(body.deliveryMode || body.delivery_mode || 'ASAP').toUpperCase();
+      let deliveryMode: DeliveryMode;
+      let deliverySlotStart: string;
+      let deliverySlotEnd: string;
+      if (requestedDeliveryMode === 'SCHEDULED') {
+        const slot = findSlot(deliveryOptions, body.deliverySlotStart ?? body.delivery_slot_start);
+        if (!slot) {
+          return NextResponse.json(
+            { success: false, error: 'Khung giờ giao không hợp lệ. Vui lòng chọn lại khung giờ nhận hàng.', code: 'DELIVERY_SLOT_INVALID' },
+            { status: 400 }
+          );
+        }
+        if (slot.reason === 'TOO_LATE') {
+          return NextResponse.json(
+            { success: false, error: `Khung ${slot.startLabel}–${slot.endLabel} không còn kịp giao. Vui lòng chọn khung giờ khác.`, code: 'DELIVERY_SLOT_TOO_LATE' },
+            { status: 409 }
+          );
+        }
+        deliveryMode = 'SCHEDULED';
+        deliverySlotStart = slot.start;
+        deliverySlotEnd = slot.end;
+      } else if (deliveryOptions.canDeliverNow) {
+        deliveryMode = 'ASAP';
+        deliverySlotStart = deliveryOptions.now;
+        deliverySlotEnd = deliveryOptions.asapArrival;
+      } else if (deliveryOptions.earliestSlot) {
+        deliveryMode = 'SCHEDULED';
+        deliverySlotStart = deliveryOptions.earliestSlot.start;
+        deliverySlotEnd = deliveryOptions.earliestSlot.end;
+      } else {
+        return NextResponse.json(
+          { success: false, error: 'Hiện chưa chọn được khung giờ giao. Vui lòng thử lại hoặc gọi hotline.', code: 'DELIVERY_SLOT_FULL' },
+          { status: 409 }
+        );
+      }
+      // Đơn hẹn: giữ hàng tới hết khung hẹn (+2 giờ) để không bị tự hủy vì quá hạn giữ chỗ trước ngày giao
+      const reservationHours = Math.max(
+        INVENTORY_CONFIG.RESERVATION_EXPIRY_HOURS,
+        Math.ceil((new Date(deliverySlotEnd).getTime() - deliveryNow.getTime()) / 3600000) + 2
+      );
+
       // 3. SERVER TỰ TÍNH LẠI GIÁ (không tin client)
       let serverCalculatedSubtotal = 0;
       const revalidatedItems = [];
@@ -773,6 +819,7 @@ export async function POST(request: Request) {
                items_total_count, items_resolved_count, order_channel,
                latitude, longitude, location_confirmed, location_confirmed_by, address_new, address_old,
                recommended_store_id, was_overridden, ranking_snapshot,
+               delivery_mode, delivery_slot_start, delivery_slot_end,
                address_source, address_precision, provider_place_id, location_check
              )
              VALUES (
@@ -781,7 +828,8 @@ export async function POST(request: Request) {
                $19, $20, $21,
                $22, $23, $24, $25, $26, $27,
                $28, $29, $30,
-               $31, $32, $33, $34
+               $31, $32, $33,
+               $34, $35, $36, $37
              )`,
             [
               orderId,
@@ -814,6 +862,9 @@ export async function POST(request: Request) {
               recommendedStoreId,
               wasOverridden,
               rankingSnapshot,
+              deliveryMode,
+              deliverySlotStart,
+              deliverySlotEnd,
               addressSource,
               addressPrecision,
               providerPlaceId,
@@ -890,7 +941,7 @@ export async function POST(request: Request) {
             orderId,
             expandedBottles,
             client,
-            INVENTORY_CONFIG.RESERVATION_EXPIRY_HOURS
+            reservationHours
           );
 
           // 7.5. GHI NHẬN ATTRIBUTION VÀ SỔ CÁI ĐỐI TÁC TRONG CÙNG TRANSACTION (ROLLBACK NẾU LỖI)
@@ -985,6 +1036,8 @@ export async function POST(request: Request) {
         }
       }
 
+      const deliveryLabel = describeOrderDelivery(deliveryMode, deliverySlotStart, deliverySlotEnd);
+
       // Kích hoạt gửi email xác nhận đặt hàng cho khách (Non-blocking async)
       if (finalEmail && finalEmail.includes('@')) {
         sendOrderEmail('ORDER_CONFIRMATION', {
@@ -1004,6 +1057,7 @@ export async function POST(request: Request) {
           note,
           storeCode: targetStoreCode,
           storeAddress: targetStoreAddress,
+          deliveryLabel,
           items: revalidatedItems,
         }).catch((err) => console.error('[Order] Error sending confirmation email:', err));
       }
@@ -1018,6 +1072,8 @@ export async function POST(request: Request) {
         paymentMethod,
         total: serverTotal,
         note,
+        deliveryLabel,
+        deliveryScheduled: deliveryMode === 'SCHEDULED',
         items: revalidatedItems.map((it: any) => ({
           name: it.name,
           quantity: it.quantity,
@@ -1052,6 +1108,12 @@ export async function POST(request: Request) {
           (sum: number, it: any) => sum + Math.max(0, (Number(it.originalPrice) || 0) - (Number(it.price) || 0)) * (Number(it.quantity) || 0),
           0
         ),
+        delivery: {
+          mode: deliveryMode,
+          start: deliverySlotStart,
+          end: deliverySlotEnd,
+          label: deliveryLabel,
+        },
         savedToPostgres: true,
         order: {
           id: orderId,
@@ -1168,6 +1230,7 @@ export async function GET(request: Request) {
             storeCode: order.store_code,
             storeAddress: order.store_address,
             createdAt: order.created_at,
+            deliveryLabel: describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end) || null,
             items: itemsRes.rows.map((it: any) => ({
               id: it.id,
               name: it.name,
@@ -1253,6 +1316,7 @@ export async function GET(request: Request) {
         storeCode: order.store_code,
         storeAddress: order.store_address,
         createdAt: order.created_at,
+        deliveryLabel: describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end) || null,
         items: itemsRes.rows.map((it: any) => ({
           id: it.id,
           name: it.name,

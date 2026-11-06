@@ -74,6 +74,7 @@ const OPEN_ORDER_STATUSES: Exclude<OpenOrderFilter, 'OPEN'>[] = ['PENDING', 'CON
 import { banners as defaultHeroBanners } from '@/data/banners';
 import { HERO_PLACEHOLDER_SLIDES } from '@/data/homepage-placeholders';
 import { showAlert, showConfirm } from '@/components/ui/AppDialog';
+import { describeOrderDelivery } from '@/lib/deliverySlots';
 
 // ==================== INTERFACES ====================
 export interface AdminUser {
@@ -226,6 +227,10 @@ interface Order {
   items?: OrderItem[];
   store_code?: string | null;
   store_address?: string | null;
+  /** Giờ giao: ASAP = giao ngay, SCHEDULED = khung hẹn khách chọn */
+  delivery_mode?: string | null;
+  delivery_slot_start?: string | null;
+  delivery_slot_end?: string | null;
   inventory_deducted?: boolean | null;
   cod_reconciled?: boolean | null;
   cod_collected_amount?: number | null;
@@ -3472,6 +3477,14 @@ export default function AdminPage() {
                                 day: '2-digit',
                                 month: '2-digit',
                               })}
+                              {order.delivery_slot_start && (
+                                <span
+                                  className={`block mt-0.5 ${order.delivery_mode === 'SCHEDULED' ? 'text-amber-800' : 'text-emerald-700'}`}
+                                >
+                                  {order.delivery_mode === 'SCHEDULED' ? 'Hẹn giao: ' : ''}
+                                  {describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end)}
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-right">
                               <button
@@ -4110,6 +4123,14 @@ export default function AdminPage() {
                                 day: '2-digit',
                                 month: '2-digit',
                               })}
+                              {order.delivery_slot_start && (
+                                <span
+                                  className={`block mt-0.5 ${order.delivery_mode === 'SCHEDULED' ? 'text-amber-800' : 'text-emerald-700'}`}
+                                >
+                                  {order.delivery_mode === 'SCHEDULED' ? 'Hẹn giao: ' : ''}
+                                  {describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end)}
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-right">
                               <div className="flex items-center justify-end gap-2">
@@ -7809,6 +7830,12 @@ export default function AdminPage() {
                     year: 'numeric',
                   })}
                 </p>
+                {selectedOrder.delivery_slot_start && (
+                  <p className="text-sm text-emerald-800 mt-0.5">
+                    {selectedOrder.delivery_mode === 'SCHEDULED' ? 'Hẹn giao: ' : ''}
+                    {describeOrderDelivery(selectedOrder.delivery_mode, selectedOrder.delivery_slot_start, selectedOrder.delivery_slot_end)}
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setIsOrderDetailModalOpen(false)}
