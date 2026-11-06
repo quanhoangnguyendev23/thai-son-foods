@@ -386,7 +386,8 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
     if (!s.is_accepting_orders) {
       canDeliver = false;
       rejectReason = s.pause_reason || 'Chi nhánh đang tạm ngưng nhận đơn';
-    } else if (!openingCheck.canFulfill) {
+    } else if (mode === 'pickup' && !openingCheck.canFulfill) {
+      // Giao hàng ngoài giờ không loại chi nhánh nữa: đơn được xếp vào khung hẹn (07:00–16:30, xem lib/deliverySlots)
       canDeliver = false;
       rejectReason = openingCheck.reason;
     } else if (mode === 'delivery' && roadKm > maxRadiusKm) {
