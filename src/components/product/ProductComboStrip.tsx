@@ -38,8 +38,8 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
         className="group block rounded-md border border-gray-200 bg-white px-3 py-2 sm:px-4 hover:border-gray-300 hover:shadow-sm transition-shadow"
       >
         <div className="flex items-center justify-center gap-3 sm:gap-5">
-          <div className="relative shrink-0 w-[72px] h-[54px] sm:w-[104px] sm:h-[64px] overflow-hidden rounded bg-ivory">
-            <Image src={combo.image} alt={combo.name} fill sizes="104px" className="object-cover" />
+          <div className="relative shrink-0 w-[72px] h-[54px] sm:w-[104px] sm:h-[78px] overflow-hidden rounded-lg bg-white border border-gray-100">
+            <Image src={combo.image} alt={combo.name} fill sizes="104px" className="object-contain" />
           </div>
 
           <div className="min-w-0 flex-1 max-w-[760px]">

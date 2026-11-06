@@ -559,7 +559,7 @@ export default function ComboDetailView({
                     : getShortBottleName(pFullName);
                   return (
                     <li key={`${item.productId}-${idx}`} className="flex items-center gap-3 py-2" title={pFullName}>
-                      <div className="relative w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-gray-200/80">
+                      <div className="relative w-16 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-gray-200/80">
                         <Image
                           src={item.product?.thumbnail || combo.image}
                           alt={pFullName}

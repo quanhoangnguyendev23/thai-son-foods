@@ -351,7 +351,7 @@ function Combo01View() {
                         <X className="w-3 h-3" />
                       </button>
 
-                      <div className="relative w-16 h-20 my-1">
+                      <div className="relative w-20 h-[60px] my-1">
                         <Image
                           src={product.thumbnail}
                           alt={product.name}
@@ -483,12 +483,12 @@ function Combo01View() {
                 )}
 
                 <div>
-                  <div className="relative w-full aspect-square mb-3 bg-ivory rounded-xl p-2 flex items-center justify-center overflow-hidden">
+                  <div className="relative w-full aspect-[4/3] mb-3 bg-white border border-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
                     <Image
                       src={prod.thumbnail}
                       alt={prod.name}
                       fill
-                      className="object-contain p-2 transition-transform"
+                      className="object-contain transition-transform"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </div>
@@ -824,7 +824,7 @@ function Combo02View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={selectedStep1Obj.image}
                     alt={selectedStep1Obj.name}
@@ -889,7 +889,7 @@ function Combo02View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={selectedStep2Obj.image}
                     alt={selectedStep2Obj.name}
@@ -956,7 +956,7 @@ function Combo02View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={selectedStep3Obj.image}
                     alt={selectedStep3Obj.name}
@@ -1100,12 +1100,12 @@ function Combo02View() {
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1239,12 +1239,12 @@ function Combo02View() {
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1355,12 +1355,12 @@ function Combo02View() {
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1651,7 +1651,7 @@ function Combo05View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={prodA.thumbnail}
                     alt={prodA.name}
@@ -1716,7 +1716,7 @@ function Combo05View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={prodB.thumbnail}
                     alt={prodB.name}
@@ -1762,7 +1762,7 @@ function Combo05View() {
 
             {prodB ? (
               <>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={prodB.thumbnail}
                     alt={prodB.name}
@@ -1886,12 +1886,12 @@ function Combo05View() {
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={prod.thumbnail}
                         alt={prod.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 25vw"
                       />
                     </div>
@@ -2038,12 +2038,12 @@ function Combo05View() {
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={prod.thumbnail}
                         alt={prod.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 25vw"
                       />
                     </div>
@@ -2511,7 +2511,7 @@ function Combo06View() {
               )}
             </div>
 
-            <div className="relative w-20 h-24 my-2">
+            <div className="relative w-24 h-[72px] my-2">
               <Image
                 src={prod1.thumbnail}
                 alt={prod1.name}
@@ -2546,7 +2546,7 @@ function Combo06View() {
               )}
             </div>
 
-            <div className="relative w-20 h-24 my-2">
+            <div className="relative w-24 h-[72px] my-2">
               <Image
                 src={prod2.thumbnail}
                 alt={prod2.name}
@@ -2582,7 +2582,7 @@ function Combo06View() {
                 )}
               </div>
 
-              <div className="relative w-20 h-24 my-2">
+              <div className="relative w-24 h-[72px] my-2">
                 <Image
                   src={prod3.thumbnail}
                   alt={prod3.name}
@@ -2742,12 +2742,12 @@ function Combo06View() {
                 )}
 
                 <div>
-                  <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                  <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                     <Image
                       src={prod.thumbnail}
                       alt={prod.name}
                       fill
-                      className="object-contain p-1 transition-transform"
+                      className="object-contain transition-transform"
                       sizes="(max-width: 640px) 100vw, 25vw"
                     />
                   </div>

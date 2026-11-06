@@ -261,7 +261,7 @@ export default function CartPage() {
               >
                 <div>
                   {/* Ảnh sản phẩm thu nhỏ gọn gàng */}
-                  <div className="relative h-28 sm:h-32 w-full rounded-lg overflow-hidden bg-gray-50/80 mb-2 border border-gray-100 flex items-center justify-center">
+                  <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-white mb-2 border border-gray-100 flex items-center justify-center">
                     {prod.thumbnail ? (
                     <Image
                       src={prod.thumbnail}
@@ -269,13 +269,13 @@ export default function CartPage() {
                       fill
                       sizes="180px"
                       className={`${
-                        isPoster ? 'object-cover' : 'object-contain p-1.5'
+                        isPoster ? 'object-contain' : 'object-contain p-1.5'
                       } transition-transform duration-200`}
                     />
                     ) : null}
 
                     {/* Huy hiệu trên ảnh */}
-                    <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10">
+                    <div className="absolute top-1 right-1 flex flex-col items-end gap-0.5 z-10">
                       {prod.isBestSeller ? (
                         <span className="px-1.5 py-0.5 text-2xs rounded bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
                           Hot
@@ -285,15 +285,12 @@ export default function CartPage() {
                           Mới
                         </span>
                       ) : null}
-                    </div>
-
-                    {inCartQty > 0 && (
-                      <div className="absolute top-1 right-1 z-10">
-                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
+                      {inCartQty > 0 && (
+                        <span className="px-1.5 py-0.5 text-2xs rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
                           x{inCartQty}
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   {/* Tên & quy cách gọn gàng */}
@@ -441,34 +438,31 @@ export default function CartPage() {
               >
                 <div>
                   {/* Ảnh combo với badge giảm giá */}
-                  <div className="relative h-28 sm:h-32 w-full rounded-lg overflow-hidden bg-gray-50 mb-2 border border-gray-100">
+                  <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-white mb-2 border border-gray-100">
                     {combo.image ? (
                     <Image
                       src={combo.image}
                       alt={combo.name}
                       fill
                       sizes="240px"
-                      className="object-cover transition-transform duration-200"
+                      className="object-contain transition-transform duration-200"
                     />
                     ) : null}
 
                     {/* Badges góc trên */}
-                    <div className="absolute top-1 left-1 flex items-center gap-1 z-10">
-                      <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-rose-600 text-white shadow-xs">
+                    <div className="absolute top-1 right-1 flex items-center gap-1 z-10">
+                      <span className="px-1.5 py-0.5 text-2xs rounded bg-rose-600 text-white shadow-xs">
                         -{combo.discount}%
                       </span>
                       <span className="px-1.5 py-0.5 text-2xs rounded bg-gray-900/85 text-white backdrop-blur-xs">
                         {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                       </span>
-                    </div>
-
-                    {comboInCartQty > 0 && (
-                      <div className="absolute top-1 right-1 z-10">
-                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
+                      {comboInCartQty > 0 && (
+                        <span className="px-1.5 py-0.5 text-2xs rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
                           x{comboInCartQty}
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   {/* Tiêu đề combo */}
@@ -741,7 +735,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-3.5 min-w-0">
                         <Link
                           href={`/san-pham/${item.slug}`}
-                          className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-ivory/70 border border-gray-200/80 shrink-0 p-1 flex items-center justify-center group"
+                          className="relative w-20 h-[60px] sm:w-24 sm:h-[72px] rounded-lg overflow-hidden bg-white border border-gray-200/80 shrink-0 flex items-center justify-center group"
                         >
                           {item.thumbnail ? (
                           <Image
@@ -749,7 +743,7 @@ export default function CartPage() {
                             alt={displayName}
                             fill
                             className="object-contain transition-transform duration-300"
-                            sizes="80px"
+                            sizes="96px"
                           />
                           ) : null}
                         </Link>
@@ -1208,27 +1202,17 @@ export default function CartPage() {
                           key={prod.id}
                           className="flex items-center gap-3 group hover:bg-emerald-50/40 py-2.5 px-1.5 rounded-lg transition-colors"
                         >
-                          {/* Ảnh sản phẩm theo đúng tỉ lệ ảnh gốc 4:3, phủ kín khung (không viền trắng) */}
-                          <div className="relative w-[84px] h-[63px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+                          {/* Ảnh sản phẩm theo đúng tỉ lệ ảnh gốc 4:3, hiện trọn hình */}
+                          <div className="relative w-[84px] h-[63px] rounded-lg bg-white border border-gray-100 overflow-hidden shrink-0">
                             {prod.thumbnail ? (
                             <Image
                               src={prod.thumbnail}
                               alt={prod.name}
                               fill
                               sizes="84px"
-                              className="object-cover transition-transform duration-200"
+                              className="object-contain transition-transform duration-200"
                             />
                             ) : null}
-                            {prod.isBestSeller ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-amber-500 text-ink-950 leading-tight">
-                                Hot
-                              </span>
-                            ) : prod.isNew ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-emerald-600 text-white leading-tight">
-                                Mới
-                              </span>
-                            ) : null}
-
                             {inCartQty > 0 && (
                               <span
                                 className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-2xs rounded bg-emerald-800 text-white shadow-2xs"
@@ -1249,7 +1233,12 @@ export default function CartPage() {
                             >
                               {shelfName}
                             </Link>
-                            <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                            <p className="text-2xs text-gray-500 truncate mt-0.5">
+                              {prod.isBestSeller ? (
+                                <span className="mr-1 px-1 py-px rounded bg-amber-500 text-ink-950 leading-tight">Hot</span>
+                              ) : prod.isNew ? (
+                                <span className="mr-1 px-1 py-px rounded bg-emerald-600 text-white leading-tight">Mới</span>
+                              ) : null}
                               {prod.volume || '330ml'} • ~{formatPrice(prod.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                             </p>
                             {(() => {
@@ -1323,19 +1312,16 @@ export default function CartPage() {
                           className="flex items-center gap-3 group hover:bg-rose-50/30 p-2 rounded-xl transition-colors"
                         >
                           {/* Ảnh combo bo góc */}
-                          <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+                          <div className="relative w-[84px] h-[63px] rounded-lg bg-white border border-gray-100 overflow-hidden shrink-0">
                             {combo.image ? (
                             <Image
                               src={combo.image}
                               alt={combo.name}
                               fill
-                              sizes="72px"
-                              className="object-cover transition-transform duration-200"
+                              sizes="84px"
+                              className="object-contain transition-transform duration-200"
                             />
                             ) : null}
-                            <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-rose-600 text-white leading-tight">
-                              -{combo.discount}%
-                            </span>
                             {comboInCartQty > 0 && (
                               <span
                                 className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-2xs rounded bg-emerald-800 text-white shadow-2xs"
@@ -1357,7 +1343,10 @@ export default function CartPage() {
                               {comboTitle}
                             </Link>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] text-gray-500 font-medium">
+                              <span className="px-1 py-px text-2xs rounded bg-rose-600 text-white leading-tight">
+                                -{combo.discount}%
+                              </span>
+                              <span className="text-2xs text-gray-500 font-medium">
                                 {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                               </span>
                               {savedMoney > 0 && (

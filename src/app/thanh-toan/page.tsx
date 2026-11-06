@@ -2588,13 +2588,13 @@ export default function CheckoutPage() {
 
                   return (
                     <div key={item.productId} className="flex gap-3">
-                      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-ivory-dark shrink-0">
+                      <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-white border border-gray-100 shrink-0">
                         <Image
                           src={item.thumbnail}
                           alt={itemName}
                           fill
-                          className="object-cover"
-                          sizes="48px"
+                          className="object-contain"
+                          sizes="64px"
                         />
                       </div>
                       <div className="flex-1 min-w-0">

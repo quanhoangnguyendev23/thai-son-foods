@@ -803,7 +803,7 @@ function AccountContent() {
                           <div key={idx} className="flex items-center justify-between py-2 text-xs">
                             <div className="flex items-center gap-3">
                               {item.thumbnail ? (
-                                <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                                <div className="relative w-[52px] h-[39px] rounded-lg overflow-hidden bg-white border border-gray-100 shrink-0">
                                   <Image
                                     src={item.thumbnail}
                                     alt={item.name}

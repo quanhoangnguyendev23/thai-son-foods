@@ -167,12 +167,12 @@ export default function CartDrawer() {
                     className="pt-3 first:pt-0 flex gap-3"
                   >
                     {/* Thumbnail */}
-                    <div className="relative w-18 h-18 rounded-lg overflow-hidden bg-ivory shrink-0 border border-border-light">
+                    <div className="relative w-20 h-[60px] rounded-lg overflow-hidden bg-white shrink-0 border border-border-light">
                       {item.thumbnail ? (<Image
                         src={item.thumbnail}
                         alt={item.name}
                         fill
-                        className="object-cover"
+                        className="object-contain"
                         sizes="72px"
                       />) : null}
                     </div>

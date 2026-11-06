@@ -665,7 +665,7 @@ export default function ProductGallery({
 
             {/* Product Card Preview */}
             <div className="p-4 bg-ivory border-b border-gray-100 flex items-center gap-3">
-              <div className="relative w-16 h-16 rounded-xl bg-white border border-gray-200/80 p-1 shrink-0 overflow-hidden flex items-center justify-center">
+              <div className="relative w-20 h-[60px] rounded-lg bg-white border border-gray-200/80 shrink-0 overflow-hidden flex items-center justify-center">
                 <Image
                   src={displayImages[0]?.url || activeImage.url}
                   alt={productName}

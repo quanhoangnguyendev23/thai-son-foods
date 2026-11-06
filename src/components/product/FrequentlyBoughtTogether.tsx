@@ -219,7 +219,7 @@ export default function FrequentlyBoughtTogether({
                   }`}
                 >
                   {/* Khung ảnh có Checkbox góc trên bên phải */}
-                  <div className="relative w-full aspect-square max-w-[160px] sm:max-w-[170px] bg-ink-50 rounded-lg border border-gray-200/80 p-2.5 mx-auto md:mx-0 flex items-center justify-center overflow-hidden group">
+                  <div className="relative w-full aspect-[4/3] max-w-[160px] sm:max-w-[170px] bg-white rounded-lg border border-gray-200/80 p-1 mx-auto md:mx-0 flex items-center justify-center overflow-hidden group">
                     <Link
                       href={`/san-pham/${item.product.slug}`}
                       className="relative w-full h-full block"

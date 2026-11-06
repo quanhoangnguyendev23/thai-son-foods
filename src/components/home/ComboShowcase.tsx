@@ -155,9 +155,9 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           </span>
                         </div>
 
-                        {/* Huy hiệu số lượng chai (Góc dưới trái) */}
-                        <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 z-10 pointer-events-none">
-                          <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
+                        {/* Huy hiệu số lượng chai (Góc dưới phải) */}
+                        <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 z-10 pointer-events-none">
+                          <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
                             {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                           </span>
                         </div>
