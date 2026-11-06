@@ -538,7 +538,7 @@ export default function ProductReviewsSection({
               ) : reviews.length === 0 ? (
                 <div className="border border-gray-200 rounded-2xl p-10 bg-white text-center text-gray-500 mt-6">
                   <MessageCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-700 text-[1.125em]">
+                  <p className="text-gray-700 text-emph">
                     {summary.totalReviews === 0
                       ? 'Chưa có đánh giá nào cho sản phẩm này'
                       : 'Chưa có đánh giá nào phù hợp với bộ lọc'}
@@ -571,7 +571,7 @@ export default function ProductReviewsSection({
                             </span>
 
                             {rev.isVerifiedBuyer && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[12px] border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs border border-emerald-200">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 Đã mua hàng
                               </span>
@@ -629,7 +629,7 @@ export default function ProductReviewsSection({
                     {/* Phản hồi từ CSKH Thái Sơn Foods (nếu có) */}
                     {rev.adminReply && (
                       <div className="bg-gray-50 border-l-4 border-emerald-600 p-3 rounded-r-xl text-xs">
-                        <div className="flex items-center gap-1.5 text-emerald-800 mb-1 text-[1.125em]">
+                        <div className="flex items-center gap-1.5 text-emerald-800 mb-1 text-emph">
                           <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                           Phản hồi từ Thái Sơn Foods
                         </div>
@@ -851,7 +851,7 @@ export default function ProductReviewsSection({
                     </div>
                   ))}
                   {formImages.length < MAX_REVIEW_IMAGES && (
-                    <label className="w-20 h-20 rounded-lg border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 flex flex-col items-center justify-center gap-1 text-gray-400 text-[11px] cursor-pointer">
+                    <label className="w-20 h-20 rounded-lg border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 flex flex-col items-center justify-center gap-1 text-gray-400 text-2xs cursor-pointer">
                       <ImagePlus className="w-5 h-5" />
                       <span>Thêm ảnh</span>
                       <input

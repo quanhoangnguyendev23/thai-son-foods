@@ -382,7 +382,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     <div className="flex flex-col space-y-3.5 w-full">
       {/* 1. Tiêu đề sản phẩm chuẩn Amazon */}
       <div className="space-y-1">
-        <h1 className="text-2xl lg:text-[25px] font-medium text-ink-950 leading-snug tracking-tight">
+        <h1 className="text-2xl lg:text-2xl font-medium text-ink-950 leading-snug tracking-tight">
           {displayName}
         </h1>
         {displayShortDesc && (
@@ -480,11 +480,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
       {/* 5. Banner Mã giảm giá */}
       <div className="bg-ivory border border-amber-200 rounded-lg p-3 text-xs flex items-center gap-2 text-ink-950 leading-relaxed">
-        <span className="bg-crimson-600 text-white px-1.5 py-0.5 rounded text-[12px] shrink-0">
+        <span className="bg-crimson-600 text-white px-1.5 py-0.5 rounded text-xs shrink-0">
           Mã giảm giá:
         </span>
         <div className="flex-1 min-w-0">
-          <strong className="text-[1.125em]">Tiết kiệm 5%</strong>: Mã giảm giá chỉ áp dụng cho tùy chọn mua hàng trực tiếp website.{' '}
+          <strong className="text-emph">Tiết kiệm 5%</strong>: Mã giảm giá chỉ áp dụng cho tùy chọn mua hàng trực tiếp website.{' '}
           <Link href="/#khuyen-mai" className="text-forest-700 hover:text-copper-600 hover:underline font-medium">
             Mua sắm các mặt hàng
           </Link>{' '}
@@ -499,7 +499,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       <div className="space-y-2 pt-1">
         <div className="text-sm text-ink-950">
           <span>Tên bộ sản phẩm: </span>
-          <strong className="text-[1.125em]">{currentUnit} ({currentVolume})</strong>
+          <strong className="text-emph">{currentUnit} ({currentVolume})</strong>
         </div>
 
         <div
@@ -532,7 +532,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 <div className="flex items-center justify-between w-full mb-1">
                   <span className="text-base text-ink-950">{vDisplayName}</span>
                   {isSelected && (
-                    <span className="w-4 h-4 rounded-full bg-forest-700 text-white flex items-center justify-center text-[10px]">
+                    <span className="w-4 h-4 rounded-full bg-forest-700 text-white flex items-center justify-center text-2xs">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                     </span>
                   )}
@@ -542,11 +542,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                   {formatPrice(v.price)} đ
                 </div>
 
-                <div className="text-[11px] text-gray-500 mt-0.5">
+                <div className="text-2xs text-gray-500 mt-0.5">
                   ({formatPrice(vPerBottle)} đ/chai)
                 </div>
 
-                <div className="text-[11px] text-gray-400 line-through mt-0.5">
+                <div className="text-2xs text-gray-400 line-through mt-0.5">
                   {formatPrice(vOriginalPrice)} đ
                 </div>
               </button>
@@ -579,7 +579,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className="flex items-center gap-2 text-xs sm:text-sm text-ink-950">
           <Truck className="w-4 h-4 text-sky-600 shrink-0" />
           <span>
-            Giao hàng <strong className="text-emerald-700 text-[1.125em]">MIỄN PHÍ</strong> cho đơn hàng từ 200.000 đ
+            Giao hàng <strong className="text-emerald-700 text-emph">MIỄN PHÍ</strong> cho đơn hàng từ 200.000 đ
           </span>
         </div>
 
@@ -587,7 +587,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <div className="flex items-center gap-1.5 text-xs sm:text-sm text-ink-700">
           <MapPin className="w-4 h-4 text-gray-500 shrink-0" />
           <span className="truncate">
-            Giao hàng đến: <strong className="text-ink-950 text-[1.125em]">{selectedBranch?.name || 'Cửa Hàng NH - Phú Thọ Hòa'}</strong>
+            Giao hàng đến: <strong className="text-ink-950 text-emph">{selectedBranch?.name || 'Cửa Hàng NH - Phú Thọ Hòa'}</strong>
           </span>
           <button
             type="button"
@@ -683,7 +683,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs px-3 py-2 rounded-lg flex items-center gap-2 animate-fade-in-up">
             <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>
-              Đã thêm <strong className="text-[1.125em]">{quantity} {currentUnit} ({currentVolume})</strong> vào giỏ hàng!
+              Đã thêm <strong className="text-emph">{quantity} {currentUnit} ({currentVolume})</strong> vào giỏ hàng!
             </span>
           </div>
         )}
@@ -711,9 +711,9 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             <div className="px-4 pb-4 text-sm md:text-base text-gray-700 space-y-2 border-t border-gray-100 pt-3 leading-relaxed">
               {highlights.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2">
-                  <span className="text-forest-700 text-[1.125em]">•</span>
+                  <span className="text-forest-700 text-emph">•</span>
                   <span>
-                    <strong className="text-[1.125em]">
+                    <strong className="text-emph">
                       {language === 'en' ? item.labelEn : item.labelVi}:{' '}
                     </strong>
                     {language === 'en' ? item.contentEn : item.contentVi}
@@ -746,27 +746,27 @@ export default function ProductInfo({ product }: ProductInfoProps) {
               <table className="w-full text-left">
                 <tbody>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 text-gray-600 w-40 text-[1.125em]">{language === 'en' ? 'Brand' : 'Thương hiệu'}</td>
+                    <td className="py-2.5 text-gray-600 w-40 text-emph">{language === 'en' ? 'Brand' : 'Thương hiệu'}</td>
                     <td className="py-2.5 text-gray-900 font-medium">Thái Sơn Foods</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Origin' : 'Xuất xứ'}</td>
+                    <td className="py-2.5 text-gray-600 text-emph">{language === 'en' ? 'Origin' : 'Xuất xứ'}</td>
                     <td className="py-2.5 text-gray-900">{language === 'en' ? 'Vietnam' : 'Việt Nam'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Product Code' : 'Mã sản phẩm'}</td>
+                    <td className="py-2.5 text-gray-600 text-emph">{language === 'en' ? 'Product Code' : 'Mã sản phẩm'}</td>
                     <td className="py-2.5 text-gray-900 font-mono">{product.sku || 'TSF-PRODUCT'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Certification' : 'Chứng nhận'}</td>
-                    <td className="py-2.5 text-emerald-700 text-[1.125em]">{language === 'en' ? 'International HACCP Certification' : 'Chứng nhận Quốc tế HACCP'}</td>
+                    <td className="py-2.5 text-gray-600 text-emph">{language === 'en' ? 'Certification' : 'Chứng nhận'}</td>
+                    <td className="py-2.5 text-emerald-700 text-emph">{language === 'en' ? 'International HACCP Certification' : 'Chứng nhận Quốc tế HACCP'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Expiry Date' : 'Hạn sử dụng'}</td>
+                    <td className="py-2.5 text-gray-600 text-emph">{language === 'en' ? 'Expiry Date' : 'Hạn sử dụng'}</td>
                     <td className="py-2.5 text-gray-900">{language === 'en' ? 'Printed on bottle cap' : 'Xem trên nắp chai'}</td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Usage Instructions' : 'Hướng dẫn sử dụng'}</td>
+                    <td className="py-2.5 text-gray-600 text-emph">{language === 'en' ? 'Usage Instructions' : 'Hướng dẫn sử dụng'}</td>
                     <td className="py-2.5 text-gray-900">
                       {language === 'en'
                         ? 'Best consumed within 24 hours after opening. Keep refrigerated during use.'
@@ -774,7 +774,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                     </td>
                   </tr>
                   <tr className="border-b border-gray-100">
-                    <td className="py-2.5 text-gray-600 text-[1.125em]">{language === 'en' ? 'Storage Instructions' : 'Hướng dẫn bảo quản'}</td>
+                    <td className="py-2.5 text-gray-600 text-emph">{language === 'en' ? 'Storage Instructions' : 'Hướng dẫn bảo quản'}</td>
                     <td className="py-2.5 text-gray-900">
                       {language === 'en'
                         ? 'Store at 5 - 10°C in refrigerator chiller compartment.'
@@ -806,8 +806,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           </button>
           {openAccordions.measurements && (
             <div className="px-4 pb-4 text-sm text-gray-700 border-t border-gray-100 pt-3 space-y-2 leading-relaxed">
-              <p>• {language === 'en' ? 'Standard bottle volume: ' : 'Dung tích đóng chai tiêu chuẩn: '}<strong className="text-[1.125em]">{bottleVolume}</strong></p>
-              <p>• {language === 'en' ? 'Packaging material: ' : 'Chất liệu bao bì: '}<strong className="text-[1.125em]">{language === 'en' ? 'Food-grade virgin PET, 100% recyclable' : 'Nhựa nguyên sinh an toàn thực phẩm, có thể tái chế.'}</strong></p>
+              <p>• {language === 'en' ? 'Standard bottle volume: ' : 'Dung tích đóng chai tiêu chuẩn: '}<strong className="text-emph">{bottleVolume}</strong></p>
+              <p>• {language === 'en' ? 'Packaging material: ' : 'Chất liệu bao bì: '}<strong className="text-emph">{language === 'en' ? 'Food-grade virgin PET, 100% recyclable' : 'Nhựa nguyên sinh an toàn thực phẩm, có thể tái chế.'}</strong></p>
             </div>
           )}
         </div>
@@ -848,7 +848,7 @@ export function ProductBreadcrumb({
               </Link>
             </li>
             <li><ChevronRight className="w-3.5 h-3.5 text-gray-400 inline" /></li>
-            <li className="text-gray-900 break-words text-[1.125em]">
+            <li className="text-gray-900 break-words text-emph">
               {productName}
             </li>
           </ol>

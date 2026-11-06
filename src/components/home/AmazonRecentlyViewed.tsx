@@ -54,7 +54,7 @@ export default function AmazonRecentlyViewed({ products }: { products: Product[]
           {language === 'en'
             ? 'Products you view will appear here. '
             : 'Sản phẩm bạn xem sẽ được lưu ở đây để quay lại nhanh. '}
-          <Link href="/#san-pham" className="text-green-primary hover:underline text-[1.125em]">
+          <Link href="/#san-pham" className="text-green-primary hover:underline text-emph">
             {language === 'en' ? 'Start browsing' : 'Bắt đầu xem sản phẩm'}
           </Link>
         </p>

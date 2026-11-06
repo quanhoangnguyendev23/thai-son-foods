@@ -89,13 +89,13 @@ export default function CartDrawer() {
               <div className="flex items-center gap-1.5 text-emerald-900 truncate">
                 <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                 <span className="truncate">
-                  Kho: <strong className="text-[1.125em]">{selectedBranch?.name || 'Chi nhánh'}</strong>
+                  Kho: <strong className="text-emph">{selectedBranch?.name || 'Chi nhánh'}</strong>
                 </span>
               </div>
               <button
                 type="button"
                 onClick={openBranchModal}
-                className="text-emerald-700 hover:text-emerald-900 underline shrink-0 ml-2 cursor-pointer text-[1.125em]"
+                className="text-emerald-700 hover:text-emerald-900 underline shrink-0 ml-2 cursor-pointer text-emph"
               >
                 Đổi
               </button>
@@ -106,13 +106,13 @@ export default function CartDrawer() {
               <div className="flex items-center justify-between text-xs text-text-dark mb-1.5">
                 <span>
                   {remainingForFreeShipping <= 0 ? (
-                    <span className="text-green-primary text-[1.125em]">
+                    <span className="text-green-primary text-emph">
                       {language === 'en' ? 'You have unlocked FREE SHIPPING!' : 'Bạn được MIỄN PHÍ VẬN CHUYỂN!'}
                     </span>
                   ) : (
                     <>
                       {language === 'en' ? 'Add ' : 'Mua thêm '}
-                      <span className="text-green-primary text-[1.125em]">
+                      <span className="text-green-primary text-emph">
                         {formatPrice(remainingForFreeShipping)}đ
                       </span>{' '}
                       {language === 'en' ? 'more for free shipping' : 'để được freeship'}
@@ -167,12 +167,12 @@ export default function CartDrawer() {
                     className="pt-3 first:pt-0 flex gap-3"
                   >
                     {/* Thumbnail */}
-                    <div className="relative w-18 h-18 rounded-lg overflow-hidden bg-ivory shrink-0 border border-border-light">
+                    <div className="relative w-20 h-[60px] rounded-lg overflow-hidden bg-white shrink-0 border border-border-light">
                       {item.thumbnail ? (<Image
                         src={item.thumbnail}
                         alt={item.name}
                         fill
-                        className="object-cover"
+                        className="object-contain"
                         sizes="72px"
                       />) : null}
                     </div>
@@ -196,7 +196,7 @@ export default function CartDrawer() {
                         const sh = shortItems.find((s) => s.productId === item.productId);
                         if (!sh) return null;
                         return (
-                          <div className="mt-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1.5 text-[11px] text-amber-900 leading-snug" role="status">
+                          <div className="mt-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1.5 text-2xs text-amber-900 leading-snug" role="status">
                             <span>
                               {sh.maxQuantity > 0
                                 ? (language === 'en' ? `Only ${sh.maxQuantity} left at this store.` : `Kho này chỉ còn ${sh.maxQuantity}.`)
@@ -301,29 +301,29 @@ export default function CartDrawer() {
                 {/* Cảnh báo thiếu hàng nếu có */}
                 {!isAvailable && (
                   <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-amber-900 text-[1.125em]">
+                    <div className="flex items-center gap-1.5 text-amber-900 text-emph">
                       <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                       <span>Chi nhánh hiện chưa đủ số lượng</span>
                     </div>
-                    <p className="text-[11px] text-amber-800 leading-snug">
+                    <p className="text-2xs text-amber-800 leading-snug">
                       Chúng tôi đang nỗ lực điều phối để bổ sung sớm nhất. Quý khách vui lòng đổi chi nhánh còn hàng để được phục vụ ngay.
                     </p>
-                    <ul className="list-disc pl-4 space-y-0.5 text-[11px]">
+                    <ul className="list-disc pl-4 space-y-0.5 text-2xs">
                       {insufficientItems.map((it) => (
                         <li key={it.productId}>
-                          <strong className="text-[1.125em]">{it.productName.slice(0, 30)}...</strong>: cần {it.requested}, kho còn {it.available}
+                          <strong className="text-emph">{it.productName.slice(0, 30)}...</strong>: cần {it.requested}, kho còn {it.available}
                         </li>
                       ))}
                     </ul>
                     {alternativeStores.length > 0 ? (
                       <div className="pt-1 border-t border-amber-200/70 flex items-center justify-between gap-1">
-                        <span className="text-[11px] text-gray-700">
-                          Kho <strong className="text-[1.125em]">{alternativeStores[0].name.slice(0, 16)}</strong> đủ hàng
+                        <span className="text-2xs text-gray-700">
+                          Kho <strong className="text-emph">{alternativeStores[0].name.slice(0, 16)}</strong> đủ hàng
                         </span>
                         <button
                           type="button"
                           onClick={() => setSelectedBranch(alternativeStores[0] as any)}
-                          className="text-[12px] text-emerald-800 underline hover:text-emerald-900 cursor-pointer"
+                          className="text-xs text-emerald-800 underline hover:text-emerald-900 cursor-pointer"
                         >
                           Đổi kho này
                         </button>
@@ -332,7 +332,7 @@ export default function CartDrawer() {
                       <button
                         type="button"
                         onClick={openBranchModal}
-                        className="text-[12px] text-emerald-800 underline cursor-pointer block text-left"
+                        className="text-xs text-emerald-800 underline cursor-pointer block text-left"
                       >
                         Chọn chi nhánh khác còn hàng
                       </button>
@@ -360,7 +360,7 @@ export default function CartDrawer() {
                       <span className="text-amber-950 text-sm">
                         {language === 'en' ? 'Branch currently out of stock' : 'Chi nhánh tạm chưa đủ hàng'}
                       </span>
-                      <span className="text-[10.5px] text-amber-800 font-normal">
+                      <span className="text-2xs text-amber-800 font-normal">
                         {language === 'en' ? 'We are restocking • Please switch branch' : 'Đang nỗ lực điều phối • Vui lòng đổi chi nhánh'}
                       </span>
                     </button>

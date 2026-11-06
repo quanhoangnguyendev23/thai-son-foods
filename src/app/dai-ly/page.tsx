@@ -48,7 +48,7 @@ export default function DaiLyLandingPage() {
                 <SparklesIcon className="w-4 h-4" />
                 HỆ THỐNG PHÂN PHỐI ĐỐI TÁC CHÍNH THỨC THÁI SƠN FOODS
               </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl text-white leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-4xl text-white leading-tight tracking-tight">
                 Đồng Hành Cùng Thái Sơn Foods <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-amber-300">
                   Từ Cộng Tác Viên Đến Đại Lý Toàn Quốc
@@ -56,20 +56,20 @@ export default function DaiLyLandingPage() {
               </h1>
               <p className="text-base sm:text-lg text-slate-200 leading-relaxed max-w-2xl">
                 Khởi đầu kinh doanh đồ uống dinh dưỡng chất lượng cao với vốn 0 đồng qua mô hình 
-                <strong className="text-[1.125em]"> CTV Bán hộ (TSF vận chuyển & đối soát COD)</strong>. Tích lũy doanh số để nâng cấp thành 
-                <strong className="text-[1.125em]"> Đại Lý Phân Phối Cấp Cao</strong> hưởng giá sỉ chiết khấu sâu.
+                <strong className="text-emph"> CTV Bán hộ (TSF vận chuyển & đối soát COD)</strong>. Tích lũy doanh số để nâng cấp thành 
+                <strong className="text-emph"> Đại Lý Phân Phối Cấp Cao</strong> hưởng giá sỉ chiết khấu sâu.
               </p>
               <div className="flex flex-wrap gap-4 pt-2">
                 <Link
                   href="/dang-ky-doi-tac"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] text-[1.125em]"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98] text-emph"
                 >
                   Đăng Ký CTV Miễn Phí (30 Giây)
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <Link
                   href="/doi-tac"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white backdrop-blur-sm transition-all text-[1.125em]"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white backdrop-blur-sm transition-all text-emph"
                 >
                   Đăng Nhập Cổng Đối Tác
                   <ChevronRight className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function DaiLyLandingPage() {
                       onChange={(e) => setEstBottles(Number(e.target.value))}
                       className="w-full accent-amber-400 cursor-pointer h-2 bg-slate-700 rounded-lg"
                     />
-                    <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+                    <div className="flex justify-between text-2xs text-slate-400 mt-1">
                       <span>50 chai (bán lẻ)</span>
                       <span>1,000 chai (nhóm/tiệc)</span>
                       <span>2,000 chai</span>
@@ -128,13 +128,13 @@ export default function DaiLyLandingPage() {
                   <div className="bg-slate-900/60 rounded-xl p-4 border border-white/5 space-y-2">
                     <div className="flex justify-between text-xs text-slate-300">
                       <span>Ước tính doanh thu tạo ra:</span>
-                      <span className="text-slate-100 text-[1.125em]">
+                      <span className="text-slate-100 text-emph">
                         {monthlyRevenue.toLocaleString('vi-VN')} đ
                       </span>
                     </div>
                     <div className="flex justify-between text-xs text-slate-300">
                       <span>Mức hoa hồng áp dụng:</span>
-                      <span className="text-emerald-400 text-[1.125em]">12% doanh số</span>
+                      <span className="text-emerald-400 text-emph">12% doanh số</span>
                     </div>
                     <div className="border-t border-slate-700/60 pt-2 flex justify-between items-baseline">
                       <span className="text-base text-white">Thu nhập thực nhận:</span>
@@ -144,8 +144,8 @@ export default function DaiLyLandingPage() {
                     </div>
                   </div>
 
-                  <div className="text-[12px] text-slate-300 bg-emerald-950/40 border border-emerald-500/20 rounded-lg p-2.5">
-                    <strong className="text-[1.125em]">Cơ hội Đại lý:</strong> Khi tích lũy đủ 20.000.000 đ doanh số hoặc 30 đơn hàng, bạn sẽ đủ điều kiện thăng cấp <strong className="text-[1.125em]">ĐẠI LÝ CHÍNH THỨC</strong> với bảng giá sỉ chiết khấu lên đến 25% - 35%!
+                  <div className="text-xs text-slate-300 bg-emerald-950/40 border border-emerald-500/20 rounded-lg p-2.5">
+                    <strong className="text-emph">Cơ hội Đại lý:</strong> Khi tích lũy đủ 20.000.000 đ doanh số hoặc 30 đơn hàng, bạn sẽ đủ điều kiện thăng cấp <strong className="text-emph">ĐẠI LÝ CHÍNH THỨC</strong> với bảng giá sỉ chiết khấu lên đến 25% - 35%!
                   </div>
                 </div>
 
@@ -184,19 +184,19 @@ export default function DaiLyLandingPage() {
             <ul className="mt-6 space-y-3.5 text-sm text-slate-700">
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong className="text-[1.125em]">Không cần bỏ vốn, không nhập hàng:</strong> Bạn chỉ cần chia sẻ link giới thiệu hoặc mã giới thiệu của mình.</span>
+                <span><strong className="text-emph">Không cần bỏ vốn, không nhập hàng:</strong> Bạn chỉ cần chia sẻ link giới thiệu hoặc mã giới thiệu của mình.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong className="text-[1.125em]">TSF lo toàn bộ vận hành:</strong> Chúng tôi đóng gói, giao hàng hỏa tốc trong ngày và thu tiền COD từ khách hàng.</span>
+                <span><strong className="text-emph">TSF lo toàn bộ vận hành:</strong> Chúng tôi đóng gói, giao hàng hỏa tốc trong ngày và thu tiền COD từ khách hàng.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong className="text-[1.125em]">Hoa hồng tự động vào ví:</strong> Ghi nhận tức thì vào sổ cái bất biến, rút tiền về tài khoản ngân hàng từ 200.000 đ.</span>
+                <span><strong className="text-emph">Hoa hồng tự động vào ví:</strong> Ghi nhận tức thì vào sổ cái bất biến, rút tiền về tài khoản ngân hàng từ 200.000 đ.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <span><strong className="text-[1.125em]">Cookie lưu 30 ngày:</strong> Khách quay lại mua trong vòng 30 ngày vẫn được tính hoa hồng cho bạn.</span>
+                <span><strong className="text-emph">Cookie lưu 30 ngày:</strong> Khách quay lại mua trong vòng 30 ngày vẫn được tính hoa hồng cho bạn.</span>
               </li>
             </ul>
 
@@ -224,16 +224,16 @@ export default function DaiLyLandingPage() {
 
             <ul className="mt-6 space-y-3.5 text-sm text-slate-200">
               <li className="flex items-start gap-2.5">
-                <span><strong className="text-[1.125em]">Bảng giá sỉ độc quyền:</strong> Chiết khấu trực tiếp theo cấp bậc (Tier 1, Tier 2, Tier 3) với biên lợi nhuận cao nhất.</span>
+                <span><strong className="text-emph">Bảng giá sỉ độc quyền:</strong> Chiết khấu trực tiếp theo cấp bậc (Tier 1, Tier 2, Tier 3) với biên lợi nhuận cao nhất.</span>
               </li>
               <li className="flex items-start gap-2.5">
-                <span><strong className="text-[1.125em]">Đơn đặt hàng số lượng lớn:</strong> Đặt đơn theo thùng/chai (tối thiểu 50 chai) trực tiếp qua cổng đại lý.</span>
+                <span><strong className="text-emph">Đơn đặt hàng số lượng lớn:</strong> Đặt đơn theo thùng/chai (tối thiểu 50 chai) trực tiếp qua cổng đại lý.</span>
               </li>
               <li className="flex items-start gap-2.5">
-                <span><strong className="text-[1.125em]">Quản lý lô & Date chuẩn FEFO:</strong> Ưu tiên xuất kho lô date mới nhất, đảm bảo hạn sử dụng chuẩn cho đại lý bày bán.</span>
+                <span><strong className="text-emph">Quản lý lô & Date chuẩn FEFO:</strong> Ưu tiên xuất kho lô date mới nhất, đảm bảo hạn sử dụng chuẩn cho đại lý bày bán.</span>
               </li>
               <li className="flex items-start gap-2.5">
-                <span><strong className="text-[1.125em]">Hỗ trợ POSM & Marketing điểm bán:</strong> Cung cấp tủ mát, kệ trưng bày, standee và tư liệu truyền thông từ TSF.</span>
+                <span><strong className="text-emph">Hỗ trợ POSM & Marketing điểm bán:</strong> Cung cấp tủ mát, kệ trưng bày, standee và tư liệu truyền thông từ TSF.</span>
               </li>
             </ul>
 
@@ -314,7 +314,7 @@ export default function DaiLyLandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-xl bg-white border border-slate-200 flex gap-4 items-start">
             <div>
-              <h4 className="text-slate-900 mb-1 text-[1.125em]">Sổ Cái Bất Biến (Immutable)</h4>
+              <h4 className="text-slate-900 mb-1 text-emph">Sổ Cái Bất Biến (Immutable)</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Mọi khoản hoa hồng, đối soát, tạm giữ đều ghi nhận theo cơ chế sổ cái kế toán kép. Không bao giờ mất dữ liệu.
               </p>
@@ -326,7 +326,7 @@ export default function DaiLyLandingPage() {
               <Package className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-slate-900 mb-1 text-[1.125em]">Chất Lượng Tươi Mỗi Ngày</h4>
+              <h4 className="text-slate-900 mb-1 text-emph">Chất Lượng Tươi Mỗi Ngày</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Sản phẩm sữa nếp bắp, hạt sen TSF luôn giữ chuẩn tươi mới, quy trình thanh trùng hiện đại bảo toàn dinh dưỡng.
               </p>
@@ -338,7 +338,7 @@ export default function DaiLyLandingPage() {
               <Headphones className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-slate-900 mb-1 text-[1.125em]">Đội Ngũ Hỗ Trợ Riêng Biệt</h4>
+              <h4 className="text-slate-900 mb-1 text-emph">Đội Ngũ Hỗ Trợ Riêng Biệt</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Kênh Zalo và hotline riêng hỗ trợ tư vấn đối tác, giải quyết khiếu nại đơn hàng và hướng dẫn kỹ năng bán hàng.
               </p>
@@ -359,7 +359,7 @@ export default function DaiLyLandingPage() {
               Làm CTV có bắt buộc phải đóng phí hoặc mua hàng trước không?
             </h4>
             <p className="mt-2 text-xs sm:text-sm text-slate-600 pl-6 leading-relaxed">
-              Hoàn toàn <strong className="text-[1.125em]">KHÔNG</strong>. Chương trình CTV của Thái Sơn Foods miễn phí 100%. Bạn chỉ cần đăng ký bằng số điện thoại, lấy link giới thiệu và gửi cho khách mua.
+              Hoàn toàn <strong className="text-emph">KHÔNG</strong>. Chương trình CTV của Thái Sơn Foods miễn phí 100%. Bạn chỉ cần đăng ký bằng số điện thoại, lấy link giới thiệu và gửi cho khách mua.
             </p>
           </div>
 
@@ -369,7 +369,7 @@ export default function DaiLyLandingPage() {
               Khi nào tôi có thể rút tiền hoa hồng về ngân hàng?
             </h4>
             <p className="mt-2 text-xs sm:text-sm text-slate-600 pl-6 leading-relaxed">
-              Sau khi đơn hàng giao thành công và hoàn tất đối soát COD, tiền hoa hồng sẽ chuyển sang trạng thái <strong className="text-[1.125em]">Khả dụng</strong>. Bạn có thể gửi lệnh rút tiền bất kỳ lúc nào với số dư tối thiểu từ <strong className="text-[1.125em]">200.000 đ</strong>.
+              Sau khi đơn hàng giao thành công và hoàn tất đối soát COD, tiền hoa hồng sẽ chuyển sang trạng thái <strong className="text-emph">Khả dụng</strong>. Bạn có thể gửi lệnh rút tiền bất kỳ lúc nào với số dư tối thiểu từ <strong className="text-emph">200.000 đ</strong>.
             </p>
           </div>
 
@@ -379,7 +379,7 @@ export default function DaiLyLandingPage() {
               Làm sao để tôi nâng cấp từ CTV lên Đại lý phân phối?
             </h4>
             <p className="mt-2 text-xs sm:text-sm text-slate-600 pl-6 leading-relaxed">
-              Khi tổng doanh số bán hộ của bạn tích lũy đạt <strong className="text-[1.125em]">20.000.000 đ</strong> hoặc đạt từ <strong className="text-[1.125em]">30 đơn hàng hoàn tất</strong>, hệ thống trên trang quản lý đối tác sẽ mở nút <em>&ldquo;Yêu cầu nâng cấp Đại lý&rdquo;</em>. Admin TSF sẽ duyệt và cấp quyền nhập sỉ với chiết khấu đại lý.
+              Khi tổng doanh số bán hộ của bạn tích lũy đạt <strong className="text-emph">20.000.000 đ</strong> hoặc đạt từ <strong className="text-emph">30 đơn hàng hoàn tất</strong>, hệ thống trên trang quản lý đối tác sẽ mở nút <em>&ldquo;Yêu cầu nâng cấp Đại lý&rdquo;</em>. Admin TSF sẽ duyệt và cấp quyền nhập sỉ với chiết khấu đại lý.
             </p>
           </div>
         </div>
@@ -397,13 +397,13 @@ export default function DaiLyLandingPage() {
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link
               href="/dang-ky-doi-tac"
-              className="px-8 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg transition-all text-[1.125em]"
+              className="px-8 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg transition-all text-emph"
             >
               Đăng Ký Làm Đối Tác Ngay
             </Link>
             <Link
               href="/doi-tac"
-              className="px-8 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all text-[1.125em]"
+              className="px-8 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all text-emph"
             >
               Vào Cổng Quản Lý Đối Tác
             </Link>

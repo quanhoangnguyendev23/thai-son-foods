@@ -72,7 +72,7 @@ export default function Footer() {
               >
                 {language === 'en' ? 'Company' : 'Công ty'}
               </h3>
-              <div className="space-y-3.5 text-[15px] sm:text-base text-white/90">
+              <div className="space-y-3.5 text-base sm:text-base text-white/90">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 mt-0.5 shrink-0 text-amber-500" />
                   <p className="leading-snug">{language === 'en' ? '2C Pho Quang, Tan Son Hoa Ward, Ho Chi Minh City' : '2C Phổ Quang, Phường Tân Sơn Hòa, TP. Hồ Chí Minh'}</p>
@@ -103,7 +103,7 @@ export default function Footer() {
               >
                 {language === 'en' ? 'Products' : 'Sản phẩm'}
               </h3>
-              <ul className="space-y-1 text-[15px] sm:text-base text-white/90">
+              <ul className="space-y-1 text-base sm:text-base text-white/90">
                 <li>
                   <Link href="/#san-pham" className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
                     {language === 'en' ? 'Nut Milk' : 'Sữa hạt'}
@@ -133,7 +133,7 @@ export default function Footer() {
                   >
                     {language === 'en' ? 'Support' : 'Hỗ trợ'}
                   </h3>
-                  <ul className="space-y-1 text-[15px] sm:text-base text-white/90 mb-6">
+                  <ul className="space-y-1 text-base sm:text-base text-white/90 mb-6">
                     <LegalPolicyLinks
                       isEn={language === 'en'}
                       className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block"
@@ -191,13 +191,13 @@ export default function Footer() {
           </div>
 
           {/* Free shipping notice */}
-          <div className="mt-8 p-4 sm:p-5 bg-white/10 rounded-xl text-[15px] sm:text-base text-white/95 flex items-center gap-3 border border-white/10">
+          <div className="mt-8 p-4 sm:p-5 bg-white/10 rounded-xl text-base sm:text-base text-white/95 flex items-center gap-3 border border-white/10">
             <Truck className="w-5 h-5 text-amber-500 shrink-0" />
             <span className="font-medium">
               {language === 'en'
                 ? 'Free shipping within Ho Chi Minh City on orders from '
                 : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
-              <span className="text-amber-300 text-[1.125em]">200.000đ</span>
+              <span className="text-amber-300 text-emph">200.000đ</span>
             </span>
           </div>
 

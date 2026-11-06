@@ -67,3 +67,11 @@ Trước và sau mỗi lần chỉnh sửa:
 - Chỉ dùng 2 phông: **Roboto** cho chữ thường (`font-body`, `font-sans`, `var(--font-roboto)`) và **Fira Sans** cho tiêu đề (`font-heading`, `var(--font-fira-sans)`). Cả hai đã nạp sẵn trong `src/app/layout.tsx`.
 - **Không** thêm phông mới (Google Fonts, `@font-face`, `font-[...]`, `fontFamily` viết tay). Các lớp `font-serif`, `font-mono` đã được trỏ về 2 phông này trong `src/app/globals.css`.
 - Trước khi bàn giao thay đổi giao diện: chạy `npm run lint:fonts` (phải báo "Phông NGOÀI quy định: 0").
+
+---
+
+## 7. THANG CỠ CHỮ CỐ ĐỊNH — KHÔNG ĐƯỢC TỰ ĐẶT CỠ CHỮ
+- Chỉ dùng 9 cỡ: `text-2xs` 11px (chỉ nhãn/huy hiệu nhỏ) · `text-xs` 12 (chú thích) · `text-sm` 14 (chữ phụ, bảng quản trị) · `text-base` 16 (chữ thường, ô nhập) · `text-lg` 18 (tên SP, giá trong danh sách) · `text-xl` 20 (tiêu đề nhỏ) · `text-2xl` 24 (tiêu đề mục) · `text-3xl` 30 (tiêu đề trang) · `text-4xl` 36 (tiêu đề lớn). Nhấn mạnh trong câu dùng `text-emph` (1.125em) thay cho chữ đậm.
+- **Không** viết `text-[13px]`, `text-[0.8rem]`, `text-[clamp(...)]`, `text-5xl` trở lên, `style={{ fontSize: ... }}` hay `font-size` ngoài thang. Cần to hơn ở màn hình rộng thì dùng tiền tố (`text-2xl md:text-3xl`), không dùng `clamp`.
+- Ô nhập trên điện thoại luôn >= 16px (đã ép trong `src/app/globals.css`); không gỡ quy tắc đó.
+- Chi tiết: `.agents/rules/font-sizes.md`. Trước khi bàn giao thay đổi giao diện: chạy `npm run lint:font-sizes` (phải báo "Cỡ chữ NGOÀI thang: 0").

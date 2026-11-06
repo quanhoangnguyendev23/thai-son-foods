@@ -86,6 +86,11 @@ export function buildOrderHtml(o: TelegramOrderNotice): string {
   const parts = [
     `🟢 <b>ĐƠN HÀNG MỚI</b>  <code>${esc(o.orderCode)}</code>`,
     `🕒 ${esc(vnTime(o.createdAt || new Date()))}`,
+    o.deliveryLabel
+      ? o.deliveryScheduled
+        ? `🚚 <b>GIAO: ${esc(o.deliveryLabel)}</b>  (đơn hẹn)`
+        : `🚚 <b>${esc(o.deliveryLabel)}</b>`
+      : '',
     LINE,
     `👤 <b>KHÁCH HÀNG</b>`,
     `<blockquote>${customer.join('\n')}</blockquote>`,

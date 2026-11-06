@@ -242,10 +242,10 @@ export default function MemberPage() {
           <div className="mb-8 p-5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-amber-900 text-[1.125em]">Gói hội viên đã hủy gia hạn</h4>
+              <h4 className="text-amber-900 text-emph">Gói hội viên đã hủy gia hạn</h4>
               <p className="text-sm text-amber-800 mt-1">
                 Bạn không bị trừ tiền ở chu kỳ tới. Quyền lợi Freeship và giảm giá 15% của bạn vẫn được bảo lưu trọn vẹn đến hết ngày{' '}
-                <span className="text-[1.125em]">
+                <span className="text-emph">
                   {new Date(membershipData?.membership?.expiresAt).toLocaleDateString('vi-VN')}
                 </span>.
               </p>
@@ -264,7 +264,7 @@ export default function MemberPage() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-sm tracking-wide uppercase mb-3">
             Đặc quyền thành viên Thái Sơn Foods
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl text-gray-900 tracking-tight font-heading">
+          <h1 className="text-3xl sm:text-4xl lg:text-4xl text-gray-900 tracking-tight font-heading">
             Gia Nhập <span className="text-emerald-700">Thái Sơn Prime</span>
           </h1>
           <p className="mt-3 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
@@ -277,7 +277,7 @@ export default function MemberPage() {
           <div className="grid grid-cols-3 bg-gray-50 border-b border-gray-200 text-base text-gray-700 p-4 sm:p-5">
             <div className="text-left font-heading">Đặc quyền dịch vụ</div>
             <div className="text-center text-gray-500">Khách Thường</div>
-            <div className="text-center text-emerald-700 flex items-center justify-center gap-1 text-[1.125em]">
+            <div className="text-center text-emerald-700 flex items-center justify-center gap-1 text-emph">
               Thái Sơn Prime
             </div>
           </div>
@@ -288,7 +288,7 @@ export default function MemberPage() {
                 <Truck className="w-4 h-4 text-emerald-600" /> Phí giao hàng xe lạnh
               </div>
               <div className="text-center text-gray-500">30.000 đ (Đơn &lt; 200k)</div>
-              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-[1.125em]">MIỄN PHÍ 100%</div>
+              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-emph">MIỄN PHÍ 100%</div>
             </div>
 
             <div className="grid grid-cols-3 p-4 sm:p-5 items-center">
@@ -296,7 +296,7 @@ export default function MemberPage() {
                 <RefreshCw className="w-4 h-4 text-emerald-600" /> Giảm giá Subscribe & Save
               </div>
               <div className="text-center text-gray-500">Không áp dụng</div>
-              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-[1.125em]">GIẢM 15% TRỌN ĐỜI</div>
+              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-emph">GIẢM 15% TRỌN ĐỜI</div>
             </div>
 
             <div className="grid grid-cols-3 p-4 sm:p-5 items-center">
@@ -304,7 +304,7 @@ export default function MemberPage() {
                 Tỷ lệ tích điểm thưởng
               </div>
               <div className="text-center text-gray-500">1% giá trị đơn hàng</div>
-              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-[1.125em]">2% (GẤP ĐÔI ĐIỂM)</div>
+              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-emph">2% (GẤP ĐÔI ĐIỂM)</div>
             </div>
 
             <div className="grid grid-cols-3 p-4 sm:p-5 items-center">
@@ -312,7 +312,7 @@ export default function MemberPage() {
                 Quà sinh nhật hàng năm
               </div>
               <div className="text-center text-gray-500">Không có</div>
-              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-[1.125em]">Hộp quà dinh dưỡng</div>
+              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-emph">Hộp quà dinh dưỡng</div>
             </div>
 
             <div className="grid grid-cols-3 p-4 sm:p-5 items-center">
@@ -320,7 +320,7 @@ export default function MemberPage() {
                 <Clock className="w-4 h-4 text-emerald-600" /> Ưu tiên giao giờ cao điểm
               </div>
               <div className="text-center text-gray-500">Theo tuyến định kỳ</div>
-              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-[1.125em]">Khung giờ vàng ưu tiên</div>
+              <div className="text-center text-emerald-700 bg-emerald-50/60 py-1 rounded text-emph">Khung giờ vàng ưu tiên</div>
             </div>
           </div>
         </div>
@@ -535,7 +535,7 @@ export default function MemberPage() {
                 </div>
 
                 <div className="mt-4 p-3 bg-gray-50 rounded-xl text-xs text-gray-600 space-y-1">
-                  <div>✓ Bạn <span className="text-gray-900 text-[1.125em]">KHÔNG</span> bị trừ tiền ở kỳ tiếp theo.</div>
+                  <div>✓ Bạn <span className="text-gray-900 text-emph">KHÔNG</span> bị trừ tiền ở kỳ tiếp theo.</div>
                   <div>✓ Bạn vẫn được hưởng trọn vẹn đặc quyền Prime cho tới hết chu kỳ hiện tại.</div>
                   <div>✓ Sau đó tài khoản tự động chuyển về Khách Thường tích điểm 1%.</div>
                 </div>

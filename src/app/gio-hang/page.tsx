@@ -202,7 +202,7 @@ export default function CartPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
                 <Store className="w-3 h-3 text-amber-600" />
                 <span>{language === 'en' ? 'CHECKOUT AISLE (12 ITEMS)' : 'LỐI VÀO QUẦY THU NGÂN • TIỆN TAY BỎ GIỎ (12 MÓN)'}</span>
               </span>
@@ -216,7 +216,7 @@ export default function CartPage() {
 
           {/* Điều hướng cuộn ngang */}
           <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-            <span className="text-[11px] font-medium text-gray-400 mr-1 hidden sm:inline">
+            <span className="text-2xs font-medium text-gray-400 mr-1 hidden sm:inline">
               {language === 'en' ? 'Scroll 12 items' : 'Trượt xem 12 món'}
             </span>
             <button
@@ -261,7 +261,7 @@ export default function CartPage() {
               >
                 <div>
                   {/* Ảnh sản phẩm thu nhỏ gọn gàng */}
-                  <div className="relative h-28 sm:h-32 w-full rounded-lg overflow-hidden bg-gray-50/80 mb-2 border border-gray-100 flex items-center justify-center">
+                  <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-white mb-2 border border-gray-100 flex items-center justify-center">
                     {prod.thumbnail ? (
                     <Image
                       src={prod.thumbnail}
@@ -269,42 +269,39 @@ export default function CartPage() {
                       fill
                       sizes="180px"
                       className={`${
-                        isPoster ? 'object-cover' : 'object-contain p-1.5'
+                        isPoster ? 'object-contain' : 'object-contain p-1.5'
                       } transition-transform duration-200`}
                     />
                     ) : null}
 
                     {/* Huy hiệu trên ảnh */}
-                    <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10">
+                    <div className="absolute top-1 right-1 flex flex-col items-end gap-0.5 z-10">
                       {prod.isBestSeller ? (
-                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
+                        <span className="px-1.5 py-0.5 text-2xs rounded bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
                           Hot
                         </span>
                       ) : prod.isNew ? (
-                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-600 text-white shadow-xs">
+                        <span className="px-1.5 py-0.5 text-2xs rounded bg-emerald-600 text-white shadow-xs">
                           Mới
                         </span>
                       ) : null}
-                    </div>
-
-                    {inCartQty > 0 && (
-                      <div className="absolute top-1 right-1 z-10">
-                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
+                      {inCartQty > 0 && (
+                        <span className="px-1.5 py-0.5 text-2xs rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
                           x{inCartQty}
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   {/* Tên & quy cách gọn gàng */}
                   <Link
                     href={`/san-pham/${prod.slug}`}
-                    className="text-[12.5px] sm:text-sm text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-0.5"
+                    className="text-xs sm:text-sm text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-0.5"
                     title={prodName}
                   >
                     {prodName}
                   </Link>
-                  <p className="text-[10px] text-gray-400 font-medium truncate mb-1">
+                  <p className="text-2xs text-gray-400 font-medium truncate mb-1">
                     {prod.volume || '330ml'} • {language === 'en' ? 'Natural' : 'Tươi mát'}
                   </p>
                 </div>
@@ -332,14 +329,14 @@ export default function CartPage() {
                       <>
                         <div className="flex flex-col">
                           <div className="flex items-baseline justify-between">
-                            <span className="text-sm sm:text-[15.5px] text-emerald-700 font-heading">
+                            <span className="text-sm sm:text-base text-emerald-700 font-heading">
                               {formatPrice(effectiveVariant.price)}đ
                             </span>
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-2xs text-gray-500">
                               /{packLabel}
                             </span>
                           </div>
-                          <span className="text-[8px] sm:text-[8.5px] text-gray-400 font-normal">
+                          <span className="text-2xs sm:text-2xs text-gray-400 font-normal">
                             ~{formatPrice(prod.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                           </span>
                         </div>
@@ -347,7 +344,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => handleQuickAddProduct(prod)}
-                          className={`w-full py-1.5 px-2 rounded-lg text-[11.5px] sm:text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                          className={`w-full py-1.5 px-2 rounded-lg text-2xs sm:text-xs flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                             isJustAdded
                               ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                               : 'bg-emerald-50 hover:bg-emerald-700 text-emerald-800 hover:text-white border border-emerald-200/80 hover:border-emerald-700'
@@ -387,7 +384,7 @@ export default function CartPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] bg-rose-50 text-rose-900 border border-rose-200/80 shadow-2xs">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-rose-50 text-rose-900 border border-rose-200/80 shadow-2xs">
                 <span>{language === 'en' ? 'SPECIAL COMBOS (12 PACKS)' : 'KHU Ụ HÀNG KHUYẾN MÃI CUỐI QUẦY • MUA NHIỀU GIẢM SÂU (12 COMBO)'}</span>
               </span>
             </div>
@@ -400,7 +397,7 @@ export default function CartPage() {
 
           {/* Điều hướng cuộn ngang combo */}
           <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-            <span className="text-[11px] font-medium text-gray-400 mr-1 hidden sm:inline">
+            <span className="text-2xs font-medium text-gray-400 mr-1 hidden sm:inline">
               {language === 'en' ? 'Scroll 12 combos' : 'Trượt xem 12 combo'}
             </span>
             <button
@@ -441,47 +438,44 @@ export default function CartPage() {
               >
                 <div>
                   {/* Ảnh combo với badge giảm giá */}
-                  <div className="relative h-28 sm:h-32 w-full rounded-lg overflow-hidden bg-gray-50 mb-2 border border-gray-100">
+                  <div className="relative aspect-[4/3] w-full rounded-lg overflow-hidden bg-white mb-2 border border-gray-100">
                     {combo.image ? (
                     <Image
                       src={combo.image}
                       alt={combo.name}
                       fill
                       sizes="240px"
-                      className="object-cover transition-transform duration-200"
+                      className="object-contain transition-transform duration-200"
                     />
                     ) : null}
 
                     {/* Badges góc trên */}
-                    <div className="absolute top-1 left-1 flex items-center gap-1 z-10">
-                      <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-rose-600 text-white shadow-xs">
+                    <div className="absolute top-1 right-1 flex items-center gap-1 z-10">
+                      <span className="px-1.5 py-0.5 text-2xs rounded bg-rose-600 text-white shadow-xs">
                         -{combo.discount}%
                       </span>
-                      <span className="px-1.5 py-0.5 text-[9px] rounded bg-gray-900/85 text-white backdrop-blur-xs">
+                      <span className="px-1.5 py-0.5 text-2xs rounded bg-gray-900/85 text-white backdrop-blur-xs">
                         {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                       </span>
-                    </div>
-
-                    {comboInCartQty > 0 && (
-                      <div className="absolute top-1 right-1 z-10">
-                        <span className="px-1.5 py-0.5 text-[9.5px] rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
+                      {comboInCartQty > 0 && (
+                        <span className="px-1.5 py-0.5 text-2xs rounded bg-emerald-800 text-white shadow-xs border border-emerald-700">
                           x{comboInCartQty}
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   {/* Tiêu đề combo */}
                   <Link
                     href={`/combo/${combo.slug}`}
-                    className="text-sm sm:text-[14.5px] text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-1"
+                    className="text-sm sm:text-sm text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors leading-snug block mb-1"
                     title={comboTitle}
                   >
                     {comboTitle}
                   </Link>
 
                   {/* Tag quyền lợi đặc quyền */}
-                  <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 truncate">
+                  <div className="mt-1 flex items-center gap-1 text-2xs text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 truncate">
                     <span className="truncate">
                       {language === 'en' ? 'Instant order eligible' : 'Đủ điều kiện đặt ngay'}
                     </span>
@@ -495,12 +489,12 @@ export default function CartPage() {
                       <span className="text-sm sm:text-base text-rose-600 font-heading">
                         {formatPrice(combo.salePrice)}đ
                       </span>
-                      <span className="text-[10px] text-gray-400 line-through">
+                      <span className="text-2xs text-gray-400 line-through">
                         {formatPrice(combo.originalPrice)}đ
                       </span>
                     </div>
                     {savedMoney > 0 && (
-                      <span className="text-[10.5px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                      <span className="text-2xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
                         -{formatPrice(savedMoney)}đ
                       </span>
                     )}
@@ -509,7 +503,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => handleQuickAddCombo(combo)}
-                    className={`w-full py-1.5 px-2.5 rounded-lg text-[12px] sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                    className={`w-full py-1.5 px-2.5 rounded-lg text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                       isJustAdded
                         ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                         : 'bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-emerald-900/10'
@@ -589,7 +583,7 @@ export default function CartPage() {
               </Link>
             </li>
             <li>/</li>
-            <li className="text-gray-900 text-[1.125em]">
+            <li className="text-gray-900 text-emph">
               {language === 'en' ? 'Shopping Cart' : 'Giỏ hàng'}
             </li>
           </ol>
@@ -624,7 +618,7 @@ export default function CartPage() {
             {/* THANH MIỄN PHÍ VẬN CHUYỂN NỔI BẬT */}
             <div className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-xs">
               <div className="flex items-center justify-between gap-3 mb-2 text-xs sm:text-sm">
-                <div className="flex items-center gap-2 text-gray-900 text-[1.125em]">
+                <div className="flex items-center gap-2 text-gray-900 text-emph">
                   <Truck className="w-4 h-4 text-emerald-600 shrink-0" />
                   {remainingForFreeShip <= 0 ? (
                     <span className="text-emerald-700">
@@ -637,7 +631,7 @@ export default function CartPage() {
                       {language === 'en' ? (
                         <>
                           Add{' '}
-                          <span className="text-emerald-700 text-[1.125em]">
+                          <span className="text-emerald-700 text-emph">
                             {formatPrice(remainingForFreeShip)}đ
                           </span>{' '}
                           more for <span className="text-emerald-800 underline">free delivery in Ho Chi Minh City</span>
@@ -645,7 +639,7 @@ export default function CartPage() {
                       ) : (
                         <>
                           Mua thêm{' '}
-                          <span className="text-emerald-700 text-[1.125em]">
+                          <span className="text-emerald-700 text-emph">
                             {formatPrice(remainingForFreeShip)}đ
                           </span>{' '}
                           để được <span className="text-emerald-800 underline">miễn phí giao hàng nội thành TP.HCM</span>
@@ -674,7 +668,7 @@ export default function CartPage() {
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[1.125em]">
+                    <p className="text-emph">
                       {language === 'en'
                         ? `${selectedBranch?.name || 'The selected store'} does not have enough stock for this cart`
                         : `Kho ${selectedBranch?.name || 'đang chọn'} chưa đủ số lượng cho giỏ hàng này`}
@@ -741,7 +735,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-3.5 min-w-0">
                         <Link
                           href={`/san-pham/${item.slug}`}
-                          className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-ivory/70 border border-gray-200/80 shrink-0 p-1 flex items-center justify-center group"
+                          className="relative w-20 h-[60px] sm:w-24 sm:h-[72px] rounded-lg overflow-hidden bg-white border border-gray-200/80 shrink-0 flex items-center justify-center group"
                         >
                           {item.thumbnail ? (
                           <Image
@@ -749,7 +743,7 @@ export default function CartPage() {
                             alt={displayName}
                             fill
                             className="object-contain transition-transform duration-300"
-                            sizes="80px"
+                            sizes="96px"
                           />
                           ) : null}
                         </Link>
@@ -757,13 +751,13 @@ export default function CartPage() {
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/san-pham/${item.slug}`}
-                            className="text-base sm:text-[17px] text-gray-900 hover:text-emerald-700 transition-colors leading-snug"
+                            className="text-base sm:text-lg text-gray-900 hover:text-emerald-700 transition-colors leading-snug"
                           >
                             {displayName}
                           </Link>
                           {displayUnit && (
                             <div className="mt-1">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[12px] bg-gray-100 text-gray-700 border border-gray-200/60">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-gray-100 text-gray-700 border border-gray-200/60">
                                 {language === 'en' ? `Spec: ${displayUnit}` : `Quy cách: ${displayUnit}`}
                               </span>
                             </div>
@@ -879,7 +873,7 @@ export default function CartPage() {
                               </button>
                             </div>
                             {isAtMax && (
-                              <span className="text-[11px] text-amber-700">
+                              <span className="text-2xs text-amber-700">
                                 {language === 'en' ? `Max ${maxAllowed}` : `Tối đa ${maxAllowed}`}
                               </span>
                             )}
@@ -976,7 +970,7 @@ export default function CartPage() {
               <div className="space-y-2.5 text-xs sm:text-sm">
                 <div className="flex justify-between items-center text-gray-600">
                   <span>{language === 'en' ? 'Items Subtotal:' : 'Tạm tính tiền hàng:'}</span>
-                  <span className="text-gray-900 text-[1.125em]">{formatPrice(subtotal)}đ</span>
+                  <span className="text-gray-900 text-emph">{formatPrice(subtotal)}đ</span>
                 </div>
 
                 {cartSavings > 0 && (
@@ -986,11 +980,11 @@ export default function CartPage() {
                   >
                     <span>
                       <span className="block">{language === 'en' ? 'You save' : 'Bạn tiết kiệm được'}</span>
-                      <span className="block text-[11px] text-emerald-700 group-hover:underline">
+                      <span className="block text-2xs text-emerald-700 group-hover:underline">
                         {language === 'en' ? 'Added to your savings bag when you order' : 'Cộng vào Túi tiết kiệm khi đặt hàng'}
                       </span>
                     </span>
-                    <span className="text-[1.125em] tabular-nums">{formatPrice(cartSavings)}đ</span>
+                    <span className="text-emph tabular-nums">{formatPrice(cartSavings)}đ</span>
                   </Link>
                 )}
 
@@ -998,14 +992,14 @@ export default function CartPage() {
                   <div className="flex items-center gap-1.5">
                     <span>{language === 'en' ? 'Shipping Fee:' : 'Phí vận chuyển:'}</span>
                     {shippingFee === 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px]">
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-2xs">
                         FREESHIP
                       </span>
                     )}
                   </div>
-                  <span className="text-gray-900 text-[1.125em]">
+                  <span className="text-gray-900 text-emph">
                     {shippingFee === 0 ? (
-                      <span className="text-emerald-700 text-[1.125em]">
+                      <span className="text-emerald-700 text-emph">
                         {language === 'en' ? 'Free' : 'Miễn phí'}
                       </span>
                     ) : (
@@ -1020,7 +1014,7 @@ export default function CartPage() {
                     <span className="text-sm sm:text-base text-gray-900 block">
                       {language === 'en' ? 'Total Payment:' : 'Tổng thanh toán:'}
                     </span>
-                    <span className="text-[10.5px] text-gray-400 font-normal">
+                    <span className="text-2xs text-gray-400 font-normal">
                       {language === 'en' ? '(Taxes & shipping included)' : '(Đã gồm thuế & phí ship)'}
                     </span>
                   </div>
@@ -1033,18 +1027,18 @@ export default function CartPage() {
               {/* Cảnh báo đơn hàng tối thiểu 120.000đ */}
               {!isEligibleToOrder ? (
                 <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
-                  <div className="flex items-center gap-1.5 text-amber-800 text-[1.125em]">
+                  <div className="flex items-center gap-1.5 text-amber-800 text-emph">
                     <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                     <span>{language === 'en' ? 'Min order is 120,000đ' : 'Mức đặt hàng tối thiểu 120.000đ'}</span>
                   </div>
-                  <p className="text-amber-700 text-[11px] leading-relaxed">
+                  <p className="text-amber-700 text-2xs leading-relaxed">
                     {language === 'en' ? (
                       <>
-                        Add <strong className="text-amber-950 text-[1.125em]">{formatPrice(missingForMinOrder)}đ</strong> more to checkout.
+                        Add <strong className="text-amber-950 text-emph">{formatPrice(missingForMinOrder)}đ</strong> more to checkout.
                       </>
                     ) : (
                       <>
-                        Chọn thêm <strong className="text-amber-950 text-[1.125em]">{formatPrice(missingForMinOrder)}đ</strong> để tiếp tục thanh toán.
+                        Chọn thêm <strong className="text-amber-950 text-emph">{formatPrice(missingForMinOrder)}đ</strong> để tiếp tục thanh toán.
                       </>
                     )}
                   </p>
@@ -1062,7 +1056,7 @@ export default function CartPage() {
               {/* Cảnh báo vượt trần đơn COD (server sẽ từ chối ở bước đặt hàng) */}
               {total > COD_MAX_ORDER_VALUE && (
                 <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1" role="alert">
-                  <div className="flex items-center gap-1.5 text-amber-800 text-[1.125em]">
+                  <div className="flex items-center gap-1.5 text-amber-800 text-emph">
                     <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                     <span>
                       {language === 'en'
@@ -1070,7 +1064,7 @@ export default function CartPage() {
                         : `Đơn COD tối đa ${formatPrice(COD_MAX_ORDER_VALUE)}đ`}
                     </span>
                   </div>
-                  <p className="text-amber-700 text-[11px] leading-relaxed">
+                  <p className="text-amber-700 text-2xs leading-relaxed">
                     {language === 'en'
                       ? 'Please reduce the quantity or call 028 6291 5024 for large orders.'
                       : 'Vui lòng giảm số lượng hoặc gọi hotline 028 6291 5024 để đặt đơn lớn.'}
@@ -1127,7 +1121,7 @@ export default function CartPage() {
                 </button>
               )}
 
-              <p className="text-center text-[10.5px] text-gray-400">
+              <p className="text-center text-2xs text-gray-400">
                 {language === 'en'
                   ? 'Cash on Delivery (COD)'
                   : 'Thanh toán tiền mặt khi nhận hàng (COD)'}
@@ -1139,21 +1133,21 @@ export default function CartPage() {
               {/* Header kệ siêu thị tiện lợi */}
               <div className="p-3.5 bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/70 border-b border-emerald-100/90">
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11.5px] bg-white text-emerald-800 border border-emerald-200/90 shadow-2xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs bg-white text-emerald-800 border border-emerald-200/90 shadow-2xs">
                     <Store className="w-3.5 h-3.5 text-emerald-700" />
                     <span>{language === 'en' ? 'Checkout Aisle' : 'Kệ trước quầy thu ngân'}</span>
                   </span>
-                  <span className="text-[12px] text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                  <span className="text-xs text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60">
                     {activeImpulseTab === 'products'
                       ? (language === 'en' ? '12 fresh packs' : '12 lốc mát lạnh')
                       : (language === 'en' ? '12 family bundles' : '12 combo tiết kiệm')}
                   </span>
                 </div>
 
-                <h3 className="text-[16.5px] font-heading text-emerald-950 tracking-tight leading-snug">
+                <h3 className="text-base font-heading text-emerald-950 tracking-tight leading-snug">
                   {language === 'en' ? 'Grab Before You Go' : 'Tiện tay bỏ giỏ trước khi về'}
                 </h3>
-                <p className="text-[11px] text-emerald-700/90 leading-normal mt-0.5">
+                <p className="text-2xs text-emerald-700/90 leading-normal mt-0.5">
                   {language === 'en'
                     ? (ENABLE_COMBOS ? '1-click to add chilled drinks & discount bundles!' : '1-click to add chilled drinks!')
                     : (ENABLE_COMBOS ? '1 chạm vào giỏ, nhận ngay đồ uống thanh mát & combo hời!' : '1 chạm vào giỏ, nhận ngay đồ uống thanh mát!')}
@@ -1208,30 +1202,20 @@ export default function CartPage() {
                           key={prod.id}
                           className="flex items-center gap-3 group hover:bg-emerald-50/40 py-2.5 px-1.5 rounded-lg transition-colors"
                         >
-                          {/* Ảnh sản phẩm theo đúng tỉ lệ ảnh gốc 4:3, phủ kín khung (không viền trắng) */}
-                          <div className="relative w-[84px] h-[63px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+                          {/* Ảnh sản phẩm theo đúng tỉ lệ ảnh gốc 4:3, hiện trọn hình */}
+                          <div className="relative w-[84px] h-[63px] rounded-lg bg-white border border-gray-100 overflow-hidden shrink-0">
                             {prod.thumbnail ? (
                             <Image
                               src={prod.thumbnail}
                               alt={prod.name}
                               fill
                               sizes="84px"
-                              className="object-cover transition-transform duration-200"
+                              className="object-contain transition-transform duration-200"
                             />
                             ) : null}
-                            {prod.isBestSeller ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-amber-500 text-ink-950 leading-tight">
-                                Hot
-                              </span>
-                            ) : prod.isNew ? (
-                              <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-emerald-600 text-white leading-tight">
-                                Mới
-                              </span>
-                            ) : null}
-
                             {inCartQty > 0 && (
                               <span
-                                className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[10px] rounded bg-emerald-800 text-white shadow-2xs"
+                                className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-2xs rounded bg-emerald-800 text-white shadow-2xs"
                                 title={language === 'en' ? `${inCartQty} in your cart` : `Đang có ${inCartQty} trong giỏ`}
                                 aria-label={language === 'en' ? `${inCartQty} in your cart` : `Đang có ${inCartQty} trong giỏ`}
                               >
@@ -1244,12 +1228,17 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0 pr-1">
                             <Link
                               href={`/san-pham/${prod.slug}`}
-                              className="block text-[14px] sm:text-[15px] text-gray-900 truncate group-hover:text-emerald-700 transition-colors leading-snug"
+                              className="block text-sm sm:text-base text-gray-900 truncate group-hover:text-emerald-700 transition-colors leading-snug"
                               title={prodName}
                             >
                               {shelfName}
                             </Link>
-                            <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                            <p className="text-2xs text-gray-500 truncate mt-0.5">
+                              {prod.isBestSeller ? (
+                                <span className="mr-1 px-1 py-px rounded bg-amber-500 text-ink-950 leading-tight">Hot</span>
+                              ) : prod.isNew ? (
+                                <span className="mr-1 px-1 py-px rounded bg-emerald-600 text-white leading-tight">Mới</span>
+                              ) : null}
                               {prod.volume || '330ml'} • ~{formatPrice(prod.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                             </p>
                             {(() => {
@@ -1272,10 +1261,10 @@ export default function CartPage() {
                               return (
                                 <div className="flex flex-col mt-0.5">
                                   <div className="flex items-baseline gap-1">
-                                    <span className="text-sm sm:text-[14.5px] text-emerald-700 font-heading">
+                                    <span className="text-sm sm:text-sm text-emerald-700 font-heading">
                                       {formatPrice(effectiveVariant.price)}đ
                                     </span>
-                                    <span className="text-[11px] text-gray-500">
+                                    <span className="text-2xs text-gray-500">
                                       /{packLabel}
                                     </span>
                                   </div>
@@ -1288,7 +1277,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickAddProduct(prod)}
-                            className={`shrink-0 min-w-[84px] py-1.5 px-2 sm:px-2.5 rounded-lg text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                            className={`shrink-0 min-w-[84px] py-1.5 px-2 sm:px-2.5 rounded-lg text-xs flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               isJustAdded
                                 ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                                 : 'bg-emerald-50 hover:bg-emerald-700 text-emerald-800 hover:text-white border border-emerald-200/80 hover:border-emerald-700'
@@ -1323,22 +1312,19 @@ export default function CartPage() {
                           className="flex items-center gap-3 group hover:bg-rose-50/30 p-2 rounded-xl transition-colors"
                         >
                           {/* Ảnh combo bo góc */}
-                          <div className="relative w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+                          <div className="relative w-[84px] h-[63px] rounded-lg bg-white border border-gray-100 overflow-hidden shrink-0">
                             {combo.image ? (
                             <Image
                               src={combo.image}
                               alt={combo.name}
                               fill
-                              sizes="72px"
-                              className="object-cover transition-transform duration-200"
+                              sizes="84px"
+                              className="object-contain transition-transform duration-200"
                             />
                             ) : null}
-                            <span className="absolute top-0.5 left-0.5 px-1 py-0.2 text-[10px] rounded bg-rose-600 text-white leading-tight">
-                              -{combo.discount}%
-                            </span>
                             {comboInCartQty > 0 && (
                               <span
-                                className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-[10px] rounded bg-emerald-800 text-white shadow-2xs"
+                                className="absolute bottom-0.5 right-0.5 px-1 py-0.2 text-2xs rounded bg-emerald-800 text-white shadow-2xs"
                                 title={language === 'en' ? `${comboInCartQty} in your cart` : `Đang có ${comboInCartQty} trong giỏ`}
                                 aria-label={language === 'en' ? `${comboInCartQty} in your cart` : `Đang có ${comboInCartQty} trong giỏ`}
                               >
@@ -1351,26 +1337,29 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0 pr-1">
                             <Link
                               href={`/combo/${combo.slug}`}
-                              className="text-[14px] sm:text-[15px] text-gray-900 line-clamp-2 break-words group-hover:text-emerald-700 transition-colors leading-snug"
+                              className="text-sm sm:text-base text-gray-900 line-clamp-2 break-words group-hover:text-emerald-700 transition-colors leading-snug"
                               title={comboTitle}
                             >
                               {comboTitle}
                             </Link>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] text-gray-500 font-medium">
+                              <span className="px-1 py-px text-2xs rounded bg-rose-600 text-white leading-tight">
+                                -{combo.discount}%
+                              </span>
+                              <span className="text-2xs text-gray-500 font-medium">
                                 {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                               </span>
                               {savedMoney > 0 && (
-                                <span className="text-[10.5px] text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-100">
+                                <span className="text-2xs text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-100">
                                   -{formatPrice(savedMoney)}đ
                                 </span>
                               )}
                             </div>
                             <div className="flex items-baseline gap-1.5 mt-0.5">
-                              <span className="text-sm sm:text-[14.5px] text-rose-600 font-heading">
+                              <span className="text-sm sm:text-sm text-rose-600 font-heading">
                                 {formatPrice(combo.salePrice)}đ
                               </span>
-                              <span className="text-[11px] text-gray-400 line-through">
+                              <span className="text-2xs text-gray-400 line-through">
                                 {formatPrice(combo.originalPrice)}đ
                               </span>
                             </div>
@@ -1380,7 +1369,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => handleQuickAddCombo(combo)}
-                            className={`shrink-0 min-w-[84px] py-1.5 px-2 sm:px-2.5 rounded-lg text-[12px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                            className={`shrink-0 min-w-[84px] py-1.5 px-2 sm:px-2.5 rounded-lg text-xs flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               isJustAdded
                                 ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                                 : 'bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-emerald-900/10'
@@ -1404,7 +1393,7 @@ export default function CartPage() {
               </div>
 
               {/* Chân kệ gợi ý: Thông báo trải nghiệm siêu thị */}
-              <div className="px-3 py-2 bg-emerald-50/60 border-t border-emerald-100/70 text-center text-[10.5px] text-emerald-800 font-medium flex items-center justify-center gap-1.5">
+              <div className="px-3 py-2 bg-emerald-50/60 border-t border-emerald-100/70 text-center text-2xs text-emerald-800 font-medium flex items-center justify-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span>
                   {language === 'en'

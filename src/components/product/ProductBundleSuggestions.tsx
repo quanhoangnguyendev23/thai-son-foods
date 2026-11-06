@@ -137,9 +137,9 @@ export default function ProductBundleSuggestions({
                         onChange={() => toggleItem(item.product.id)}
                         className="mt-0.5 w-4 h-4 shrink-0 accent-forest-700 cursor-pointer"
                       />
-                      <span className="text-[13px] leading-snug text-ink-950 line-clamp-3">
+                      <span className="text-sm leading-snug text-ink-950 line-clamp-3">
                         {item.isCurrent && (
-                          <strong className="text-[1.125em]">{isEn ? 'This item: ' : 'Sản phẩm này: '}</strong>
+                          <strong className="text-emph">{isEn ? 'This item: ' : 'Sản phẩm này: '}</strong>
                         )}
                         {name} ({packLabel})
                       </span>

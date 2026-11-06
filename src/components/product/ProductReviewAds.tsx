@@ -67,7 +67,7 @@ export function ReviewProductAd({
         <div className="mt-2 flex items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="text-base font-semibold text-ink-950">{formatPrice(price)}đ</p>
-            <p className="text-[11px] text-gray-500 truncate">
+            <p className="text-2xs text-gray-500 truncate">
               {variant ? `${variant.unit === 'thùng' ? 'Thùng' : 'Lốc'} ${variant.name}` : product.unit}
               {perBottle ? ` · ${formatPrice(perBottle)}đ/chai` : ''}
             </p>
@@ -80,7 +80,7 @@ export function ReviewProductAd({
           </Link>
         </div>
       </div>
-      <p className="mt-1 text-right text-[11px] text-gray-500">Sản phẩm gợi ý</p>
+      <p className="mt-1 text-right text-2xs text-gray-500">Sản phẩm gợi ý</p>
     </div>
   );
 }
@@ -124,7 +124,7 @@ export function ReviewComboAd({ combo, brand }: { combo: Combo; brand?: Brand })
           </span>
         </span>
       </Link>
-      <p className="mt-1 text-right text-[11px] text-gray-500">Combo gợi ý</p>
+      <p className="mt-1 text-right text-2xs text-gray-500">Combo gợi ý</p>
     </div>
   );
 }

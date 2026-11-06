@@ -453,14 +453,14 @@ export default function LocationConfirmMapModal({
         {/* Header */}
         <div className="p-4 bg-white border-b border-gray-100 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-emph">
               <MapPin className="w-4 h-4 text-emerald-700" />
             </div>
             <div>
               <h3 className="text-gray-900 text-base sm:text-lg leading-tight">
                 Xác nhận vị trí giao hàng chính xác
               </h3>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-2xs text-gray-500">
                 Kéo bản đồ để đặt pin chính xác vào cổng hoặc cửa nhà bạn
               </p>
             </div>
@@ -483,7 +483,7 @@ export default function LocationConfirmMapModal({
             {/* Nhãn trên pin */}
             <div
               className={cn(
-                'px-2.5 py-1 rounded-full text-[12px] shadow-lg mb-1 whitespace-nowrap transition-all flex items-center gap-1',
+                'px-2.5 py-1 rounded-full text-xs shadow-lg mb-1 whitespace-nowrap transition-all flex items-center gap-1',
                 isDragging
                   ? 'bg-amber-500 text-ink-950 scale-105'
                   : 'bg-emerald-800 text-white'
@@ -557,12 +557,12 @@ export default function LocationConfirmMapModal({
 
           {/* Chú thích chấm xanh vị trí của khách / nhắc bật định vị */}
           {userPos ? (
-            <div className="absolute bottom-3 left-3 z-30 px-2.5 py-1.5 rounded-xl bg-white/95 text-[12px] text-gray-700 shadow-md flex items-center gap-1.5 backdrop-blur-md pointer-events-none">
+            <div className="absolute bottom-3 left-3 z-30 px-2.5 py-1.5 rounded-xl bg-white/95 text-xs text-gray-700 shadow-md flex items-center gap-1.5 backdrop-blur-md pointer-events-none">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 ring-2 ring-white shadow" />
               <span>Chấm xanh: vị trí hiện tại của bạn</span>
             </div>
           ) : locationDenied ? (
-            <div className="absolute bottom-3 left-3 right-16 sm:right-auto sm:max-w-xs z-30 px-2.5 py-1.5 rounded-xl bg-white/95 text-[11px] text-gray-700 shadow-md backdrop-blur-md">
+            <div className="absolute bottom-3 left-3 right-16 sm:right-auto sm:max-w-xs z-30 px-2.5 py-1.5 rounded-xl bg-white/95 text-2xs text-gray-700 shadow-md backdrop-blur-md">
               Bật quyền vị trí của trình duyệt để thấy chấm xanh nơi bạn đang đứng, giúp ghim chính xác hơn.
             </div>
           ) : null}
@@ -581,7 +581,7 @@ export default function LocationConfirmMapModal({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-0.5">
               <span>Tọa độ xác nhận:</span>
-              <span className="font-mono text-emerald-800 text-[1.125em]">
+              <span className="font-mono text-emerald-800 text-emph">
                 {centerCoords.lat.toFixed(6)}, {centerCoords.lng.toFixed(6)}
               </span>
               {isReverseGeocoding && <Loader2 className="w-3 h-3 animate-spin text-emerald-600" />}
@@ -605,7 +605,7 @@ export default function LocationConfirmMapModal({
               </p>
             )}
             {houseNote !== 'none' && !isReverseGeocoding && (
-              <p className="text-[11px] text-amber-800 mt-0.5">
+              <p className="text-2xs text-amber-800 mt-0.5">
                 {houseNote === 'kept'
                   ? 'Bản đồ chưa có số nhà tại điểm này nên đang giữ số nhà bạn đã gõ. Nếu khác, bạn sửa lại trong ô địa chỉ nhé.'
                   : houseNote === 'noRoad'

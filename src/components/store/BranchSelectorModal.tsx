@@ -216,7 +216,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
         {/* Header Modal */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
+            <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-emph">
               <MapPin className="w-5 h-5 text-forest-700" />
             </div>
             <div>
@@ -293,7 +293,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
           {/* Bộ lọc Tỉnh & Quận */}
           <div className="grid grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-[12px] text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">
                 Tỉnh / Thành phố
               </label>
               <select
@@ -315,7 +315,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
             </div>
 
             <div>
-              <label className="block text-[12px] text-gray-500 uppercase tracking-wider mb-1">
+              <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">
                 Bạn ở Quận / Huyện
               </label>
               <select
@@ -414,20 +414,20 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-gray-900 text-base md:text-[17px]">
+                      <span className="text-gray-900 text-base md:text-lg">
                         {branch.name}
                       </span>
 
                       {/* Huy hiệu Gần nhất */}
                       {isNearest && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[12px]">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs">
                           Gần nhất ({branch.distanceKm} km)
                         </span>
                       )}
 
                       {/* Khoảng cách nếu có GPS và không phải gần nhất */}
                       {!isNearest && branch.distanceKm !== undefined && (
-                        <span className="text-[11px] text-gray-500 font-medium">
+                        <span className="text-2xs text-gray-500 font-medium">
                           • cách {branch.distanceKm} km
                         </span>
                       )}
@@ -436,7 +436,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                       {stockStatus && (
                         <span
                           className={cn(
-                            'text-[12px] px-2 py-0.5 rounded-full',
+                            'text-xs px-2 py-0.5 rounded-full',
                             stockStatus === 'in_stock' && 'bg-emerald-100 text-emerald-800',
                             stockStatus === 'low_stock' && 'bg-amber-100 text-amber-800',
                             stockStatus === 'out_of_stock' && 'bg-red-100 text-red-800'
@@ -457,7 +457,7 @@ export default function BranchSelectorModal({ productId, onSelect }: BranchSelec
                     </p>
 
                     {branch.phone && (
-                      <p className="text-[11px] text-text-muted mt-0.5 flex items-center gap-1 pl-4.5">
+                      <p className="text-2xs text-text-muted mt-0.5 flex items-center gap-1 pl-4.5">
                         <Phone className="w-3 h-3" />
                         <span>Hotline: {branch.phone}</span>
                       </p>

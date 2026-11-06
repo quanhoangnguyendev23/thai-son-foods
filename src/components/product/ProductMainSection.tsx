@@ -370,12 +370,12 @@ export default function ProductMainSection({
         <div className="min-w-0 md:col-start-2 md:row-start-1 xl:col-start-2 space-y-3">
           <Link
             href="/"
-            className="inline-block text-[13px] text-forest-700 hover:text-copper-600 hover:underline"
+            className="inline-block text-sm text-forest-700 hover:text-copper-600 hover:underline"
           >
             {isEn ? 'Visit the Thái Sơn Foods store' : 'Ghé thăm cửa hàng Thái Sơn Foods'}
           </Link>
 
-          <h1 className="text-xl sm:text-2xl xl:text-[24px] font-medium text-ink-950 leading-snug break-words">
+          <h1 className="text-xl sm:text-2xl xl:text-2xl font-medium text-ink-950 leading-snug break-words">
             {displayName}
           </h1>
 
@@ -383,7 +383,7 @@ export default function ProductMainSection({
           <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-sm">
             {reviewSummary && reviewSummary.totalReviews > 0 ? (
               <a href="#danh-gia" onClick={scrollToReviews} className="inline-flex items-center gap-1.5 group">
-                <span className="text-ink-950 text-[1.125em]">{reviewSummary.averageRating.toFixed(1)}</span>
+                <span className="text-ink-950 text-emph">{reviewSummary.averageRating.toFixed(1)}</span>
                 <span className="flex items-center gap-0.5" aria-hidden>
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
@@ -418,17 +418,17 @@ export default function ProductMainSection({
           {(isVegan || product.isBestSeller || product.isNew) && (
             <div className="flex flex-wrap gap-1.5">
               {product.isBestSeller && (
-                <span className="text-[12px] px-2 py-0.5 rounded bg-sale text-white">
+                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">
                   {isEn ? 'Best seller' : 'Bán chạy'}
                 </span>
               )}
               {product.isNew && (
-                <span className="text-[12px] px-2 py-0.5 rounded bg-sky-600 text-white">
+                <span className="text-xs px-2 py-0.5 rounded bg-sky-600 text-white">
                   {isEn ? 'New' : 'Mới'}
                 </span>
               )}
               {isVegan && (
-                <span className="inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                   {isEn ? 'Vegan' : 'Thuần chay'}
                 </span>
               )}
@@ -437,7 +437,7 @@ export default function ProductMainSection({
 
           <div className="border-t border-gray-200 pt-3">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-[26px] leading-none text-ink-950">{formatPrice(currentPrice)}đ</span>
+              <span className="text-2xl leading-none text-ink-950">{formatPrice(currentPrice)}đ</span>
               {currentVariant && (
                 <span className="text-sm text-gray-600">
                   ({formatPrice(getUnitPrice(currentVariant))}đ/{isEn ? 'bottle' : 'chai'})
@@ -471,7 +471,7 @@ export default function ProductMainSection({
             <div className="pt-1">
               <p className="text-sm text-ink-950 mb-2">
                 {isEn ? 'Flavor: ' : 'Hương vị: '}
-                <strong className="text-[1.125em]">{getShortProductName(product, language)}</strong>
+                <strong className="text-emph">{getShortProductName(product, language)}</strong>
               </p>
               <div className="flex flex-wrap gap-2 pb-1">
                 {siblingProducts.map((p) => {
@@ -492,7 +492,7 @@ export default function ProductMainSection({
                       <span className="relative block w-full aspect-[4/3] rounded overflow-hidden bg-white">
                         <Image src={getProductImage(p)} alt="" fill sizes="76px" className="object-contain transition-transform duration-300 motion-reduce:transition-none" />
                       </span>
-                      <span className="block text-[10.5px] leading-tight text-ink-950 mt-1 line-clamp-2 min-h-[2.4em]">
+                      <span className="block text-2xs leading-tight text-ink-950 mt-1 line-clamp-2 min-h-[2.4em]">
                         {getShortProductName(p, language)}
                       </span>
                     </Link>
@@ -503,11 +503,11 @@ export default function ProductMainSection({
           )}
 
           {/* Bảng tóm tắt thuộc tính chính (dữ liệu thật) */}
-          <table className="w-full text-[13px]">
+          <table className="w-full text-sm">
             <tbody>
               {overviewRows.map((row) => (
                 <tr key={row.label}>
-                  <th scope="row" className="w-[42%] py-1 pr-3 text-left text-ink-950 align-top text-[1.125em]">
+                  <th scope="row" className="w-[42%] py-1 pr-3 text-left text-ink-950 align-top text-emph">
                     {row.label}
                   </th>
                   <td className="py-1 text-ink-950">{row.value}</td>
@@ -566,7 +566,7 @@ export default function ProductMainSection({
             <ul className="list-disc pl-5 space-y-1.5 text-sm text-ink-950 leading-relaxed marker:text-gray-400">
               {highlights.map((item) => (
                 <li key={item.labelVi}>
-                  <strong className="text-[1.125em]">{isEn ? item.labelEn : item.labelVi}:</strong>{' '}
+                  <strong className="text-emph">{isEn ? item.labelEn : item.labelVi}:</strong>{' '}
                   {isEn ? item.contentEn : item.contentVi}
                 </li>
               ))}
@@ -576,7 +576,7 @@ export default function ProductMainSection({
             </ul>
             <a
               href="#thong-tin-san-pham"
-              className="inline-flex items-center gap-0.5 mt-2 text-[13px] text-forest-700 hover:text-copper-600 hover:underline"
+              className="inline-flex items-center gap-0.5 mt-2 text-sm text-forest-700 hover:text-copper-600 hover:underline"
             >
               {isEn ? 'See full product information' : 'Xem thông tin chi tiết sản phẩm'}
               <ChevronRight className="w-3.5 h-3.5" aria-hidden />

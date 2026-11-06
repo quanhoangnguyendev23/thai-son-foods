@@ -87,17 +87,17 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
 
             <div className="relative z-[1] w-[58%] flex flex-col justify-center gap-1 px-4 lg:px-5 py-3">
               {tile.tag && (
-                <span className="self-start rounded-full bg-corn px-2 py-0.5 text-[12px] leading-tight text-text-dark">
+                <span className="self-start rounded-full bg-corn px-2 py-0.5 text-xs leading-tight text-text-dark">
                   {tile.tag}
                 </span>
               )}
               {title && (
-                <p className="font-heading text-[17px] sm:text-[19px] lg:text-[clamp(18px,1.45vw,22px)] leading-tight line-clamp-2">
+                <p className="font-heading text-lg sm:text-lg xl:text-xl leading-tight line-clamp-2">
                   {title}
                 </p>
               )}
-              {subtitle && <p className="text-[13px] text-white/85 leading-snug line-clamp-1">{subtitle}</p>}
-              <span className="mt-0.5 inline-flex items-center gap-1 text-[14px] text-amber-200 group-hover:underline">
+              {subtitle && <p className="text-sm text-white/85 leading-snug line-clamp-1">{subtitle}</p>}
+              <span className="mt-0.5 inline-flex items-center gap-1 text-sm text-amber-200 group-hover:underline">
                 {cta}
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden />
               </span>

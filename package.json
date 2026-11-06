@@ -17,6 +17,7 @@
     "test:rbac": "node scripts/test_phase6_master_audit.mjs",
     "lint:colors": "node scripts/brand-color-lint.mjs",
     "lint:fonts": "node scripts/brand-font-lint.mjs",
+    "lint:font-sizes": "node scripts/font-size-lint.mjs",
     "test:address": "npx tsx tests/address_unit_test.mjs && npx tsx tests/address_controller_test.mjs && npx tsx tests/address_autocomplete_api_test.mjs && npx tsx tests/address_admin_data_test.mjs && npx tsx tests/address_anonymous_log_test.mjs && npx tsx tests/address_order_check_test.mjs && npx tsx tests/address_round4_test.mjs && npx tsx tests/address_street_segments_test.mjs",
     "test:address:e2e": "node tests/address_e2e_test.mjs"
   },

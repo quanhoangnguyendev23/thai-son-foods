@@ -157,7 +157,7 @@ export default function AdminRegisterPage() {
           <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-amber-500/15 to-emerald-500/15 border border-amber-500/30 text-amber-800 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
             <Crown className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div>
-              <p className="text-amber-800 text-[1.125em]">Quyền Super Admin tự động kích hoạt</p>
+              <p className="text-amber-800 text-emph">Quyền Super Admin tự động kích hoạt</p>
               <p className="text-xs text-ink-800 mt-1">
                 Tài khoản đầu tiên được đăng ký sẽ tự động sở hữu toàn quyền quản trị cao nhất và không yêu cầu mã bảo mật.
               </p>
@@ -175,7 +175,7 @@ export default function AdminRegisterPage() {
             </div>
             {/* Tên CSDL chỉ hiện trên máy phát triển */}
             {process.env.NODE_ENV !== 'production' && (
-              <div className="flex items-center gap-1.5 text-ink-700 font-mono text-[11px]">
+              <div className="flex items-center gap-1.5 text-ink-700 font-mono text-2xs">
                 <Database className="w-3 h-3 text-emerald-700" />
                 <span>PostgreSQL: WebTSF</span>
               </div>
@@ -209,9 +209,9 @@ export default function AdminRegisterPage() {
                 <p className="text-xs sm:text-sm text-ink-800 max-w-sm mx-auto leading-relaxed">
                   Hệ thống quản trị Thái Sơn Foods đã được thiết lập. Nhằm đảm bảo an toàn và bảo mật thông tin, việc đăng ký tài khoản mới tự do đã bị vô hiệu hóa.
                 </p>
-                <div className="p-3.5 rounded-xl bg-ink-50 border border-ink-200 text-[11px] text-ink-700 max-w-sm mx-auto text-left space-y-1">
-                  <p className="text-ink-800 text-[1.125em]">📋 Nguyên tắc cấp phát tài khoản:</p>
-                  <p>• Mọi tài khoản <strong className="text-[1.125em]">Marketing</strong> hoặc <strong className="text-[1.125em]">Nhân viên cửa hàng</strong> đều phải do Quản trị viên cấp cao (Super Admin) tạo.</p>
+                <div className="p-3.5 rounded-xl bg-ink-50 border border-ink-200 text-2xs text-ink-700 max-w-sm mx-auto text-left space-y-1">
+                  <p className="text-ink-800 text-emph">📋 Nguyên tắc cấp phát tài khoản:</p>
+                  <p>• Mọi tài khoản <strong className="text-emph">Marketing</strong> hoặc <strong className="text-emph">Nhân viên cửa hàng</strong> đều phải do Quản trị viên cấp cao (Super Admin) tạo.</p>
                   <p>• Vui lòng liên hệ Super Admin của công ty để được cấp tài khoản và phân quyền cửa hàng tương ứng.</p>
                 </div>
               </div>
@@ -349,7 +349,7 @@ export default function AdminRegisterPage() {
                   <label className="block text-sm uppercase tracking-wider text-ink-800">
                     Mã bảo mật đăng ký <span className="text-emerald-700">*</span>
                   </label>
-                  <span className="text-[11px] text-ink-700">Cấu hình trên máy chủ</span>
+                  <span className="text-2xs text-ink-700">Cấu hình trên máy chủ</span>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-700">
@@ -365,7 +365,7 @@ export default function AdminRegisterPage() {
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-ink-50 border border-amber-500/40 text-ink-950 placeholder-ink-500 text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-colors disabled:opacity-50"
                   />
                 </div>
-                <p className="text-[11px] text-ink-700 mt-1">
+                <p className="text-2xs text-ink-700 mt-1">
                   Mã này ngăn chặn việc tự ý đăng ký tài khoản quản trị khi chưa được phép.
                 </p>
               </div>
@@ -397,7 +397,7 @@ export default function AdminRegisterPage() {
             <span>Đã có tài khoản quản trị? </span>
             <Link
               href="/admin/login"
-              className="text-emerald-700 hover:text-emerald-700 hover:underline ml-1 text-[1.125em]"
+              className="text-emerald-700 hover:text-emerald-700 hover:underline ml-1 text-emph"
             >
               Đăng nhập ngay
             </Link>

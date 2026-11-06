@@ -119,7 +119,7 @@ export default function ProductDescription({
                 <h4 className="text-gray-900 text-base sm:text-lg">
                   Giá trị dinh dưỡng (Trong 100ml)
                 </h4>
-                <span className="text-[11px] text-gray-400 bg-white border border-gray-200 rounded-md px-2 py-0.5 font-medium">
+                <span className="text-2xs text-gray-400 bg-white border border-gray-200 rounded-md px-2 py-0.5 font-medium">
                   Ước tính
                 </span>
               </div>
@@ -127,27 +127,27 @@ export default function ProductDescription({
               <div className="divide-y divide-gray-100">
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Năng lượng / Energy</span>
-                  <span className="text-gray-900 text-[1.125em]">{formatKcal(energyKcal) || '~62 kcal'}</span>
+                  <span className="text-gray-900 text-emph">{formatKcal(energyKcal) || '~62 kcal'}</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Carbohydrate</span>
-                  <span className="text-gray-900 text-[1.125em]">11.8 g</span>
+                  <span className="text-gray-900 text-emph">11.8 g</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Chất đạm / Protein</span>
-                  <span className="text-gray-900 text-[1.125em]">1.2 g</span>
+                  <span className="text-gray-900 text-emph">1.2 g</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Chất béo / Fat</span>
-                  <span className="text-gray-900 text-[1.125em]">1.0 g</span>
+                  <span className="text-gray-900 text-emph">1.0 g</span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-gray-600">Chất xơ / Dietary Fiber</span>
-                  <span className="text-gray-900 text-[1.125em]">0.8 g</span>
+                  <span className="text-gray-900 text-emph">0.8 g</span>
                 </div>
               </div>
 
-              <p className="text-[11px] text-gray-400 mt-3 italic text-center">
+              <p className="text-2xs text-gray-400 mt-3 italic text-center">
                 * Tỷ lệ phần trăm giá trị dinh dưỡng dựa trên chế độ ăn 2.000 calo/ngày.
               </p>
             </div>

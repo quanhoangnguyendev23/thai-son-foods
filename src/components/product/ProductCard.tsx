@@ -73,7 +73,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
   );
   const cartQtyBadge =
     mounted && cartQty > 0 ? (
-      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-sale text-white text-[11px] leading-[18px] text-center shadow-sm pointer-events-none">
+      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-sale text-white text-2xs leading-[18px] text-center shadow-sm pointer-events-none">
         {cartQty > 99 ? '99+' : cartQty}
       </span>
     ) : null;
@@ -102,7 +102,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
     recentAdds > 0 ? (
       <span
         role="status"
-        className="absolute right-0 bottom-full mb-1.5 z-20 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-950 text-white text-[11px] pl-2.5 pr-1 py-1 shadow-lg"
+        className="absolute right-0 bottom-full mb-1.5 z-20 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-950 text-white text-2xs pl-2.5 pr-1 py-1 shadow-lg"
       >
         <span>{language === 'en' ? `Added ${recentAdds}` : `Đã thêm ${recentAdds}`}</span>
         <button
@@ -208,16 +208,16 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             {/* Huy hiệu Bán chạy / Mới */}
             <div
               className={`absolute top-1 sm:top-2 ${
-                isPoster ? 'right-1 sm:right-2' : 'left-1 sm:left-2'
-              } flex flex-col gap-0.5 z-10`}
+                'right-1 sm:right-2'
+              } flex flex-col items-end gap-0.5 z-10`}
             >
               {product.isBestSeller && (
-                <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-brand-emerald text-white rounded shadow-xs">
+                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
                   {bestSellerText}
                 </span>
               )}
               {product.isNew && (
-                <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-corn text-text-dark rounded shadow-xs">
+                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-corn text-text-dark rounded shadow-xs">
                   {newText}
                 </span>
               )}
@@ -229,7 +229,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             <div>
               <h3
                 title={fullName}
-                className={`text-[15px] sm:text-[15px] text-text-dark mb-1 leading-snug group-hover:text-leaf-900 transition-colors ${
+                className={`text-base sm:text-base text-text-dark mb-1 leading-snug group-hover:text-leaf-900 transition-colors ${
                   isHomepage ? (titleLines === 4 ? 'line-clamp-4' : 'line-clamp-2') : ''
                 }`}
               >
@@ -239,13 +239,13 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
 
             <div className="relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
               <div className="flex flex-col">
-                <div className="text-base sm:text-[15px] text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
+                <div className="text-base sm:text-base text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
                   <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
-                  <span className="text-[11px] lg:text-[10px] text-text-muted">
+                  <span className="text-2xs lg:text-2xs text-text-muted">
                     /{packDisplayUnit}
                   </span>
                 </div>
-                <span className="text-[10px] lg:text-[8.5px] text-text-muted font-normal" suppressHydrationWarning>
+                <span className="text-2xs lg:text-2xs text-text-muted font-normal" suppressHydrationWarning>
                   ~{formatPrice(product.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                 </span>
               </div>
@@ -300,16 +300,16 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
             <div
               className={`absolute top-1 sm:top-2.5 ${
-                isPoster ? 'right-1 sm:right-2.5' : 'left-1 sm:left-2.5'
-              } flex flex-col gap-1 z-10`}
+                'right-1 sm:right-2.5'
+              } flex flex-col items-end gap-1 z-10`}
             >
               {product.isBestSeller && (
-                <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
+                <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
                   {bestSellerText}
                 </span>
               )}
               {product.isNew && (
-                <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
+                <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
                   {newText}
                 </span>
               )}
@@ -321,7 +321,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             <div>
               <h3
                 title={fullName}
-                className={`text-[15px] sm:text-lg md:text-xl text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-leaf-900 transition-colors ${
+                className={`text-base sm:text-lg md:text-xl text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-leaf-900 transition-colors ${
                   isHomepage ? 'line-clamp-2' : ''
                 }`}
               >
@@ -333,11 +333,11 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               <div className="flex flex-col">
                 <div className="text-base sm:text-lg md:text-xl text-leaf-900 flex flex-wrap items-baseline gap-x-1">
                   <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
-                  <span className="text-[11px] sm:text-sm md:text-base text-text-muted">
+                  <span className="text-2xs sm:text-sm md:text-base text-text-muted">
                     /{packDisplayUnit}
                   </span>
                 </div>
-                <span className="text-[10px] sm:text-xs text-text-muted font-normal" suppressHydrationWarning>
+                <span className="text-2xs sm:text-xs text-text-muted font-normal" suppressHydrationWarning>
                   ~{formatPrice(product.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
                 </span>
               </div>
@@ -391,16 +391,16 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
           {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
           <div
             className={`absolute top-1 sm:top-2.5 ${
-              isPoster ? 'right-1 sm:right-2.5' : 'left-1 sm:left-2.5'
-            } flex flex-col gap-1 z-10`}
+              'right-1 sm:right-2.5'
+            } flex flex-col items-end gap-1 z-10`}
           >
             {product.isBestSeller && (
-              <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
                 {bestSellerText}
               </span>
             )}
             {product.isNew && (
-              <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
                 {newText}
               </span>
             )}
@@ -412,7 +412,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
           <div>
             <h3
               title={fullName}
-              className={`text-[15px] sm:text-lg md:text-xl text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-leaf-900 transition-colors ${
+              className={`text-base sm:text-lg md:text-xl text-text-dark mb-1 sm:mb-1.5 leading-snug group-hover:text-leaf-900 transition-colors ${
                 isHomepage ? 'line-clamp-2' : ''
               }`}
             >
@@ -424,11 +424,11 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             <div className="flex flex-col">
               <div className="text-base sm:text-lg md:text-xl text-leaf-900 flex flex-wrap items-baseline gap-x-1">
                 <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>
-                <span className="text-[11px] sm:text-sm md:text-base text-text-muted">
+                <span className="text-2xs sm:text-sm md:text-base text-text-muted">
                   /{packDisplayUnit}
                 </span>
               </div>
-              <span className="text-[10px] sm:text-xs text-text-muted font-normal" suppressHydrationWarning>
+              <span className="text-2xs sm:text-xs text-text-muted font-normal" suppressHydrationWarning>
                 ~{formatPrice(product.price)}đ/{language === 'en' ? 'bottle' : 'chai'}
               </span>
             </div>

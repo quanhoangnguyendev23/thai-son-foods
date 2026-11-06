@@ -61,7 +61,6 @@ import {
   Copy
 } from 'lucide-react';
 import { hasPermission, Role, Permission } from '@/lib/rbac';
-import { FEATURES } from '@/config/features';
 import { canDeleteOrder, canTransitionOrderStatus } from '@/lib/order-status';
 import { safeFetchJson } from '@/lib/utils';
 import { downloadXlsx } from '@/lib/xlsx';
@@ -74,6 +73,7 @@ const OPEN_ORDER_STATUSES: Exclude<OpenOrderFilter, 'OPEN'>[] = ['PENDING', 'CON
 import { banners as defaultHeroBanners } from '@/data/banners';
 import { HERO_PLACEHOLDER_SLIDES } from '@/data/homepage-placeholders';
 import { showAlert, showConfirm } from '@/components/ui/AppDialog';
+import { describeOrderDelivery } from '@/lib/deliverySlots';
 
 // ==================== INTERFACES ====================
 export interface AdminUser {
@@ -226,6 +226,10 @@ interface Order {
   items?: OrderItem[];
   store_code?: string | null;
   store_address?: string | null;
+  /** Giờ giao: ASAP = giao ngay, SCHEDULED = khung hẹn khách chọn */
+  delivery_mode?: string | null;
+  delivery_slot_start?: string | null;
+  delivery_slot_end?: string | null;
   inventory_deducted?: boolean | null;
   cod_reconciled?: boolean | null;
   cod_collected_amount?: number | null;
@@ -246,6 +250,54 @@ interface Order {
   address_source?: string | null;
   address_new?: string | null;
   created_at: string;
+  /** Lần đổi trạng thái gần nhất (ai, lúc nào) — từ bảng order_status_history */
+  last_status_change?: OrderStatusChange | null;
+  /** Toàn bộ lịch sử đổi trạng thái (chỉ có khi mở chi tiết đơn) */
+  status_history?: OrderStatusChange[];
+}
+
+interface OrderStatusChange {
+  id?: string;
+  from_status: string | null;
+  to_status: string;
+  actor_type: string;
+  actor_username: string | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  note?: string | null;
+  created_at: string;
+}
+
+const STATUS_ACTOR_ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: 'Quản trị cấp cao',
+  ADMIN: 'Quản trị',
+  MARKETING: 'Marketing',
+  STORE_STAFF: 'Nhân viên cửa hàng',
+};
+
+/** "Xác nhận" / "Huỷ" / "Cập nhật" theo trạng thái được chuyển tới */
+function statusChangeVerb(toStatus: string): string {
+  if (toStatus === 'CANCELLED') return 'Huỷ';
+  if (toStatus === 'CONFIRMED') return 'Xác nhận';
+  if (toStatus === 'COMPLETED') return 'Hoàn thành';
+  if (toStatus === 'SHIPPING') return 'Giao hàng';
+  return 'Cập nhật';
+}
+
+function statusChangeActorLabel(c: OrderStatusChange): string {
+  if (c.actor_type === 'system') return 'Hệ thống tự động';
+  if (c.actor_type === 'customer') return `Khách hàng${c.actor_name ? ` (${c.actor_name})` : ''}`;
+  return c.actor_name || c.actor_username || 'Không rõ';
+}
+
+function formatStatusChangeTime(iso: string): string {
+  return new Date(iso).toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 interface ComboItem {
@@ -2191,6 +2243,16 @@ export default function AdminPage() {
             inventory_deducted: data.data?.inventory_deducted ?? selectedOrder.inventory_deducted,
             store_code: data.data?.store_code ?? selectedOrder.store_code,
           });
+          // Tải lại lịch sử trạng thái để thấy ngay ai vừa đổi
+          safeFetchJson<any>(`/api/admin/orders?id=${orderId}`)
+            .then((d) => {
+              if (d?.success && d.order) {
+                setSelectedOrder((prev) =>
+                  prev && prev.id === orderId ? { ...prev, status_history: d.order.status_history } : prev
+                );
+              }
+            })
+            .catch(() => {});
         }
         refreshOrderList();
         // Làm mới tồn kho nếu đang quản lý kho
@@ -2685,11 +2747,11 @@ export default function AdminPage() {
                 <span className="text-ink-950 text-lg tracking-tight group-hover:text-emerald-700 transition-colors">
                   Thái Sơn Foods
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-full text-2xs bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider">
                   Admin Pro
                 </span>
               </div>
-              <p className="text-[11px] text-ink-700">Hệ thống quản trị & Cơ sở dữ liệu WebTSF</p>
+              <p className="text-2xs text-ink-700">Hệ thống quản trị & Cơ sở dữ liệu WebTSF</p>
             </div>
           </Link>
         </div>
@@ -2710,9 +2772,9 @@ export default function AdminPage() {
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-ink-300 text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="text-ink-800 font-medium">PostgreSQL:</span>
-            <span className="text-emerald-700 font-mono text-[1.125em]">WebTSF</span>
+            <span className="text-emerald-700 font-mono text-emph">WebTSF</span>
             <span className="text-ink-600">|</span>
-            <span className="text-ink-700 text-[11px]">Port 5432 (127.0.0.1)</span>
+            <span className="text-ink-700 text-2xs">Port 5432 (127.0.0.1)</span>
           </div>
         )}
 
@@ -2787,7 +2849,7 @@ export default function AdminPage() {
           <div className="p-4 space-y-6 overflow-y-auto">
             {/* Nav links */}
             <div className="space-y-1">
-              <p className="px-3 text-[12px] uppercase tracking-wider text-ink-700">
+              <p className="px-3 text-xs uppercase tracking-wider text-ink-700">
                 Menu Quản Trị
               </p>
               {(hasPermission(currentUser, 'dashboard.view_company') || hasPermission(currentUser, 'dashboard.view_store')) && (
@@ -2826,7 +2888,7 @@ export default function AdminPage() {
                     <PackageCheck className="w-4 h-4 text-amber-700" />
                     <span>Cập nhật số lượng</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-2xs bg-amber-500/20 text-amber-800 border border-amber-500/30">
                     {currentUser?.role === 'STORE_STAFF' ? 'Cửa hàng' : 'Kho hàng'}
                   </span>
                 </button>
@@ -2895,7 +2957,7 @@ export default function AdminPage() {
                   <span className="flex items-center gap-1.5">
                     {newOrderCount > 0 && (
                       <span
-                        className="px-1.5 py-0.5 rounded-full text-[11px] bg-rose-500 text-white animate-pulse"
+                        className="px-1.5 py-0.5 rounded-full text-2xs bg-rose-500 text-white animate-pulse"
                         title={`${newOrderCount} đơn hàng mới chưa xem`}
                       >
                         +{newOrderCount} mới
@@ -3030,7 +3092,7 @@ export default function AdminPage() {
                     <ShieldCheck className="w-4 h-4 text-leaf-700" />
                     <span>Quản lý tài khoản</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-leaf-500/20 text-leaf-700 border border-leaf-500/30 font-mono">
+                  <span className="px-2 py-0.5 rounded-full text-2xs bg-leaf-500/20 text-leaf-700 border border-leaf-500/30 font-mono">
                     Super
                   </span>
                 </button>
@@ -3053,7 +3115,7 @@ export default function AdminPage() {
                     <History className="w-4 h-4 text-amber-700" />
                     <span>Nhật ký hoạt động</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30 font-mono">
+                  <span className="px-2 py-0.5 rounded-full text-2xs bg-amber-500/20 text-amber-800 border border-amber-500/30 font-mono">
                     Audit
                   </span>
                 </button>
@@ -3070,75 +3132,15 @@ export default function AdminPage() {
                     <span>Đánh giá khách hàng</span>
                   </div>
                   {pendingReviewsCount > 0 ? (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30 font-mono animate-pulse">
+                    <span className="px-2 py-0.5 rounded-full text-2xs bg-amber-500/20 text-amber-800 border border-amber-500/30 font-mono animate-pulse">
                       {pendingReviewsCount} chờ duyệt
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-ink-100 text-ink-700 border border-ink-300 font-mono">
+                    <span className="px-2 py-0.5 rounded-full text-2xs bg-ink-100 text-ink-700 border border-ink-300 font-mono">
                       Reviews
                     </span>
                   )}
                 </Link>
-              )}
-
-              {/* GIAI ĐOẠN 2: CTV & Đại lý, Duyệt chi trả — chỉ mở khi NEXT_PUBLIC_ENABLE_PARTNER_PROGRAM=true */}
-              {FEATURES.PARTNER_PROGRAM ? (
-                <>
-                  <Link
-                    href="/admin/partners"
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-ink-700 hover:text-ink-950 hover:bg-ink-100"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Users className="w-4 h-4 text-emerald-700" />
-                      <span>Đối tác CTV & Đại lý</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 font-mono">
-                      Partner
-                    </span>
-                  </Link>
-                  <Link
-                    href="/admin/payouts"
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-ink-700 hover:text-ink-950 hover:bg-ink-100"
-                  >
-                    <div className="flex items-center gap-3">
-                      <DollarSign className="w-4 h-4 text-amber-700" />
-                      <span>Duyệt chi trả (Payouts)</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30 font-mono">
-                      Ví
-                    </span>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <div
-                    aria-disabled="true"
-                    title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-ink-600 opacity-45 cursor-not-allowed select-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Users className="w-4 h-4" />
-                      <span>Đối tác CTV & Đại lý</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-ink-100 text-ink-700 border border-ink-300 font-mono">
-                      Giai đoạn 2
-                    </span>
-                  </div>
-
-                  <div
-                    aria-disabled="true"
-                    title="Chức năng thuộc giai đoạn 2 — chưa mở sử dụng"
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-ink-600 opacity-45 cursor-not-allowed select-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      <DollarSign className="w-4 h-4" />
-                      <span>Duyệt chi trả (Payouts)</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] bg-ink-100 text-ink-700 border border-ink-300 font-mono">
-                      Giai đoạn 2
-                    </span>
-                  </div>
-                </>
               )}
             </div>
 
@@ -3146,7 +3148,7 @@ export default function AdminPage() {
             {(hasPermission(currentUser, 'dashboard.view_company') || hasPermission(currentUser, 'dashboard.view_store')) && (
               <div className="p-3.5 rounded-2xl bg-gradient-to-b from-white to-ink-50 border border-ink-200 space-y-2.5">
                 <div className="flex items-center justify-between text-xs text-ink-700">
-                  <span className="text-ink-800 text-[1.125em]">
+                  <span className="text-ink-800 text-emph">
                     {currentUser?.role === 'STORE_STAFF' ? 'Doanh thu cửa hàng' : 'Doanh thu tuần này'}
                   </span>
                   <TrendingUp className="w-4 h-4 text-emerald-700" />
@@ -3157,7 +3159,7 @@ export default function AdminPage() {
                 <div className="w-full bg-ink-100 h-1.5 rounded-full overflow-hidden">
                   <div className="bg-emerald-500 h-full rounded-full w-[78%]"></div>
                 </div>
-                <div className="flex justify-between text-[11px] text-ink-700 pt-1">
+                <div className="flex justify-between text-2xs text-ink-700 pt-1">
                   <span>{stats?.summary?.total_orders || 0} đơn đã tạo</span>
                   <span className="text-emerald-700 font-medium">94% thành công</span>
                 </div>
@@ -3181,11 +3183,11 @@ export default function AdminPage() {
                     <p className="text-sm text-ink-950 truncate">
                       {currentUser?.fullName || currentUser?.username || 'Admin Quản Lý'}
                     </p>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 uppercase">
+                    <span className="text-2xs px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 uppercase">
                       {currentUser?.role === 'SUPER_ADMIN' ? 'Super' : currentUser?.role === 'MARKETING' ? 'Marketing' : 'Cửa hàng'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-ink-700 truncate">
+                  <p className="text-2xs text-ink-700 truncate">
                     {currentUser?.email || 'admin@thaisonfoods.vn'}
                   </p>
                 </div>
@@ -3212,7 +3214,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={openPasswordModal}
-              className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] text-ink-800 bg-ink-100 hover:bg-amber-500/10 hover:text-amber-800 border border-ink-300 transition-colors cursor-pointer"
+              className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-ink-800 bg-ink-100 hover:bg-amber-500/10 hover:text-amber-800 border border-ink-300 transition-colors cursor-pointer"
             >
               <Key className="w-3.5 h-3.5" />
               <span>Đổi mật khẩu</span>
@@ -3229,7 +3231,7 @@ export default function AdminPage() {
               </div>
               <h2 className="text-2xl text-ink-950 mb-2">Bạn không có quyền truy cập mục này</h2>
               <p className="text-sm text-ink-700 max-w-md mb-6">
-                Vai trò hiện tại của bạn (<span className="text-amber-700 text-[1.125em]">{currentUser.role}</span>) không được cấp quyền xem hoặc quản lý phân hệ này. Vui lòng liên hệ Quản trị viên cấp cao nếu cần hỗ trợ.
+                Vai trò hiện tại của bạn (<span className="text-amber-700 text-emph">{currentUser.role}</span>) không được cấp quyền xem hoặc quản lý phân hệ này. Vui lòng liên hệ Quản trị viên cấp cao nếu cần hỗ trợ.
               </p>
               <button
                 onClick={() => setActiveTab(getDefaultTab())}
@@ -3297,7 +3299,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-ink-950 mt-2 tracking-tight">
                     {formatVND(stats?.summary?.total_revenue || 0)}
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 mt-2">
+                  <div className="flex items-center gap-1.5 text-2xs text-emerald-700 mt-2">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Đã ghi nhận trong WebTSF</span>
                   </div>
@@ -3317,10 +3319,10 @@ export default function AdminPage() {
                   <div className="text-2xl text-ink-950 mt-2 tracking-tight">
                     {stats?.summary?.total_orders || ordersTotal || 0}
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-ink-700 mt-2">
-                    <span className="text-amber-700 text-[1.125em]">{stats?.summary?.pending_orders || 0} chờ duyệt</span>
+                  <div className="flex items-center gap-2 text-2xs text-ink-700 mt-2">
+                    <span className="text-amber-700 text-emph">{stats?.summary?.pending_orders || 0} chờ duyệt</span>
                     <span>•</span>
-                    <span className="text-emerald-700 text-[1.125em]">{stats?.summary?.completed_orders || 0} hoàn tất</span>
+                    <span className="text-emerald-700 text-emph">{stats?.summary?.completed_orders || 0} hoàn tất</span>
                   </div>
                 </div>
 
@@ -3339,7 +3341,7 @@ export default function AdminPage() {
                     <span>Kết Nối Tốt</span>
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-ink-700 mt-2">
+                  <div className="flex items-center gap-1.5 text-2xs text-ink-700 mt-2">
                     <span className="text-ink-800 font-mono">WebTSF @ localhost</span>
                   </div>
                 </div>
@@ -3396,7 +3398,7 @@ export default function AdminPage() {
                     <h3 className="text-base text-ink-950 flex items-center gap-2">
                       <ShoppingCart className="w-4 h-4 text-emerald-700" />
                       <span>Đơn Chưa Hoàn Thành</span>
-                      <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/15 text-emerald-700 tabular-nums">
+                      <span className="px-2 py-0.5 rounded-full text-2xs bg-emerald-500/15 text-emerald-700 tabular-nums">
                         {OPEN_ORDER_STATUSES.reduce((s, k) => s + (openOrderCounts[k] || 0), 0)} đơn
                       </span>
                       {openOrdersLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin text-ink-600" aria-label="Đang tải" />}
@@ -3435,7 +3437,7 @@ export default function AdminPage() {
 
                 <div className={`overflow-x-auto transition-opacity ${openOrdersLoading ? 'opacity-60' : ''}`}>
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3 px-4">Mã Đơn</th>
                         <th className="py-3 px-4">Khách Hàng</th>
@@ -3451,27 +3453,35 @@ export default function AdminPage() {
                         const st = statusMap[order.status] || statusMap['PENDING'];
                         return (
                           <tr key={order.id} className="hover:bg-ink-100 transition-colors">
-                            <td className="py-3 px-4 font-mono text-emerald-700 text-[1.125em]">
+                            <td className="py-3 px-4 font-mono text-emerald-700 text-emph">
                               #{order.order_code}
                             </td>
                             <td className="py-3 px-4 font-medium text-ink-950">{order.full_name}</td>
                             <td className="py-3 px-4 text-ink-700 font-mono">{order.phone}</td>
-                            <td className="py-3 px-4 text-ink-950 text-[1.125em]">{formatVND(order.total)}</td>
+                            <td className="py-3 px-4 text-ink-950 text-emph">{formatVND(order.total)}</td>
                             <td className="py-3 px-4">
                               <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border ${st.bg}`}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs border ${st.bg}`}
                               >
                                 <st.icon className="w-3 h-3" />
                                 <span>{st.label}</span>
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-ink-700 text-[11px]">
+                            <td className="py-3 px-4 text-ink-700 text-2xs">
                               {new Date(order.created_at).toLocaleDateString('vi-VN', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 day: '2-digit',
                                 month: '2-digit',
                               })}
+                              {order.delivery_slot_start && (
+                                <span
+                                  className={`block mt-0.5 ${order.delivery_mode === 'SCHEDULED' ? 'text-amber-800' : 'text-emerald-700'}`}
+                                >
+                                  {order.delivery_mode === 'SCHEDULED' ? 'Hẹn giao: ' : ''}
+                                  {describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end)}
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-right">
                               <button
@@ -3578,7 +3588,7 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white border border-ink-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3 px-4">Ảnh & Mã SP</th>
                         <th className="py-3 px-4">Danh Mục</th>
@@ -3593,7 +3603,7 @@ export default function AdminPage() {
                         <tr key={p.id} className="hover:bg-ink-100 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-lg overflow-hidden bg-ink-100 relative shrink-0 border border-ink-300">
+                              <div className="w-14 h-[42px] rounded-lg overflow-hidden bg-white relative shrink-0 border border-ink-300">
                                 {p.thumbnail ? (
                                   <Image
                                     src={p.thumbnail}
@@ -3610,12 +3620,12 @@ export default function AdminPage() {
                               </div>
                               <div>
                                 <p className="text-ink-950 text-base font-mono" title={p.name}>{productCodeOf(p.id, p.sku, p.name)}</p>
-                                <p className="text-[11px] text-ink-700">Đơn vị: {p.unit}</p>
+                                <p className="text-2xs text-ink-700">Đơn vị: {p.unit}</p>
                               </div>
                             </div>
                           </td>
                           <td className="py-3 px-4">
-                            <span className="px-2 py-0.5 rounded-md text-[11px] bg-ink-100 text-ink-800 border border-ink-300">
+                            <span className="px-2 py-0.5 rounded-md text-2xs bg-ink-100 text-ink-800 border border-ink-300">
                               {p.category_name || 'Chưa phân loại'}
                             </span>
                           </td>
@@ -3624,7 +3634,7 @@ export default function AdminPage() {
                               {formatVND(p.price)}
                             </div>
                             {hasPermission(currentUser, 'cost_price.view') && (
-                              <div className="text-[10px] text-amber-700/90 font-mono mt-0.5">
+                              <div className="text-2xs text-amber-700/90 font-mono mt-0.5">
                                 Vốn: {p.cost_price ? formatVND(p.cost_price) : '0 ₫'}
                               </div>
                             )}
@@ -3632,17 +3642,17 @@ export default function AdminPage() {
                           <td className="py-3 px-4">
                             <div className="flex flex-wrap items-center gap-1.5">
                               {p.is_featured && (
-                                <span className="px-1.5 py-0.5 rounded text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30">
+                                <span className="px-1.5 py-0.5 rounded text-2xs bg-amber-500/20 text-amber-800 border border-amber-500/30">
                                   ⭐ Nổi bật
                                 </span>
                               )}
                               {p.is_best_seller && (
-                                <span className="px-1.5 py-0.5 rounded text-[11px] bg-rose-500/20 text-rose-600 border border-rose-500/30">
+                                <span className="px-1.5 py-0.5 rounded text-2xs bg-rose-500/20 text-rose-600 border border-rose-500/30">
                                   🔥 Bán chạy
                                 </span>
                               )}
                               {p.is_new && (
-                                <span className="px-1.5 py-0.5 rounded text-[11px] bg-blue-500/20 text-blue-700 border border-blue-500/30">
+                                <span className="px-1.5 py-0.5 rounded text-2xs bg-blue-500/20 text-blue-700 border border-blue-500/30">
                                   🆕 Mới
                                 </span>
                               )}
@@ -3652,7 +3662,7 @@ export default function AdminPage() {
                             <button
                               disabled={!hasPermission(currentUser, 'products.manage')}
                               onClick={() => handleToggleProductActive(p)}
-                              className={`px-2.5 py-1 rounded-full text-[11px] border transition-all ${
+                              className={`px-2.5 py-1 rounded-full text-2xs border transition-all ${
                                 !hasPermission(currentUser, 'products.manage') ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
                               } ${
                                 p.is_active
@@ -3776,7 +3786,7 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white border border-ink-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3 px-4">Gói Combo & Ảnh</th>
                         <th className="py-3 px-4">Quy Cách & Chi Tiết</th>
@@ -3795,14 +3805,14 @@ export default function AdminPage() {
                             {/* Image & Name */}
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-ink-100 border border-ink-300 overflow-hidden relative shrink-0">
+                                <div className="w-16 h-12 rounded-lg bg-white border border-ink-300 overflow-hidden relative shrink-0">
                                   {c.image ? (
                                     <Image
                                       src={c.image}
                                       alt={c.name}
                                       fill
-                                      className="object-cover"
-                                      sizes="48px"
+                                      className="object-contain"
+                                      sizes="64px"
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-ink-600">
@@ -3814,17 +3824,17 @@ export default function AdminPage() {
                                   <div className="text-ink-950 text-sm hover:text-amber-700 transition-colors flex items-center gap-1.5 flex-wrap">
                                     <span>{c.name}</span>
                                     {c.is_featured && (
-                                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-800 border border-amber-500/30">
+                                      <span className="text-2xs px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-800 border border-amber-500/30">
                                         Nổi bật
                                       </span>
                                     )}
                                     {c.is_best_seller && (
-                                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-600 border border-rose-500/30">
+                                      <span className="text-2xs px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-600 border border-rose-500/30">
                                         Bán chạy
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-[11px] font-mono text-ink-600 mt-0.5">
+                                  <div className="text-2xs font-mono text-ink-600 mt-0.5">
                                     slug: {c.slug}
                                   </div>
                                 </div>
@@ -3833,10 +3843,10 @@ export default function AdminPage() {
 
                             {/* Quy cách */}
                             <td className="py-3 px-4 max-w-xs">
-                              <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-800 border border-amber-500/20 text-[12px] mb-1">
+                              <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-800 border border-amber-500/20 text-xs mb-1">
                                 {c.total_items} chai
                               </span>
-                              <p className="text-[11px] text-ink-700 line-clamp-2" title={c.description || ''}>
+                              <p className="text-2xs text-ink-700 line-clamp-2" title={c.description || ''}>
                                 {c.description || 'Không có mô tả'}
                               </p>
                             </td>
@@ -3852,7 +3862,7 @@ export default function AdminPage() {
                                 {formatVND(c.sale_price)}
                               </div>
                               {hasPermission(currentUser, 'cost_price.view') && (
-                                <div className="text-[10px] text-amber-700/90 font-mono mt-0.5">
+                                <div className="text-2xs text-amber-700/90 font-mono mt-0.5">
                                   Vốn: {c.cost_price ? formatVND(c.cost_price) : '0 ₫'}
                                 </div>
                               )}
@@ -3860,7 +3870,7 @@ export default function AdminPage() {
 
                             {/* Savings */}
                             <td className="py-3 px-4 text-center">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs bg-rose-500/10 text-rose-600 border border-rose-500/20">
                                 <span>-{c.discount}%</span>
                                 {savings > 0 && <span className="font-mono">({formatVND(savings)})</span>}
                               </span>
@@ -3870,7 +3880,7 @@ export default function AdminPage() {
                             <td className="py-3 px-4 text-center">
                               <button
                                 onClick={() => handleToggleComboActive(c)}
-                                className={`px-2.5 py-1 rounded-full text-[11px] border cursor-pointer transition-all ${
+                                className={`px-2.5 py-1 rounded-full text-2xs border cursor-pointer transition-all ${
                                   c.is_active
                                     ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/20'
                                     : 'bg-ink-100 text-ink-700 border-ink-300 hover:bg-ink-200'
@@ -3980,7 +3990,7 @@ export default function AdminPage() {
                     }`}
                   >
                     <span>{t.label}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-ink-50 font-mono">
+                    <span className="px-1.5 py-0.2 rounded-full text-2xs bg-ink-50 font-mono">
                       {t.count}
                     </span>
                   </button>
@@ -4003,7 +4013,7 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white border border-ink-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3 px-4">Mã Đơn</th>
                         <th className="py-3 px-4">Khách Hàng</th>
@@ -4021,11 +4031,11 @@ export default function AdminPage() {
                         return (
                           <tr key={order.id} className="hover:bg-ink-100 transition-colors">
                             <td className="py-3 px-4">
-                              <div className="font-mono text-emerald-700 text-[1.125em]">
+                              <div className="font-mono text-emerald-700 text-emph">
                                 #{order.order_code}
                               </div>
                               <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 border border-blue-500/20" title="Chi nhánh tiếp nhận">
+                                <span className="text-2xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 border border-blue-500/20" title="Chi nhánh tiếp nhận">
                                   {order.store_code || 'NH'}
                                 </span>
                                 {order.status === 'PENDING' ? (
@@ -4033,42 +4043,42 @@ export default function AdminPage() {
                                     const hoursAgo = (Date.now() - new Date(order.created_at).getTime()) / (1000 * 60 * 60);
                                     if (hoursAgo >= 20) {
                                       return (
-                                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-600 border border-rose-500/40 animate-pulse flex items-center gap-1" title={`Đã tạo ${Math.floor(hoursAgo)} giờ trước, sắp quá hạn giữ chỗ 24h!`}>
+                                        <span className="text-2xs px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-600 border border-rose-500/40 animate-pulse flex items-center gap-1" title={`Đã tạo ${Math.floor(hoursAgo)} giờ trước, sắp quá hạn giữ chỗ 24h!`}>
                                           <AlertCircle className="w-2.5 h-2.5 text-rose-600" />
                                           <span>Sắp hết hạn 24h</span>
                                         </span>
                                       );
                                     }
                                     return (
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-800 border border-amber-500/20 font-medium">
+                                      <span className="text-2xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-800 border border-amber-500/20 font-medium">
                                         Đang giữ chỗ
                                       </span>
                                     );
                                   })()
                                 ) : order.inventory_deducted ? (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 font-medium">
+                                  <span className="text-2xs px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 font-medium">
                                     Đã trừ kho
                                   </span>
                                 ) : order.status === 'CANCELLED' ? (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-ink-100 text-ink-700 font-medium">
+                                  <span className="text-2xs px-1.5 py-0.5 rounded bg-ink-100 text-ink-700 font-medium">
                                     Đã nhả
                                   </span>
                                 ) : null}
                               </div>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-ink-950 text-[1.125em]">{order.full_name}</p>
-                              <p className="text-[11px] text-ink-700 font-mono">{order.phone}</p>
+                              <p className="text-ink-950 text-emph">{order.full_name}</p>
+                              <p className="text-2xs text-ink-700 font-mono">{order.phone}</p>
                             </td>
                             <td className="py-3 px-4">
                               <p className="text-ink-950 text-xs truncate max-w-[180px]">{order.address}</p>
-                              <p className="text-[11px] text-ink-700">{order.province}</p>
+                              <p className="text-2xs text-ink-700">{order.province}</p>
                             </td>
                             <td className="py-3 px-4 text-ink-950 text-base">
                               {formatVND(order.total)}
                             </td>
                             <td className="py-3 px-4">
-                              <span className="px-2 py-0.5 rounded text-[11px] bg-ink-100 text-ink-800 border border-ink-300 uppercase">
+                              <span className="px-2 py-0.5 rounded text-2xs bg-ink-100 text-ink-800 border border-ink-300 uppercase">
                                 {order.payment_method}
                               </span>
                             </td>
@@ -4080,7 +4090,7 @@ export default function AdminPage() {
                                 onChange={(e) =>
                                   handleRequestStatusChange(order, e.target.value as Order['status'])
                                 }
-                                className={`text-[12px] rounded-lg px-2.5 py-1 border focus:outline-none ${
+                                className={`text-xs rounded-lg px-2.5 py-1 border focus:outline-none ${
                                   !(hasPermission(currentUser, 'orders.update_status_own_store') || hasPermission(currentUser, 'orders.update_status_all'))
                                     ? 'opacity-60 cursor-not-allowed'
                                     : 'cursor-pointer'
@@ -4102,14 +4112,42 @@ export default function AdminPage() {
                                     </option>
                                   ))}
                               </select>
+                              {/* Ai đổi trạng thái gần nhất, lúc nào */}
+                              {order.last_status_change && order.last_status_change.to_status === order.status && (
+                                <div
+                                  className="mt-1 text-2xs text-ink-700 leading-snug max-w-[170px]"
+                                  title={[
+                                    order.last_status_change.actor_username ? `Tài khoản: ${order.last_status_change.actor_username}` : '',
+                                    order.last_status_change.actor_role
+                                      ? `Vai trò: ${STATUS_ACTOR_ROLE_LABELS[order.last_status_change.actor_role] || order.last_status_change.actor_role}`
+                                      : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' · ') || undefined}
+                                >
+                                  <p className="truncate">
+                                    {statusChangeVerb(order.last_status_change.to_status)} bởi{' '}
+                                    <span className="text-ink-950">{statusChangeActorLabel(order.last_status_change)}</span>
+                                  </p>
+                                  <p>{formatStatusChangeTime(order.last_status_change.created_at)}</p>
+                                </div>
+                              )}
                             </td>
-                            <td className="py-3 px-4 text-ink-700 text-[11px]">
+                            <td className="py-3 px-4 text-ink-700 text-2xs">
                               {new Date(order.created_at).toLocaleDateString('vi-VN', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 day: '2-digit',
                                 month: '2-digit',
                               })}
+                              {order.delivery_slot_start && (
+                                <span
+                                  className={`block mt-0.5 ${order.delivery_mode === 'SCHEDULED' ? 'text-amber-800' : 'text-emerald-700'}`}
+                                >
+                                  {order.delivery_mode === 'SCHEDULED' ? 'Hẹn giao: ' : ''}
+                                  {describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end)}
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-right">
                               <div className="flex items-center justify-end gap-2">
@@ -4361,16 +4399,16 @@ export default function AdminPage() {
                             <div className="w-full h-full flex items-center justify-center text-ink-500 text-xs">Chưa có ảnh</div>
                           )}
                           <div className="absolute top-2 left-2 flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-full text-[11px] tracking-wider bg-white text-amber-800 border border-ink-300">
+                            <span className="px-2 py-0.5 rounded-full text-2xs tracking-wider bg-white text-amber-800 border border-ink-300">
                               #{idx + 1}
                             </span>
                             {ban.mobile_image && (
-                              <span className="px-2 py-0.5 rounded-full text-[11px] bg-white text-sky-700 border border-ink-300">Có ảnh điện thoại</span>
+                              <span className="px-2 py-0.5 rounded-full text-2xs bg-white text-sky-700 border border-ink-300">Có ảnh điện thoại</span>
                             )}
                           </div>
                           <div className="absolute top-2 right-2">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[11px] ${
+                              className={`px-2 py-0.5 rounded-full text-2xs ${
                                 ban.is_active
                                   ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/40'
                                   : 'bg-rose-500/20 text-rose-600 border border-rose-500/40'
@@ -4383,16 +4421,16 @@ export default function AdminPage() {
 
                         <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                           <div>
-                            {ban.tag && <span className="text-[11px] text-emerald-700 uppercase tracking-wider">{ban.tag}</span>}
+                            {ban.tag && <span className="text-2xs text-emerald-700 uppercase tracking-wider">{ban.tag}</span>}
                             <h3 className="text-sm text-ink-950 line-clamp-1 mt-0.5">{ban.title || 'Không có tiêu đề'}</h3>
-                            {ban.subtitle && <p className="text-[11px] text-ink-700 line-clamp-2 mt-1">{ban.subtitle}</p>}
-                            {ban.link && <p className="text-[10px] font-mono text-ink-600 truncate mt-1">Link: {ban.link}</p>}
+                            {ban.subtitle && <p className="text-2xs text-ink-700 line-clamp-2 mt-1">{ban.subtitle}</p>}
+                            {ban.link && <p className="text-2xs font-mono text-ink-600 truncate mt-1">Link: {ban.link}</p>}
                           </div>
 
                           <div className="flex items-center justify-between gap-2 pt-2 border-t border-ink-200">
                             <button
                               onClick={() => handleToggleBannerActive(ban)}
-                              className={`text-[11px] px-2 py-1 rounded transition-colors cursor-pointer ${
+                              className={`text-2xs px-2 py-1 rounded transition-colors cursor-pointer ${
                                 ban.is_active
                                   ? 'bg-ink-100 text-ink-800 hover:bg-ink-200'
                                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-50'
@@ -4450,11 +4488,11 @@ export default function AdminPage() {
                                   <div>
                                     <h3 className="text-sm text-ink-950 flex items-center gap-2 flex-wrap">
                                       <span>{g.title}</span>
-                                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-ink-100 text-amber-700 border border-ink-300">
+                                      <span className="text-2xs font-mono px-2 py-0.5 rounded-full bg-ink-100 text-amber-700 border border-ink-300">
                                         {g.items.length} banner • {activeCount} đang bật
                                       </span>
                                     </h3>
-                                    <p className="text-[11px] text-ink-700 mt-0.5 max-w-3xl">{g.hint}</p>
+                                    <p className="text-2xs text-ink-700 mt-0.5 max-w-3xl">{g.hint}</p>
                                   </div>
                                   {g.key !== 'other' && (
                                     <button
@@ -4485,7 +4523,7 @@ export default function AdminPage() {
                                       {[defaultHeroBanners[0], HERO_PLACEHOLDER_SLIDES[0]].filter(Boolean).map((d) => (
                                         <div key={d.id} className="relative w-44 aspect-[16/9] rounded-lg overflow-hidden border border-ink-200 bg-white">
                                           <Image src={d.image} alt={d.alt} fill className="object-cover opacity-80" unoptimized />
-                                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-white text-[10px] text-ink-800">Mặc định</span>
+                                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-white text-2xs text-ink-800">Mặc định</span>
                                         </div>
                                       ))}
                                     </div>
@@ -4615,7 +4653,7 @@ export default function AdminPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg text-ink-950">Báo Cáo Lợi Nhuận Gộp & Phân Tích Giá Vốn</h3>
-                          <span className="px-2 py-0.5 rounded text-[11px] bg-amber-500/10 text-amber-800 border border-amber-500/30">
+                          <span className="px-2 py-0.5 rounded text-2xs bg-amber-500/10 text-amber-800 border border-amber-500/30">
                             Super Admin
                           </span>
                         </div>
@@ -4689,38 +4727,38 @@ export default function AdminPage() {
                   {/* Profit Overview Cards: Tổng DT = DT có giá vốn + DT chưa có giá vốn; LN gộp = DT có giá vốn − Giá vốn */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="p-4 rounded-xl bg-ink-50 border border-ink-200">
-                      <p className="text-[11px] font-medium text-ink-700">Tổng Doanh Thu</p>
+                      <p className="text-2xs font-medium text-ink-700">Tổng Doanh Thu</p>
                       <p className="text-xl text-ink-950 mt-1">
                         {formatVND(profitData?.summary?.totalRevenue || 0)}
                       </p>
-                      <p className="text-[10px] text-ink-700 mt-1">{profitData?.summary?.totalOrders || 0} đơn hoàn tất</p>
+                      <p className="text-2xs text-ink-700 mt-1">{profitData?.summary?.totalOrders || 0} đơn hoàn tất</p>
                     </div>
 
                     <div className="p-4 rounded-xl bg-ink-50 border border-ink-200">
-                      <p className="text-[11px] font-medium text-ink-700">Doanh Thu Có Giá Vốn</p>
+                      <p className="text-2xs font-medium text-ink-700">Doanh Thu Có Giá Vốn</p>
                       <p className="text-xl text-ink-950 mt-1">
                         {formatVND(profitData?.summary?.revenueWithCost || 0)}
                       </p>
-                      <p className="text-[11px] text-ink-700 mt-1">
+                      <p className="text-2xs text-ink-700 mt-1">
                         {profitData?.summary?.costCoveragePercent || 0}% tổng doanh thu · dùng để tính lợi nhuận
                       </p>
                     </div>
 
                     <div className="p-4 rounded-xl bg-ink-50 border border-amber-200">
-                      <p className="text-[11px] font-medium text-amber-700/90">Giá Vốn (COGS)</p>
+                      <p className="text-2xs font-medium text-amber-700/90">Giá Vốn (COGS)</p>
                       <p className="text-xl text-amber-800 mt-1">
                         {formatVND(profitData?.summary?.totalCost || 0)}
                       </p>
-                      <p className="text-[10px] text-ink-700 mt-1">{profitData?.summary?.itemsWithCost || 0} dòng hàng có giá vốn</p>
+                      <p className="text-2xs text-ink-700 mt-1">{profitData?.summary?.itemsWithCost || 0} dòng hàng có giá vốn</p>
                     </div>
 
                     <div className="p-4 rounded-xl bg-ink-50 border border-emerald-200">
-                      <p className="text-[11px] font-medium text-emerald-700">Lợi Nhuận Gộp</p>
+                      <p className="text-2xs font-medium text-emerald-700">Lợi Nhuận Gộp</p>
                       <p className="text-xl text-emerald-700 mt-1">
                         {formatVND(profitData?.summary?.grossProfit || 0)}
                         <span className="ml-2 text-sm text-cyan-700">{profitData?.summary?.marginPercent || 0}%</span>
                       </p>
-                      <p className="text-[10px] text-emerald-700 mt-1">= Doanh thu có giá vốn − Giá vốn</p>
+                      <p className="text-2xs text-emerald-700 mt-1">= Doanh thu có giá vốn − Giá vốn</p>
                     </div>
                   </div>
 
@@ -4730,8 +4768,8 @@ export default function AdminPage() {
                       <AlertCircle className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
                       <div className="text-xs text-amber-800 space-y-1">
                         <p>
-                          <span className="text-[1.125em]">Chưa tính lợi nhuận: </span>
-                          <strong className="font-mono text-ink-950 text-[1.125em]">{formatVND(profitData?.summary?.revenueWithoutCost || 0)}</strong>
+                          <span className="text-emph">Chưa tính lợi nhuận: </span>
+                          <strong className="font-mono text-ink-950 text-emph">{formatVND(profitData?.summary?.revenueWithoutCost || 0)}</strong>
                           <span> doanh thu ({profitData?.summary?.itemsWithoutCost || 0} dòng hàng) chưa có giá vốn lúc đặt đơn, nên không nằm trong giá vốn và lợi nhuận gộp ở trên.</span>
                         </p>
                         {Array.isArray(profitData?.summary?.missingCostProducts) && profitData.summary.missingCostProducts.length > 0 && (
@@ -4759,14 +4797,14 @@ export default function AdminPage() {
                           profitGroupBy === 'product' ? 'Theo Sản Phẩm' : 'Theo Cửa Hàng'
                         }
                       </span>
-                      <span className="text-[11px] font-mono text-ink-700">
+                      <span className="text-2xs font-mono text-ink-700">
                         {profitData?.breakdown?.length || 0} bản ghi
                       </span>
                     </div>
 
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs text-ink-800">
-                        <thead className="bg-white text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                        <thead className="bg-white text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                           <tr>
                             <th className="py-2.5 px-4">
                               {profitGroupBy === 'product' ? 'Sản Phẩm' : profitGroupBy === 'store' ? 'Chi Nhánh' : 'Thời Gian'}
@@ -4799,10 +4837,10 @@ export default function AdminPage() {
                           ) : (
                             profitData.breakdown.map((row: any, idx: number) => (
                               <tr key={idx} className="hover:bg-white transition-colors">
-                                <td className="py-3 px-4 text-ink-950 text-[1.125em]">
+                                <td className="py-3 px-4 text-ink-950 text-emph">
                                   {row.label || row.name || row.store_name || row.period}
                                   {row.store_code && profitGroupBy === 'store' && (
-                                    <span className="ml-2 font-mono text-[10px] px-1.5 py-0.5 rounded bg-ink-100 text-ink-700">
+                                    <span className="ml-2 font-mono text-2xs px-1.5 py-0.5 rounded bg-ink-100 text-ink-700">
                                       {row.store_code}
                                     </span>
                                   )}
@@ -4810,7 +4848,7 @@ export default function AdminPage() {
                                 <td className="py-3 px-4 text-center font-mono text-ink-800">
                                   {row.orders_count != null ? row.orders_count : row.quantity_sold}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono text-ink-950 text-[1.125em]">
+                                <td className="py-3 px-4 text-right font-mono text-ink-950 text-emph">
                                   {formatVND(row.revenue)}
                                 </td>
                                 <td className="py-3 px-4 text-right font-mono text-ink-800">
@@ -4819,11 +4857,11 @@ export default function AdminPage() {
                                 <td className="py-3 px-4 text-right font-mono text-amber-800">
                                   {formatVND(row.cost)}
                                 </td>
-                                <td className="py-3 px-4 text-right font-mono text-emerald-700 text-[1.125em]">
+                                <td className="py-3 px-4 text-right font-mono text-emerald-700 text-emph">
                                   {formatVND(row.profit)}
                                 </td>
                                 <td className="py-3 px-4 text-center">
-                                  <span className={`px-2 py-0.5 rounded-full text-[11px] ${
+                                  <span className={`px-2 py-0.5 rounded-full text-2xs ${
                                     row.margin >= 30 ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20' :
                                     row.margin > 0 ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20' :
                                     'bg-ink-100 text-ink-700'
@@ -4835,10 +4873,10 @@ export default function AdminPage() {
                                   {row.missing_cost_items > 0 ? (
                                     <span className="font-mono text-amber-700" title={`${row.missing_cost_items} dòng hàng chưa có giá vốn, không tính vào lợi nhuận`}>
                                       {formatVND(row.revenue_without_cost || 0)}
-                                      <span className="ml-1 text-[11px]">({row.missing_cost_items} dòng)</span>
+                                      <span className="ml-1 text-2xs">({row.missing_cost_items} dòng)</span>
                                     </span>
                                   ) : (
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="px-2 py-0.5 rounded text-2xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                                       ✓ Đầy đủ
                                     </span>
                                   )}
@@ -4963,23 +5001,23 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   <div className="p-3 rounded-xl bg-ink-50 border border-ink-200 flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] text-ink-700">Sản phẩm trên Store</p>
+                      <p className="text-2xs text-ink-700">Sản phẩm trên Store</p>
                       <p className="text-base text-ink-950 mt-0.5">{products.length} sản phẩm</p>
                     </div>
-                    <span className="text-[12px] text-emerald-700">100% Khớp CSDL</span>
+                    <span className="text-xs text-emerald-700">100% Khớp CSDL</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-ink-50 border border-ink-200 flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] text-ink-700">Gói Combo trên Store</p>
+                      <p className="text-2xs text-ink-700">Gói Combo trên Store</p>
                       <p className="text-base text-amber-700 mt-0.5">{combos.length} gói combo</p>
                     </div>
-                    <span className="text-[12px] text-emerald-700">100% Khớp CSDL</span>
+                    <span className="text-xs text-emerald-700">100% Khớp CSDL</span>
                   </div>
 
                   <div className="p-3 rounded-xl bg-ink-50 border border-ink-200 flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] text-ink-700">Trạng thái CSDL</p>
+                      <p className="text-2xs text-ink-700">Trạng thái CSDL</p>
                       <p className="text-base text-emerald-700 mt-0.5">Sẵn sàng phục vụ</p>
                     </div>
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -4994,7 +5032,7 @@ export default function AdminPage() {
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3 px-4">Tên Bảng (Table Name)</th>
                         <th className="py-3 px-4">Mục Đích Dữ Liệu</th>
@@ -5004,48 +5042,48 @@ export default function AdminPage() {
                     </thead>
                     <tbody className="divide-y divide-ink-200">
                       <tr>
-                        <td className="py-3 px-4 font-mono text-emerald-700 text-[1.125em]">products</td>
+                        <td className="py-3 px-4 font-mono text-emerald-700 text-emph">products</td>
                         <td className="py-3 px-4">Sản phẩm đồ uống, giá bán, ảnh, thuộc tính</td>
-                        <td className="py-3 px-4 font-mono text-[1.125em]">{products.length} dòng</td>
-                        <td className="py-3 px-4 text-emerald-700 text-[1.125em]">Đã đồng bộ</td>
+                        <td className="py-3 px-4 font-mono text-emph">{products.length} dòng</td>
+                        <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                       <tr>
-                        <td className="py-3 px-4 font-mono text-emerald-700 text-[1.125em]">categories</td>
+                        <td className="py-3 px-4 font-mono text-emerald-700 text-emph">categories</td>
                         <td className="py-3 px-4">Phân loại sản phẩm (Sữa hạt, Trà sữa...)</td>
-                        <td className="py-3 px-4 font-mono text-[1.125em]">{categories.length} dòng</td>
-                        <td className="py-3 px-4 text-emerald-700 text-[1.125em]">Đã đồng bộ</td>
+                        <td className="py-3 px-4 font-mono text-emph">{categories.length} dòng</td>
+                        <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                       <tr>
-                        <td className="py-3 px-4 font-mono text-amber-700 text-[1.125em]">combos</td>
+                        <td className="py-3 px-4 font-mono text-amber-700 text-emph">combos</td>
                         <td className="py-3 px-4">Gói combo sản phẩm ưu đãi & tiết kiệm</td>
-                        <td className="py-3 px-4 font-mono text-[1.125em]">{combos.length} dòng</td>
-                        <td className="py-3 px-4 text-emerald-700 text-[1.125em]">Đã đồng bộ</td>
+                        <td className="py-3 px-4 font-mono text-emph">{combos.length} dòng</td>
+                        <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                       <tr>
-                        <td className="py-3 px-4 font-mono text-amber-700 text-[1.125em]">combo_items</td>
+                        <td className="py-3 px-4 font-mono text-amber-700 text-emph">combo_items</td>
                         <td className="py-3 px-4">Chi tiết các chai đồ uống trong từng gói combo</td>
-                        <td className="py-3 px-4 font-mono text-[1.125em]">Tự động liên kết</td>
-                        <td className="py-3 px-4 text-emerald-700 text-[1.125em]">Đã đồng bộ</td>
+                        <td className="py-3 px-4 font-mono text-emph">Tự động liên kết</td>
+                        <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                       <tr>
-                        <td className="py-3 px-4 font-mono text-emerald-700 text-[1.125em]">orders</td>
+                        <td className="py-3 px-4 font-mono text-emerald-700 text-emph">orders</td>
                         <td className="py-3 px-4">Đơn đặt hàng từ website khách hàng</td>
-                        <td className="py-3 px-4 font-mono text-[1.125em]">{ordersTotal} dòng</td>
-                        <td className="py-3 px-4 text-emerald-700 text-[1.125em]">Đã đồng bộ</td>
+                        <td className="py-3 px-4 font-mono text-emph">{ordersTotal} dòng</td>
+                        <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                       <tr>
-                        <td className="py-3 px-4 font-mono text-emerald-700 text-[1.125em]">order_items</td>
+                        <td className="py-3 px-4 font-mono text-emerald-700 text-emph">order_items</td>
                         <td className="py-3 px-4">Chi tiết các món trong từng đơn hàng</td>
-                        <td className="py-3 px-4 font-mono text-[1.125em]">
+                        <td className="py-3 px-4 font-mono text-emph">
                           {ordersTotal > orders.length ? '≥ ' : ''}{orders.reduce((acc, o) => acc + (o.item_count || 1), 0)} dòng
                         </td>
-                        <td className="py-3 px-4 text-emerald-700 text-[1.125em]">Đã đồng bộ</td>
+                        <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                       <tr>
-                        <td className="py-3 px-4 font-mono text-emerald-700 text-[1.125em]">product_variants</td>
+                        <td className="py-3 px-4 font-mono text-emerald-700 text-emph">product_variants</td>
                         <td className="py-3 px-4">Biến thể số lượng (1 chai, lốc 6, thùng 24)</td>
-                        <td className="py-3 px-4 font-mono text-[1.125em]">Tự động liên kết</td>
-                        <td className="py-3 px-4 text-emerald-700 text-[1.125em]">Đã đồng bộ</td>
+                        <td className="py-3 px-4 font-mono text-emph">Tự động liên kết</td>
+                        <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                     </tbody>
                   </table>
@@ -5088,7 +5126,7 @@ export default function AdminPage() {
                           </option>
                         ))}
                       </select>
-                      <span className="text-[11px] text-ink-600 hidden sm:inline">
+                      <span className="text-2xs text-ink-600 hidden sm:inline">
                         (Quản trị viên Super Admin có thể xem và cập nhật kho cho tất cả các chi nhánh)
                       </span>
                     </div>
@@ -5097,7 +5135,7 @@ export default function AdminPage() {
                       <Store className="w-4 h-4 text-amber-700 shrink-0" />
                       <span>
                         Đang quản lý kho cho:{' '}
-                        <strong className="text-ink-950 text-[1.125em]">
+                        <strong className="text-ink-950 text-emph">
                           {storeList.find((s) => s.code === selectedStoreCode)?.name || currentUser?.fullName || currentUser?.username}
                         </strong>
                       </span>
@@ -5146,22 +5184,22 @@ export default function AdminPage() {
                         <div className="text-sm text-ink-950 flex items-start gap-2 pt-1">
                           <MapPin className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                           <span>
-                            <strong className="text-ink-700 font-normal text-[1.125em]">Địa chỉ cửa hàng: </strong>
-                            <span className="text-ink-950 text-[1.125em]">
+                            <strong className="text-ink-700 font-normal text-emph">Địa chỉ cửa hàng: </strong>
+                            <span className="text-ink-950 text-emph">
                               {currentStore?.address || 'Chưa cập nhật địa chỉ'}
                             </span>
                           </span>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-ink-800 pt-0.5">
-                          <span className="flex items-center gap-1.5 text-red-600 text-[1.125em]">
+                          <span className="flex items-center gap-1.5 text-red-600 text-emph">
                             <Phone className="w-3.5 h-3.5" />
                             <span>Hotline: {currentStore?.phone || '028 6291 5024'}</span>
                           </span>
                           <span className="text-ink-600">•</span>
                           <span>
                             Khu vực:{' '}
-                            <strong className="text-[1.125em]">
+                            <strong className="text-emph">
                               {currentStore?.district || 'Chưa rõ'}, {currentStore?.province || 'Hồ Chí Minh'}
                             </strong>
                           </span>
@@ -5209,38 +5247,38 @@ export default function AdminPage() {
               {/* KPI Summary Cards for Inventory */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
-                  <span className="text-[11px] font-medium text-ink-700">Tổng Số Mặt Hàng</span>
+                  <span className="text-2xs font-medium text-ink-700">Tổng Số Mặt Hàng</span>
                   <div className="text-2xl sm:text-2xl text-ink-950 mt-1">
                     {inventoryItems.length} sản phẩm
                   </div>
-                  <span className="text-[10px] text-ink-600">100% thức uống chính hãng</span>
+                  <span className="text-2xs text-ink-600">100% thức uống chính hãng</span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
-                  <span className="text-[11px] font-medium text-ink-700">Tổng Tồn Thực</span>
+                  <span className="text-2xs font-medium text-ink-700">Tổng Tồn Thực</span>
                   <div className="text-2xl sm:text-2xl text-amber-700 mt-1">
                     {Object.values(editedStock).reduce((a, b) => a + (Number(b) || 0), 0)} chai
                   </div>
-                  <span className="text-[10px] text-ink-700">Kho thực tế tại {selectedStoreCode}</span>
+                  <span className="text-2xs text-ink-700">Kho thực tế tại {selectedStoreCode}</span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
-                  <span className="text-[11px] font-medium text-ink-700">Đang Giữ Chỗ (Reserved)</span>
+                  <span className="text-2xs font-medium text-ink-700">Đang Giữ Chỗ (Reserved)</span>
                   <div className="text-2xl sm:text-2xl text-amber-800 mt-1">
                     {inventoryItems.reduce((acc, i) => acc + (Number(i.reserved) || 0), 0)} chai
                   </div>
-                  <span className="text-[10px] text-amber-700/80">Từ các đơn hàng PENDING</span>
+                  <span className="text-2xs text-amber-700/80">Từ các đơn hàng PENDING</span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
-                  <span className="text-[11px] font-medium text-ink-700">Tồn Khả Dụng Bán</span>
+                  <span className="text-2xs font-medium text-ink-700">Tồn Khả Dụng Bán</span>
                   <div className="text-2xl sm:text-2xl text-emerald-700 mt-1">
                     {inventoryItems.reduce((acc, i) => {
                       const cur = editedStock[i.product_id] !== undefined ? editedStock[i.product_id] : i.stock_quantity;
                       return acc + Math.max(0, cur - (Number(i.reserved) || 0) - (Number(i.safety_stock) || 0));
                     }, 0)} chai
                   </div>
-                  <span className="text-[10px] text-emerald-700/80">Khách có thể đặt mua</span>
+                  <span className="text-2xs text-emerald-700/80">Khách có thể đặt mua</span>
                 </div>
               </div>
 
@@ -5275,7 +5313,7 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white border border-ink-200 overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3.5 px-4">Mặt hàng</th>
                         <th className="py-3.5 px-4">Danh mục</th>
@@ -5316,7 +5354,7 @@ export default function AdminPage() {
                               {/* Thông tin mặt hàng */}
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-xl bg-ink-50 border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center p-1">
+                                  <div className="w-16 h-12 rounded-lg bg-white border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center">
                                     <Image
                                       src={item.thumbnail}
                                       alt={item.product_name}
@@ -5329,7 +5367,7 @@ export default function AdminPage() {
                                     <p className="text-ink-950 text-sm truncate max-w-[240px] font-mono" title={item.product_name}>
                                       {productCodeOf(item.product_id, item.sku, item.product_name)}
                                     </p>
-                                    <p className="text-[11px] font-mono text-ink-700">
+                                    <p className="text-2xs font-mono text-ink-700">
                                       {item.unit || '1 chai'}
                                     </p>
                                   </div>
@@ -5338,20 +5376,20 @@ export default function AdminPage() {
 
                               {/* Danh mục */}
                               <td className="py-3 px-4">
-                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-ink-100 text-ink-800 border border-ink-300">
+                                <span className="px-2.5 py-1 rounded-lg text-2xs font-medium bg-ink-100 text-ink-800 border border-ink-300">
                                   {item.category_name || 'Đồ uống'}
                                 </span>
                               </td>
 
                               {/* Giá bán */}
-                              <td className="py-3 px-4 text-emerald-700 font-mono text-[1.125em]">
+                              <td className="py-3 px-4 text-emerald-700 font-mono text-emph">
                                 {formatVND(item.price)}
                               </td>
 
                               {/* Cột 1: Tồn vật lý */}
                               <td className="py-3 px-3 text-center">
                                 <span className="inline-block px-2.5 py-1 rounded-xl bg-ink-50 border border-ink-200 font-mono text-ink-950 text-sm shadow-xs">
-                                  {currentQty} <span className="text-[10px] text-ink-600 font-normal">chai</span>
+                                  {currentQty} <span className="text-2xs text-ink-600 font-normal">chai</span>
                                 </span>
                               </td>
 
@@ -5362,7 +5400,7 @@ export default function AdminPage() {
                                     ? 'bg-amber-500/10 text-amber-800 border-amber-500/30 shadow-xs'
                                     : 'bg-ink-50 text-ink-600 border-ink-200'
                                 }`}>
-                                  {reservedQty} <span className="text-[10px] font-normal">chai</span>
+                                  {reservedQty} <span className="text-2xs font-normal">chai</span>
                                 </span>
                               </td>
 
@@ -5373,7 +5411,7 @@ export default function AdminPage() {
                                     ? 'bg-blue-500/10 text-blue-700 border-blue-500/30 shadow-xs'
                                     : 'bg-ink-50 text-ink-600 border-ink-200'
                                 }`}>
-                                  {safetyQty} <span className="text-[10px] font-normal">chai</span>
+                                  {safetyQty} <span className="text-2xs font-normal">chai</span>
                                 </span>
                               </td>
 
@@ -5386,7 +5424,7 @@ export default function AdminPage() {
                                       ? 'bg-amber-500/15 text-amber-800 border-amber-500/30'
                                       : 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30'
                                 }`}>
-                                  {availableQty} <span className="text-[10px] font-normal">chai</span>
+                                  {availableQty} <span className="text-2xs font-normal">chai</span>
                                 </span>
                               </td>
 
@@ -5394,17 +5432,17 @@ export default function AdminPage() {
                               <td className="py-3 px-4 text-center">
                                 <div className="flex flex-col items-center justify-center gap-1">
                                   {isOut ? (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-rose-500/10 text-rose-600 border border-rose-500/30">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs bg-rose-500/10 text-rose-600 border border-rose-500/30">
                                       <AlertCircle className="w-3 h-3" />
                                       <span>Hết hàng</span>
                                     </span>
                                   ) : isLow ? (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-amber-500/10 text-amber-700 border border-amber-500/30">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs bg-amber-500/10 text-amber-700 border border-amber-500/30">
                                       <Clock className="w-3 h-3" />
                                       <span>Sắp hết (≤ 5)</span>
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/30">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs bg-emerald-500/10 text-emerald-700 border border-emerald-500/30">
                                       <CheckCircle2 className="w-3 h-3" />
                                       <span>Còn hàng</span>
                                     </span>
@@ -5413,7 +5451,7 @@ export default function AdminPage() {
                                   {/* Dòng hiển thị thời gian cập nhật lần cuối */}
                                   {item.updated_at ? (
                                     <span
-                                      className="text-[10px] text-ink-700 font-mono whitespace-nowrap flex items-center justify-center gap-1"
+                                      className="text-2xs text-ink-700 font-mono whitespace-nowrap flex items-center justify-center gap-1"
                                       title={`Cập nhật lần cuối: ${new Date(item.updated_at).toLocaleString('vi-VN')}${item.updated_by ? ` bởi ${item.updated_by}` : ''}`}
                                     >
                                       <Clock className="w-2.5 h-2.5 text-ink-600 shrink-0" />
@@ -5430,7 +5468,7 @@ export default function AdminPage() {
                                       </span>
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] text-ink-600 italic">
+                                    <span className="text-2xs text-ink-600 italic">
                                       Chưa cập nhật
                                     </span>
                                   )}
@@ -5440,7 +5478,7 @@ export default function AdminPage() {
                               {/* Nút Cập nhật duy nhất - Mở Pop-up nhập số lượng */}
                               <td className="py-3 px-4 text-right">
                                 {inventorySheetMode ? (
-                                  <span className="text-[11px] text-ink-600">Theo sheet</span>
+                                  <span className="text-2xs text-ink-600">Theo sheet</span>
                                 ) : (
                                 <button
                                   type="button"
@@ -5468,13 +5506,13 @@ export default function AdminPage() {
                     <h2 className="text-base text-ink-950 flex items-center gap-2">
                       <Layers className="w-4 h-4 text-emerald-700" />
                       <span>Lô hàng &amp; hạn sử dụng</span>
-                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-ink-100 text-ink-800 border border-ink-300">
+                      <span className="text-2xs font-mono px-2 py-0.5 rounded-full bg-ink-100 text-ink-800 border border-ink-300">
                         {inventoryLots.length} lô
                       </span>
                     </h2>
-                    <p className="text-[11px] text-ink-700 mt-0.5">
+                    <p className="text-2xs text-ink-700 mt-0.5">
                       Theo dõi từng lô theo ngày sản xuất / hạn dùng (xuất theo lô hết hạn trước — FEFO). Chi nhánh:{' '}
-                      <strong className="text-ink-950 text-[1.125em]">{selectedStoreCode}</strong>
+                      <strong className="text-ink-950 text-emph">{selectedStoreCode}</strong>
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -5502,7 +5540,7 @@ export default function AdminPage() {
 
                 {lotFormOpen && (
                   <form onSubmit={handleSaveLot} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 px-5 py-4 border-b border-ink-200 bg-ink-50">
-                    <label className="text-[12px] text-ink-800 lg:col-span-2">
+                    <label className="text-xs text-ink-800 lg:col-span-2">
                       Sản phẩm *
                       <select
                         value={lotForm.productId}
@@ -5518,7 +5556,7 @@ export default function AdminPage() {
                         ))}
                       </select>
                     </label>
-                    <label className="text-[12px] text-ink-800">
+                    <label className="text-xs text-ink-800">
                       Mã lô *
                       <input
                         type="text"
@@ -5530,7 +5568,7 @@ export default function AdminPage() {
                         className="mt-1 w-full bg-ink-50 border border-ink-300 rounded-lg px-2.5 py-2 text-xs text-ink-950 placeholder:text-ink-600 focus:outline-none focus:border-emerald-500"
                       />
                     </label>
-                    <label className="text-[12px] text-ink-800">
+                    <label className="text-xs text-ink-800">
                       Ngày sản xuất *
                       <input
                         type="date"
@@ -5540,7 +5578,7 @@ export default function AdminPage() {
                         className="mt-1 w-full bg-ink-50 border border-ink-300 rounded-lg px-2.5 py-2 text-xs text-ink-950 focus:outline-none focus:border-emerald-500"
                       />
                     </label>
-                    <label className="text-[12px] text-ink-800">
+                    <label className="text-xs text-ink-800">
                       Hạn sử dụng *
                       <input
                         type="date"
@@ -5551,7 +5589,7 @@ export default function AdminPage() {
                         className="mt-1 w-full bg-ink-50 border border-ink-300 rounded-lg px-2.5 py-2 text-xs text-ink-950 focus:outline-none focus:border-emerald-500"
                       />
                     </label>
-                    <label className="text-[12px] text-ink-800">
+                    <label className="text-xs text-ink-800">
                       Số lượng (chai) *
                       <input
                         type="number"
@@ -5563,7 +5601,7 @@ export default function AdminPage() {
                         className="mt-1 w-full bg-ink-50 border border-ink-300 rounded-lg px-2.5 py-2 text-xs text-ink-950 focus:outline-none focus:border-emerald-500"
                       />
                     </label>
-                    <div className="sm:col-span-2 lg:col-span-4 flex items-end text-[11px] text-ink-600">
+                    <div className="sm:col-span-2 lg:col-span-4 flex items-end text-2xs text-ink-600">
                       Nhập trùng mã lô và đúng ngày sẽ cộng thêm số lượng vào lô đó; trùng mã lô nhưng khác ngày sẽ bị từ chối.
                     </div>
                     <div className="flex items-end justify-end">
@@ -5580,7 +5618,7 @@ export default function AdminPage() {
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3 px-4">Sản phẩm</th>
                         <th className="py-3 px-4">Mã lô</th>
@@ -5614,7 +5652,7 @@ export default function AdminPage() {
                         const fmtDate = (d: string) => new Date(d).toLocaleDateString('vi-VN');
                         return (
                           <tr key={lot.id} className="hover:bg-ink-100 transition-colors">
-                            <td className="py-3 px-4 text-ink-950 max-w-[240px] truncate text-[1.125em] font-mono" title={lot.product_name}>
+                            <td className="py-3 px-4 text-ink-950 max-w-[240px] truncate text-emph font-mono" title={lot.product_name}>
                               {productCodeOf(lot.product_id, null, lot.product_name)}
                             </td>
                             <td className="py-3 px-4 font-mono text-emerald-700">{lot.lot_code}</td>
@@ -5622,9 +5660,9 @@ export default function AdminPage() {
                             <td className="py-3 px-4 text-ink-950">{fmtDate(lot.expiry_date)}</td>
                             <td className="py-3 px-4 text-right font-mono">{lot.stock_quantity}</td>
                             <td className="py-3 px-4 text-right font-mono text-amber-800">{lot.reserved_quantity}</td>
-                            <td className="py-3 px-4 text-right font-mono text-ink-950 text-[1.125em]">{lot.available_quantity}</td>
+                            <td className="py-3 px-4 text-right font-mono text-ink-950 text-emph">{lot.available_quantity}</td>
                             <td className="py-3 px-4">
-                              <span className={`px-2 py-0.5 rounded-full text-[11px] border ${badge.cls}`}>{badge.text}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-2xs border ${badge.cls}`}>{badge.text}</span>
                             </td>
                           </tr>
                         );
@@ -5681,7 +5719,7 @@ export default function AdminPage() {
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
                   <span className="text-xs text-ink-700 font-medium">Tổng Quản Trị Viên</span>
                   <div className="text-2xl text-ink-950 mt-1">{adminUsers.length} tài khoản</div>
-                  <span className="text-[10px] text-ink-600">Trong CSDL WebTSF</span>
+                  <span className="text-2xs text-ink-600">Trong CSDL WebTSF</span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
@@ -5689,7 +5727,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-leaf-700 mt-1">
                     {adminUsers.filter((u) => u.role === 'SUPER_ADMIN').length} Super Admin
                   </div>
-                  <span className="text-[10px] text-leaf-700/80">Toàn quyền hệ thống</span>
+                  <span className="text-2xs text-leaf-700/80">Toàn quyền hệ thống</span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
@@ -5697,7 +5735,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-emerald-700 mt-1">
                     {adminUsers.filter((u) => u.role === 'ADMIN').length} Cửa hàng
                   </div>
-                  <span className="text-[10px] text-emerald-700/80">TCH, TN, THB, NH, D1...</span>
+                  <span className="text-2xs text-emerald-700/80">TCH, TN, THB, NH, D1...</span>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-ink-50 border border-ink-200">
@@ -5705,7 +5743,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-teal-700 mt-1">
                     {adminUsers.filter((u) => u.is_active).length} / {adminUsers.length}
                   </div>
-                  <span className="text-[10px] text-teal-700/80">Sẵn sàng đăng nhập</span>
+                  <span className="text-2xs text-teal-700/80">Sẵn sàng đăng nhập</span>
                 </div>
               </div>
 
@@ -5739,7 +5777,7 @@ export default function AdminPage() {
               <div className="rounded-2xl bg-white border border-ink-200 overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
-                    <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                    <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
                         <th className="py-3.5 px-4">Tài khoản &amp; Họ tên</th>
                         <th className="py-3.5 px-4">Email đăng nhập</th>
@@ -5785,12 +5823,12 @@ export default function AdminPage() {
                                     <p className="text-ink-950 text-sm flex items-center gap-1.5">
                                       <span>{user.username}</span>
                                       {isSelf && (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700">
+                                        <span className="text-2xs px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700">
                                           (Tôi)
                                         </span>
                                       )}
                                     </p>
-                                    <p className="text-[11px] text-ink-700">{user.full_name || 'Quản trị viên'}</p>
+                                    <p className="text-2xs text-ink-700">{user.full_name || 'Quản trị viên'}</p>
                                   </div>
                                 </div>
                               </td>
@@ -5803,12 +5841,12 @@ export default function AdminPage() {
                               {/* Role */}
                               <td className="py-3 px-4">
                                 {user.role === 'SUPER_ADMIN' ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-leaf-500/10 text-leaf-700 border border-leaf-500/30 uppercase">
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs bg-leaf-500/10 text-leaf-700 border border-leaf-500/30 uppercase">
                                     <ShieldCheck className="w-3 h-3" />
                                     <span>Super Admin</span>
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 uppercase">
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 uppercase">
                                     <Store className="w-3 h-3" />
                                     <span>Admin Cửa Hàng</span>
                                   </span>
@@ -5818,12 +5856,12 @@ export default function AdminPage() {
                               {/* Trạng thái */}
                               <td className="py-3 px-4">
                                 {user.is_active ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-2xs bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                                     <span>Hoạt động</span>
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-2xs bg-rose-500/10 text-rose-600 border border-rose-500/20">
                                     <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
                                     <span>Tạm khóa</span>
                                   </span>
@@ -5831,7 +5869,7 @@ export default function AdminPage() {
                               </td>
 
                               {/* Ngày tạo */}
-                              <td className="py-3 px-4 text-ink-700 text-[11px]">
+                              <td className="py-3 px-4 text-ink-700 text-2xs">
                                 {new Date(user.created_at).toLocaleDateString('vi-VN')}
                               </td>
 
@@ -5934,7 +5972,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-ink-950 mt-2 tracking-tight">
                     {members.length}
                   </div>
-                  <p className="text-[11px] text-emerald-700 mt-1.5 flex items-center gap-1">
+                  <p className="text-2xs text-emerald-700 mt-1.5 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>{members.filter((m) => m.provider === 'google').length} tài khoản Google</span>
                   </p>
@@ -5951,7 +5989,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-ink-950 mt-2 tracking-tight">
                     {members.filter((m) => Number(m.total_orders) > 0).length}
                   </div>
-                  <p className="text-[11px] text-blue-700 mt-1.5">
+                  <p className="text-2xs text-blue-700 mt-1.5">
                     {members.length > 0
                       ? `${Math.round((members.filter((m) => Number(m.total_orders) > 0).length / members.length) * 100)}% đã phát sinh đơn`
                       : 'Chưa có đơn hàng'}
@@ -5969,7 +6007,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-ink-950 mt-2 tracking-tight">
                     {formatVND(members.reduce((acc, m) => acc + (Number(m.total_spent) || 0), 0))}
                   </div>
-                  <p className="text-[11px] text-amber-700 mt-1.5">Doanh thu từ các đơn thành viên</p>
+                  <p className="text-2xs text-amber-700 mt-1.5">Doanh thu từ các đơn thành viên</p>
                 </div>
 
                 {/* 4. Tài khoản hoạt động */}
@@ -5983,7 +6021,7 @@ export default function AdminPage() {
                   <div className="text-2xl text-ink-950 mt-2 tracking-tight">
                     {members.filter((m) => m.is_active).length} / {members.length}
                   </div>
-                  <p className="text-[11px] text-leaf-700 mt-1.5">
+                  <p className="text-2xs text-leaf-700 mt-1.5">
                     {members.filter((m) => !m.is_active).length > 0
                       ? `${members.filter((m) => !m.is_active).length} tài khoản đang bị khóa`
                       : '100% tài khoản hoạt động tốt'}
@@ -6036,7 +6074,7 @@ export default function AdminPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-ink-200 bg-ink-50 text-[12px] uppercase tracking-wider text-ink-700">
+                      <tr className="border-b border-ink-200 bg-ink-50 text-xs uppercase tracking-wider text-ink-700">
                         <th className="py-3 px-4">Thành Viên</th>
                         <th className="py-3 px-4">Liên Hệ</th>
                         <th className="py-3 px-4">Địa Chỉ Nhận Hàng</th>
@@ -6061,8 +6099,8 @@ export default function AdminPage() {
                           <td colSpan={7} className="py-12 text-center text-ink-700">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Users className="w-8 h-8 text-ink-500" />
-                              <p className="text-ink-800 text-[1.125em]">Không tìm thấy khách hàng nào</p>
-                              <p className="text-[11px] text-ink-600">
+                              <p className="text-ink-800 text-emph">Không tìm thấy khách hàng nào</p>
+                              <p className="text-2xs text-ink-600">
                                 Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái
                               </p>
                             </div>
@@ -6084,26 +6122,26 @@ export default function AdminPage() {
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    <p className="text-ink-950 group-hover:text-emerald-700 transition-colors text-[1.125em]">
+                                    <p className="text-ink-950 group-hover:text-emerald-700 transition-colors text-emph">
                                       {member.full_name || 'Khách vãng lai'}
                                     </p>
                                     {member.provider === 'google' && (
-                                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                                      <span className="px-1.5 py-0.5 rounded text-2xs bg-rose-500/10 text-rose-600 border border-rose-500/20">
                                         Google
                                       </span>
                                     )}
                                     {member.provider === 'facebook' && (
-                                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-700 border border-blue-500/20">
+                                      <span className="px-1.5 py-0.5 rounded text-2xs bg-blue-500/10 text-blue-700 border border-blue-500/20">
                                         Facebook
                                       </span>
                                     )}
                                     {(!member.provider || member.provider === 'local') && (
-                                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-ink-100 text-ink-700 border border-ink-300">
+                                      <span className="px-1.5 py-0.5 rounded text-2xs bg-ink-100 text-ink-700 border border-ink-300">
                                         Web
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-[10px] text-ink-600 font-mono truncate">
+                                  <p className="text-2xs text-ink-600 font-mono truncate">
                                     ID: {member.id}
                                   </p>
                                 </div>
@@ -6120,12 +6158,12 @@ export default function AdminPage() {
                                   </span>
                                 </div>
                                 {member.phone ? (
-                                  <div className="flex items-center gap-1.5 text-emerald-700 font-mono text-[11px]">
+                                  <div className="flex items-center gap-1.5 text-emerald-700 font-mono text-2xs">
                                     <Phone className="w-3 h-3 text-ink-600 shrink-0" />
                                     <span>{member.phone}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-[10px] text-ink-600 italic">
+                                  <span className="text-2xs text-ink-600 italic">
                                     Chưa cập nhật SĐT
                                   </span>
                                 )}
@@ -6139,7 +6177,7 @@ export default function AdminPage() {
                                   <p className="text-ink-800 truncate" title={member.address || ''}>
                                     {member.address || 'Địa chỉ chưa cập nhật'}
                                   </p>
-                                  <p className="text-[10px] text-ink-600 truncate flex items-center gap-1">
+                                  <p className="text-2xs text-ink-600 truncate flex items-center gap-1">
                                     <MapPin className="w-3 h-3 text-ink-500 shrink-0" />
                                     <span>
                                       {[member.ward, member.district, member.province]
@@ -6149,7 +6187,7 @@ export default function AdminPage() {
                                   </p>
                                 </div>
                               ) : (
-                                <span className="text-[11px] text-ink-600 italic">
+                                <span className="text-2xs text-ink-600 italic">
                                   Chưa lưu địa chỉ
                                 </span>
                               )}
@@ -6159,15 +6197,15 @@ export default function AdminPage() {
                             <td className="py-3.5 px-4">
                               <div className="space-y-0.5">
                                 <div className="flex items-center gap-2">
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-blue-500/10 text-blue-700 border border-blue-500/20">
+                                  <span className="px-2 py-0.5 rounded-full text-2xs bg-blue-500/10 text-blue-700 border border-blue-500/20">
                                     {member.total_orders || 0} đơn
                                   </span>
-                                  <span className="text-ink-950 text-[1.125em]">
+                                  <span className="text-ink-950 text-emph">
                                     {formatVND(member.total_spent || 0)}
                                   </span>
                                 </div>
                                 {member.last_order_date && (
-                                  <p className="text-[10px] text-ink-600">
+                                  <p className="text-2xs text-ink-600">
                                     Gần nhất: {new Date(member.last_order_date).toLocaleDateString('vi-VN')}
                                   </p>
                                 )}
@@ -6177,12 +6215,12 @@ export default function AdminPage() {
                             {/* Cột 5: Trạng thái */}
                             <td className="py-3.5 px-4">
                               {member.is_active ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                                   <span>Hoạt động</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs bg-rose-500/10 text-rose-600 border border-rose-500/20">
                                   <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
                                   <span>Đã tạm khóa</span>
                                 </span>
@@ -6190,7 +6228,7 @@ export default function AdminPage() {
                             </td>
 
                             {/* Cột 6: Ngày đăng ký */}
-                            <td className="py-3.5 px-4 text-ink-700 text-[11px] font-mono">
+                            <td className="py-3.5 px-4 text-ink-700 text-2xs font-mono">
                               {new Date(member.created_at).toLocaleDateString('vi-VN')}
                             </td>
 
@@ -6388,7 +6426,7 @@ export default function AdminPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs text-ink-800">
                     <thead>
-                      <tr className="border-b border-ink-200 bg-ink-50 text-[12px] uppercase tracking-wider text-ink-700">
+                      <tr className="border-b border-ink-200 bg-ink-50 text-xs uppercase tracking-wider text-ink-700">
                         <th className="py-3 px-4">Thời Gian</th>
                         <th className="py-3 px-4">Người Thực Hiện</th>
                         <th className="py-3 px-4">Hành Động</th>
@@ -6413,8 +6451,8 @@ export default function AdminPage() {
                           <td colSpan={7} className="py-12 text-center text-ink-700">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <History className="w-8 h-8 text-ink-500" />
-                              <p className="text-ink-800 text-[1.125em]">Chưa có nhật ký hoạt động nào</p>
-                              <p className="text-[11px] text-ink-600">
+                              <p className="text-ink-800 text-emph">Chưa có nhật ký hoạt động nào</p>
+                              <p className="text-2xs text-ink-600">
                                 Mọi thao tác thêm, sửa, xóa, chuyển đơn, đăng nhập sẽ tự động hiển thị tại đây
                               </p>
                             </div>
@@ -6430,7 +6468,7 @@ export default function AdminPage() {
                           return (
                             <tr key={log.id} className="hover:bg-ink-100 transition-colors">
                               {/* Thời gian */}
-                              <td className="py-3 px-4 font-mono text-[11px] text-ink-700 whitespace-nowrap">
+                              <td className="py-3 px-4 font-mono text-2xs text-ink-700 whitespace-nowrap">
                                 {new Date(log.created_at).toLocaleString('vi-VN', {
                                   day: '2-digit',
                                   month: '2-digit',
@@ -6444,9 +6482,9 @@ export default function AdminPage() {
                               {/* Người thực hiện */}
                               <td className="py-3 px-4 whitespace-nowrap">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-ink-950 font-mono text-[1.125em]">{log.admin_username}</span>
+                                  <span className="text-ink-950 font-mono text-emph">{log.admin_username}</span>
                                   <span
-                                    className={`px-1.5 py-0.5 rounded text-[10px] uppercase ${
+                                    className={`px-1.5 py-0.5 rounded text-2xs uppercase ${
                                       log.role === 'SUPER_ADMIN'
                                         ? 'bg-leaf-500/20 text-leaf-700 border border-leaf-500/30'
                                         : log.role === 'MARKETING'
@@ -6462,7 +6500,7 @@ export default function AdminPage() {
                               {/* Hành động */}
                               <td className="py-3 px-4 whitespace-nowrap">
                                 <span
-                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] border ${
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs border ${
                                     isCreate
                                       ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30'
                                       : isDelete
@@ -6480,7 +6518,7 @@ export default function AdminPage() {
 
                               {/* Đối tượng */}
                               <td className="py-3 px-4">
-                                <div className="text-ink-800 font-mono text-[11px] truncate max-w-[200px]" title={log.entity_id || ''}>
+                                <div className="text-ink-800 font-mono text-2xs truncate max-w-[200px]" title={log.entity_id || ''}>
                                   <span className="text-ink-700">{log.entity_type}</span>
                                   {log.entity_id && <span className="text-ink-950"> #{log.entity_id}</span>}
                                 </div>
@@ -6489,16 +6527,16 @@ export default function AdminPage() {
                               {/* Cửa hàng */}
                               <td className="py-3 px-4 whitespace-nowrap">
                                 {log.store_code ? (
-                                  <span className="px-2 py-0.5 rounded text-[11px] bg-amber-500/10 text-amber-800 border border-amber-500/20 font-mono">
+                                  <span className="px-2 py-0.5 rounded text-2xs bg-amber-500/10 text-amber-800 border border-amber-500/20 font-mono">
                                     {log.store_code}
                                   </span>
                                 ) : (
-                                  <span className="text-ink-600 text-[11px]">Toàn HT</span>
+                                  <span className="text-ink-600 text-2xs">Toàn HT</span>
                                 )}
                               </td>
 
                               {/* IP */}
-                              <td className="py-3 px-4 font-mono text-[11px] text-ink-700 whitespace-nowrap">
+                              <td className="py-3 px-4 font-mono text-2xs text-ink-700 whitespace-nowrap">
                                 {log.ip || '—'}
                               </td>
 
@@ -6506,7 +6544,7 @@ export default function AdminPage() {
                               <td className="py-3 px-4 text-right whitespace-nowrap">
                                 <button
                                   onClick={() => openAuditLogDetail(log)}
-                                  className="px-2.5 py-1 rounded-lg text-[12px] bg-ink-100 hover:bg-ink-200 text-leaf-700 hover:text-ink-950 border border-ink-300 transition-colors cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg text-xs bg-ink-100 hover:bg-ink-200 text-leaf-700 hover:text-ink-950 border border-ink-300 transition-colors cursor-pointer"
                                 >
                                   Xem thay đổi
                                 </button>
@@ -6629,7 +6667,7 @@ export default function AdminPage() {
                       Giá bán (VNĐ) *
                     </label>
                     {!hasPermission(currentUser, 'products.manage_price') && (
-                      <span className="text-[10px] text-amber-700 font-medium">Chỉ xem (không có quyền sửa giá)</span>
+                      <span className="text-2xs text-amber-700 font-medium">Chỉ xem (không có quyền sửa giá)</span>
                     )}
                   </div>
                   <input
@@ -6656,7 +6694,7 @@ export default function AdminPage() {
                         Giá vốn (VNĐ)
                       </label>
                       {!hasPermission(currentUser, 'cost_price.edit') && (
-                        <span className="text-[10px] text-ink-700 font-medium">Chỉ xem</span>
+                        <span className="text-2xs text-ink-700 font-medium">Chỉ xem</span>
                       )}
                     </div>
                     <input
@@ -6724,11 +6762,11 @@ export default function AdminPage() {
                       <h4 className="text-sm text-ink-950 flex items-center gap-2">
                         <ImageIcon className="w-4 h-4 text-emerald-700" />
                         <span>Quản Lý Hình Ảnh & Thư Viện Sản Phẩm</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-ink-100 text-emerald-700 border border-ink-300">
+                        <span className="text-2xs font-mono px-2 py-0.5 rounded-full bg-ink-100 text-emerald-700 border border-ink-300">
                           {productImages.length} ảnh
                         </span>
                       </h4>
-                      <p className="text-[11px] text-ink-700 mt-0.5">
+                      <p className="text-2xs text-ink-700 mt-0.5">
                         Tải ảnh mới từ máy tính hoặc dán URL. Admin có thể kéo/chọn ảnh đại diện, sắp xếp thứ tự và sửa Alt text.
                       </p>
                     </div>
@@ -6801,14 +6839,14 @@ export default function AdminPage() {
 
                               {/* Badge Đại diện */}
                               {isThumb && (
-                                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[11px] bg-emerald-600 text-white shadow-sm flex items-center gap-1">
+                                <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-full text-2xs bg-emerald-600 text-white shadow-sm flex items-center gap-1">
                                   <Star className="w-2.5 h-2.5 fill-white" />
                                   <span>Đại diện</span>
                                 </span>
                               )}
 
                               {/* Thứ tự */}
-                              <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-white text-ink-800 border border-ink-300">
+                              <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-2xs font-mono bg-white text-ink-800 border border-ink-300">
                                 #{idx + 1}
                               </span>
                             </div>
@@ -6824,7 +6862,7 @@ export default function AdminPage() {
                                 );
                               }}
                               placeholder="Mô tả ảnh (Alt text)..."
-                              className="w-full bg-ink-50 border border-ink-200 rounded-lg px-2 py-1 text-[11px] text-ink-950 placeholder:text-ink-500 focus:outline-none focus:border-emerald-500"
+                              className="w-full bg-ink-50 border border-ink-200 rounded-lg px-2 py-1 text-2xs text-ink-950 placeholder:text-ink-500 focus:outline-none focus:border-emerald-500"
                             />
 
                             {/* Action Toolbar */}
@@ -6834,7 +6872,7 @@ export default function AdminPage() {
                                   <button
                                     type="button"
                                     onClick={() => setEditingProduct({ ...editingProduct, thumbnail: img.url })}
-                                    className="px-2 py-1 rounded text-[11px] bg-ink-100 hover:bg-emerald-600 hover:text-white text-ink-800 transition-all flex items-center gap-1 cursor-pointer"
+                                    className="px-2 py-1 rounded text-2xs bg-ink-100 hover:bg-emerald-600 hover:text-white text-ink-800 transition-all flex items-center gap-1 cursor-pointer"
                                     title="Chọn làm ảnh đại diện chính"
                                   >
                                     <Star className="w-3 h-3 text-amber-700" />
@@ -6974,7 +7012,7 @@ export default function AdminPage() {
                   }
                   className="w-full sm:w-64 bg-ink-50 border border-ink-300 text-sm text-ink-950 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
                 />
-                <p className="text-[11px] text-ink-600">
+                <p className="text-2xs text-ink-600">
                   Nhập số lượng thật đã bán ở cửa hàng/đại lý/kênh khác. Website tự cộng thêm đơn đặt trên web và chỉ hiện khi tổng từ 10 trở lên.
                 </p>
               </div>
@@ -6991,14 +7029,14 @@ export default function AdminPage() {
                         { name: '24 chai', quantity: 24, price: 432000, unit: 'thùng', bottle_multiplier: 24 },
                       ])
                     }
-                    className="text-[12px] text-emerald-700 hover:text-emerald-700 flex items-center gap-1"
+                    className="text-xs text-emerald-700 hover:text-emerald-700 flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm biến thể</span>
                   </button>
                 </div>
 
-                <p className="text-[11px] text-ink-600">
+                <p className="text-2xs text-ink-600">
                   Tên ghi dạng &quot;7 chai&quot;; đơn vị Lốc/Thùng sẽ tự ghép phía trước khi hiển thị (VD: Lốc 7 chai). &quot;Số chai quy đổi&quot; là số chai thật trong gói, dùng để trừ kho.
                 </p>
 
@@ -7014,7 +7052,7 @@ export default function AdminPage() {
                   const canEditVariantPrice = hasPermission(currentUser, 'products.manage_price');
                   const unitOptions = ['chai', 'lốc', 'thùng'];
                   if (v.unit && !unitOptions.includes(v.unit)) unitOptions.push(v.unit);
-                  const labelCls = 'block text-[10px] text-ink-600 mb-0.5';
+                  const labelCls = 'block text-2xs text-ink-600 mb-0.5';
                   const fieldCls =
                     'w-full bg-white border border-ink-300 rounded-lg px-2 py-1 text-xs text-ink-950 focus:outline-none focus:border-emerald-500';
                   return (
@@ -7205,7 +7243,7 @@ export default function AdminPage() {
                       Giá Gốc Niêm Yết (VNĐ) *
                     </label>
                     {!hasPermission(currentUser, 'products.manage_price') && (
-                      <span className="text-[10px] text-amber-700 font-medium">Chỉ xem</span>
+                      <span className="text-2xs text-amber-700 font-medium">Chỉ xem</span>
                     )}
                   </div>
                   <input
@@ -7233,7 +7271,7 @@ export default function AdminPage() {
                       Giá Bán Ưu Đãi (VNĐ) *
                     </label>
                     {!hasPermission(currentUser, 'products.manage_price') && (
-                      <span className="text-[10px] text-amber-700 font-medium">Chỉ xem</span>
+                      <span className="text-2xs text-amber-700 font-medium">Chỉ xem</span>
                     )}
                   </div>
                   <input
@@ -7262,7 +7300,7 @@ export default function AdminPage() {
                         Giá Vốn Combo (VNĐ)
                       </label>
                       {!hasPermission(currentUser, 'cost_price.edit') && (
-                        <span className="text-[10px] text-ink-700 font-medium">Chỉ xem</span>
+                        <span className="text-2xs text-ink-700 font-medium">Chỉ xem</span>
                       )}
                     </div>
                     <input
@@ -7306,11 +7344,11 @@ export default function AdminPage() {
                       <h4 className="text-sm text-ink-950 flex items-center gap-2">
                         <ImageIcon className="w-4 h-4 text-amber-700" />
                         <span>Quản Lý Hình Ảnh Gói Combo</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-ink-100 text-amber-700 border border-ink-300">
+                        <span className="text-2xs font-mono px-2 py-0.5 rounded-full bg-ink-100 text-amber-700 border border-ink-300">
                           {comboImages.length} ảnh
                         </span>
                       </h4>
-                      <p className="text-[11px] text-ink-700 mt-0.5">
+                      <p className="text-2xs text-ink-700 mt-0.5">
                         Tải ảnh combo từ máy hoặc dán URL. Admin có thể kéo/chọn ảnh đại diện chính, sắp xếp thứ tự và sửa Alt text.
                       </p>
                     </div>
@@ -7379,13 +7417,13 @@ export default function AdminPage() {
                               ) : null}
 
                               {isThumb && (
-                                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[11px] bg-amber-600 text-white shadow-sm flex items-center gap-1">
+                                <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-full text-2xs bg-amber-600 text-white shadow-sm flex items-center gap-1">
                                   <Star className="w-2.5 h-2.5 fill-white" />
                                   <span>Ảnh chính</span>
                                 </span>
                               )}
 
-                              <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-white text-ink-800 border border-ink-300">
+                              <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-2xs font-mono bg-white text-ink-800 border border-ink-300">
                                 #{idx + 1}
                               </span>
                             </div>
@@ -7400,7 +7438,7 @@ export default function AdminPage() {
                                 );
                               }}
                               placeholder="Mô tả ảnh combo..."
-                              className="w-full bg-ink-50 border border-ink-200 rounded-lg px-2 py-1 text-[11px] text-ink-950 placeholder:text-ink-500 focus:outline-none focus:border-amber-500"
+                              className="w-full bg-ink-50 border border-ink-200 rounded-lg px-2 py-1 text-2xs text-ink-950 placeholder:text-ink-500 focus:outline-none focus:border-amber-500"
                             />
 
                             <div className="flex items-center justify-between gap-1 pt-1 border-t border-ink-200">
@@ -7409,7 +7447,7 @@ export default function AdminPage() {
                                   <button
                                     type="button"
                                     onClick={() => setEditingCombo({ ...editingCombo, image: img.url })}
-                                    className="px-2 py-1 rounded text-[11px] bg-ink-100 hover:bg-amber-600 hover:text-white text-ink-800 transition-all flex items-center gap-1 cursor-pointer"
+                                    className="px-2 py-1 rounded text-2xs bg-ink-100 hover:bg-amber-600 hover:text-white text-ink-800 transition-all flex items-center gap-1 cursor-pointer"
                                     title="Chọn làm ảnh combo chính"
                                   >
                                     <Star className="w-3 h-3 text-amber-700" />
@@ -7523,7 +7561,7 @@ export default function AdminPage() {
                   }
                   className="w-full sm:w-64 bg-ink-50 border border-ink-300 text-sm text-ink-950 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
                 />
-                <p className="text-[11px] text-ink-600">
+                <p className="text-2xs text-ink-600">
                   Nhập số lượng thật đã bán ở cửa hàng/đại lý/kênh khác. Website tự cộng thêm đơn đặt trên web và chỉ hiện khi tổng từ 10 trở lên.
                 </p>
               </div>
@@ -7584,7 +7622,7 @@ export default function AdminPage() {
                     <option value="scroll">Banner Cuộn (Scroll Showcase, toàn màn hình khi cuộn)</option>
                     <option value="promo">Khuyến mãi / Khác (hiện chưa hiển thị ở đâu trên website)</option>
                   </select>
-                  <p className="text-[11px] text-ink-600 mt-1">
+                  <p className="text-2xs text-ink-600 mt-1">
                     {editingBanner.placement === 'scroll'
                       ? 'Mỗi banner là một cảnh; nhãn, tiêu đề và phụ đề sẽ hiện trên ảnh.'
                       : editingBanner.placement === 'promo'
@@ -7660,7 +7698,7 @@ export default function AdminPage() {
                       />
                     </label>
                   </div>
-                  <p className="text-[11px] text-ink-600">
+                  <p className="text-2xs text-ink-600">
                     {editingBanner.placement === 'scroll'
                       ? 'Khuyến nghị 1920×1080 px (16:9), phủ toàn màn hình. JPG/PNG/WebP, tối đa 5MB.'
                       : 'Khuyến nghị 1920×850 px (tỉ lệ ~2,26:1). JPG/PNG/WebP, tối đa 5MB.'}
@@ -7696,7 +7734,7 @@ export default function AdminPage() {
                         />
                       </label>
                     </div>
-                    <p className="text-[11px] text-ink-600">
+                    <p className="text-2xs text-ink-600">
                       {editingBanner.placement === 'scroll'
                         ? 'Khuyến nghị 1080×1920 px (dọc 9:16). Để trống sẽ dùng ảnh máy tính trên điện thoại.'
                         : 'Khuyến nghị 1200×675 px (16:9). Để trống sẽ dùng ảnh máy tính trên điện thoại.'}
@@ -7793,7 +7831,7 @@ export default function AdminPage() {
                   {(() => {
                     const st = statusMap[selectedOrder.status] || statusMap['PENDING'];
                     return (
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] border ${st.bg}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-2xs border ${st.bg}`}>
                         {st.label}
                       </span>
                     );
@@ -7809,6 +7847,12 @@ export default function AdminPage() {
                     year: 'numeric',
                   })}
                 </p>
+                {selectedOrder.delivery_slot_start && (
+                  <p className="text-sm text-emerald-800 mt-0.5">
+                    {selectedOrder.delivery_mode === 'SCHEDULED' ? 'Hẹn giao: ' : ''}
+                    {describeOrderDelivery(selectedOrder.delivery_mode, selectedOrder.delivery_slot_start, selectedOrder.delivery_slot_end)}
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setIsOrderDetailModalOpen(false)}
@@ -7837,11 +7881,11 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="text-ink-700">Họ và tên:</span>{' '}
-                    <span className="text-ink-950 text-[1.125em]">{selectedOrder.full_name}</span>
+                    <span className="text-ink-950 text-emph">{selectedOrder.full_name}</span>
                   </div>
                   <div>
                     <span className="text-ink-700">Số điện thoại:</span>{' '}
-                    <span className="font-mono text-ink-950 text-[1.125em]">{selectedOrder.phone}</span>
+                    <span className="font-mono text-ink-950 text-emph">{selectedOrder.phone}</span>
                   </div>
                   <div className="sm:col-span-2">
                     <span className="text-ink-700">Địa chỉ giao hàng:</span>{' '}
@@ -7881,15 +7925,15 @@ export default function AdminPage() {
                           <>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-ink-700">Vị trí giao hàng:</span>
-                              <span className="font-mono text-emerald-700 text-[1.125em]">
+                              <span className="font-mono text-emerald-700 text-emph">
                                 {lat.toFixed(5)}, {lng.toFixed(5)}
                               </span>
                               {selectedOrder.location_confirmed ? (
-                                <span className="px-2 py-0.5 rounded-md text-[11px] bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
+                                <span className="px-2 py-0.5 rounded-md text-2xs bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
                                   ✓ Đã xác nhận ghim trên bản đồ
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-md text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30">
+                                <span className="px-2 py-0.5 rounded-md text-2xs bg-amber-500/20 text-amber-800 border border-amber-500/30">
                                   📍 Tọa độ ước tính / gợi ý
                                 </span>
                               )}
@@ -7961,7 +8005,7 @@ export default function AdminPage() {
                                 href={googleMapsUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-100 text-emerald-700 text-[12px] border border-emerald-500/30 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-100 text-emerald-700 text-xs border border-emerald-500/30 transition-colors inline-flex items-center gap-1 cursor-pointer"
                               >
                                 <span>Mở Google Maps</span>
                               </a>
@@ -7969,7 +8013,7 @@ export default function AdminPage() {
                                 href={osmUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-2.5 py-1 rounded-lg bg-ink-100 hover:bg-ink-200 text-ink-800 text-[12px] border border-ink-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                className="px-2.5 py-1 rounded-lg bg-ink-100 hover:bg-ink-200 text-ink-800 text-xs border border-ink-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
                               >
                                 <span>OpenStreetMap</span>
                               </a>
@@ -7988,36 +8032,36 @@ export default function AdminPage() {
                   </div>
                   {selectedOrder.note && (
                     <div className="sm:col-span-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-800">
-                      <span className="text-[1.125em]">Ghi chú của khách:</span> {selectedOrder.note}
+                      <span className="text-emph">Ghi chú của khách:</span> {selectedOrder.note}
                     </div>
                   )}
                   <div className="sm:col-span-2 pt-2 border-t border-ink-200 flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <span className="text-ink-700">Chi nhánh xử lý:</span>{' '}
-                      <span className="text-amber-800 text-[1.125em]">
+                      <span className="text-amber-800 text-emph">
                         {storeList.find((s) => s.code === selectedOrder.store_code)?.name ||
                           selectedOrder.store_code ||
                           'Chưa gán (Tự động CH1)'}
                       </span>
                       {selectedOrder.store_address && (
-                        <p className="text-[11px] text-ink-700 mt-0.5">{selectedOrder.store_address}</p>
+                        <p className="text-2xs text-ink-700 mt-0.5">{selectedOrder.store_address}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       {selectedOrder.inventory_deducted ? (
-                        <span className="px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
+                        <span className="px-2.5 py-1 rounded-full text-2xs bg-emerald-500/20 text-emerald-700 border border-emerald-500/30">
                           ✓ Đã trừ kho hàng
                         </span>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-1 rounded-full text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30">
+                          <span className="px-2.5 py-1 rounded-full text-2xs bg-amber-500/20 text-amber-800 border border-amber-500/30">
                             Chưa trừ kho
                           </span>
                           {selectedOrder.status !== 'CANCELLED' && (
                             <button
                               type="button"
                               onClick={() => handleRequestStatusChange(selectedOrder, 'CONFIRMED')}
-                              className="px-2.5 py-1 rounded-lg text-[12px] bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg text-xs bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-colors cursor-pointer"
                             >
                               Xác nhận xuất kho ngay
                             </button>
@@ -8026,6 +8070,63 @@ export default function AdminPage() {
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Lịch sử trạng thái: ai xác nhận / ai huỷ / lúc nào */}
+              <div className="space-y-3">
+                <h4 className="text-sm text-ink-800 uppercase tracking-wider">
+                  Lịch Sử Trạng Thái
+                </h4>
+                <div className="rounded-xl border border-ink-200 p-4 text-xs">
+                  <ol className="space-y-3">
+                    <li className="flex gap-3">
+                      <span className="mt-1 w-2 h-2 rounded-full bg-ink-300 shrink-0" />
+                      <div>
+                        <p className="text-ink-950">Khách đặt đơn</p>
+                        <p className="text-2xs text-ink-700">{formatStatusChangeTime(selectedOrder.created_at)}</p>
+                      </div>
+                    </li>
+                    {(selectedOrder.status_history || []).map((h, idx) => {
+                      const toSt = statusMap[h.to_status];
+                      return (
+                        <li key={h.id || idx} className="flex gap-3">
+                          <span
+                            className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                              h.to_status === 'CANCELLED' ? 'bg-rose-400' : 'bg-emerald-400'
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <p className="text-ink-950">
+                              <span className={toSt?.text || ''}>{toSt?.label || h.to_status}</span>
+                              {h.from_status && (
+                                <span className="text-ink-700"> (từ {statusMap[h.from_status]?.label || h.from_status})</span>
+                              )}
+                            </p>
+                            <p className="text-ink-800">
+                              Bởi <span className="text-ink-950">{statusChangeActorLabel(h)}</span>
+                              {h.actor_type === 'admin' && h.actor_username && h.actor_name !== h.actor_username && (
+                                <span className="text-ink-700"> · {h.actor_username}</span>
+                              )}
+                              {h.actor_role && (
+                                <span className="text-ink-700"> · {STATUS_ACTOR_ROLE_LABELS[h.actor_role] || h.actor_role}</span>
+                              )}
+                            </p>
+                            {h.note && <p className="text-ink-700 break-words">Lý do: {h.note}</p>}
+                            <p className="text-2xs text-ink-700">{formatStatusChangeTime(h.created_at)}</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  {selectedOrder.status_history && selectedOrder.status_history.length === 0 && selectedOrder.status !== 'PENDING' && (
+                    <p className="mt-3 text-2xs text-ink-700">
+                      Đơn này đổi trạng thái trước khi có tính năng ghi lịch sử nên không biết ai đã đổi.
+                    </p>
+                  )}
+                  {!selectedOrder.status_history && (
+                    <p className="mt-3 text-2xs text-ink-700">Đang tải lịch sử...</p>
+                  )}
                 </div>
               </div>
 
@@ -8038,7 +8139,7 @@ export default function AdminPage() {
                   {selectedOrder.items && selectedOrder.items.length > 0 ? (
                     selectedOrder.items.map((item, idx) => (
                       <div key={item.id || idx} className="p-3 bg-ink-50 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-ink-100 border border-ink-300 relative overflow-hidden shrink-0">
+                        <div className="w-[52px] h-[39px] rounded-lg bg-white border border-ink-300 relative overflow-hidden shrink-0">
                           {item.thumbnail ? (
                             <Image
                               src={item.thumbnail}
@@ -8056,11 +8157,11 @@ export default function AdminPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-ink-950 truncate font-mono" title={item.name}>{item.product_id ? productCodeOf(item.product_id) : item.name}</p>
                           <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                            <p className="text-[11px] text-ink-700">
+                            <p className="text-2xs text-ink-700">
                               {formatVND(item.price)} × {item.quantity} {item.unit}
                             </p>
                             {(item as any).total_bottles && (item as any).total_bottles > 0 && (
-                              <span className="text-[11px] text-amber-800 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
+                              <span className="text-2xs text-amber-800 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
                                 📦 Xuất kho: {(item as any).total_bottles} chai
                               </span>
                             )}
@@ -8085,19 +8186,19 @@ export default function AdminPage() {
               <div className="p-4 rounded-xl bg-ink-50 border border-ink-200 space-y-2 text-xs">
                 <div className="flex justify-between text-ink-700">
                   <span>Tiền hàng:</span>
-                  <span className="text-ink-950 text-[1.125em]">
+                  <span className="text-ink-950 text-emph">
                     {formatVND(selectedOrder.subtotal || selectedOrder.total)}
                   </span>
                 </div>
                 <div className="flex justify-between text-ink-700">
                   <span>Phí giao hàng:</span>
-                  <span className="text-ink-950 text-[1.125em]">
+                  <span className="text-ink-950 text-emph">
                     {formatVND(selectedOrder.shipping_fee || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-ink-700">
                   <span>Phương thức:</span>
-                  <span className="uppercase text-ink-950 text-[1.125em]">
+                  <span className="uppercase text-ink-950 text-emph">
                     {selectedOrder.payment_method}
                   </span>
                 </div>
@@ -8105,24 +8206,24 @@ export default function AdminPage() {
                   <div className="flex justify-between items-center text-ink-700 pt-1 border-t border-ink-200">
                     <span>Đối soát tiền COD:</span>
                     {selectedOrder.cod_reconciled ? (
-                      <span className="text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[12px]">
+                      <span className="text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-xs">
                         ✓ Đã thu {formatVND(selectedOrder.cod_collected_amount || selectedOrder.total)}
                       </span>
                     ) : (
-                      <span className="text-amber-800 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 text-[12px]">
+                      <span className="text-amber-800 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 text-xs">
                         ⏳ Chờ thu tiền mặt
                       </span>
                     )}
                   </div>
                 )}
                 {selectedOrder.status === 'CANCELLED' && selectedOrder.return_disposition && (
-                  <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl space-y-1 mt-1 text-[11px]">
+                  <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl space-y-1 mt-1 text-2xs">
                     <div className="flex justify-between text-red-600">
-                      <span className="text-[1.125em]">Lý do hủy/hoàn:</span>
+                      <span className="text-emph">Lý do hủy/hoàn:</span>
                       <span>{selectedOrder.return_reason || 'Không rõ'}</span>
                     </div>
                     <div className="flex justify-between text-red-600">
-                      <span className="text-[1.125em]">Xử lý tồn kho:</span>
+                      <span className="text-emph">Xử lý tồn kho:</span>
                       <span className={selectedOrder.return_disposition === 'restocked' ? 'text-emerald-700' : 'text-amber-800'}>
                         {selectedOrder.return_disposition === 'restocked' ? '✓ Đã nhập lại kho' : '⚠️ Ghi nhận hủy/hư hỏng'}
                       </span>
@@ -8152,11 +8253,11 @@ export default function AdminPage() {
                     <div className="flex justify-between items-center text-ink-700">
                       <span>Thanh toán chuyển khoản:</span>
                       {selectedOrder.payment_status === 'PAID' ? (
-                        <span className="text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[12px]">
+                        <span className="text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-xs">
                           ✓ Đã nhận · GD: {selectedOrder.payment_reference || '—'}
                         </span>
                       ) : (
-                        <span className="text-amber-800 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 text-[12px]">
+                        <span className="text-amber-800 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 text-xs">
                           ⏳ Chưa xác nhận
                         </span>
                       )}
@@ -8195,7 +8296,7 @@ export default function AdminPage() {
                       <ArrowRightLeft className="w-3.5 h-3.5" />
                       <span>Chuyển đơn sang chi nhánh khác</span>
                     </div>
-                    <p className="text-[11px] text-ink-700 mt-0.5">
+                    <p className="text-2xs text-ink-700 mt-0.5">
                       Tự động kiểm tra tồn kho chi nhánh đích, nhả giữ chỗ kho cũ và chuyển giữ chỗ kho mới
                     </p>
                   </div>
@@ -8235,7 +8336,7 @@ export default function AdminPage() {
               <div className="p-4 rounded-xl bg-white border border-ink-200 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm text-ink-950">Cập nhật trạng thái đơn</p>
-                  <p className="text-[11px] text-ink-700">Thay đổi và lưu vào CSDL WebTSF</p>
+                  <p className="text-2xs text-ink-700">Thay đổi và lưu vào CSDL WebTSF</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <select
@@ -8357,7 +8458,7 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <h3 className="text-base text-ink-950">Xác nhận đổi trạng thái</h3>
-                  <p className="text-[11px] text-ink-700">Đơn hàng #{pendingStatusChange.orderCode}</p>
+                  <p className="text-2xs text-ink-700">Đơn hàng #{pendingStatusChange.orderCode}</p>
                 </div>
               </div>
               <button
@@ -8373,13 +8474,13 @@ export default function AdminPage() {
             <div className="p-6 space-y-4">
               <p className="text-xs text-ink-800 leading-relaxed">
                 Bạn có chắc chắn muốn chuyển trạng thái đơn hàng của khách hàng{' '}
-                <span className="text-ink-950 text-[1.125em]">{pendingStatusChange.customerName}</span>?
+                <span className="text-ink-950 text-emph">{pendingStatusChange.customerName}</span>?
               </p>
 
               {/* Status Comparison */}
               <div className="bg-ink-50 border border-ink-200 rounded-xl p-3.5 flex items-center justify-between gap-3">
                 <div className="flex-1 text-center">
-                  <span className="block text-[11px] uppercase text-ink-700 mb-1">Hiện tại</span>
+                  <span className="block text-2xs uppercase text-ink-700 mb-1">Hiện tại</span>
                   {(() => {
                     const cur = statusMap[pendingStatusChange.currentStatus] || statusMap['PENDING'];
                     return (
@@ -8393,7 +8494,7 @@ export default function AdminPage() {
                 <div className="text-ink-600 text-base">➔</div>
 
                 <div className="flex-1 text-center">
-                  <span className="block text-[11px] uppercase text-ink-700 mb-1">Chuyển sang</span>
+                  <span className="block text-2xs uppercase text-ink-700 mb-1">Chuyển sang</span>
                   {(() => {
                     const next = statusMap[pendingStatusChange.newStatus] || statusMap['PENDING'];
                     return (
@@ -8407,12 +8508,12 @@ export default function AdminPage() {
 
               {['CONFIRMED', 'PROCESSING', 'SHIPPING', 'COMPLETED'].includes(pendingStatusChange.newStatus) && (
                 <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs">
-                  <p className="flex items-center gap-1.5 text-amber-700 text-[1.125em]">
+                  <p className="flex items-center gap-1.5 text-amber-700 text-emph">
                     <PackageCheck className="w-4 h-4" />
                     <span>Lưu ý xuất kho chi nhánh:</span>
                   </p>
                   <p className="mt-1 text-ink-800 leading-relaxed">
-                    Khi chuyển sang trạng thái <strong className="text-[1.125em]">{statusMap[pendingStatusChange.newStatus]?.label}</strong>, hệ thống sẽ tự động trừ hàng hoá thực tế từ kho cửa hàng xử lý đơn này (nếu chưa trừ) theo đúng số lượng chai vật lý.
+                    Khi chuyển sang trạng thái <strong className="text-emph">{statusMap[pendingStatusChange.newStatus]?.label}</strong>, hệ thống sẽ tự động trừ hàng hoá thực tế từ kho cửa hàng xử lý đơn này (nếu chưa trừ) theo đúng số lượng chai vật lý.
                   </p>
                 </div>
               )}
@@ -8507,7 +8608,7 @@ export default function AdminPage() {
                   }`}
                 />
                 {userModalMode === 'edit' && (
-                  <span className="text-[10px] text-ink-600 mt-0.5 block">Không thể đổi username sau khi đã khởi tạo</span>
+                  <span className="text-2xs text-ink-600 mt-0.5 block">Không thể đổi username sau khi đã khởi tạo</span>
                 )}
               </div>
 
@@ -8591,7 +8692,7 @@ export default function AdminPage() {
                       </option>
                     ))}
                   </select>
-                  <span className="text-[10px] text-ink-700 mt-1 block">
+                  <span className="text-2xs text-ink-700 mt-1 block">
                     Tài khoản này chỉ có quyền xem/sửa đơn hàng và tồn kho thuộc cửa hàng đã chọn. Có thể tạo nhiều tài khoản cùng một cửa hàng.
                   </span>
                 </div>
@@ -8607,7 +8708,7 @@ export default function AdminPage() {
                       onChange={(e) => setUserFormData({ ...userFormData, isActive: e.target.checked })}
                       className="accent-leaf-600 rounded w-4 h-4 cursor-pointer"
                     />
-                    <span className="text-[1.125em]">Cho phép tài khoản này đăng nhập hệ thống (Kích hoạt)</span>
+                    <span className="text-emph">Cho phép tài khoản này đăng nhập hệ thống (Kích hoạt)</span>
                   </label>
                 </div>
               )}
@@ -8659,7 +8760,7 @@ export default function AdminPage() {
                 <div>
                   <h2 className="text-lg text-ink-950">Cập Nhật Số Lượng Chai</h2>
                   <p className="text-xs text-ink-700">
-                    Chi nhánh: <span className="text-amber-700 text-[1.125em]">{storeList.find((s) => s.code === selectedStoreCode)?.name || selectedStoreCode}</span>
+                    Chi nhánh: <span className="text-amber-700 text-emph">{storeList.find((s) => s.code === selectedStoreCode)?.name || selectedStoreCode}</span>
                   </p>
                 </div>
               </div>
@@ -8682,7 +8783,7 @@ export default function AdminPage() {
             >
               {/* Product preview */}
               <div className="p-3.5 rounded-xl bg-ink-50 border border-ink-200 flex items-center gap-3">
-                <div className="w-14 h-14 rounded-xl bg-white border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center p-1">
+                <div className="w-20 h-[60px] rounded-lg bg-white border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center">
                   <Image
                     src={stockModalItem.thumbnail}
                     alt={stockModalItem.product_name}
@@ -8695,25 +8796,25 @@ export default function AdminPage() {
                   <p className="text-ink-950 text-sm leading-snug line-clamp-2 font-mono" title={stockModalItem.product_name}>
                     {productCodeOf(stockModalItem.product_id, stockModalItem.sku, stockModalItem.product_name)}
                   </p>
-                  <p className="text-[11px] font-mono text-ink-700 mt-1">
+                  <p className="text-2xs font-mono text-ink-700 mt-1">
                     {stockModalItem.unit}
                   </p>
-                  <p className="text-[11px] text-ink-700 mt-0.5">
-                    Số lượng hiện tại: <strong className="text-emerald-700 font-mono text-[1.125em]">{stockModalItem.current_stock} chai</strong>
+                  <p className="text-2xs text-ink-700 mt-0.5">
+                    Số lượng hiện tại: <strong className="text-emerald-700 font-mono text-emph">{stockModalItem.current_stock} chai</strong>
                   </p>
                   {stockModalItem.updated_at ? (
-                    <p className="text-[11px] text-ink-700 mt-0.5 flex items-center gap-1 font-mono">
+                    <p className="text-2xs text-ink-700 mt-0.5 flex items-center gap-1 font-mono">
                       <Clock className="w-3 h-3 text-ink-600 shrink-0" />
                       <span>
                         Cập nhật lần cuối:{' '}
-                        <strong className="text-ink-950 text-[1.125em]">
+                        <strong className="text-ink-950 text-emph">
                           {new Date(stockModalItem.updated_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}{' '}
                           {new Date(stockModalItem.updated_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </strong>
                       </span>
                     </p>
                   ) : (
-                    <p className="text-[11px] text-ink-600 italic mt-0.5">
+                    <p className="text-2xs text-ink-600 italic mt-0.5">
                       Chưa cập nhật lần nào
                     </p>
                   )}
@@ -8749,7 +8850,7 @@ export default function AdminPage() {
 
               {/* Quick adjustment buttons */}
               <div>
-                <span className="text-[11px] text-ink-700 block mb-1.5 font-medium">Tăng / Giảm nhanh:</span>
+                <span className="text-2xs text-ink-700 block mb-1.5 font-medium">Tăng / Giảm nhanh:</span>
                 <div className="grid grid-cols-5 gap-2">
                   {[-10, -5, +5, +10, +50].map((delta) => (
                     <button
@@ -8969,11 +9070,11 @@ export default function AdminPage() {
                       {selectedMember.full_name || 'Khách hàng thành viên'}
                     </h2>
                     {selectedMember.is_active ? (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                      <span className="px-2 py-0.5 rounded-full text-2xs bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
                         Hoạt động
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                      <span className="px-2 py-0.5 rounded-full text-2xs bg-rose-500/10 text-rose-600 border border-rose-500/20">
                         Tạm khóa
                       </span>
                     )}
@@ -9006,17 +9107,17 @@ export default function AdminPage() {
                   <div className="space-y-2 text-ink-800">
                     <div className="flex justify-between items-center py-1 border-b border-ink-200">
                       <span className="text-ink-700">Email:</span>
-                      <span className="text-ink-950 truncate max-w-[200px] text-[1.125em]">{selectedMember.email}</span>
+                      <span className="text-ink-950 truncate max-w-[200px] text-emph">{selectedMember.email}</span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-ink-200">
                       <span className="text-ink-700">Điện thoại:</span>
-                      <span className="font-mono text-emerald-700 text-[1.125em]">{selectedMember.phone || 'Chưa cung cấp'}</span>
+                      <span className="font-mono text-emerald-700 text-emph">{selectedMember.phone || 'Chưa cung cấp'}</span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-ink-200">
                       <span className="text-ink-700">Phương thức đăng ký:</span>
-                      <span className="capitalize text-ink-950 text-[1.125em]">
+                      <span className="capitalize text-ink-950 text-emph">
                         {selectedMember.provider === 'google' ? 'Google OAuth' : selectedMember.provider === 'facebook' ? 'Facebook' : 'Email & Mật khẩu'}
                       </span>
                     </div>
@@ -9027,7 +9128,7 @@ export default function AdminPage() {
                         {selectedMember.address ? (
                           <>
                             <p className="font-medium">{selectedMember.address}</p>
-                            <p className="text-[11px] text-ink-700 mt-0.5">
+                            <p className="text-2xs text-ink-700 mt-0.5">
                               {[selectedMember.ward, selectedMember.district, selectedMember.province].filter(Boolean).join(', ')}
                             </p>
                           </>
@@ -9049,19 +9150,19 @@ export default function AdminPage() {
 
                     <div className="grid grid-cols-2 gap-2 mt-3">
                       <div className="p-3 rounded-lg bg-white border border-ink-200 text-center">
-                        <span className="text-[10px] text-ink-700 block">Tổng số đơn</span>
+                        <span className="text-2xs text-ink-700 block">Tổng số đơn</span>
                         <span className="text-xl text-ink-950 mt-0.5 block">{selectedMember.total_orders || 0}</span>
                       </div>
                       <div className="p-3 rounded-lg bg-white border border-ink-200 text-center">
-                        <span className="text-[10px] text-ink-700 block">Tổng tích lũy</span>
+                        <span className="text-2xs text-ink-700 block">Tổng tích lũy</span>
                         <span className="text-xl text-emerald-700 mt-0.5 block">{formatVND(selectedMember.total_spent || 0)}</span>
                       </div>
                     </div>
 
-                    <div className="mt-3 p-3 rounded-lg bg-white border border-ink-200 text-ink-700 text-[11px] space-y-1">
+                    <div className="mt-3 p-3 rounded-lg bg-white border border-ink-200 text-ink-700 text-2xs space-y-1">
                       <p>
                         Giá trị trung bình/đơn:{' '}
-                        <strong className="text-ink-950 text-[1.125em]">
+                        <strong className="text-ink-950 text-emph">
                           {selectedMember.total_orders > 0
                             ? formatVND(Math.round(selectedMember.total_spent / selectedMember.total_orders))
                             : '0 ₫'}
@@ -9070,7 +9171,7 @@ export default function AdminPage() {
                       {selectedMember.last_order_date && (
                         <p>
                           Đơn gần nhất:{' '}
-                          <strong className="text-ink-800 text-[1.125em]">
+                          <strong className="text-ink-800 text-emph">
                             {new Date(selectedMember.last_order_date).toLocaleDateString('vi-VN')}
                           </strong>
                         </p>
@@ -9103,7 +9204,7 @@ export default function AdminPage() {
                     <ShoppingCart className="w-4 h-4 text-blue-700" />
                     <span>Lịch Sử Đơn Hàng ({memberOrders.length})</span>
                   </h3>
-                  <span className="text-[11px] text-ink-700">Tự động đồng bộ theo ID thành viên</span>
+                  <span className="text-2xs text-ink-700">Tự động đồng bộ theo ID thành viên</span>
                 </div>
 
                 {memberDetailLoading ? (
@@ -9114,7 +9215,7 @@ export default function AdminPage() {
                 ) : memberOrders.length === 0 ? (
                   <div className="p-6 rounded-xl bg-ink-50 border border-ink-200 text-center text-ink-700">
                     <p className="font-medium text-ink-800">Khách hàng chưa có đơn hàng nào</p>
-                    <p className="text-[11px] text-ink-600 mt-0.5">Các đơn hàng phát sinh sau khi đăng nhập sẽ hiển thị tại đây</p>
+                    <p className="text-2xs text-ink-600 mt-0.5">Các đơn hàng phát sinh sau khi đăng nhập sẽ hiển thị tại đây</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -9131,21 +9232,21 @@ export default function AdminPage() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-ink-950 text-[1.125em]">#{ord.order_code}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[11px] border ${st.bg}`}>
+                                <span className="font-mono text-ink-950 text-emph">#{ord.order_code}</span>
+                                <span className={`px-2 py-0.5 rounded-full text-2xs border ${st.bg}`}>
                                   {st.label}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-ink-700 mt-0.5">
+                              <p className="text-2xs text-ink-700 mt-0.5">
                                 Ngày đặt: {new Date(ord.created_at).toLocaleString('vi-VN')} &bull; Thanh toán:{' '}
-                                <span className="uppercase text-ink-800 text-[1.125em]">{ord.payment_method || 'COD'}</span>
+                                <span className="uppercase text-ink-800 text-emph">{ord.payment_method || 'COD'}</span>
                               </p>
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
                             <div className="text-right">
-                              <span className="text-[10px] text-ink-600 block">Tổng tiền</span>
+                              <span className="text-2xs text-ink-600 block">Tổng tiền</span>
                               <span className="text-emerald-700 text-base">{formatVND(ord.total)}</span>
                             </div>
                             <button
@@ -9155,7 +9256,7 @@ export default function AdminPage() {
                                 setActiveTab('orders');
                                 setOrderSearch(ord.order_code);
                               }}
-                              className="px-2.5 py-1.5 rounded-lg bg-ink-100 hover:bg-ink-200 text-ink-800 hover:text-ink-950 text-[12px] transition-colors cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg bg-ink-100 hover:bg-ink-200 text-ink-800 hover:text-ink-950 text-xs transition-colors cursor-pointer"
                             >
                               Xem đơn
                             </button>
@@ -9243,7 +9344,7 @@ export default function AdminPage() {
                 <div className="rounded-xl border border-ink-200 overflow-hidden bg-ink-50">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs text-ink-800">
-                      <thead className="bg-ink-50 text-ink-700 uppercase text-[10px] tracking-wider border-b border-ink-200">
+                      <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                         <tr>
                           <th className="py-3 px-3.5">Thời gian</th>
                           <th className="py-3 px-3.5">Mặt hàng</th>
@@ -9273,7 +9374,7 @@ export default function AdminPage() {
 
                           return (
                             <tr key={log.id} className="hover:bg-white transition-colors">
-                              <td className="py-3 px-3.5 whitespace-nowrap text-ink-700 font-mono text-[11px]">
+                              <td className="py-3 px-3.5 whitespace-nowrap text-ink-700 font-mono text-2xs">
                                 {new Date(log.created_at).toLocaleString('vi-VN', {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -9283,15 +9384,15 @@ export default function AdminPage() {
                                 })}
                               </td>
                               <td className="py-3 px-3.5">
-                                <div className="text-ink-950 max-w-[180px] truncate text-[1.125em]" title={log.product_name}>
+                                <div className="text-ink-950 max-w-[180px] truncate text-emph" title={log.product_name}>
                                   {productCodeOf(log.product_id, null, log.product_name)}
                                 </div>
-                                <div className="text-[10px] text-ink-600 font-mono">
+                                <div className="text-2xs text-ink-600 font-mono">
                                   {log.unit || '1 chai'}
                                 </div>
                               </td>
                               <td className="py-3 px-3.5 whitespace-nowrap">
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] border ${act.bg} ${act.text}`}>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-2xs border ${act.bg} ${act.text}`}>
                                   {act.label}
                                 </span>
                               </td>
@@ -9309,15 +9410,15 @@ export default function AdminPage() {
                                   {log.new_reserved}
                                 </span>
                               </td>
-                              <td className="py-3 px-3.5 text-[11px]">
+                              <td className="py-3 px-3.5 text-2xs">
                                 <p className="font-medium text-ink-950">{log.actor || 'Hệ thống'}</p>
                                 {log.order_id && (
-                                  <p className="text-[10px] font-mono text-emerald-700 truncate max-w-[120px]" title={log.order_id}>
+                                  <p className="text-2xs font-mono text-emerald-700 truncate max-w-[120px]" title={log.order_id}>
                                     Đơn #{log.order_id.slice(0, 8)}
                                   </p>
                                 )}
                               </td>
-                              <td className="py-3 px-3.5 text-[11px] text-ink-700 max-w-[200px] truncate" title={log.note || ''}>
+                              <td className="py-3 px-3.5 text-2xs text-ink-700 max-w-[200px] truncate" title={log.note || ''}>
                                 {log.note || '—'}
                               </td>
                             </tr>
@@ -9371,7 +9472,7 @@ export default function AdminPage() {
                     {selectedAuditLog.store_code && (
                       <>
                         <span>•</span>
-                        <span className="text-emerald-700 text-[1.125em]">Chi nhánh: {selectedAuditLog.store_code}</span>
+                        <span className="text-emerald-700 text-emph">Chi nhánh: {selectedAuditLog.store_code}</span>
                       </>
                     )}
                   </p>
@@ -9391,34 +9492,34 @@ export default function AdminPage() {
               {/* Meta Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-xl bg-ink-50 border border-ink-200">
-                  <div className="text-[11px] text-ink-700 font-medium mb-1">Người thực hiện</div>
+                  <div className="text-2xs text-ink-700 font-medium mb-1">Người thực hiện</div>
                   <div className="text-sm text-ink-950 flex items-center gap-1.5">
                     <span>{selectedAuditLog.admin_username}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-leaf-50 text-leaf-700 border border-leaf-200">
+                    <span className="px-1.5 py-0.5 rounded text-2xs font-mono bg-leaf-50 text-leaf-700 border border-leaf-200">
                       {selectedAuditLog.role}
                     </span>
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-ink-50 border border-ink-200">
-                  <div className="text-[11px] text-ink-700 font-medium mb-1">Hành động</div>
+                  <div className="text-2xs text-ink-700 font-medium mb-1">Hành động</div>
                   <div className="text-sm font-mono text-emerald-700">
                     {selectedAuditLog.action}
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-ink-50 border border-ink-200">
-                  <div className="text-[11px] text-ink-700 font-medium mb-1">Đối tượng (Entity)</div>
+                  <div className="text-2xs text-ink-700 font-medium mb-1">Đối tượng (Entity)</div>
                   <div className="text-xs font-medium text-ink-800 flex items-center gap-1 truncate">
-                    <span className="text-amber-700 text-[1.125em]">{selectedAuditLog.entity_type}</span>
+                    <span className="text-amber-700 text-emph">{selectedAuditLog.entity_type}</span>
                     {selectedAuditLog.entity_id && (
-                      <span className="text-ink-700 font-mono text-[11px]">#{selectedAuditLog.entity_id}</span>
+                      <span className="text-ink-700 font-mono text-2xs">#{selectedAuditLog.entity_id}</span>
                     )}
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-ink-50 border border-ink-200">
-                  <div className="text-[11px] text-ink-700 font-medium mb-1">IP & Thiết bị</div>
+                  <div className="text-2xs text-ink-700 font-medium mb-1">IP & Thiết bị</div>
                   <div className="text-xs font-mono text-ink-800 truncate" title={selectedAuditLog.user_agent || ''}>
                     {selectedAuditLog.ip || '—'}
                   </div>
@@ -9445,7 +9546,7 @@ export default function AdminPage() {
                           setCopiedField('before');
                           setTimeout(() => setCopiedField(null), 2000);
                         }}
-                        className="text-[11px] px-2 py-0.5 rounded bg-ink-100 hover:bg-ink-200 text-ink-800 hover:text-ink-950 flex items-center gap-1 transition-colors cursor-pointer"
+                        className="text-2xs px-2 py-0.5 rounded bg-ink-100 hover:bg-ink-200 text-ink-800 hover:text-ink-950 flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         {copiedField === 'before' ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedField === 'before' ? 'Đã chép' : 'Sao chép'}</span>
@@ -9453,7 +9554,7 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div className="p-4 flex-1 overflow-x-auto max-h-[360px]">
-                    <pre className="text-[11px] font-mono text-ink-800 leading-relaxed whitespace-pre-wrap break-all">
+                    <pre className="text-2xs font-mono text-ink-800 leading-relaxed whitespace-pre-wrap break-all">
                       {selectedAuditLog.before_json
                         ? (typeof selectedAuditLog.before_json === 'string'
                             ? (() => {
@@ -9486,7 +9587,7 @@ export default function AdminPage() {
                           setCopiedField('after');
                           setTimeout(() => setCopiedField(null), 2000);
                         }}
-                        className="text-[11px] px-2 py-0.5 rounded bg-ink-100 hover:bg-ink-200 text-ink-800 hover:text-ink-950 flex items-center gap-1 transition-colors cursor-pointer"
+                        className="text-2xs px-2 py-0.5 rounded bg-ink-100 hover:bg-ink-200 text-ink-800 hover:text-ink-950 flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         {copiedField === 'after' ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedField === 'after' ? 'Đã chép' : 'Sao chép'}</span>
@@ -9494,7 +9595,7 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div className="p-4 flex-1 overflow-x-auto max-h-[360px]">
-                    <pre className="text-[11px] font-mono text-emerald-700 leading-relaxed whitespace-pre-wrap break-all">
+                    <pre className="text-2xs font-mono text-emerald-700 leading-relaxed whitespace-pre-wrap break-all">
                       {selectedAuditLog.after_json
                         ? (typeof selectedAuditLog.after_json === 'string'
                             ? (() => {
@@ -9512,8 +9613,8 @@ export default function AdminPage() {
 
               {/* User Agent Detailed view if long */}
               {selectedAuditLog.user_agent && (
-                <div className="p-3 rounded-xl bg-ink-50 border border-ink-200 text-[11px] text-ink-700">
-                  <span className="text-ink-800 text-[1.125em]">Trình duyệt / Client: </span>
+                <div className="p-3 rounded-xl bg-ink-50 border border-ink-200 text-2xs text-ink-700">
+                  <span className="text-ink-800 text-emph">Trình duyệt / Client: </span>
                   <span className="font-mono text-ink-700 break-all">{selectedAuditLog.user_agent}</span>
                 </div>
               )}
@@ -9580,7 +9681,7 @@ export default function AdminPage() {
               </div>
 
               {currentUser?.mustChangePassword && (
-                <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-800/90 leading-relaxed">
+                <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-2xs text-amber-800/90 leading-relaxed">
                   ⚠️ Vì lý do an toàn bảo mật, tài khoản của bạn được đánh dấu bắt buộc phải cập nhật mật khẩu mới trước khi có thể truy cập các tính năng quản lý chi nhánh.
                 </div>
               )}
@@ -9634,7 +9735,7 @@ export default function AdminPage() {
                   placeholder="Tối thiểu 8 ký tự (chữ & số)"
                   className="w-full bg-ink-50 border border-ink-300 rounded-xl px-3.5 py-2.5 text-xs text-ink-950 placeholder-ink-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
                 />
-                <p className="text-[10px] text-ink-700 mt-1">Độ dài tối thiểu 8 ký tự, bao gồm ít nhất 1 chữ cái và 1 chữ số.</p>
+                <p className="text-2xs text-ink-700 mt-1">Độ dài tối thiểu 8 ký tự, bao gồm ít nhất 1 chữ cái và 1 chữ số.</p>
               </div>
 
               {/* Confirm New Password */}
@@ -9658,7 +9759,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setShowPwdFields(!showPwdFields)}
-                  className="text-ink-700 hover:text-ink-950 flex items-center gap-1.5 cursor-pointer text-[11px]"
+                  className="text-ink-700 hover:text-ink-950 flex items-center gap-1.5 cursor-pointer text-2xs"
                 >
                   {showPwdFields ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   <span>{showPwdFields ? 'Ẩn ký tự mật khẩu' : 'Hiện ký tự mật khẩu'}</span>

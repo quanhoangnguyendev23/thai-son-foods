@@ -106,7 +106,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
             id={`${baseId}-panel-${active}`}
             role="tabpanel"
             aria-labelledby={`${baseId}-tab-${active}`}
-            className="pt-5 text-[15px] leading-relaxed text-gray-800 min-h-[160px]"
+            className="pt-5 text-base leading-relaxed text-gray-800 min-h-[160px]"
           >
             {active === 'description' && (
               <div className="space-y-3 max-w-3xl">
@@ -148,12 +148,12 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                         {content.nutrition.rows.map((r) => (/năng lượng/i.test(r.label) && formatKcal(product.energyKcal) ? { ...r, value: formatKcal(product.energyKcal) as string } : r)).map((row) => (
                           <tr key={row.label} className="border-b border-gray-100 last:border-0">
                             <th scope="row" className="text-left font-normal text-gray-700 px-4 py-2">{row.label}</th>
-                            <td className="text-right text-ink-950 px-4 py-2 text-[1.125em]">{row.value}</td>
+                            <td className="text-right text-ink-950 px-4 py-2 text-emph">{row.value}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    <p className="text-[11px] text-gray-500 px-4 py-2 border-t border-gray-200">{content.nutrition.source}</p>
+                    <p className="text-2xs text-gray-500 px-4 py-2 border-t border-gray-200">{content.nutrition.source}</p>
                   </div>
                 ) : formatKcal(product.energyKcal) ? (
                   <div className="border border-gray-300 rounded-lg overflow-hidden">
@@ -164,11 +164,11 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                       <tbody>
                         <tr>
                           <th scope="row" className="text-left font-normal text-gray-700 px-4 py-2">{isEn ? 'Energy' : 'Năng lượng'}</th>
-                          <td className="text-right text-ink-950 px-4 py-2 text-[1.125em]">{formatKcal(product.energyKcal)}</td>
+                          <td className="text-right text-ink-950 px-4 py-2 text-emph">{formatKcal(product.energyKcal)}</td>
                         </tr>
                       </tbody>
                     </table>
-                    <p className="text-[11px] text-gray-500 px-4 py-2 border-t border-gray-200">
+                    <p className="text-2xs text-gray-500 px-4 py-2 border-t border-gray-200">
                       {isEn ? 'Other nutrition values are being updated.' : 'Các chỉ số dinh dưỡng khác đang được cập nhật.'}
                     </p>
                   </div>
@@ -184,12 +184,12 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                   {bottleVolume && (
                     <li>
                       • {isEn ? 'Standard bottle volume: ' : 'Dung tích đóng chai tiêu chuẩn: '}
-                      <strong className="text-[1.125em]">{bottleVolume}</strong>
+                      <strong className="text-emph">{bottleVolume}</strong>
                     </li>
                   )}
                   <li>
                     • {isEn ? 'Packaging material: ' : 'Chất liệu bao bì: '}
-                    <strong className="text-[1.125em]">{content.packagingMaterial || DEFAULT_PRODUCT_DETAIL.packagingMaterial}</strong>
+                    <strong className="text-emph">{content.packagingMaterial || DEFAULT_PRODUCT_DETAIL.packagingMaterial}</strong>
                   </li>
                 </ul>
                 {variants.length > 0 && (
@@ -200,10 +200,10 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                       </caption>
                       <thead className="bg-gray-50">
                         <tr>
-                          <th scope="col" className="text-left text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Pack' : 'Quy cách'}</th>
-                          <th scope="col" className="text-left text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Contents' : 'Quy đổi'}</th>
-                          <th scope="col" className="text-right text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Price' : 'Giá'}</th>
-                          <th scope="col" className="text-right text-gray-700 px-3 py-2 text-[1.125em]">{isEn ? 'Per bottle' : 'Đơn giá/chai'}</th>
+                          <th scope="col" className="text-left text-gray-700 px-3 py-2 text-emph">{isEn ? 'Pack' : 'Quy cách'}</th>
+                          <th scope="col" className="text-left text-gray-700 px-3 py-2 text-emph">{isEn ? 'Contents' : 'Quy đổi'}</th>
+                          <th scope="col" className="text-right text-gray-700 px-3 py-2 text-emph">{isEn ? 'Price' : 'Giá'}</th>
+                          <th scope="col" className="text-right text-gray-700 px-3 py-2 text-emph">{isEn ? 'Per bottle' : 'Đơn giá/chai'}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -211,7 +211,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                           <tr key={v.id} className="border-t border-gray-100">
                             <td className="px-3 py-2">{getVariantLabel(v, language)}</td>
                             <td className="px-3 py-2 text-gray-600">{v.volume || `${v.quantity} chai`}</td>
-                            <td className="px-3 py-2 text-right text-[1.125em]">{formatPrice(v.price)}đ</td>
+                            <td className="px-3 py-2 text-right text-emph">{formatPrice(v.price)}đ</td>
                             <td className="px-3 py-2 text-right text-gray-600">{formatPrice(getUnitPrice(v))}đ</td>
                           </tr>
                         ))}
@@ -228,7 +228,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
                   <tbody>
                     {specs.map((row) => (
                       <tr key={row.label} className="border-b border-gray-100 last:border-0 align-top">
-                        <th scope="row" className="text-left text-gray-700 bg-gray-50 px-4 py-2.5 w-[38%] sm:w-[220px] text-[1.125em]">
+                        <th scope="row" className="text-left text-gray-700 bg-gray-50 px-4 py-2.5 w-[38%] sm:w-[220px] text-emph">
                           {row.label}
                         </th>
                         <td className="px-4 py-2.5 text-ink-950">{row.value}</td>

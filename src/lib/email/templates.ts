@@ -35,6 +35,8 @@ export interface OrderEmailData {
   note?: string | null;
   storeCode?: string | null;
   storeAddress?: string | null;
+  /** Giờ giao đã chốt: "Thứ Sáu 06/11, 08:00–09:00" hoặc "Giao ngay, dự kiến 10:15 hôm nay" */
+  deliveryLabel?: string | null;
   items: OrderEmailItem[];
   createdAt?: Date | string;
 }
@@ -235,6 +237,14 @@ export function renderOrderConfirmationEmail(
           <td style="color: #70908B; vertical-align: top;">Địa chỉ giao:</td>
           <td>${escapeHtml(fullAddress)}</td>
         </tr>
+        ${
+          order.deliveryLabel
+            ? `<tr>
+                <td style="color: #70908B; vertical-align: top;">Giờ nhận hàng:</td>
+                <td><strong style="font-weight: 400; font-size: 1.125em; color: #22544C;">${escapeHtml(order.deliveryLabel)}</strong></td>
+              </tr>`
+            : ''
+        }
         <tr>
           <td style="color: #70908B; vertical-align: top;">Thanh toán:</td>
           <td><strong style="font-weight: 400; font-size: 1.125em;">${paymentMethodLabel}</strong></td>

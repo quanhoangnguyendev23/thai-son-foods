@@ -686,6 +686,11 @@ async function runInitDatabase(dryRunClient?: PoolClient) {
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS ranking_snapshot JSONB;
       CREATE INDEX IF NOT EXISTS idx_orders_lat_lng ON orders(latitude, longitude);
       CREATE INDEX IF NOT EXISTS idx_orders_recommended_store ON orders(recommended_store_id);
+      -- Giờ giao hàng: ASAP = giao ngay (start = lúc đặt, end = dự kiến tới nơi); SCHEDULED = khung hẹn khách chọn
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_mode VARCHAR(20);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_slot_start TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_slot_end TIMESTAMP WITH TIME ZONE;
+      CREATE INDEX IF NOT EXISTS idx_orders_store_delivery_slot ON orders(store_code, delivery_slot_start);
       -- Ô địa chỉ (xem scripts/migrations/address_round3_schema.sql): nguồn, độ chính xác, mã gợi ý, kiểm tra phường
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS address_source VARCHAR(20);
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS address_precision VARCHAR(10);
@@ -747,6 +752,19 @@ async function runInitDatabase(dryRunClient?: PoolClient) {
       await restoreDefaultProductGallery(client);
     } catch (err) {
       console.error('[DB] Không khôi phục được bộ ảnh sản phẩm:', err);
+    }
+
+    // Lịch sử đổi trạng thái đơn (ai xác nhận / ai huỷ): bảng + trigger, chỉ thêm mới (xem src/lib/orderStatusHistory.ts)
+    try {
+      if (dryRunClient) {
+        // Chạy thử: không gọi thật (module này tự chạy câu lệnh qua pool); script chạy thử tự đọc DDL của module
+        await client.query('-- ensureOrderStatusHistory(): DDL + BACKFILL trong src/lib/orderStatusHistory.ts');
+      } else {
+        const { ensureOrderStatusHistory } = await import('@/lib/orderStatusHistory');
+        await ensureOrderStatusHistory();
+      }
+    } catch (err) {
+      console.error('[DB] Không tạo được lịch sử trạng thái đơn:', err);
     }
 
     console.log('Database tables verified/created successfully!');

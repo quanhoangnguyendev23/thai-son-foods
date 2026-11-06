@@ -102,7 +102,7 @@ export default function StoreRecommendationSheet({
         {/* Header */}
         <div className="p-4 sm:p-5 bg-white border-b border-gray-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-emph">
               <Store className="w-5 h-5 text-emerald-700" />
             </div>
             <div>
@@ -174,10 +174,10 @@ export default function StoreRecommendationSheet({
           {/* PHẦN 1: CÁC GỢI Ý GẦN NHẤT & GIAO ĐƯỢC (TỐI ĐA 3-4 CỬA HÀNG) */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[12px] text-gray-500 uppercase tracking-wider">
+              <span className="text-xs text-gray-500 uppercase tracking-wider">
                 Gợi ý giao hàng tối ưu nhất ({topStores.length})
               </span>
-              <span className="text-[11px] text-emerald-800 font-medium">Miễn phí ship trong 10 km</span>
+              <span className="text-2xs text-emerald-800 font-medium">Miễn phí ship trong 10 km</span>
             </div>
 
             {topStores.filter(filterByKeyword).length === 0 ? (
@@ -229,16 +229,16 @@ export default function StoreRecommendationSheet({
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-gray-900 text-base">{st.name}</span>
                           {st.areaLabel && (
-                            <span className="text-[12px] text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                            <span className="text-xs text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
                               {st.areaLabel}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-gray-500 truncate mt-0.5">{st.addressNew}</p>
+                        <p className="text-2xs text-gray-500 truncate mt-0.5">{st.addressNew}</p>
                       </div>
 
                       {isSelected && (
-                        <span className="text-[12px] text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0 flex items-center gap-1">
+                        <span className="text-xs text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0 flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" />
                           <span>Đang chọn</span>
                         </span>
@@ -247,28 +247,28 @@ export default function StoreRecommendationSheet({
 
                     {/* Hàng giữa: Các thông số Quãng đường, ETA, Phí ship, Giờ đóng cửa */}
                     <div className="flex items-center gap-2 flex-wrap text-xs pt-1 border-t border-gray-100">
-                      <span className="text-gray-800 flex items-center gap-1 text-[1.125em]">
+                      <span className="text-gray-800 flex items-center gap-1 text-emph">
                         <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                         <span>{st.roadKm} km</span>
                       </span>
 
                       <span className="text-gray-300">•</span>
 
-                      <span className="text-gray-800 flex items-center gap-1 text-[1.125em]">
+                      <span className="text-gray-800 flex items-center gap-1 text-emph">
                         <Clock className="w-3.5 h-3.5 text-blue-600" />
                         <span>~{st.etaMinutes} phút</span>
                       </span>
 
                       <span className="text-gray-300">•</span>
 
-                      <span className="text-emerald-800 text-[1.125em]">
+                      <span className="text-emerald-800 text-emph">
                         {st.shippingFee === 0 ? 'Freeship' : `${st.shippingFee.toLocaleString('vi-VN')}đ`}
                       </span>
 
                       {st.closesAt && (
                         <>
                           <span className="text-gray-300">•</span>
-                          <span className="text-[11px] text-gray-500">Mở đến {st.closesAt}</span>
+                          <span className="text-2xs text-gray-500">Mở đến {st.closesAt}</span>
                         </>
                       )}
                     </div>
@@ -280,7 +280,7 @@ export default function StoreRecommendationSheet({
                           <span
                             key={b}
                             className={cn(
-                              'text-[11px] px-2 py-0.5 rounded-md',
+                              'text-2xs px-2 py-0.5 rounded-md',
                               b === 'Đề xuất'
                                 ? 'bg-emerald-800 text-white'
                                 : b === 'Gần nhất'
@@ -297,7 +297,7 @@ export default function StoreRecommendationSheet({
 
                       {/* Hiển thị chênh lệch nếu khách tự chọn chi nhánh xa hơn đề xuất */}
                       {!isTop1 && (diffFee > 0 || diffEta > 0) && (
-                        <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md font-medium border border-amber-200">
+                        <span className="text-2xs text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md font-medium border border-amber-200">
                           {diffFee > 0 && `+${diffFee.toLocaleString('vi-VN')}đ `}
                           {diffEta > 0 && `+${diffEta} phút`}
                         </span>
@@ -308,7 +308,7 @@ export default function StoreRecommendationSheet({
                         <a
                           href={`tel:${st.phone}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-[11px] text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded-md transition-colors"
+                          className="inline-flex items-center gap-1 text-2xs text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded-md transition-colors"
                         >
                           <Phone className="w-3 h-3 text-gray-500" />
                           <span>{st.phone}</span>
@@ -335,7 +335,7 @@ export default function StoreRecommendationSheet({
             ) : (
               <div className="space-y-4 animate-in fade-in duration-150">
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-gray-500 uppercase tracking-wider">
+                  <span className="text-xs text-gray-500 uppercase tracking-wider">
                     Tất cả chi nhánh hệ thống
                   </span>
                   <button
@@ -379,12 +379,12 @@ export default function StoreRecommendationSheet({
                               )}
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-gray-900 text-[1.125em]">{st.name}</span>
+                                <span className="text-gray-900 text-emph">{st.name}</span>
                                 {st.roadKm && <span className="text-gray-500">~{st.roadKm} km</span>}
                               </div>
-                              <p className="text-[11px] text-gray-500 truncate">{st.addressNew}</p>
+                              <p className="text-2xs text-gray-500 truncate">{st.addressNew}</p>
                               {isUnavailable && unavailReason && (
-                                <p className="text-[10px] text-amber-800 font-medium">
+                                <p className="text-2xs text-amber-800 font-medium">
                                   {unavailReason}
                                 </p>
                               )}

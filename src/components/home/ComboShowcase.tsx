@@ -150,14 +150,14 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
 
                         {/* Huy hiệu giảm giá (Góc trên phải) */}
                         <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
-                          <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-sale text-white rounded shadow-xs">
+                          <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
                             -{combo.discount}%
                           </span>
                         </div>
 
-                        {/* Huy hiệu số lượng chai (Góc dưới trái) */}
-                        <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 z-10 pointer-events-none">
-                          <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
+                        {/* Huy hiệu số lượng chai (Góc dưới phải) */}
+                        <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 z-10 pointer-events-none">
+                          <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
                             {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                           </span>
                         </div>
@@ -168,12 +168,12 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                         <div>
                           <h3
                             title={comboName}
-                            className="text-sm sm:text-[15px] text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors line-clamp-2"
+                            className="text-sm sm:text-base text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors line-clamp-2"
                           >
                             {shortComboName}
                           </h3>
                           <p
-                            className="text-[10px] sm:text-[11px] text-text-muted leading-tight mb-1.5 line-clamp-2"
+                            className="text-2xs sm:text-2xs text-text-muted leading-tight mb-1.5 line-clamp-2"
                             title={comboDesc}
                           >
                             {comboDesc}
@@ -185,10 +185,10 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                     {/* Hàng giá bán & Nút hành động */}
                     <div className="px-2 pb-2 sm:px-2.5 sm:pb-2.5 md:px-3 md:pb-3 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center justify-between gap-1">
                       <div className="flex flex-col sm:flex-row sm:items-baseline">
-                        <span className="text-sm sm:text-[15px] text-green-primary">
+                        <span className="text-sm sm:text-base text-green-primary">
                           {formatPrice(combo.salePrice)}đ
                         </span>
-                        <span className="text-[11px] lg:text-[10px] text-gray-400 line-through sm:ml-1">
+                        <span className="text-2xs lg:text-2xs text-gray-400 line-through sm:ml-1">
                           {formatPrice(combo.originalPrice)}đ
                         </span>
                       </div>
