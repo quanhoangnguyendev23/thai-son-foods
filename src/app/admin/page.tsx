@@ -246,6 +246,54 @@ interface Order {
   address_source?: string | null;
   address_new?: string | null;
   created_at: string;
+  /** Lần đổi trạng thái gần nhất (ai, lúc nào) — từ bảng order_status_history */
+  last_status_change?: OrderStatusChange | null;
+  /** Toàn bộ lịch sử đổi trạng thái (chỉ có khi mở chi tiết đơn) */
+  status_history?: OrderStatusChange[];
+}
+
+interface OrderStatusChange {
+  id?: string;
+  from_status: string | null;
+  to_status: string;
+  actor_type: string;
+  actor_username: string | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  note?: string | null;
+  created_at: string;
+}
+
+const STATUS_ACTOR_ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: 'Quản trị cấp cao',
+  ADMIN: 'Quản trị',
+  MARKETING: 'Marketing',
+  STORE_STAFF: 'Nhân viên cửa hàng',
+};
+
+/** "Xác nhận" / "Huỷ" / "Cập nhật" theo trạng thái được chuyển tới */
+function statusChangeVerb(toStatus: string): string {
+  if (toStatus === 'CANCELLED') return 'Huỷ';
+  if (toStatus === 'CONFIRMED') return 'Xác nhận';
+  if (toStatus === 'COMPLETED') return 'Hoàn thành';
+  if (toStatus === 'SHIPPING') return 'Giao hàng';
+  return 'Cập nhật';
+}
+
+function statusChangeActorLabel(c: OrderStatusChange): string {
+  if (c.actor_type === 'system') return 'Hệ thống tự động';
+  if (c.actor_type === 'customer') return `Khách hàng${c.actor_name ? ` (${c.actor_name})` : ''}`;
+  return c.actor_name || c.actor_username || 'Không rõ';
+}
+
+function formatStatusChangeTime(iso: string): string {
+  return new Date(iso).toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 interface ComboItem {
@@ -2191,6 +2239,16 @@ export default function AdminPage() {
             inventory_deducted: data.data?.inventory_deducted ?? selectedOrder.inventory_deducted,
             store_code: data.data?.store_code ?? selectedOrder.store_code,
           });
+          // Tải lại lịch sử trạng thái để thấy ngay ai vừa đổi
+          safeFetchJson<any>(`/api/admin/orders?id=${orderId}`)
+            .then((d) => {
+              if (d?.success && d.order) {
+                setSelectedOrder((prev) =>
+                  prev && prev.id === orderId ? { ...prev, status_history: d.order.status_history } : prev
+                );
+              }
+            })
+            .catch(() => {});
         }
         refreshOrderList();
         // Làm mới tồn kho nếu đang quản lý kho
@@ -4102,6 +4160,26 @@ export default function AdminPage() {
                                     </option>
                                   ))}
                               </select>
+                              {/* Ai đổi trạng thái gần nhất, lúc nào */}
+                              {order.last_status_change && order.last_status_change.to_status === order.status && (
+                                <div
+                                  className="mt-1 text-2xs text-ink-700 leading-snug max-w-[170px]"
+                                  title={[
+                                    order.last_status_change.actor_username ? `Tài khoản: ${order.last_status_change.actor_username}` : '',
+                                    order.last_status_change.actor_role
+                                      ? `Vai trò: ${STATUS_ACTOR_ROLE_LABELS[order.last_status_change.actor_role] || order.last_status_change.actor_role}`
+                                      : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' · ') || undefined}
+                                >
+                                  <p className="truncate">
+                                    {statusChangeVerb(order.last_status_change.to_status)} bởi{' '}
+                                    <span className="text-ink-950">{statusChangeActorLabel(order.last_status_change)}</span>
+                                  </p>
+                                  <p>{formatStatusChangeTime(order.last_status_change.created_at)}</p>
+                                </div>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-ink-700 text-[11px]">
                               {new Date(order.created_at).toLocaleDateString('vi-VN', {
@@ -8026,6 +8104,63 @@ export default function AdminPage() {
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Lịch sử trạng thái: ai xác nhận / ai huỷ / lúc nào */}
+              <div className="space-y-3">
+                <h4 className="text-sm text-ink-800 uppercase tracking-wider">
+                  Lịch Sử Trạng Thái
+                </h4>
+                <div className="rounded-xl border border-ink-200 p-4 text-xs">
+                  <ol className="space-y-3">
+                    <li className="flex gap-3">
+                      <span className="mt-1 w-2 h-2 rounded-full bg-ink-300 shrink-0" />
+                      <div>
+                        <p className="text-ink-950">Khách đặt đơn</p>
+                        <p className="text-2xs text-ink-700">{formatStatusChangeTime(selectedOrder.created_at)}</p>
+                      </div>
+                    </li>
+                    {(selectedOrder.status_history || []).map((h, idx) => {
+                      const toSt = statusMap[h.to_status];
+                      return (
+                        <li key={h.id || idx} className="flex gap-3">
+                          <span
+                            className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                              h.to_status === 'CANCELLED' ? 'bg-rose-400' : 'bg-emerald-400'
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <p className="text-ink-950">
+                              <span className={toSt?.text || ''}>{toSt?.label || h.to_status}</span>
+                              {h.from_status && (
+                                <span className="text-ink-700"> (từ {statusMap[h.from_status]?.label || h.from_status})</span>
+                              )}
+                            </p>
+                            <p className="text-ink-800">
+                              Bởi <span className="text-ink-950">{statusChangeActorLabel(h)}</span>
+                              {h.actor_type === 'admin' && h.actor_username && h.actor_name !== h.actor_username && (
+                                <span className="text-ink-700"> · {h.actor_username}</span>
+                              )}
+                              {h.actor_role && (
+                                <span className="text-ink-700"> · {STATUS_ACTOR_ROLE_LABELS[h.actor_role] || h.actor_role}</span>
+                              )}
+                            </p>
+                            {h.note && <p className="text-ink-700 break-words">Lý do: {h.note}</p>}
+                            <p className="text-2xs text-ink-700">{formatStatusChangeTime(h.created_at)}</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  {selectedOrder.status_history && selectedOrder.status_history.length === 0 && selectedOrder.status !== 'PENDING' && (
+                    <p className="mt-3 text-2xs text-ink-700">
+                      Đơn này đổi trạng thái trước khi có tính năng ghi lịch sử nên không biết ai đã đổi.
+                    </p>
+                  )}
+                  {!selectedOrder.status_history && (
+                    <p className="mt-3 text-2xs text-ink-700">Đang tải lịch sử...</p>
+                  )}
                 </div>
               </div>
 

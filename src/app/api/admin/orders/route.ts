@@ -7,6 +7,12 @@ import { sendOrderEmail } from '@/lib/email/service';
 import { canDeleteOrder, canTransitionOrderStatus, isOrderStatus } from '@/lib/order-status';
 import { publicErrorMessage } from '@/lib/apiError';
 import { buildXlsx, XLSX_MIME } from '@/lib/xlsx';
+import {
+  ensureOrderStatusHistory,
+  getOrderStatusHistory,
+  setOrderStatusActor,
+  LAST_STATUS_CHANGE_SELECT,
+} from '@/lib/orderStatusHistory';
 
 export const dynamic = 'force-dynamic';
 
@@ -126,11 +132,15 @@ export async function GET(request: Request) {
         return item;
       });
 
+      // Lịch sử đổi trạng thái: ai xác nhận / ai huỷ / lúc nào
+      const statusHistory = await getOrderStatusHistory(orderId);
+
       return NextResponse.json({
         success: true,
         order: {
           ...orderData,
           items: sanitizedItems,
+          status_history: statusHistory,
         },
       });
     }
@@ -322,9 +332,12 @@ export async function GET(request: Request) {
 
     // 2b. Danh sách đơn: phân trang trước, rồi mới gom sản phẩm cho đúng các đơn của trang đó
     const costFieldSql = canViewCostPrice ? `'cost_price', oi.cost_price,` : '';
+    // Ai đổi trạng thái gần nhất (bỏ qua nếu bảng lịch sử chưa tạo được, để danh sách đơn vẫn chạy)
+    const lastStatusSql = (await ensureOrderStatusHistory()) ? `${LAST_STATUS_CHANGE_SELECT},` : '';
     const selectSql = `
       SELECT
         o.*,
+        ${lastStatusSql}
         (SELECT COUNT(*) FROM order_items oc WHERE oc.order_id = o.id) AS item_count,
         COALESCE((
           SELECT json_agg(
@@ -448,6 +461,9 @@ export async function PUT(request: Request) {
     let targetStoreCode: string;
     let updatedOrder: any;
 
+    // Tạo bảng/trigger lịch sử trạng thái (nếu chưa có) TRƯỚC khi mở transaction khoá đơn
+    if (status) await ensureOrderStatusHistory();
+
     const client = await pool.connect();
     try {
       await client.query('BEGIN;');
@@ -498,6 +514,19 @@ export async function PUT(request: Request) {
         );
       }
       const statusChanged = Boolean(status) && status !== currentOrder.status;
+
+      // Ghi người đổi trạng thái vào lịch sử đơn (trigger đọc giá trị này khi cột status đổi)
+      if (statusChanged) {
+        await setOrderStatusActor(client, {
+          orderId: id,
+          type: 'admin',
+          id: session.id,
+          username: session.username,
+          name: session.fullName || session.username,
+          role: session.role,
+          note: status === 'CANCELLED' ? note || null : null,
+        });
+      }
 
       // Xác định cửa hàng xử lý đơn
       targetStoreCode = currentOrder.store_code || storeScope || (session.username !== 'admin' ? session.username : 'NH');
