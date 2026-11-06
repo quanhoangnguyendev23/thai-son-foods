@@ -304,7 +304,7 @@ function ComboQuadCard({ combos }: { combos: Combo[] }) {
               <div className="relative aspect-[4/3] rounded-lg bg-ivory overflow-hidden">
                 <TileImage src={c.image} alt={name} sizes="(max-width: 640px) 40vw, 160px" />
                 {c.discount > 0 && (
-                  <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[11px] bg-sale text-white rounded">
+                  <span className="absolute top-1 right-1 px-1.5 py-0.5 text-2xs bg-sale text-white rounded">
                     -{c.discount}%
                   </span>
                 )}

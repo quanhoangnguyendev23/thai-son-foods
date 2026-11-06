@@ -168,7 +168,7 @@ export default function ProductCombosSidebar({
 
               {/* Badge giảm giá */}
               {combo.discount > 0 && (
-                <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[9px] sm:text-[10px] bg-sale text-white rounded shadow-xs">
+                <span className="absolute top-1 right-1 px-1.5 py-0.5 text-2xs sm:text-2xs bg-sale text-white rounded shadow-xs">
                   -{combo.discount}%
                 </span>
               )}
@@ -284,13 +284,13 @@ export default function ProductCombosSidebar({
           title={`Xem chi tiết ${combo.name}`}
         >
           {/* Ảnh Combo Thumbnail */}
-          <div className="relative rounded-lg overflow-hidden bg-ivory-dark shrink-0 border border-gray-100 w-16 h-16 sm:w-18 sm:h-18">
+          <div className="relative rounded-lg overflow-hidden bg-white shrink-0 border border-gray-100 w-20 h-[60px] sm:w-24 sm:h-[72px]">
             <Image
               src={combo.image}
               alt={comboTitle}
               fill
-              className="object-cover group-hover/card:scale-105 transition-transform duration-300"
-              sizes="72px"
+              className="object-contain group-hover/card:scale-105 transition-transform duration-300"
+              sizes="96px"
             />
             {/* Badge số chai */}
             <span className="absolute bottom-1 right-1 bg-ink-950/75 backdrop-blur-xs text-white text-[10px] px-1.5 py-0.2 rounded">

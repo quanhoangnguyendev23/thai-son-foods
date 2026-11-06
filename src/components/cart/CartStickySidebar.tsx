@@ -247,7 +247,7 @@ export default function CartStickySidebar() {
                 className="pt-3 first:pt-0 flex items-center gap-3 group"
               >
                 {/* Thumbnail sản phẩm */}
-                <div className="relative w-14 h-16 rounded-xl overflow-hidden bg-ivory shrink-0 border border-gray-100 p-1 flex items-center justify-center">
+                <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-white shrink-0 border border-gray-100 flex items-center justify-center">
                   <Image
                     src={item.thumbnail}
                     alt={item.name}

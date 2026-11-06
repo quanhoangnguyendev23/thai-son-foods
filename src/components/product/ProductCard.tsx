@@ -208,8 +208,8 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             {/* Huy hiệu Bán chạy / Mới */}
             <div
               className={`absolute top-1 sm:top-2 ${
-                isPoster ? 'right-1 sm:right-2' : 'left-1 sm:left-2'
-              } flex flex-col gap-0.5 z-10`}
+                'right-1 sm:right-2'
+              } flex flex-col items-end gap-0.5 z-10`}
             >
               {product.isBestSeller && (
                 <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-brand-emerald text-white rounded shadow-xs">
@@ -300,8 +300,8 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
             <div
               className={`absolute top-1 sm:top-2.5 ${
-                isPoster ? 'right-1 sm:right-2.5' : 'left-1 sm:left-2.5'
-              } flex flex-col gap-1 z-10`}
+                'right-1 sm:right-2.5'
+              } flex flex-col items-end gap-1 z-10`}
             >
               {product.isBestSeller && (
                 <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
@@ -391,8 +391,8 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
           {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
           <div
             className={`absolute top-1 sm:top-2.5 ${
-              isPoster ? 'right-1 sm:right-2.5' : 'left-1 sm:left-2.5'
-            } flex flex-col gap-1 z-10`}
+              'right-1 sm:right-2.5'
+            } flex flex-col items-end gap-1 z-10`}
           >
             {product.isBestSeller && (
               <span className="px-1.5 sm:px-2 py-0.5 text-[11px] md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">

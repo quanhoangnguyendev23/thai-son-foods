@@ -53,7 +53,7 @@ function ComboCard({ combo }: { combo: Combo }) {
             className="object-cover transition-transform duration-500"
           />
           {combo.discount > 0 && (
-            <span className="absolute top-1 left-1 sm:top-2 sm:left-2 px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-sale text-white rounded shadow-xs">
+            <span className="absolute top-1 right-1 sm:top-2 sm:right-2 px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
               -{combo.discount}%
             </span>
           )}

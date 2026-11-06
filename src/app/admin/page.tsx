@@ -3559,7 +3559,7 @@ export default function AdminPage() {
                         <tr key={p.id} className="hover:bg-ink-100 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-lg overflow-hidden bg-ink-100 relative shrink-0 border border-ink-300">
+                              <div className="w-14 h-[42px] rounded-lg overflow-hidden bg-white relative shrink-0 border border-ink-300">
                                 {p.thumbnail ? (
                                   <Image
                                     src={p.thumbnail}
@@ -3761,14 +3761,14 @@ export default function AdminPage() {
                             {/* Image & Name */}
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-ink-100 border border-ink-300 overflow-hidden relative shrink-0">
+                                <div className="w-16 h-12 rounded-lg bg-white border border-ink-300 overflow-hidden relative shrink-0">
                                   {c.image ? (
                                     <Image
                                       src={c.image}
                                       alt={c.name}
                                       fill
-                                      className="object-cover"
-                                      sizes="48px"
+                                      className="object-contain"
+                                      sizes="64px"
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-ink-600">
@@ -5282,7 +5282,7 @@ export default function AdminPage() {
                               {/* Thông tin mặt hàng */}
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 rounded-xl bg-ink-50 border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center p-1">
+                                  <div className="w-16 h-12 rounded-lg bg-white border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center">
                                     <Image
                                       src={item.thumbnail}
                                       alt={item.product_name}
@@ -6767,7 +6767,7 @@ export default function AdminPage() {
 
                               {/* Badge Đại diện */}
                               {isThumb && (
-                                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[11px] bg-emerald-600 text-white shadow-sm flex items-center gap-1">
+                                <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-full text-2xs bg-emerald-600 text-white shadow-sm flex items-center gap-1">
                                   <Star className="w-2.5 h-2.5 fill-white" />
                                   <span>Đại diện</span>
                                 </span>
@@ -7345,7 +7345,7 @@ export default function AdminPage() {
                               ) : null}
 
                               {isThumb && (
-                                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[11px] bg-amber-600 text-white shadow-sm flex items-center gap-1">
+                                <span className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-full text-2xs bg-amber-600 text-white shadow-sm flex items-center gap-1">
                                   <Star className="w-2.5 h-2.5 fill-white" />
                                   <span>Ảnh chính</span>
                                 </span>
@@ -7940,7 +7940,7 @@ export default function AdminPage() {
                   {selectedOrder.items && selectedOrder.items.length > 0 ? (
                     selectedOrder.items.map((item, idx) => (
                       <div key={item.id || idx} className="p-3 bg-ink-50 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-ink-100 border border-ink-300 relative overflow-hidden shrink-0">
+                        <div className="w-[52px] h-[39px] rounded-lg bg-white border border-ink-300 relative overflow-hidden shrink-0">
                           {item.thumbnail ? (
                             <Image
                               src={item.thumbnail}
@@ -8584,7 +8584,7 @@ export default function AdminPage() {
             >
               {/* Product preview */}
               <div className="p-3.5 rounded-xl bg-ink-50 border border-ink-200 flex items-center gap-3">
-                <div className="w-14 h-14 rounded-xl bg-white border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center p-1">
+                <div className="w-20 h-[60px] rounded-lg bg-white border border-ink-200 relative overflow-hidden shrink-0 flex items-center justify-center">
                   <Image
                     src={stockModalItem.thumbnail}
                     alt={stockModalItem.product_name}

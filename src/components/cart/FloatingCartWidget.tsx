@@ -86,7 +86,7 @@ export default function FloatingCartWidget() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-xl bg-ivory p-1 shrink-0 border border-emerald-100/80 flex items-center justify-center overflow-hidden">
+              <div className="relative w-16 h-12 rounded-lg bg-white shrink-0 border border-emerald-100/80 flex items-center justify-center overflow-hidden">
                 <Image
                   src={toastItem.thumbnail}
                   alt={toastName}

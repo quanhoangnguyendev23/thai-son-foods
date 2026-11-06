@@ -348,8 +348,8 @@ export default function HeaderAmazon() {
                     onClick={() => handleSelectProduct(item.slug)}
                     className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-emerald-50/50 transition-colors cursor-pointer group text-left"
                   >
-                    <span className="relative w-12 h-12 rounded-lg bg-ivory border border-gray-200/80 overflow-hidden shrink-0">
-                      <Image src={item.thumbnail || '/images/logo-clean-1000.png'} alt={name} fill className="object-contain p-1" sizes="48px" />
+                    <span className="relative w-16 h-12 rounded-lg bg-white border border-gray-200/80 overflow-hidden shrink-0">
+                      <Image src={item.thumbnail || '/images/logo-clean-1000.png'} alt={name} fill className="object-contain" sizes="64px" />
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm sm:text-base text-gray-900 group-hover:text-green-primary leading-snug line-clamp-2">
