@@ -485,6 +485,18 @@ export async function PUT(request: Request) {
           { status: 409 }
         );
       }
+      // Đơn đặt khi bản đồ lỗi: phải gọi khách xác nhận vị trí (nút "Đã gọi xác nhận") trước khi giao
+      if ((status === 'SHIPPING' || status === 'COMPLETED') && currentOrder.location_check === 'needs_call') {
+        await client.query('ROLLBACK;');
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Đơn cần gọi xác nhận vị trí. Bấm "Đã gọi xác nhận" (sửa phí ship nếu cần) trước khi chuyển sang giao hàng.',
+            code: 'LOCATION_CALL_REQUIRED',
+          },
+          { status: 409 }
+        );
+      }
       const statusChanged = Boolean(status) && status !== currentOrder.status;
 
       // Xác định cửa hàng xử lý đơn

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { cleanupExpiredReservations } from '@/lib/inventory';
 import { publicErrorMessage } from '@/lib/apiError';
 import { pruneOldLogs } from '@/lib/logRetention';
+import { purgeOldAddressEvents } from '@/lib/address/addressEventStore';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,11 +52,20 @@ export async function GET(request: Request) {
       console.log(`[Cron Cleanup] ${timestamp} | Đã lưu trữ và xoá ${deletedLogs} dòng nhật ký quá hạn`);
     }
 
+    // Log ẩn danh ô địa chỉ: xóa bản ghi quá 30 ngày (lỗi ở bước này không ảnh hưởng các bước trên)
+    let addressEventsDeleted = 0;
+    try {
+      addressEventsDeleted = await purgeOldAddressEvents();
+    } catch (e) {
+      console.warn('[Cron Cleanup] Không xóa được address_events quá hạn:', (e as Error)?.message);
+    }
+
     return NextResponse.json({
       success: true,
       timestamp,
       ...result,
       logRetention,
+      addressEventsDeleted,
     });
   } catch (error: any) {
     console.error('[Cron Cleanup] Error releasing expired reservations:', error);

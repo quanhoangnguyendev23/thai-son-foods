@@ -54,8 +54,9 @@ export async function query(text: string, params?: any[]) {
   return pool.query(text, params);
 }
 
-async function runInitDatabase() {
-  const client = await pool.connect();
+/** `dryRunClient`: chạy thử, ghi lại câu SQL thay vì thực thi (xem collectSchemaBootstrapSql). */
+async function runInitDatabase(dryRunClient?: PoolClient) {
+  const client = dryRunClient || (await pool.connect());
   try {
     // Create categories table
     await client.query(`
@@ -685,6 +686,34 @@ async function runInitDatabase() {
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS ranking_snapshot JSONB;
       CREATE INDEX IF NOT EXISTS idx_orders_lat_lng ON orders(latitude, longitude);
       CREATE INDEX IF NOT EXISTS idx_orders_recommended_store ON orders(recommended_store_id);
+      -- Ô địa chỉ (xem scripts/migrations/address_round3_schema.sql): nguồn, độ chính xác, mã gợi ý, kiểm tra phường
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS address_source VARCHAR(20);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS address_precision VARCHAR(10);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS provider_place_id TEXT;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS location_check VARCHAR(24);
+      -- Xác nhận ghim cho địa chỉ đã lưu (scripts/migrations/address_round4_schema.sql)
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS address_pin_confirmed_at TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS address_pin_lat DOUBLE PRECISION;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS address_pin_lng DOUBLE PRECISION;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS address_pin_snapshot TEXT;
+      CREATE TABLE IF NOT EXISTS address_events (
+        id BIGSERIAL PRIMARY KEY,
+        hour TIMESTAMP WITH TIME ZONE NOT NULL,
+        query VARCHAR(80),
+        result_count SMALLINT,
+        rank SMALLINT,
+        source VARCHAR(12),
+        provider_status VARCHAR(12),
+        precision VARCHAR(10),
+        address_source VARCHAR(14),
+        location_trusted BOOLEAN,
+        location_check VARCHAR(24),
+        pin_moved VARCHAR(10),
+        pin_choice VARCHAR(4),
+        pin_lat NUMERIC(7,3),
+        pin_lng NUMERIC(7,3)
+      );
+      CREATE INDEX IF NOT EXISTS idx_address_events_hour ON address_events(hour);
 
       -- 11. Danh sách yêu thích theo tài khoản & lượt xem sản phẩm ẩn danh (gợi ý "khách cũng xem")
       CREATE TABLE IF NOT EXISTS wishlists (
@@ -787,7 +816,40 @@ async function restoreDefaultProductGallery(client: PoolClient) {
  * khóa lược đồ gây "deadlock detected" (HTTP 500 khi đặt hàng) và làm chậm mọi API. Nếu lần chạy lỗi thì cho phép thử lại.
  */
 let initDatabasePromise: Promise<void> | null = null;
+
+/**
+ * Chạy thử bộ khởi tạo lược đồ: trả về đúng thứ tự các câu SQL sẽ chạy, KHÔNG kết nối CSDL, KHÔNG thực thi.
+ * Câu SELECT của bước khôi phục ảnh gallery nhận 0 dòng nên bước đó không sinh câu ghi dữ liệu nào trong bản chạy thử.
+ * Dùng bởi scripts/schema_bootstrap_dry_run.mjs.
+ */
+export async function collectSchemaBootstrapSql(): Promise<string[]> {
+  const statements: string[] = [];
+  const fake = {
+    query: async (sql: string) => {
+      statements.push(String(sql).trim());
+      return { rows: [], rowCount: 0 };
+    },
+    release: () => {},
+  };
+  await runInitDatabase(fake as unknown as PoolClient);
+  return statements;
+}
+
+/**
+ * Production: lược đồ CHỈ đổi qua migration (scripts/migrations/*.sql, xem docs/DEPLOY-DIA-CHI.md), không tự CREATE/ALTER
+ * lúc chạy. Mặc định tắt khi NODE_ENV=production; bật lại tạm thời bằng DB_SCHEMA_BOOTSTRAP=1. Dev/local luôn chạy như cũ.
+ */
+export function isSchemaBootstrapEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  const flag = (env.DB_SCHEMA_BOOTSTRAP || '').trim().toLowerCase();
+  if (flag === '1' || flag === 'true') return true;
+  if (flag === '0' || flag === 'false') return false;
+  return env.NODE_ENV !== 'production';
+}
+
 export function initDatabase(): Promise<void> {
+  if (!initDatabasePromise && !isSchemaBootstrapEnabled()) {
+    initDatabasePromise = Promise.resolve();
+  }
   if (!initDatabasePromise) {
     initDatabasePromise = runInitDatabase().catch((err) => {
       initDatabasePromise = null;

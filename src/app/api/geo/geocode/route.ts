@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { findPreciseCoordinates, VIETNAM_ADDRESSES } from '@/data/vietnam-addresses';
 import { findStreetCoordinates, extractHouseNumberAndStreet } from '@/data/vietnam-streets';
 import { matchStandardAdministrative, isKhuPho, removeKhuPho } from '@/lib/geo';
+import { nominatimJson } from '@/lib/address/osmQueue';
 
 export const dynamic = 'force-dynamic';
 
@@ -184,22 +185,17 @@ export async function GET(req: NextRequest) {
           .filter(Boolean)
           .join(', ');
 
-    if (searchTarget) {
+    // Không có chữ địa chỉ, phường, quận hay tỉnh nào thì searchTarget chỉ còn "Việt Nam": không hỏi Nominatim
+    // (trước đây trả về tâm cả nước làm tọa độ).
+    if (searchTarget && (address || wardParam || districtParam || provinceParam)) {
       try {
         const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
           searchTarget
         )}&format=json&countrycodes=vn&addressdetails=1&limit=1`;
 
-        const nRes = await fetch(nomUrl, {
-          headers: {
-            'User-Agent': 'ThaiSonFoodsWeb/1.0 (contact@thaisonfoods.vn)',
-            'Accept-Language': 'vi,en;q=0.9',
-          },
-          signal: AbortSignal.timeout(3500),
-        });
-
-        if (nRes.ok) {
-          const nData = await nRes.json();
+        // Qua hàng đợi chung của app (≤ 1 lượt/giây, có đệm)
+        {
+          const nData = await nominatimJson<any>(nomUrl);
           if (Array.isArray(nData) && nData.length > 0) {
             const item = nData[0];
             const lat = parseFloat(item.lat);

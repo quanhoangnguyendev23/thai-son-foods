@@ -10,6 +10,13 @@ import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 import { computeLineUnitCosts } from '@/lib/costSnapshot';
+import { logAddressEvent } from '@/lib/address/anonymousLog';
+import { hasRealCoords } from '@/lib/address/normalize';
+import { isSavedPinValid, readSavedPin } from '@/lib/address/savedAddressPin';
+import { isFallbackCode, takeFallbackQuota } from '@/lib/address/locationFallback';
+import { getAreaCenter } from '@/lib/address/admin';
+import { saveAddressEvent } from '@/lib/address/addressEventStore';
+import { runOrderAddressChecks } from '@/lib/address/orderLocationCheck';
 
 /** Số dòng sản phẩm tối đa trong 1 đơn (sau đó mới gộp dòng trùng) */
 const MAX_ORDER_LINES = 50;
@@ -75,7 +82,9 @@ export async function POST(request: Request) {
       rawLatInput >= -90 &&
       rawLatInput <= 90 &&
       rawLngInput >= -180 &&
-      rawLngInput <= 180
+      rawLngInput <= 180 &&
+      // (0, 0) là giá trị mặc định do lỗi, không phải vị trí: coi như THIẾU, lưu NULL
+      hasRealCoords(rawLatInput, rawLngInput)
     ) {
       rawLat = rawLatInput;
       rawLng = rawLngInput;
@@ -90,8 +99,118 @@ export async function POST(request: Request) {
       ? (locationConfirmed ? 'USER_MAP_PIN' : (clientConfirmedBy || 'USER_GEOCODE'))
       : null;
     const saveDefaultAddress = Boolean(body.saveDefaultAddress);
-    const addressNew = body.addressNew || body.address_new || null;
-    const addressOld = body.addressOld || body.address_old || null;
+    // Địa chỉ dạng mới (phường mới) và dạng cũ (quận cũ) do trình duyệt gửi: chỉ làm sạch và lưu, không ghi đè
+    const cleanAddressText = (v: unknown) => (v ? stripHtml(String(v)).slice(0, 300) || null : null);
+    const addressNew = cleanAddressText(body.addressNew || body.address_new);
+    const addressOld = cleanAddressText(body.addressOld || body.address_old);
+    // Nguồn của địa chỉ/vị trí do khách chọn: gợi ý, ghim, GPS, đã lưu hay tự gõ. Chỉ để ghi log, không dùng để đổi dữ liệu.
+    const ADDRESS_SOURCES = ['autocomplete', 'pin', 'gps', 'saved', 'manual'];
+    const addressSource = ADDRESS_SOURCES.includes(String(body.addressSource)) ? String(body.addressSource) : null;
+    // Mã gợi ý của nhà cung cấp, luôn có tiền tố ("photon:N5", "local:…", "area:…", "google:…"); id có thể dài nên lưu TEXT
+    const rawPlaceId = typeof body.providerPlaceId === 'string' ? body.providerPlaceId.trim().slice(0, 500) : '';
+    const providerPlaceId = !rawPlaceId
+      ? null
+      : rawPlaceId.startsWith('ph:')
+      ? `photon:${rawPlaceId.slice(3)}`
+      : rawPlaceId.startsWith('loc:')
+      ? `local:${rawPlaceId.slice(4)}`
+      : /^(area|photon|local|google|goong|vietmap):/.test(rawPlaceId)
+      ? rawPlaceId
+      : `google:${rawPlaceId}`;
+    const addressPrecision = ['house', 'street', 'area'].includes(String(body.addressPrecision)) ? String(body.addressPrecision) : null;
+    // Vị trí đáng tin: ghim khách xác nhận, GPS thiết bị sai số ≤ 100 m (trình duyệt gửi DEVICE_GPS), hoặc gợi ý đúng số
+    // nhà. Tâm phường / giữa đường / GPS sai số lớn / tọa độ ước từ ô Quận-Phường / địa chỉ đã lưu chưa xác nhận: KHÔNG
+    // nhận đơn (trả LOCATION_UNCONFIRMED, trang mở bản đồ), không thu phí cơ bản thay thế.
+    // Địa chỉ đã lưu có xác nhận ghim: server tự kiểm trong DB (đúng tài khoản, chữ + phường + tọa độ chưa đổi), không tin lời client
+    let savedPinTrusted = false;
+    if (clientConfirmedBy === 'USER_SAVED_PROFILE_PIN' && userId && rawLat !== null && rawLng !== null) {
+      savedPinTrusted = isSavedPinValid(await readSavedPin(userId), {
+        address,
+        ward,
+        district,
+        province,
+        latitude: rawLat,
+        longitude: rawLng,
+      });
+    }
+    const locationTrusted =
+      rawLat !== null &&
+      rawLng !== null &&
+      (locationConfirmed ||
+        savedPinTrusted ||
+        clientConfirmedBy === 'DEVICE_GPS' ||
+        (addressSource === 'autocomplete' && addressPrecision === 'house'));
+    // Đường lui: bản đồ / dịch vụ địa chỉ lỗi → nhận đơn với cờ "needs_call", phí theo tâm Phường/Quận đã chọn.
+    // Chỉ khi có mã lỗi bản đồ hợp lệ, có Phường + Quận, và phiên còn hạn mức (2 lần / 24 giờ).
+    const fallbackCode = body.locationFallback && typeof body.locationFallback === 'object' ? (body.locationFallback as { code?: unknown }).code : null;
+    let needsCall = false;
+    let fallbackCenter: { lat: number; lng: number } | null = null;
+    if (!locationTrusted && isFallbackCode(fallbackCode) && ward && district) {
+      // Đơn "cần gọi xác nhận" chỉ nhận thanh toán khi nhận hàng (COD): chưa chắc vị trí thì không thu tiền trước
+      const earlyPaymentMethod = String(body.paymentMethod || customerObj.paymentMethod || 'cod').trim().toLowerCase();
+      if (earlyPaymentMethod !== 'cod') {
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'NEEDS_CALL_COD_ONLY',
+            error: 'Bản đồ đang lỗi nên đơn cần gọi xác nhận vị trí chỉ thanh toán khi nhận hàng (COD).',
+          },
+          { status: 400 }
+        );
+      }
+      fallbackCenter = getAreaCenter(ward, district);
+      const sid = (request.headers.get('cookie') || '').match(/(?:^|;\s*)tsf_geo_sid=([a-zA-Z0-9_-]{8,64})/)?.[1];
+      const quotaKey = sid ? `sid:${sid}` : `ip:${getClientIp(request.headers) || UNKNOWN_CLIENT_IP}`;
+      if (fallbackCenter && takeFallbackQuota(quotaKey)) needsCall = true;
+    }
+    if (!locationTrusted && !needsCall) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'LOCATION_UNCONFIRMED',
+          error: 'Vui lòng xác nhận vị trí giao hàng trên bản đồ trước khi đặt hàng.',
+        },
+        { status: 400 }
+      );
+    }
+    // Kiểm tra phụ, KHÔNG chờ, KHÔNG sửa, KHÔNG chặn đơn: phường tại tọa độ đơn có khớp phường khách chọn không (tính cả
+    // tên cũ / mới); khoảng cách tới tâm phường chỉ là kiểm tra thứ hai, ngưỡng theo cỡ phường. Hiện chỉ ghi log ẩn danh
+    // (không mã đơn, không IP); lưu cờ vào đơn cần thêm cột nên đang chờ chủ dự án duyệt (xem báo cáo, mục 7).
+    // Log ẩn danh (không mã đơn / mã khách / IP; chuỗi bỏ hết chữ số; tọa độ làm tròn; giờ làm tròn): xem anonymousLog.ts
+    const telemetry: Record<string, unknown> =
+      body.addressTelemetry && typeof body.addressTelemetry === 'object' ? body.addressTelemetry : {};
+    const emitAddressEvent = (check: string | null) =>
+      saveAddressEvent(logAddressEvent({
+        query: typeof telemetry.query === 'string' ? telemetry.query : null,
+        resultCount: typeof telemetry.total === 'number' ? telemetry.total : null,
+        rank: typeof telemetry.rank === 'number' ? telemetry.rank : null,
+        source: typeof telemetry.source === 'string' ? telemetry.source : null,
+        precision: addressPrecision,
+        addressSource,
+        locationTrusted,
+        check,
+        pinMovedMeters: typeof telemetry.pinMovedM === 'number' ? telemetry.pinMovedM : null,
+        pinChoice: telemetry.pinChoice === 'use' || telemetry.pinChoice === 'keep' ? telemetry.pinChoice : null,
+        lat: rawLat,
+        lng: rawLng,
+      })).catch((e) => console.warn('[orders] Không lưu được address_events:', (e as Error)?.message));
+    // Chạy SAU KHI tạo đơn (after(): Vercel giữ hàm sống tới khi xong): kiểm phường, lưu location_check, ghi log ẩn danh
+    const runAddressChecks = async (savedOrderId: string) => {
+      // Đơn đi đường lui: giữ cờ needs_call (cửa hàng gọi xác nhận), không kiểm phường theo tọa độ chưa đáng tin
+      if (needsCall) {
+        await emitAddressEvent('needs_call');
+        return;
+      }
+      await runOrderAddressChecks({
+        orderId: savedOrderId,
+        ward,
+        district,
+        lat: rawLat,
+        lng: rawLng,
+        addressSource,
+        emit: emitAddressEvent,
+      });
+    };
     const recommendedStoreId = (body.recommendedStoreId || body.recommended_store_id || null)?.toString().slice(0, 50) || null;
     const wasOverridden = Boolean(body.wasOverridden ?? body.was_overridden ?? (recommendedStoreId && storeCode && recommendedStoreId !== storeCode));
     const rankingSnapshot = body.rankingSnapshot ? JSON.stringify(body.rankingSnapshot) : null;
@@ -437,12 +556,14 @@ export async function POST(request: Request) {
       let customerDistanceKm: number | null = null;
       // Phí theo km dùng quãng đường đi thật (cùng nguồn với khung "Chi nhánh phục vụ" ở trang thanh toán).
       // Chỉ tính khi khách gửi tọa độ thật; tọa độ ước từ tên quận/phường quá thô để thu phụ phí.
-      if (rawLat !== null && rawLng !== null && targetStoreLat !== null && targetStoreLng !== null) {
+      // Vị trí dùng tính km: tọa độ đáng tin, hoặc tâm Phường/Quận đã chọn khi đi đường lui "needs_call"
+      const feeAt = locationTrusted && rawLat !== null && rawLng !== null ? { lat: rawLat, lng: rawLng } : needsCall ? fallbackCenter : null;
+      if (feeAt && targetStoreLat !== null && targetStoreLng !== null) {
         try {
           const { getRoadDistanceAndDuration } = await import('@/lib/storeRecommender');
           const road = await getRoadDistanceAndDuration(
-            rawLat,
-            rawLng,
+            feeAt.lat,
+            feeAt.lng,
             targetStoreLat,
             targetStoreLng,
             targetStoreCode || ''
@@ -450,7 +571,7 @@ export async function POST(request: Request) {
           customerDistanceKm = road.roadKm;
         } catch {
           customerDistanceKm =
-            Math.round(calculateHaversineDistance(rawLat, rawLng, targetStoreLat, targetStoreLng) * 1.35 * 10) / 10;
+            Math.round(calculateHaversineDistance(feeAt.lat, feeAt.lng, targetStoreLat, targetStoreLng) * 1.35 * 10) / 10;
         }
       }
       const shippingCalc = calculateShippingFee(serverCalculatedSubtotal, customerDistanceKm);
@@ -651,14 +772,16 @@ export async function POST(request: Request) {
                payment_method, shipping_fee, subtotal, total, status, user_id, store_code, store_address,
                items_total_count, items_resolved_count, order_channel,
                latitude, longitude, location_confirmed, location_confirmed_by, address_new, address_old,
-               recommended_store_id, was_overridden, ranking_snapshot
+               recommended_store_id, was_overridden, ranking_snapshot,
+               address_source, address_precision, provider_place_id, location_check
              )
              VALUES (
                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                $11, $12, $13, $14, $15, $16, $17, $18,
                $19, $20, $21,
                $22, $23, $24, $25, $26, $27,
-               $28, $29, $30
+               $28, $29, $30,
+               $31, $32, $33, $34
              )`,
             [
               orderId,
@@ -691,6 +814,10 @@ export async function POST(request: Request) {
               recommendedStoreId,
               wasOverridden,
               rankingSnapshot,
+              addressSource,
+              addressPrecision,
+              providerPlaceId,
+              needsCall ? 'needs_call' : null,
             ]
           );
 
@@ -909,6 +1036,8 @@ export async function POST(request: Request) {
         items: revalidatedItems.map((it: any, i: number) => ({ ...orderNotice.items[i], price: Number(it.price) || 0 })),
       };
       after(() => notifyNewOrderTelegram(telegramNotice).catch(() => {}));
+      // Ô địa chỉ: kiểm phường tại tọa độ + lưu location_check + log ẩn danh, chạy sau khi đã trả phản hồi cho khách
+      after(() => runAddressChecks(orderId).catch(() => {}));
 
       return NextResponse.json({
         success: true,

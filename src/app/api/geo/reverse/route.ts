@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { VIETNAM_ADDRESSES } from '@/data/vietnam-addresses';
 import { calculateHaversineDistance, matchStandardAdministrative, isKhuPho, removeKhuPho } from '@/lib/geo';
+import { geoHeaders } from '@/lib/address/httpIdentity';
+import { nominatimJson } from '@/lib/address/osmQueue';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,10 +25,7 @@ async function findNearbyHouseNumber(lat: number, lng: number, road?: string): P
     const query = `[out:json][timeout:3];nwr(around:30,${lat},${lng})["addr:housenumber"];out center 20;`;
     const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'ThaiSonFoodsWeb/1.0 (contact@thaisonfoods.vn)',
-      },
+      headers: geoHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
       body: `data=${encodeURIComponent(query)}`,
       signal: AbortSignal.timeout(2500),
     });
@@ -76,6 +75,9 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // light=1: chỉ cần phường/quận (kiểm tra lệch), bỏ bước tìm số nhà qua Overpass cho nhanh và đỡ tải dịch vụ ngoài
+    const light = searchParams.get('light') === '1';
 
     const apiKey =
       process.env.GOOGLE_MAPS_API_KEY ||
@@ -148,17 +150,10 @@ export async function GET(req: NextRequest) {
 
     // 2. OpenStreetMap Reverse Geocode
     try {
-      const nomUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&zoom=18&accept-language=vi`;
-      const nRes = await fetch(nomUrl, {
-        headers: {
-          'User-Agent': 'ThaiSonFoodsWeb/1.0 (contact@thaisonfoods.vn)',
-          'Accept-Language': 'vi,en;q=0.9',
-        },
-        signal: AbortSignal.timeout(3500),
-      });
-
-      if (nRes.ok) {
-        const item = await nRes.json();
+      // Qua hàng đợi chung của app (≤ 1 lượt/giây, có đệm; tọa độ làm tròn 5 số lẻ ≈ 1 m để đệm có tác dụng)
+      const nomUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&format=json&addressdetails=1&zoom=18&accept-language=vi`;
+      {
+        const item = await nominatimJson<any>(nomUrl);
         if (item && item.address) {
           const addr = item.address;
           const rawProv = addr.city || addr.state || 'TP. Hồ Chí Minh';
@@ -179,7 +174,7 @@ export async function GET(req: NextRequest) {
 
           let houseNumber: string = addr.house_number || '';
           // OSM thường thiếu số nhà ngay điểm ghim: tìm số nhà gần nhất quanh điểm ghim
-          if (!houseNumber) {
+          if (!houseNumber && !light) {
             houseNumber = (await findNearbyHouseNumber(lat, lng, addr.road)) || '';
           }
           const rawStreet = [houseNumber, addr.road].filter(Boolean).join(' ');
