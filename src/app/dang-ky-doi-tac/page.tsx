@@ -209,21 +209,21 @@ export default function DangKyDoiTacPage() {
           {/* Stepper Indicator */}
           <div className="flex items-center justify-center gap-3 mt-6">
             <div className={`flex items-center gap-1.5 text-sm ${step >= 1 ? 'text-emerald-700' : 'text-slate-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-2xs ${step >= 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
                 1
               </span>
               <span>Đăng ký cơ bản</span>
             </div>
             <span className="w-8 h-[2px] bg-slate-200" />
             <div className={`flex items-center gap-1.5 text-sm ${step >= 2 ? 'text-emerald-700' : 'text-slate-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-2xs ${step >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
                 2
               </span>
               <span>Định danh & Ngân hàng</span>
             </div>
             <span className="w-8 h-[2px] bg-slate-200" />
             <div className={`flex items-center gap-1.5 text-sm ${step === 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step === 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-2xs ${step === 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
                 3
               </span>
               <span>Kích hoạt</span>
@@ -296,11 +296,11 @@ export default function DangKyDoiTacPage() {
               {otpSent && (
                 <div className="bg-amber-50/60 border border-amber-200/80 rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-amber-900 flex items-center gap-1.5 text-[1.125em]">
+                    <span className="text-amber-900 flex items-center gap-1.5 text-emph">
                       <KeyRound className="w-4 h-4 text-amber-600" /> Nhập mã xác thực OTP 6 số:
                     </span>
                     {debugOtp && (
-                      <span className="text-[11px] font-mono bg-amber-200 px-1.5 py-0.5 rounded text-amber-900">
+                      <span className="text-2xs font-mono bg-amber-200 px-1.5 py-0.5 rounded text-amber-900">
                         Demo: {debugOtp}
                       </span>
                     )}
@@ -314,7 +314,7 @@ export default function DangKyDoiTacPage() {
                     onChange={(e) => setOtpCode(e.target.value)}
                     className="w-full text-center tracking-widest font-mono text-lg py-2 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20 bg-white"
                   />
-                  <p className="text-[11px] text-amber-800">
+                  <p className="text-2xs text-amber-800">
                     Mã xác thực gồm 6 chữ số có hiệu lực trong vòng 5 phút.
                   </p>
                 </div>
@@ -362,7 +362,7 @@ export default function DangKyDoiTacPage() {
                   />
                   <span>
                     Tôi đồng ý với{' '}
-                    <span className="text-emerald-700 underline text-[1.125em]">
+                    <span className="text-emerald-700 underline text-emph">
                       Chính sách đối tác & Quy chế phân phối
                     </span>{' '}
                     của Thái Sơn Foods.
@@ -382,7 +382,7 @@ export default function DangKyDoiTacPage() {
 
             <div className="mt-6 pt-5 border-t border-slate-100 text-center text-xs text-slate-500">
               Đã có tài khoản đối tác?{' '}
-              <Link href="/doi-tac" className="text-emerald-700 hover:underline text-[1.125em]">
+              <Link href="/doi-tac" className="text-emerald-700 hover:underline text-emph">
                 Đăng nhập Cổng đối tác
               </Link>
             </div>

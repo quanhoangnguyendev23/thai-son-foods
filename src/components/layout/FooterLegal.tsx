@@ -58,11 +58,11 @@ export function LegalCompanyBlock({ isEn, className = '' }: { isEn: boolean; cla
   if (!lines.length && !bct) return null;
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center gap-4 text-[13px] text-white/80 leading-relaxed ${className}`}>
+    <div className={`flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-white/80 leading-relaxed ${className}`}>
       {lines.length > 0 && (
         <div className="min-w-0 flex-1 space-y-0.5 break-words">
           {lines.map((line, i) => (
-            <p key={i} className={i === 0 && companyName ? 'text-white text-[14px]' : undefined}>
+            <p key={i} className={i === 0 && companyName ? 'text-white text-sm' : undefined}>
               {line}
             </p>
           ))}

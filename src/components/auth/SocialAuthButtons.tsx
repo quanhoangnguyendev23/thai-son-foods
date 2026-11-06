@@ -80,7 +80,7 @@ export default function SocialAuthButtons({ returnUrl = '/tai-khoan', className 
       {/* Divider */}
       <div className="relative flex items-center justify-center my-3">
         <div className="border-t border-gray-200 w-full" />
-        <span className="bg-white px-3 text-[11px] text-gray-400 font-medium shrink-0 uppercase tracking-wider">
+        <span className="bg-white px-3 text-2xs text-gray-400 font-medium shrink-0 uppercase tracking-wider">
           {language === 'en' ? 'or with email' : 'hoặc bằng email'}
         </span>
         <div className="border-t border-gray-200 w-full" />

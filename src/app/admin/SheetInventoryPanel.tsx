@@ -269,11 +269,11 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
         <div className="min-w-0">
           <h2 className="text-base text-ink-950 flex flex-wrap items-center gap-2">
             <span>Nguồn tồn kho: Google Sheet</span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-ink-100 text-ink-800 border border-ink-300">Chỉ đọc</span>
+            <span className="text-2xs px-2 py-0.5 rounded-full bg-ink-100 text-ink-800 border border-ink-300">Chỉ đọc</span>
           </h2>
-          <p className="text-[12px] text-ink-700 mt-1">
+          <p className="text-xs text-ink-700 mt-1">
             Cập nhật lúc{' '}
-            <span className="text-ink-950 text-[1.125em]">{fmtTime(status?.lastSuccessAt)}</span>
+            <span className="text-ink-950 text-emph">{fmtTime(status?.lastSuccessAt)}</span>
             {status?.lastSuccessAt ? <span> ({ago(status.lastSuccessAt, now)})</span> : null}
             {'. '}
             Web tự đọc lại sau mỗi {status?.refreshIntervalMinutes ?? 15} phút. Số lượng và lô sửa trực tiếp trong sheet, không sửa trên web.
@@ -336,7 +336,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
 
       {/* Tổng quan nhanh + bộ lọc */}
       <div className="px-5 py-3 border-b border-ink-200 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[12px] text-ink-700">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-ink-700">
           <span>
             <span className="text-ink-950 text-base tabular-nums">{rows.length}</span> mặt hàng
           </span>
@@ -355,7 +355,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
               role="tab"
               aria-selected={filter === t.key}
               onClick={() => setFilter(t.key)}
-              className={`px-3 py-1.5 rounded-lg text-[12px] border transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs border transition-colors cursor-pointer ${
                 filter === t.key ? 'bg-ink-200 border-ink-400 text-ink-950' : `bg-ink-50 border-ink-200 hover:bg-ink-100 ${t.tone}`
               }`}
             >
@@ -368,7 +368,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
       {/* Bảng tồn theo lô: 1 dòng / mặt hàng, số căn phải để dễ so */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-ink-800">
-          <thead className="bg-ink-50 text-ink-700 text-[11px] border-b border-ink-200">
+          <thead className="bg-ink-50 text-ink-700 text-2xs border-b border-ink-200">
             <tr>
               <th className="py-2.5 px-4 font-normal">Sản phẩm</th>
               <th className="py-2.5 px-3 font-normal">Lô theo hạn dùng · số chai</th>
@@ -388,10 +388,10 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                 <React.Fragment key={r.productId}>
                   <tr className={`hover:bg-ink-100 transition-colors ${r.stopped ? 'opacity-70' : ''}`}>
                     <td className="py-2.5 px-4 min-w-[220px]">
-                      <p className="text-ink-950 text-[13.5px] truncate max-w-[340px]" title={r.productName}>
+                      <p className="text-ink-950 text-sm truncate max-w-[340px]" title={r.productName}>
                         {name}
                       </p>
-                      <p className="text-[11px] text-ink-600 flex items-center gap-2 mt-0.5">
+                      <p className="text-2xs text-ink-600 flex items-center gap-2 mt-0.5">
                         {r.nh === 1 && (
                           <span className="inline-flex items-center gap-1 text-emerald-700">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden />
@@ -419,36 +419,36 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                             return (
                               <span
                                 key={`${l.nsx}-${l.hsd}`}
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[11.5px] whitespace-nowrap tabular-nums ${tone}`}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-2xs whitespace-nowrap tabular-nums ${tone}`}
                                 title={`Sản xuất ${fmtDay(l.nsx)} · hạn dùng ${fmtDay(l.hsd)}${l.expired ? ' · đã hết hạn, không bán' : ` · còn ${l.daysLeft} ngày`}`}
                               >
                                 <span className="opacity-70">{fmtDay(l.hsd)}</span>
                                 <span className="text-ink-950">{l.qty}</span>
-                                {warn && <span className="text-[10.5px]">· {warn}</span>}
+                                {warn && <span className="text-2xs">· {warn}</span>}
                               </span>
                             );
                           })}
                         </div>
                       )}
                       {r.expiredQty > 0 && (
-                        <p className="text-[11px] text-rose-600 mt-1">{r.expiredQty} chai hết hạn, không tính vào bán được.</p>
+                        <p className="text-2xs text-rose-600 mt-1">{r.expiredQty} chai hết hạn, không tính vào bán được.</p>
                       )}
                     </td>
 
-                    <td className="py-2.5 px-3 text-right tabular-nums text-[13.5px] text-ink-800">{r.sellableFromSheet}</td>
+                    <td className="py-2.5 px-3 text-right tabular-nums text-sm text-ink-800">{r.sellableFromSheet}</td>
 
-                    <td className={`py-2.5 px-3 text-right tabular-nums text-[13.5px] ${r.reserved > 0 ? 'text-amber-800' : 'text-ink-500'}`}>
+                    <td className={`py-2.5 px-3 text-right tabular-nums text-sm ${r.reserved > 0 ? 'text-amber-800' : 'text-ink-500'}`}>
                       {r.reserved}
                     </td>
 
                     <td className="py-2.5 px-3 text-right">
                       {r.stopped ? (
-                        <span className="inline-block px-2 py-0.5 rounded-md text-[11px] bg-rose-500/10 text-rose-600 border border-rose-500/30" title={[r.stopReason, r.stopBy && `bởi ${r.stopBy} lúc ${fmtTime(r.stopAt)}`].filter(Boolean).join(' · ')}>
+                        <span className="inline-block px-2 py-0.5 rounded-md text-2xs bg-rose-500/10 text-rose-600 border border-rose-500/30" title={[r.stopReason, r.stopBy && `bởi ${r.stopBy} lúc ${fmtTime(r.stopAt)}`].filter(Boolean).join(' · ')}>
                           Tạm hết hàng
                         </span>
                       ) : (
                         <span
-                          className={`tabular-nums text-[15px] ${
+                          className={`tabular-nums text-base ${
                             r.available === 0 ? 'text-rose-600' : r.available <= LOW_STOCK ? 'text-amber-800' : 'text-emerald-700'
                           }`}
                         >
@@ -464,7 +464,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                             type="button"
                             disabled={isBusy}
                             onClick={() => handleStopSale(r.productId, false)}
-                            className="px-2.5 py-1 rounded-lg text-[12px] bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white transition-all cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white transition-all cursor-pointer"
                           >
                             {isBusy ? 'Đang xử lý...' : 'Mở bán lại'}
                           </button>
@@ -473,7 +473,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
                             type="button"
                             disabled={isBusy}
                             onClick={() => setStopForm(formOpen ? null : { productId: r.productId, reason: '' })}
-                            className="px-2.5 py-1 rounded-lg text-[12px] text-ink-700 hover:text-rose-600 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-xs text-ink-700 hover:text-rose-600 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-all cursor-pointer"
                           >
                             {formOpen ? 'Đóng' : 'Tạm hết hàng'}
                           </button>
@@ -534,7 +534,7 @@ export default function SheetInventoryPanel({ storeCode, canUpdate, onModeResolv
 
       {/* Chi tiết lần đọc gần nhất */}
       {summary && (
-        <div className="px-5 py-3 border-t border-ink-200 text-[11px] text-ink-700">
+        <div className="px-5 py-3 border-t border-ink-200 text-2xs text-ink-700">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span>
               Lần đọc gần nhất: {summary.mappedRows}/{summary.rowsInSheet} dòng khớp cửa hàng và sản phẩm của web, {summary.changedRows} dòng thay đổi.

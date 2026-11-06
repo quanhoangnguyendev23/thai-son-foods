@@ -252,7 +252,7 @@ export default function FrequentlyBoughtTogether({
                   <div className="pt-2.5 text-left">
                     {/* Dòng Được tài trợ (nếu là sản phẩm gợi ý) */}
                     {item.isSponsored && (
-                      <div className="flex items-center gap-0.5 text-[10px] text-gray-400 mb-0.5 select-none">
+                      <div className="flex items-center gap-0.5 text-2xs text-gray-400 mb-0.5 select-none">
                         <span>Được tài trợ</span>
                         <Info className="w-2.5 h-2.5 text-gray-400" />
                       </div>
@@ -265,7 +265,7 @@ export default function FrequentlyBoughtTogether({
                       title={`${item.cleanName} (${item.packName})`}
                     >
                       {item.isCurrent && (
-                        <span className="text-gray-900 mr-1 text-[1.125em]">
+                        <span className="text-gray-900 mr-1 text-emph">
                           Sản phẩm này:
                         </span>
                       )}
@@ -273,8 +273,8 @@ export default function FrequentlyBoughtTogether({
                     </Link>
 
                     {/* Đánh giá sao */}
-                    <div className="flex items-center gap-1 text-[11px] mt-1 flex-wrap">
-                      <span className="text-gray-800 text-[12px]">
+                    <div className="flex items-center gap-1 text-2xs mt-1 flex-wrap">
+                      <span className="text-gray-800 text-xs">
                         {item.rating}
                       </span>
                       <div className="flex items-center text-amber-500">
@@ -285,7 +285,7 @@ export default function FrequentlyBoughtTogether({
                           />
                         ))}
                       </div>
-                      <span className="text-[11px] text-forest-700 font-medium">
+                      <span className="text-2xs text-forest-700 font-medium">
                         {item.reviewCount}
                       </span>
                     </div>
@@ -301,14 +301,14 @@ export default function FrequentlyBoughtTogether({
                         {item.price.toLocaleString('vi-VN')}₫
                       </span>
                       {item.originalPrice && (
-                        <span className="text-[11px] text-gray-400 line-through">
+                        <span className="text-2xs text-gray-400 line-through">
                           {item.originalPrice.toLocaleString('vi-VN')}₫
                         </span>
                       )}
                       {item.hasPrime && (
                         <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter ml-1">
-                          <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
-                          <span className="text-forest-700 not-italic text-[12px] font-sans">
+                          <span className="text-forest-700 mr-0.5 not-italic text-emph">✓</span>
+                          <span className="text-forest-700 not-italic text-xs font-sans">
                             prime
                           </span>
                         </span>

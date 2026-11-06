@@ -46,6 +46,27 @@
   --font-sans: var(--font-roboto), sans-serif;
   --font-mono: var(--font-roboto), sans-serif;
   --font-serif: var(--font-fira-sans), sans-serif;
+
+  /* Thang cỡ chữ cố định (quy tắc: .agents/rules/font-sizes.md, kiểm bằng npm run lint:font-sizes).
+     Chỉ dùng: text-2xs 11 · xs 12 · sm 14 · base 16 · lg 18 · xl 20 · 2xl 24 · 3xl 30 · 4xl 36 (px)
+     và text-emph (1.125em, nhấn mạnh trong câu thay cho chữ đậm). Các cỡ xs…4xl là mặc định của Tailwind. */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.45;
+  --text-emph: 1.125em;
+}
+
+/* Ô nhập trên điện thoại luôn >= 16px để iPhone không tự phóng to khi chạm vào ô */
+@layer base {
+  @media (width < 40rem) {
+    input, select, textarea {
+      font-size: 16px;
+    }
+  }
+}
+@media (width < 40rem) {
+  :is(input, select, textarea):is(.text-2xs, .text-xs, .text-sm) {
+    font-size: 16px;
+  }
 }
 
 /* ===== BASE STYLES ===== */

@@ -48,11 +48,11 @@ export default function OrderSuccessModal({
         <p className="text-sm text-text-muted mb-6">
           {language === 'en' ? (
             <>
-              Thank you <span className="text-text-dark text-[1.125em]">{customerName}</span> for choosing Thai Son Foods. We will contact you shortly to confirm your order.
+              Thank you <span className="text-text-dark text-emph">{customerName}</span> for choosing Thai Son Foods. We will contact you shortly to confirm your order.
             </>
           ) : (
             <>
-              Cảm ơn <span className="text-text-dark text-[1.125em]">{customerName}</span> đã tin tưởng và sử dụng sản phẩm của Thái Sơn Foods. Mình sẽ liên hệ xác nhận đơn hàng cho bạn sớm nhất.
+              Cảm ơn <span className="text-text-dark text-emph">{customerName}</span> đã tin tưởng và sử dụng sản phẩm của Thái Sơn Foods. Mình sẽ liên hệ xác nhận đơn hàng cho bạn sớm nhất.
             </>
           )}
         </p>
@@ -102,7 +102,7 @@ export default function OrderSuccessModal({
               <p className="text-sm text-gray-900">
                 {language === 'en' ? 'Review Your Purchase' : 'Đánh giá sản phẩm vừa mua'}
               </p>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-2xs text-gray-500">
                 {language === 'en' ? 'Share your experience with others' : 'Nhận huy hiệu Đã mua hàng từ thương hiệu'}
               </p>
             </div>

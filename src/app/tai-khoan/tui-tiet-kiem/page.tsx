@@ -103,7 +103,7 @@ export default function SavingsBagPage() {
             </p>
             {user ? (
               <>
-                <p className="mt-3 text-4xl sm:text-5xl tabular-nums tracking-tight">
+                <p className="mt-3 text-4xl sm:text-4xl tabular-nums tracking-tight">
                   {loadingTotal ? '…' : vnd(data?.totalSaved ?? 0)}
                 </p>
                 {data?.success && (
@@ -121,7 +121,7 @@ export default function SavingsBagPage() {
               </>
             ) : (
               <>
-                <p className="mt-3 text-4xl sm:text-5xl tabular-nums tracking-tight text-white/50">0đ</p>
+                <p className="mt-3 text-4xl sm:text-4xl tabular-nums tracking-tight text-white/50">0đ</p>
                 <p className="mt-3 text-sm text-white/80 max-w-sm">
                   {en
                     ? 'Sign in and every discounted order is added up here.'

@@ -25,7 +25,7 @@ function PlaceholderBadgeImpl({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded border border-dashed border-copper-400 bg-copper-50 px-1.5 py-px text-[10px] font-medium text-copper-800 whitespace-nowrap',
+        'inline-flex items-center rounded border border-dashed border-copper-400 bg-copper-50 px-1.5 py-px text-2xs font-medium text-copper-800 whitespace-nowrap',
         className
       )}
       title="Khối giao diện mẫu, dữ liệu chưa phải dữ liệu thật"
@@ -38,7 +38,7 @@ function PlaceholderBadgeImpl({ className }: { className?: string }) {
 /** Dòng "đã mua trong tháng trước" cạnh đánh giá */
 function MonthlySalesPlaceholderImpl() {
   return (
-    <p className="flex items-center gap-2 flex-wrap text-[13px] text-gray-600">
+    <p className="flex items-center gap-2 flex-wrap text-sm text-gray-600">
       <span>{MONTHLY_SALES_PLACEHOLDER.text}</span>
       <PlaceholderBadge />
     </p>
@@ -51,11 +51,11 @@ function CouponPlaceholderImpl() {
   return (
     <div className="rounded-lg border border-amber-200 bg-ivory px-3 py-2 text-xs text-ink-950">
       <div className="flex items-start gap-2 flex-wrap">
-        <span className="shrink-0 rounded bg-sale px-1.5 py-0.5 text-[12px] text-white">
+        <span className="shrink-0 rounded bg-sale px-1.5 py-0.5 text-xs text-white">
           {COUPON_PLACEHOLDER.badge}
         </span>
         <span className="min-w-0 flex-1 leading-relaxed">
-          <strong className="text-[1.125em]">{COUPON_PLACEHOLDER.title}</strong>: {COUPON_PLACEHOLDER.description}{' '}
+          <strong className="text-emph">{COUPON_PLACEHOLDER.title}</strong>: {COUPON_PLACEHOLDER.description}{' '}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -80,7 +80,7 @@ function DeliveryAddressPlaceholderImpl() {
   const selected = DELIVERY_ADDRESS_PLACEHOLDERS.find((a) => a.id === selectedId);
 
   return (
-    <div className="text-[13px]">
+    <div className="text-sm">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -111,12 +111,12 @@ function DeliveryAddressPlaceholderImpl() {
                 className="mt-0.5 accent-forest-700"
               />
               <span className="leading-snug">
-                <strong className="text-[1.125em]">{addr.label}</strong>
+                <strong className="text-emph">{addr.label}</strong>
                 <span className="block text-xs text-gray-600">{addr.line}</span>
               </span>
             </label>
           ))}
-          <p className="text-[11px] text-gray-500 pt-1">
+          <p className="text-2xs text-gray-500 pt-1">
             Sổ địa chỉ chưa kết nối tài khoản. Địa chỉ giao thật được nhập ở bước thanh toán.
           </p>
         </fieldset>
@@ -158,7 +158,7 @@ function WishlistPlaceholderButtonImpl() {
         type="button"
         onClick={() => setSaved((v) => !v)}
         aria-pressed={saved}
-        className="w-full h-9 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-[13px] text-ink-950 inline-flex items-center justify-center gap-2 cursor-pointer"
+        className="w-full h-9 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-sm text-ink-950 inline-flex items-center justify-center gap-2 cursor-pointer"
       >
         <Heart className={cn('w-4 h-4', saved ? 'fill-red-500 text-red-500' : 'text-gray-600')} aria-hidden />
         {saved ? 'Đã đánh dấu (chưa lưu vào tài khoản)' : 'Thêm vào danh sách yêu thích'}
@@ -245,7 +245,7 @@ function ProductQAPlaceholderImpl() {
                 className="flex w-full items-start justify-between gap-3 text-left cursor-pointer"
               >
                 <span className="text-sm">
-                  <strong className="text-[1.125em]">Hỏi: </strong>
+                  <strong className="text-emph">Hỏi: </strong>
                   {qa.question}
                 </span>
                 <ChevronDown className={cn('w-4 h-4 text-gray-400 shrink-0 mt-0.5 transition-transform', isOpen && 'rotate-180')} aria-hidden />
@@ -253,7 +253,7 @@ function ProductQAPlaceholderImpl() {
               {isOpen && (
                 <div className="mt-2 text-sm text-gray-700">
                   <p>
-                    <strong className="text-[1.125em]">Đáp: </strong>
+                    <strong className="text-emph">Đáp: </strong>
                     {qa.answer}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
@@ -341,17 +341,17 @@ function PreorderSchedulePlaceholderImpl() {
           active ? 'border-2 border-green-primary bg-white' : 'border-gray-300 bg-white hover:border-gray-500'
         )}
       >
-        <span className="block text-[13px] text-ink-950">{label}</span>
-        <span className="block text-[11px] leading-tight text-gray-600 mt-0.5">{hint}</span>
+        <span className="block text-sm text-ink-950">{label}</span>
+        <span className="block text-2xs leading-tight text-gray-600 mt-0.5">{hint}</span>
       </button>
     );
   };
 
   return (
-    <div className="rounded-lg border border-dashed border-copper-400 bg-ivory p-3 space-y-2.5 text-[13px]">
+    <div className="rounded-lg border border-dashed border-copper-400 bg-ivory p-3 space-y-2.5 text-sm">
       <div className="flex items-center gap-2 flex-wrap">
         <CalendarDays className="w-4 h-4 text-gray-600 shrink-0" aria-hidden />
-        <strong className="text-[1.125em] text-ink-950">{PREORDER_PLACEHOLDER.title}</strong>
+        <strong className="text-emph text-ink-950">{PREORDER_PLACEHOLDER.title}</strong>
         <PlaceholderBadge />
       </div>
 
@@ -383,11 +383,11 @@ function PreorderSchedulePlaceholderImpl() {
                         : 'border-gray-300 bg-white hover:border-gray-500 cursor-pointer'
                   )}
                 >
-                  <span className="block text-[12px] leading-tight">{d.weekday || '\u00A0'}</span>
-                  <span className="block text-[13px] leading-tight text-ink-950">{d.dateLabel || '\u00A0'}</span>
+                  <span className="block text-xs leading-tight">{d.weekday || '\u00A0'}</span>
+                  <span className="block text-sm leading-tight text-ink-950">{d.dateLabel || '\u00A0'}</span>
                   <span
                     className={cn(
-                      'block text-[11px] leading-tight mt-1',
+                      'block text-2xs leading-tight mt-1',
                       d.full ? 'text-gray-400' : d.low ? 'text-amber-700' : 'text-green-primary'
                     )}
                   >
@@ -407,11 +407,11 @@ function PreorderSchedulePlaceholderImpl() {
               {PREORDER_PLACEHOLDER.cutOffText}
             </span>
           </p>
-          <p className="text-[11px] text-gray-500">{PREORDER_PLACEHOLDER.quotaNote}</p>
+          <p className="text-2xs text-gray-500">{PREORDER_PLACEHOLDER.quotaNote}</p>
         </div>
       )}
 
-      <p className="text-[11px] text-gray-500">{PREORDER_PLACEHOLDER.footnote}</p>
+      <p className="text-2xs text-gray-500">{PREORDER_PLACEHOLDER.footnote}</p>
     </div>
   );
 }

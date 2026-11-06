@@ -97,7 +97,7 @@ export default function SectionTitle({
           >
             <span
               className={cn(
-                'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] sm:text-sm shadow-2xs transition-transform duration-200 ',
+                'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs sm:text-sm shadow-2xs transition-transform duration-200 ',
                 isCombo
                   ? 'bg-amber-50 text-amber-900 border border-amber-200/90'
                   : 'bg-emerald-50 text-emerald-900 border border-emerald-200/80'
@@ -120,7 +120,7 @@ export default function SectionTitle({
           className="relative inline-flex flex-col items-start"
         >
           <div className="flex items-center flex-wrap">
-            <h2 className="text-[27px] sm:text-[33px] md:text-[36px] lg:text-[40px] text-forest-900 font-heading tracking-tight leading-[1.15] text-left">
+            <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-4xl text-forest-900 font-heading tracking-tight leading-[1.15] text-left">
               {renderTitleWithHighlight(title, variant, highlightWord)}
             </h2>
 

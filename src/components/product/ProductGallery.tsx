@@ -416,7 +416,7 @@ export default function ProductGallery({
           {/* Facebook — cùng kiểu viền xám với nút Sao chép */}
           <button
             onClick={handleShareFacebook}
-            className="h-6 px-2 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1 transition-all cursor-pointer text-[11px] font-medium"
+            className="h-6 px-2 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1 transition-all cursor-pointer text-2xs font-medium"
             title="Chia sẻ lên Facebook"
             aria-label="Chia sẻ lên Facebook"
           >
@@ -427,7 +427,7 @@ export default function ProductGallery({
           {/* Zalo — cùng kiểu viền xám với nút Sao chép */}
           <button
             onClick={handleShareZalo}
-            className="h-6 px-2 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1 transition-all cursor-pointer text-[11px] font-medium"
+            className="h-6 px-2 rounded-full border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 flex items-center gap-1 transition-all cursor-pointer text-2xs font-medium"
             title="Chia sẻ qua Zalo"
             aria-label="Chia sẻ qua Zalo"
           >
@@ -439,7 +439,7 @@ export default function ProductGallery({
           <button
             onClick={() => copyToClipboard()}
             className={cn(
-              "h-6 px-2.5 rounded-full border text-[11px] font-medium flex items-center gap-1 transition-all cursor-pointer",
+              "h-6 px-2.5 rounded-full border text-2xs font-medium flex items-center gap-1 transition-all cursor-pointer",
               copied
                 ? "bg-emerald-600 border-emerald-600 text-white"
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
@@ -472,7 +472,7 @@ export default function ProductGallery({
                 Sản phẩm cùng danh mục ({categoryProducts.length})
               </span>
             </div>
-            <span className="text-[11px] text-gray-400">
+            <span className="text-2xs text-gray-400">
               Chọn để xem vị khác
             </span>
           </div>
@@ -508,7 +508,7 @@ export default function ProductGallery({
                 >
                   {/* Card đang xem có icon dấu tick tròn xanh Check nổi ở góc trên bên phải */}
                   {isCurrent && (
-                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs text-[10px] z-10">
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs text-2xs z-10">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                     </span>
                   )}
@@ -525,10 +525,10 @@ export default function ProductGallery({
                   </div>
 
                   {/* Tên vị bên dưới */}
-                  <span className="text-[12px] text-gray-800 leading-tight line-clamp-1 w-full">
+                  <span className="text-xs text-gray-800 leading-tight line-clamp-1 w-full">
                     {shortFlavorName}
                   </span>
-                  <span className="text-[10px] text-emerald-700 font-medium mt-0.5">
+                  <span className="text-2xs text-emerald-700 font-medium mt-0.5">
                     {formatPrice(prod.price)}đ
                   </span>
                 </Link>
@@ -618,7 +618,7 @@ export default function ProductGallery({
           >
             {/* Bộ đếm không co lại; tên sản phẩm dài cắt gọn 1 dòng để khung không bị bóp thành nhiều dòng trên điện thoại */}
             <span className="shrink-0 whitespace-nowrap">
-              <span className="text-orange-400 text-[1.125em]">{activeIndex + 1}</span>
+              <span className="text-orange-400 text-emph">{activeIndex + 1}</span>
               <span className="text-white/60"> / </span>
               <span>{displayImages.length}</span>
             </span>
@@ -649,7 +649,7 @@ export default function ProductGallery({
                   <h3 className="text-gray-900 text-lg leading-tight">
                     {language === 'en' ? 'Share Product' : 'Chia sẻ sản phẩm'}
                   </h3>
-                  <p className="text-[11px] text-gray-500">
+                  <p className="text-2xs text-gray-500">
                     {language === 'en' ? 'Tip: Share with your friends' : 'Gợi ý: Chia sẽ đến bạn bè của bạn'}
                   </p>
                 </div>
@@ -675,7 +675,7 @@ export default function ProductGallery({
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-[11px] text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full inline-block mb-1">
+                <span className="text-2xs text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full inline-block mb-1">
                   Thái Sơn Foods
                 </span>
                 <h4 className="text-base text-gray-900 leading-snug">
@@ -705,7 +705,7 @@ export default function ProductGallery({
                     <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-xs transition-transform">
                       <Image src="/images/icons/facebook.png" alt="" width={40} height={40} className="w-10 h-10 object-contain" aria-hidden="true" />
                     </div>
-                    <span className="text-[12px] text-gray-700">Facebook</span>
+                    <span className="text-xs text-gray-700">Facebook</span>
                   </button>
 
                   {/* Zalo */}
@@ -716,7 +716,7 @@ export default function ProductGallery({
                     <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-xs transition-transform">
                       <Image src="/images/icons/zalo.png" alt="" width={24} height={24} className="w-6 h-6 object-contain" aria-hidden="true" />
                     </div>
-                    <span className="text-[12px] text-gray-700">Zalo</span>
+                    <span className="text-xs text-gray-700">Zalo</span>
                   </button>
 
                   {/* Messenger */}
@@ -729,7 +729,7 @@ export default function ProductGallery({
                         <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.455 5.518 3.735 7.208V22l3.39-1.86c.928.257 1.916.396 2.875.396 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.09 12.433l-2.766-2.95-5.398 2.95 5.938-6.302 2.836 2.95 5.328-2.95-5.938 6.302z" />
                       </svg>
                     </div>
-                    <span className="text-[12px] text-gray-700">Messenger</span>
+                    <span className="text-xs text-gray-700">Messenger</span>
                   </button>
 
                   {/* Mã QR */}
@@ -745,7 +745,7 @@ export default function ProductGallery({
                     <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-xs transition-transform">
                       <QrCode className="w-5 h-5" />
                     </div>
-                    <span className="text-[12px] text-gray-700">Mã QR</span>
+                    <span className="text-xs text-gray-700">Mã QR</span>
                   </button>
                 </div>
               </div>
@@ -763,7 +763,7 @@ export default function ProductGallery({
                   <p className="text-sm text-gray-800">
                     Quét mã để xem chi tiết sản phẩm trên điện thoại
                   </p>
-                  <p className="text-[11px] text-gray-500 mt-0.5">
+                  <p className="text-2xs text-gray-500 mt-0.5">
                     Mở camera trên điện thoại của bạn bè để quét nhanh
                   </p>
                 </div>

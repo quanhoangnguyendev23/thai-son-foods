@@ -51,7 +51,7 @@ function TiktokIcon({ className = 'w-5 h-5' }: { className?: string }) {
 }
 const CATEGORY_ORDER = ['sua-hat', 'nuoc-giai-khat', 'tra-sua'];
 const linkCls = 'hover:text-corn hover:underline transition-colors py-1.5 inline-block';
-const headingCls = 'font-heading text-[17px] uppercase tracking-wider text-amber-300 mb-3';
+const headingCls = 'font-heading text-lg uppercase tracking-wider text-amber-300 mb-3';
 
 export default function FooterAmazon() {
   const { language, setLanguage } = useLanguage();
@@ -70,7 +70,7 @@ export default function FooterAmazon() {
       <button
         type="button"
         onClick={scrollToTop}
-        className="w-full flex items-center justify-center gap-1.5 bg-green-light hover:bg-emerald-600 py-3.5 text-[15px] transition-colors cursor-pointer"
+        className="w-full flex items-center justify-center gap-1.5 bg-green-light hover:bg-emerald-600 py-3.5 text-base transition-colors cursor-pointer"
       >
         <ChevronUp className="w-4 h-4" />
         {isEn ? 'Back to top' : 'Về đầu trang'}
@@ -78,7 +78,7 @@ export default function FooterAmazon() {
 
       {/* CÁC CỘT */}
       <div className="bg-green-primary">
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-10 grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-8 text-[14px] text-white/90">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-10 grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-8 text-sm text-white/90">
           <div>
             <h3 className={headingCls}>{isEn ? 'Company' : 'Công ty'}</h3>
             <div className="space-y-3">
@@ -179,13 +179,13 @@ export default function FooterAmazon() {
 
         {/* Miễn phí vận chuyển — ngưỡng lấy từ INVENTORY_CONFIG (cùng giá trị 200.000đ với Footer gốc) */}
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-8">
-          <div className="p-4 bg-white/10 rounded-xl text-[14px] sm:text-[15px] flex items-center gap-3 border border-white/10">
+          <div className="p-4 bg-white/10 rounded-xl text-sm sm:text-base flex items-center gap-3 border border-white/10">
             <Truck className="w-5 h-5 text-corn shrink-0" />
             <span className="font-medium">
               {isEn
                 ? 'Free shipping within Ho Chi Minh City on orders from '
                 : 'Miễn phí vận chuyển nội thành TP.HCM cho đơn hàng từ '}
-              <span className="text-amber-300 text-[1.125em]">{formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ</span>
+              <span className="text-amber-300 text-emph">{formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ</span>
             </span>
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function FooterAmazon() {
               <Image src="/images/logo-vien-trang.png" alt="Thái Sơn Foods - Món ngon quê Việt" fill sizes="128px" className="object-contain" />
             </span>
           </Link>
-          <div className="flex items-center gap-1 rounded-lg border border-white/25 p-1 text-[13px]">
+          <div className="flex items-center gap-1 rounded-lg border border-white/25 p-1 text-sm">
             {(['vi', 'en'] as const).map((lng) => (
               <button
                 key={lng}
@@ -212,7 +212,7 @@ export default function FooterAmazon() {
               </button>
             ))}
           </div>
-          <p className="text-[13px] text-white/70 text-center">
+          <p className="text-sm text-white/70 text-center">
             © 2026 Thái Sơn Foods. {isEn ? 'All rights reserved.' : 'Tất cả các quyền được bảo lưu.'}
           </p>
         </div>

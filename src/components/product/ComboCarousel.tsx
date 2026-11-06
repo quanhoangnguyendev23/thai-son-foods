@@ -61,18 +61,18 @@ function ComboCard({ combo }: { combo: Combo }) {
 
         {/* Thông tin: cùng cỡ chữ, cách dòng với thẻ sản phẩm */}
         <div className="p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col justify-between">
-          <h3 title={combo.name} className="text-[15px] text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 transition-colors">
+          <h3 title={combo.name} className="text-base text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 transition-colors">
             {combo.name}
           </h3>
 
           <div className="relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
             <div className="flex flex-col min-w-0">
-              <div className="text-base sm:text-[15px] text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
+              <div className="text-base sm:text-base text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
                 <span>{formatPrice(combo.salePrice)}đ</span>
-                <span className="text-[11px] lg:text-[10px] text-text-muted">/combo {combo.totalItems} chai</span>
+                <span className="text-2xs lg:text-2xs text-text-muted">/combo {combo.totalItems} chai</span>
               </div>
               {combo.originalPrice > combo.salePrice && (
-                <span className="text-[10px] lg:text-[8.5px] text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
+                <span className="text-2xs lg:text-2xs text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
               )}
             </div>
 

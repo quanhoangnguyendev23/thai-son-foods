@@ -156,14 +156,14 @@ export default function StorePromotionSidebar() {
             >
               <div className="flex items-center gap-1">
                 <Icon className={`w-3 h-3 ${badge.iconColor} shrink-0`} />
-                <span className={`text-[12px] lg:text-[11px] uppercase tracking-wider ${badge.tagColor}`}>
+                <span className={`text-xs lg:text-2xs uppercase tracking-wider ${badge.tagColor}`}>
                   {language === 'en' ? badge.tagEn : badge.tagVi}
                 </span>
               </div>
-              <p className="text-[13px] leading-tight mt-0.5 text-white">
+              <p className="text-sm leading-tight mt-0.5 text-white">
                 {language === 'en' ? badge.titleEn : badge.titleVi}
               </p>
-              <p className="text-[11px] lg:text-[9.5px] text-white/85 mt-0.5 font-medium leading-tight">
+              <p className="text-2xs lg:text-2xs text-white/85 mt-0.5 font-medium leading-tight">
                 {language === 'en' ? badge.subEn : badge.subVi}
               </p>
             </Link>

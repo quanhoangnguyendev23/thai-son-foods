@@ -134,7 +134,7 @@ function AdminLoginForm() {
           <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-sm flex items-start gap-3 shadow-lg">
             <Sparkles className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div>
-              <p className="text-amber-800 text-[1.125em]">Khởi tạo hệ thống lần đầu!</p>
+              <p className="text-amber-800 text-emph">Khởi tạo hệ thống lần đầu!</p>
               <p className="text-xs text-amber-800/80 mt-1">
                 Chưa có tài khoản quản trị nào trong cơ sở dữ liệu. Vui lòng bấm Đăng Ký để tạo tài khoản Super Admin đầu tiên.
               </p>
@@ -158,7 +158,7 @@ function AdminLoginForm() {
             </div>
             {/* Tên CSDL chỉ hiện trên máy phát triển */}
             {process.env.NODE_ENV !== 'production' && (
-              <div className="flex items-center gap-1.5 text-ink-700 font-mono text-[11px]">
+              <div className="flex items-center gap-1.5 text-ink-700 font-mono text-2xs">
                 <Database className="w-3 h-3 text-emerald-700" />
                 <span>PostgreSQL: WebTSF</span>
               </div>
@@ -271,7 +271,7 @@ function AdminLoginForm() {
             <span>Chưa có tài khoản quản trị? </span>
             <Link
               href="/admin/register"
-              className="text-emerald-700 hover:text-emerald-700 hover:underline ml-1 text-[1.125em]"
+              className="text-emerald-700 hover:text-emerald-700 hover:underline ml-1 text-emph"
             >
               Đăng ký tài khoản mới
             </Link>
