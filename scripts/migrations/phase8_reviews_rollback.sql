@@ -1,0 +1,3 @@
+-- ROLLBACK PHASE 8: HỆ THỐNG ĐÁNH GIÁ SẢN PHẨM
+DROP TABLE IF EXISTS review_helpful_votes CASCADE;
+DROP TABLE IF EXISTS product_reviews CASCADE;
