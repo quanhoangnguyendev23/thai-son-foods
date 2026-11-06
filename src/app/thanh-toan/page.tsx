@@ -40,8 +40,14 @@ import {
   getWardsByDistrict,
   findPreciseCoordinates,
 } from '@/data/vietnam-addresses';
-import type { AutocompleteSuggestion } from '@/app/api/geo/autocomplete/route';
 import LocationConfirmMapModal from '@/components/checkout/LocationConfirmMapModal';
+import AddressSuggestionList from '@/components/checkout/AddressSuggestionList';
+import { useAddressSearch } from '@/hooks/useAddressSearch';
+import { detectLocationMismatch, formatAdminLine, getAreaCenter } from '@/lib/address/admin';
+import { distanceMeters, sameAddressLine, splitHouseAndStreet } from '@/lib/address/normalize';
+import { hintCenter, parseAddressInput } from '@/lib/address/suggest';
+import type { SelectedPlace } from '@/lib/address/searchController';
+import type { AddressSuggestion } from '@/lib/address/types';
 import { SERVICE_AREA, isHcmProvince } from '@/config/service-area';
 import StoreRecommendationSheet from '@/components/checkout/StoreRecommendationSheet';
 import type { StoreRecommendationItem } from '@/lib/storeRecommender';
@@ -106,11 +112,14 @@ function DeliveryMiniMap({
         scrollWheelZoom: false,
         doubleClickZoom: false,
         touchZoom: false,
-        attributionControl: false,
+        attributionControl: true,
       });
+      // Điều khoản OpenStreetMap: phải ghi nguồn bản đồ nền
+      map.attributionControl.setPrefix(false);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
       }).addTo(map);
 
       mapInstanceRef.current = map;
@@ -252,6 +261,27 @@ function DeliveryMiniMap({
   );
 }
 
+/** Địa chỉ tại điểm ghim / GPS (kết quả reverse geocode) */
+interface PinAddressParts {
+  street?: string;
+  ward?: string;
+  district?: string;
+  province?: string;
+  formatted?: string;
+}
+
+/**
+ * Hỏi khách "Dùng địa chỉ này?" khi ghim/GPS cho ra địa chỉ khác chữ khách đã nhập,
+ * hoặc phường tại ghim khác phường đã chọn. Không bao giờ tự ghi đè, không chặn cứng.
+ */
+interface PinReview {
+  kind: 'pin-differs' | 'ward-mismatch';
+  pin: PinAddressParts;
+  typed: string;
+  chosenWard?: string;
+  pinWard?: string;
+}
+
 const MIN_ORDER_THRESHOLD = 120000;
 
 export default function CheckoutPage() {
@@ -325,27 +355,44 @@ export default function CheckoutPage() {
   useEffect(() => {
     pinLockedRef.current = locationConfirmed && locationConfirmedBy === 'USER_MAP_PIN';
   });
-  // Địa chỉ do ghim điền vào: không bật gợi ý / không hiện khung xác định lại
-  const pinAddressRef = useRef<string | null>(null);
-  // Địa chỉ khách đã chốt (chọn gợi ý / ghim / GPS): không gợi ý thêm, không geocode lại đè tọa độ
-  const chosenAddressRef = useRef<string | null>(null);
-  // Nội dung ô "Số nhà, tên đường" mới nhất (đọc trong các hàm khai báo trước biến form)
+  // Nguồn của địa chỉ + tọa độ hiện tại: chọn gợi ý, ghim tay, GPS, đã lưu trong tài khoản, hoặc tự gõ
+  const [addressSource, setAddressSource] = useState<'autocomplete' | 'pin' | 'gps' | 'saved' | 'manual'>('manual');
+  // Gợi ý khách đã chọn (để gửi kèm mã nhà cung cấp và biết độ chính xác của vị trí)
+  const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
+  // Hỏi "Dùng địa chỉ này?" khi ghim/GPS cho ra địa chỉ khác chữ khách đã nhập, hoặc phường tại ghim không khớp
+  const [pinReview, setPinReview] = useState<PinReview | null>(null);
+  // Khách bấm Đặt hàng khi vị trí mới là gần đúng: mở bản đồ và nhắc phải xác nhận ghim
+  const [locationRequired, setLocationRequired] = useState(false);
+  // Bản đồ / dịch vụ địa chỉ không dùng được: mã lỗi để server chấp nhận đường lui "cửa hàng gọi xác nhận vị trí"
+  const [mapFailure, setMapFailure] = useState<'TILES_FAILED' | 'REVERSE_FAILED' | 'GEO_ERROR' | null>(null);
+  const [useCallFallback, setUseCallFallback] = useState(false);
+  // Vị trí đáng tin để tính phí ship và giao hàng: khách đã xác nhận ghim, GPS thiết bị sai số ≤ 100 m, hoặc gợi ý có
+  // đúng số nhà. Tâm phường ("gần đúng"), giữa đường, GPS sai số lớn, tọa độ ước từ ô Quận/Phường và địa chỉ đã lưu
+  // (chưa biết đã xác nhận ghim hay chưa) thì CHƯA đáng tin: khách xác nhận ghim một lần.
+  const locationTrusted =
+    !!customerCoords &&
+    ((locationConfirmed && (locationConfirmedBy === 'USER_MAP_PIN' || locationConfirmedBy === 'USER_SAVED_PROFILE_PIN')) ||
+      locationConfirmedBy === 'DEVICE_GPS' ||
+      (addressSource === 'autocomplete' && selectedPlace?.suggestion.precision === 'house'));
+  // Nội dung ô "Số nhà, tên đường" mới nhất (đọc trong các bước bất đồng bộ)
   const latestAddressRef = useRef('');
-  // Thời điểm vừa chọn gợi ý: chặn việc rời ô nhập tự chọn gợi ý đầu tiên đè lên lựa chọn của khách
-  const lastPickAtRef = useRef(0);
   // Tọa độ hiện tại (đọc trong các bước bất đồng bộ)
   const customerCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
     customerCoordsRef.current = customerCoords;
   }, [customerCoords]);
-  // Tọa độ geocode của địa chỉ gõ tay (chỉ dùng để cảnh báo lệch so với ghim)
-  const [typedAddrCoords, setTypedAddrCoords] = useState<{ lat: number; lng: number } | null>(null);
-  // Khoảng cách (km) giữa ghim khách chấm và địa chỉ gõ tay; > 1km coi là lệch
-  const pinMismatchKm =
-    locationConfirmed && locationConfirmedBy === 'USER_MAP_PIN' && typedAddrCoords && customerCoords
-      ? calculateHaversineDistance(customerCoords.lat, customerCoords.lng, typedAddrCoords.lat, typedAddrCoords.lng)
-      : 0;
-  const hasPinMismatch = pinMismatchKm > 1;
+  // Gợi ý đang được chọn (bỏ kết quả kiểm tra muộn nếu khách đã chọn chỗ khác)
+  const selectedPlaceIdRef = useRef<string | null>(null);
+  // Số đo cho log ẩn danh chất lượng gợi ý (gửi kèm đơn; server bỏ chữ số trong chuỗi, làm tròn tọa độ, không ghi mã đơn / IP)
+  const telemetryRef = useRef<{
+    query?: string;
+    total?: number;
+    rank?: number;
+    source?: string;
+    from?: { lat: number; lng: number };
+    pinMovedM?: number;
+    pinChoice?: 'use' | 'keep';
+  }>({});
   const [wasOverridden, setWasOverridden] = useState(false);
   const [recommendData, setRecommendData] = useState<{
     recommended: StoreRecommendationItem | null;
@@ -460,45 +507,6 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleMapLocationConfirm = (confirmed: {
-    lat: number;
-    lng: number;
-    formattedAddress: string;
-    components?: { province?: string; district?: string; ward?: string; street?: string };
-    confidence: 'high' | 'medium' | 'low';
-  }) => {
-    setCustomerCoords({ lat: confirmed.lat, lng: confirmed.lng });
-    setLocationConfirmed(true);
-    setLocationConfirmedBy('USER_MAP_PIN');
-    // Địa chỉ sau khi ghim: theo điểm ghim nếu có, không thì giữ địa chỉ khách đã gõ
-    const pinnedAddress = confirmed.components?.street || latestAddressRef.current || null;
-    pinAddressRef.current = pinnedAddress;
-    chosenAddressRef.current = pinnedAddress;
-    setTypedAddrCoords(null);
-    setShowSuggestions(false);
-    setSuggestions([]);
-
-    if (confirmed.components) {
-      setForm((prev) => ({
-        ...prev,
-        province: confirmed.components?.province || prev.province,
-        district: confirmed.components?.district || prev.district,
-        ward: confirmed.components?.ward || prev.ward,
-        address: confirmed.components?.street || prev.address,
-      }));
-      setErrors((prev) => ({
-        ...prev,
-        province: '',
-        district: '',
-        ward: '',
-        address: '',
-      }));
-    }
-    if (confirmed.formattedAddress) {
-      setGeoResolvedDesc(confirmed.formattedAddress);
-    }
-  };
-
   const getNearestBranchPreview = useCallback(
     (lat?: number, lng?: number) => {
       if (!lat || !lng || !stores.length) return null;
@@ -515,71 +523,6 @@ export default function CheckoutPage() {
     },
     [stores]
   );
-
-  const handleLocateGPS = () => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      showAlert(language === 'en' ? 'Geolocation is not supported by your browser.' : 'Trình duyệt không hỗ trợ định vị GPS.', dialogOpts(language, 'warning'));
-      return;
-    }
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setCustomerCoords(coords);
-        setLocationConfirmed(false);
-        setLocationConfirmedBy('DEVICE_GPS');
-
-        try {
-          // Phân giải địa chỉ chuẩn từ tọa độ GPS thực tế
-          const revData = await safeFetchJson<{
-            success: boolean;
-            formattedAddress?: string;
-            components?: { province?: string; district?: string; ward?: string; street?: string };
-          }>(`/api/geo/reverse?lat=${coords.lat}&lng=${coords.lng}`);
-
-          if (revData?.success && revData.components) {
-            // Tọa độ GPS là chuẩn nhất: không để bước gợi ý / geocode địa chỉ gõ tay đè lên
-            chosenAddressRef.current = revData.components.street || latestAddressRef.current || null;
-            setShowSuggestions(false);
-            setSuggestions([]);
-            setForm((prev) => ({
-              ...prev,
-              province: revData.components?.province || prev.province,
-              district: revData.components?.district || prev.district,
-              ward: revData.components?.ward || prev.ward,
-              address: revData.components?.street || prev.address,
-            }));
-            setGeoResolvedDesc(
-              revData.formattedAddress ||
-                [revData.components.street, revData.components.ward, revData.components.district, revData.components.province]
-                  .filter(Boolean)
-                  .join(', ')
-            );
-          } else {
-            setGeoResolvedDesc(
-              language === 'en'
-                ? `GPS located: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
-                : `Đã định vị thành công tọa độ GPS: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
-            );
-          }
-        } catch {
-          // ignore
-        } finally {
-          setIsLocating(false);
-        }
-      },
-      (err) => {
-        setIsLocating(false);
-        showAlert(
-          language === 'en'
-            ? 'Unable to retrieve your GPS location. Nearest branch will be estimated from your address.'
-            : 'Không thể lấy vị trí GPS. Hệ thống sẽ ước tính kho gần nhất theo địa chỉ bạn nhập.',
-        dialogOpts(language, 'warning')
-        );
-      },
-      { timeout: 8000, enableHighAccuracy: true }
-    );
-  };
 
   const [form, setForm] = useState({
     fullName: '',
@@ -601,23 +544,15 @@ export default function CheckoutPage() {
   const availableDistricts = useMemo(() => getDistrictsByProvince(form.province), [form.province]);
   const availableWards = useMemo(() => getWardsByDistrict(form.province, form.district), [form.province, form.district]);
 
-  // Trạng thái gợi ý địa chỉ Google Maps Places Autocomplete
-  const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
-  const [geoResolvedDesc, setGeoResolvedDesc] = useState<string | null>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-
-  // Đóng dropdown gợi ý khi click ra ngoài
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Khách đổi ô Tỉnh/Quận/Phường và ghim dời về tâm khu vực: tọa độ lúc này chỉ là ước tính theo khu vực
+  const markAreaEstimate = () => {
+    setLocationConfirmed(false);
+    setLocationConfirmedBy('MANUAL_INPUT');
+    setAddressSource('manual');
+    setSelectedPlace(null);
+    selectedPlaceIdRef.current = null;
+    setPinReview(null);
+  };
 
   // Xử lý thay đổi Tỉnh / Thành phố
   const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -634,6 +569,7 @@ export default function CheckoutPage() {
     const coords = findPreciseCoordinates(provinceVal);
     if (coords && !pinLockedRef.current) {
       setCustomerCoords(coords);
+      markAreaEstimate();
     }
   };
 
@@ -651,6 +587,7 @@ export default function CheckoutPage() {
     const coords = findPreciseCoordinates(form.province, districtVal);
     if (coords && !pinLockedRef.current) {
       setCustomerCoords(coords);
+      markAreaEstimate();
     }
   };
 
@@ -667,276 +604,279 @@ export default function CheckoutPage() {
     const coords = findPreciseCoordinates(form.province, form.district, wardVal);
     if (coords && !pinLockedRef.current) {
       setCustomerCoords(coords);
+      markAreaEstimate();
     }
   };
 
-  // Xử lý nhập số nhà, tên đường
-  const handleAddressInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setForm((prev) => ({ ...prev, address: val }));
-    if (errors.address) {
-      setErrors((prev) => ({ ...prev, address: '' }));
-    }
-    // Xóa thông báo định vị cũ khi user gõ lại
-    if (geoResolvedDesc) {
-      setGeoResolvedDesc(null);
-    }
-  };
-
-  // Tìm kiếm gợi ý Google Maps khi người dùng gõ số nhà / tên đường
+  // ── Ô "Số nhà, tên đường": gõ → gợi ý → chọn → ghim ───────────────────────────────────────────
+  // Toàn bộ logic gợi ý nằm trong useAddressSearch (src/hooks) + src/lib/address; trang chỉ nối kết quả vào form.
+  // Nguyên tắc vàng: không bao giờ tự đổi chữ khách đã gõ hay đã chọn. Chữ chỉ đổi khi khách gõ, chọn một gợi ý,
+  // hoặc bấm "Dùng địa chỉ này" sau khi ghim/GPS. Không còn geocode ngầm chữ khách gõ.
+  const formRef = useRef(form);
   useEffect(() => {
-    if (!form.address || form.address.trim().length < 2) {
-      setSuggestions([]);
-      setIsSearchingAddress(false);
-      return;
-    }
-    if (
-      (pinLockedRef.current && form.address === pinAddressRef.current) ||
-      form.address === chosenAddressRef.current
-    ) {
-      // Khách đã chọn xong địa chỉ: không gợi ý thêm
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
+    formRef.current = form;
+  });
 
+  // Vị trí GPS mà trình duyệt đã cho phép từ trước (không tự hỏi quyền): dùng làm bias cho gợi ý
+  const gpsBiasRef = useRef<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation || !navigator.permissions?.query) return;
     let cancelled = false;
-    const timer = setTimeout(async () => {
-      setIsSearchingAddress(true);
-      try {
-        // Truyền province/district/ward context để API trả kết quả chính xác theo khu vực
-        const params = new URLSearchParams({ input: form.address });
-        if (form.province) params.set('province', form.province);
-        if (form.district) params.set('district', form.district);
-        if (form.ward) params.set('ward', form.ward);
-
-        const data = await safeFetchJson<{ success: boolean; predictions?: AutocompleteSuggestion[] }>(
-          `/api/geo/autocomplete?${params.toString()}`
+    navigator.permissions
+      .query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        if (cancelled || status.state !== 'granted') return;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (!cancelled) gpsBiasRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          },
+          () => {},
+          { maximumAge: 10 * 60 * 1000, timeout: 5000 }
         );
-        // Kết quả về muộn sau khi khách đã chọn / gõ tiếp: bỏ qua
-        if (cancelled) return;
-        if (data?.success && Array.isArray(data.predictions)) {
-          setSuggestions(data.predictions);
-          if (data.predictions.length > 0) {
-            setShowSuggestions(true);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching address suggestions:', err);
-      } finally {
-        if (!cancelled) setIsSearchingAddress(false);
-      }
-    }, 350);
-
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
-      clearTimeout(timer);
-      setIsSearchingAddress(false);
     };
-  }, [form.address, form.ward, form.district, form.province]);
+  }, []);
 
-  // Geocode ngầm địa chỉ tự động chọn Tỉnh, Quận, Phường khi người dùng gõ số nhà tên đường
-  useEffect(() => {
-    if (pinLockedRef.current && form.address === pinAddressRef.current) {
-      setTypedAddrCoords(null);
-      return;
-    }
-    // Địa chỉ đã chốt từ gợi ý / ghim / GPS đã có tọa độ chuẩn: không geocode lại đè lên
-    if (form.address && form.address === chosenAddressRef.current) {
-      return;
-    }
-    if (form.address && form.address.trim().length >= 4) {
-      let cancelled = false;
-      const timer = setTimeout(async () => {
-        try {
-          const defaultProv = form.province || 'TP. Hồ Chí Minh';
-          const data = await safeFetchJson<{
-            success: boolean;
-            lat?: number;
-            lng?: number;
-            formattedAddress?: string;
-            components?: { province?: string; district?: string; ward?: string; street?: string };
-            source?: string;
-            precision?: 'house' | 'street' | 'area';
-          }>(
-            `/api/geo/geocode?address=${encodeURIComponent(form.address)}&ward=${encodeURIComponent(
-              form.ward
-            )}&district=${encodeURIComponent(form.district)}&province=${encodeURIComponent(defaultProv)}`
-          );
-          if (cancelled || form.address === chosenAddressRef.current) return;
-          if (data?.success) {
-            if (pinLockedRef.current) {
-              // Khách đã ghim: chỉ so sánh địa chỉ gõ tay với ghim, không dời ghim, không đổi Tỉnh/Quận/Phường
-              setTypedAddrCoords(data.lat && data.lng ? { lat: data.lat, lng: data.lng } : null);
-              if (data.formattedAddress) setGeoResolvedDesc(data.formattedAddress);
-              return;
-            }
-            setTypedAddrCoords(null);
-            // Kết quả chỉ ở mức phường/quận thì không dời ghim đang có (tránh ghim nhảy xa nhà khách)
-            if (data.lat && data.lng && !(data.precision === 'area' && customerCoordsRef.current)) {
-              setCustomerCoords({ lat: data.lat, lng: data.lng });
-            }
-            if (data.components) {
-              const newProv = data.components.province || form.province || 'TP. Hồ Chí Minh';
-              const newDist = data.components.district || form.district;
-              const newWard = data.components.ward || form.ward;
-
-              const shouldUpdateWard = newWard && newWard !== form.ward;
-              const shouldUpdateDist = newDist && newDist !== form.district;
-              const shouldUpdateProv = newProv && newProv !== form.province;
-
-              if (shouldUpdateWard || shouldUpdateDist || shouldUpdateProv) {
-                setForm((prev) => ({
-                  ...prev,
-                  province: newProv,
-                  district: newDist || prev.district,
-                  ward: newWard || prev.ward,
-                }));
-                setErrors((prev) => ({
-                  ...prev,
-                  province: newProv ? '' : prev.province,
-                  district: newDist ? '' : prev.district,
-                  ward: newWard ? '' : prev.ward,
-                }));
-              }
-
-              const resolvedText = [
-                form.address,
-                newWard || form.ward,
-                newDist || form.district,
-                newProv || form.province,
-              ]
-                .filter(Boolean)
-                .join(', ');
-              setGeoResolvedDesc(resolvedText);
-            } else if (data.formattedAddress) {
-              setGeoResolvedDesc(data.formattedAddress);
-            }
-          }
-        } catch {
-          // ignore
-        }
-      }, 500);
-      return () => {
-        cancelled = true;
-        clearTimeout(timer);
-      };
-    }
-  }, [form.address, form.ward, form.district, form.province]);
-
-  // Chọn một địa chỉ từ gợi ý Google Maps / Nominatim / Tuyến đường GPS
-  const handleSelectSuggestion = async (suggestion: AutocompleteSuggestion) => {
-    const targetAddress = removeKhuPho(suggestion.main_text || form.address);
-    // Đã chọn xong: chốt địa chỉ này, không hiện thêm gợi ý nào nữa
-    chosenAddressRef.current = targetAddress;
-    lastPickAtRef.current = Date.now();
-    setShowSuggestions(false);
-    setSuggestions([]);
-    setTypedAddrCoords(null);
-    setIsSearchingAddress(true);
-
-    // Khách đã tự ghim và gợi ý nằm gần ghim (≤ 300m): giữ ghim của khách vì chính xác hơn
-    const pinned = pinLockedRef.current ? customerCoordsRef.current : null;
-    const keepUserPin =
-      !!pinned &&
-      (!suggestion.lat ||
-        !suggestion.lng ||
-        calculateHaversineDistance(pinned.lat, pinned.lng, suggestion.lat, suggestion.lng) <= 0.3);
-    if (keepUserPin) pinAddressRef.current = targetAddress;
-
-    const moveSuggestionPin = (lat: number, lng: number) => {
-      if (keepUserPin) return;
-      setCustomerCoords({ lat, lng });
-      setLocationConfirmed(false);
-      setLocationConfirmedBy('AUTOCOMPLETE_SUGGESTION');
-    };
-
+  // Gợi ý lấy từ bảng đường nội bộ có tọa độ là tâm đường: kiểm tra 1 lần phường tại điểm đó có khớp phường đã chọn không
+  const verifyLocalSuggestion = async (s: AddressSuggestion, typedLine: string) => {
+    if (typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
     try {
-      // 1. Áp dụng ngay tọa độ GPS từ gợi ý để ghim trên bản đồ nhỏ nhảy tới vị trí này
-      if (suggestion.lat && suggestion.lng) {
-        moveSuggestionPin(suggestion.lat, suggestion.lng);
+      const rev = await safeFetchJson<{
+        success: boolean;
+        formattedAddress?: string;
+        components?: PinAddressParts;
+      }>(`/api/geo/reverse?lat=${s.lat}&lng=${s.lng}&light=1`);
+      if (!rev?.success || !rev.components || selectedPlaceIdRef.current !== s.place_id) return;
+      const mm = detectLocationMismatch(
+        { ward: s.ward, district: s.district },
+        { ward: rev.components.ward, district: rev.components.district },
+        { lat: s.lat, lng: s.lng }
+      );
+      if (mm.mismatch) {
+        setPinReview({
+          kind: 'ward-mismatch',
+          pin: { ...rev.components, formatted: rev.formattedAddress },
+          typed: typedLine,
+          chosenWard: s.ward,
+          pinWard: rev.components.ward,
+        });
       }
-
-      // 2. Tự động điền đầy đủ và chọn ngay Tỉnh/Thành, Quận/Huyện, Phường/Xã cho người dùng (loại bỏ hoàn toàn Khu phố)
-      const targetProv = suggestion.province || form.province || 'TP. Hồ Chí Minh';
-      const targetDist = suggestion.district || form.district;
-      const targetWard = removeKhuPho(suggestion.ward) || form.ward;
-
-      setForm((prev) => ({
-        ...prev,
-        province: targetProv,
-        district: targetDist || prev.district,
-        ward: targetWard || prev.ward,
-        address: targetAddress,
-      }));
-      setGeoResolvedDesc(removeKhuPho(suggestion.description));
-
-      // Xóa ngay lập tức mọi cảnh báo lỗi của form địa chỉ
-      setErrors((prev) => ({
-        ...prev,
-        province: '',
-        district: '',
-        ward: '',
-        address: '',
-      }));
-
-      // 3. Gọi geocode chuyên sâu khi: còn thiếu Quận/Phường, gợi ý chưa có tọa độ,
-      //    hoặc địa chỉ có số nhà (thử tìm đúng vị trí căn nhà thay vì điểm giữa con đường)
-      const missingAdmin = !targetDist || !targetWard;
-      const missingCoords = !suggestion.lat || !suggestion.lng;
-      const hasHouseNumber = /^\d/.test(targetAddress);
-      if (missingAdmin || missingCoords || hasHouseNumber) {
-        const data = await safeFetchJson<any>(
-          `/api/geo/geocode?place_id=${encodeURIComponent(suggestion.place_id)}&address=${encodeURIComponent(
-            suggestion.description
-          )}&province=${encodeURIComponent(targetProv)}&district=${encodeURIComponent(
-            targetDist || ''
-          )}&ward=${encodeURIComponent(targetWard || '')}`
-        );
-
-        // Khách đã chọn địa chỉ khác trong lúc chờ: bỏ kết quả này
-        if (chosenAddressRef.current !== targetAddress) return;
-        if (data?.success) {
-          if (data.lat && data.lng) {
-            const nearSuggestion =
-              missingCoords ||
-              calculateHaversineDistance(data.lat, data.lng, suggestion.lat!, suggestion.lng!) <= 2;
-            // Chỉ thay tọa độ gợi ý khi gợi ý chưa có tọa độ, hoặc tìm được đúng căn nhà gần đó
-            if (missingCoords || (data.precision === 'house' && nearSuggestion)) {
-              moveSuggestionPin(data.lat, data.lng);
-            }
-          }
-          if (missingAdmin && data.components) {
-            setForm((prev) => ({
-              ...prev,
-              province: data.components.province || targetProv,
-              district: data.components.district || targetDist || prev.district,
-              ward: removeKhuPho(data.components.ward || targetWard || prev.ward),
-              address: targetAddress,
-            }));
-          }
-          if (missingAdmin && data.formattedAddress) {
-            setGeoResolvedDesc(removeKhuPho(data.formattedAddress));
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error handling selected suggestion:', err);
-      if (suggestion.lat && suggestion.lng) {
-        moveSuggestionPin(suggestion.lat, suggestion.lng);
-      }
-      setForm((prev) => ({
-        ...prev,
-        province: suggestion.province || prev.province || 'TP. Hồ Chí Minh',
-        district: suggestion.district || prev.district,
-        ward: suggestion.ward || prev.ward,
-        address: targetAddress || prev.address,
-      }));
-      setGeoResolvedDesc(suggestion.description);
-    } finally {
-      setIsSearchingAddress(false);
+    } catch {
+      // kiểm tra phụ, lỗi thì bỏ qua
     }
   };
+
+  // Gợi ý của Google (khi có khóa) chưa có tọa độ: lấy chi tiết theo place_id đúng 1 lần, không geocode chữ
+  const resolveGoogleSuggestion = async (s: AddressSuggestion) => {
+    try {
+      const data = await safeFetchJson<{ success: boolean; lat?: number; lng?: number; source?: string }>(
+        `/api/geo/geocode?place_id=${encodeURIComponent(s.place_id)}`
+      );
+      if (!data?.success || data.source !== 'google' || typeof data.lat !== 'number' || typeof data.lng !== 'number') return;
+      if (selectedPlaceIdRef.current !== s.place_id) return;
+      setCustomerCoords({ lat: data.lat, lng: data.lng });
+      setLocationConfirmed(false);
+      setLocationConfirmedBy('AUTOCOMPLETE_SUGGESTION');
+    } catch {
+      // khách vẫn chấm ghim được
+    }
+  };
+
+  // Khách chọn một gợi ý: điền ô, đưa ghim tới tọa độ của gợi ý đúng 1 lần, không gọi thêm API nào để lấy tọa độ
+  const applySuggestion = (sel: SelectedPlace) => {
+    const s = sel.suggestion;
+    selectedPlaceIdRef.current = s.place_id;
+    telemetryRef.current = {
+      query: sel.query,
+      total: sel.total,
+      rank: sel.rank,
+      source: s.source,
+      from: typeof s.lat === 'number' && typeof s.lng === 'number' ? { lat: s.lat, lng: s.lng } : undefined,
+    };
+    setSelectedPlace(sel);
+    setAddressSource('autocomplete');
+    setPinReview(null);
+    setForm((prev) => ({
+      ...prev,
+      province: s.province || prev.province || 'TP. Hồ Chí Minh',
+      district: s.district || prev.district,
+      ward: s.ward ? removeKhuPho(s.ward) : prev.ward,
+      address: sel.text,
+    }));
+    setErrors((prev) => ({ ...prev, province: '', district: '', ward: '', address: '' }));
+    if (typeof s.lat === 'number' && typeof s.lng === 'number') {
+      // Khách đã tự ghim và gợi ý nằm cách ghim ≤ 300 m: giữ ghim của khách (chính xác hơn tâm đường)
+      const pinned = pinLockedRef.current ? customerCoordsRef.current : null;
+      const keepUserPin = !!pinned && calculateHaversineDistance(pinned.lat, pinned.lng, s.lat, s.lng) <= 0.3;
+      if (!keepUserPin) {
+        setCustomerCoords({ lat: s.lat, lng: s.lng });
+        setLocationConfirmed(false);
+        setLocationConfirmedBy('AUTOCOMPLETE_SUGGESTION');
+      }
+      if (s.source === 'local') void verifyLocalSuggestion(s, sel.text);
+    } else if (s.source === 'google') {
+      void resolveGoogleSuggestion(s);
+    }
+  };
+
+  const addr = useAddressSearch({
+    getBias: () =>
+      gpsBiasRef.current ??
+      (user?.latitude && user?.longitude ? { lat: Number(user.latitude), lng: Number(user.longitude) } : null),
+    getContext: () => ({ ward: form.ward || undefined, district: form.district || undefined }),
+    onSelect: applySuggestion,
+    onTextChange: (text) => {
+      setForm((prev) => ({ ...prev, address: text }));
+      setErrors((prev) => (prev.address ? { ...prev, address: '' } : prev));
+    },
+  });
+
+  // Điền địa chỉ tại ghim/GPS vào form: chỉ khi ô còn trống hoặc khách bấm "Dùng địa chỉ này"
+  const applyPinAddress = (pin: PinAddressParts, source: 'pin' | 'gps') => {
+    const street = pin.street ? removeKhuPho(pin.street) : latestAddressRef.current;
+    setForm((prev) => ({
+      ...prev,
+      province: pin.province || prev.province,
+      district: pin.district || prev.district,
+      ward: pin.ward ? removeKhuPho(pin.ward) : prev.ward,
+      address: street || prev.address,
+    }));
+    setErrors((prev) => ({ ...prev, province: '', district: '', ward: '', address: '' }));
+    if (street) addr.controller.commitText(street, source);
+    setAddressSource(source);
+    setSelectedPlace(null);
+    selectedPlaceIdRef.current = null;
+    setPinReview(null);
+  };
+
+  // Chỉ điền các ô Tỉnh/Quận/Phường còn trống, không đè ô khách đã chọn
+  const fillEmptyAdminFromPin = (pin: PinAddressParts) => {
+    setForm((prev) => ({
+      ...prev,
+      province: prev.province || pin.province || '',
+      district: prev.district || pin.district || '',
+      ward: prev.ward || (pin.ward ? removeKhuPho(pin.ward) : ''),
+    }));
+  };
+
+  // Ghim/GPS vừa cho ra một địa chỉ. Ô còn trống thì điền luôn. Đã có chữ thì KHÔNG đè: giữ chữ, chỉ điền ô hành chính
+  // còn trống, và nếu địa chỉ tại ghim khác chữ (hoặc khác phường đã chọn) thì hỏi "Dùng địa chỉ này?"
+  const reviewPinAddress = (pin: PinAddressParts, at: { lat: number; lng: number }, source: 'pin' | 'gps') => {
+    const current = formRef.current;
+    const typed = current.address.trim();
+    setAddressSource(source);
+    setSelectedPlace(null);
+    selectedPlaceIdRef.current = null;
+    if (!typed) {
+      applyPinAddress(pin, source);
+      return;
+    }
+    addr.controller.commitText(current.address, source);
+    const pinLine = pin.street ? removeKhuPho(pin.street) : '';
+    if (pinLine && !sameAddressLine(typed, pinLine)) {
+      // Địa chỉ tại ghim khác chữ khách gõ: chờ khách quyết định, chưa điền ô Tỉnh/Quận/Phường nào
+      setPinReview({ kind: 'pin-differs', pin, typed });
+      return;
+    }
+    fillEmptyAdminFromPin(pin);
+    const mm = detectLocationMismatch(
+      { ward: current.ward, district: current.district },
+      { ward: pin.ward, district: pin.district },
+      at
+    );
+    setPinReview(
+      mm.mismatch ? { kind: 'ward-mismatch', pin, typed, chosenWard: current.ward, pinWard: pin.ward } : null
+    );
+  };
+
+  const handleMapLocationConfirm = (confirmed: {
+    lat: number;
+    lng: number;
+    formattedAddress: string;
+    components?: { province?: string; district?: string; ward?: string; street?: string };
+    confidence: 'high' | 'medium' | 'low';
+  }) => {
+    const at = { lat: confirmed.lat, lng: confirmed.lng };
+    // Ghim dời bao xa so với điểm của gợi ý đã chọn (log ẩn danh)
+    if (telemetryRef.current.from) telemetryRef.current.pinMovedM = distanceMeters(telemetryRef.current.from, at);
+    setCustomerCoords(at);
+    setLocationConfirmed(true);
+    setLocationConfirmedBy('USER_MAP_PIN');
+    reviewPinAddress({ ...(confirmed.components || {}), formatted: confirmed.formattedAddress }, at, 'pin');
+  };
+
+  const handleLocateGPS = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      showAlert(language === 'en' ? 'Geolocation is not supported by your browser.' : 'Trình duyệt không hỗ trợ định vị GPS.', dialogOpts(language, 'warning'));
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        // GPS chỉ đáng tin khi sai số ≤ 100 m; lớn hơn thì coi như vị trí gần đúng, khách xác nhận ghim
+        const gpsAccurate = typeof pos.coords.accuracy === 'number' && pos.coords.accuracy <= 100;
+        gpsBiasRef.current = coords;
+        setCustomerCoords(coords);
+        setLocationConfirmed(false);
+        setLocationConfirmedBy(gpsAccurate ? 'DEVICE_GPS' : 'DEVICE_GPS_LOW_ACCURACY');
+        try {
+          // Phân giải địa chỉ từ tọa độ GPS thực tế
+          const revData = await safeFetchJson<{
+            success: boolean;
+            formattedAddress?: string;
+            components?: PinAddressParts;
+          }>(`/api/geo/reverse?lat=${coords.lat}&lng=${coords.lng}`);
+          if (revData?.success && revData.components) {
+            reviewPinAddress({ ...revData.components, formatted: revData.formattedAddress }, coords, 'gps');
+          } else {
+            setAddressSource('gps');
+          }
+        } catch {
+          // giữ tọa độ GPS, khách vẫn tự nhập địa chỉ được
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      () => {
+        setIsLocating(false);
+        showAlert(
+          language === 'en'
+            ? 'Unable to retrieve your GPS location. Nearest branch will be estimated from your address.'
+            : 'Không thể lấy vị trí GPS. Hệ thống sẽ ước tính kho gần nhất theo địa chỉ bạn nhập.',
+          dialogOpts(language, 'warning')
+        );
+      },
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  };
+
+  // Khách bấm "Dùng địa chỉ này" / "Giữ địa chỉ của tôi" ở khung hỏi sau khi ghim
+  const acceptPinAddress = () => {
+    telemetryRef.current.pinChoice = 'use';
+    if (pinReview) applyPinAddress(pinReview.pin, addressSource === 'gps' ? 'gps' : 'pin');
+  };
+  const dismissPinReview = () => {
+    if (pinReview?.kind === 'pin-differs') telemetryRef.current.pinChoice = 'keep';
+    // "Giữ địa chỉ của tôi": chữ giữ nguyên; vị trí ghim vẫn được dùng nên điền nốt các ô hành chính còn trống theo ghim
+    if (pinReview?.kind === 'pin-differs') fillEmptyAdminFromPin(pinReview.pin);
+    setPinReview(null);
+  };
+
+  // Tâm khu vực khách đã gõ trong ô địa chỉ ("…, Hạnh Thông, Gò Vấp"), để mở bản đồ đúng khu khi chưa có tọa độ
+  const typedAreaCenter = useMemo(() => hintCenter(parseAddressInput(form.address)), [form.address]);
+
+  // Dòng địa chỉ dạng mới và dạng cũ (để lưu đơn và hiển thị)
+  const addressNewText = form.address
+    ? [form.address, form.ward, form.province].filter(Boolean).join(', ')
+    : null;
+  const addressOldText = form.address
+    ? [form.address, form.district, form.province].filter(Boolean).join(', ')
+    : null;
+
 
   // Kiểm tra tồn kho toàn giỏ (đã bóc combo) mỗi khi đổi chi nhánh hoặc đổi giỏ hàng / tọa độ
   const checkCartStock = useCallback(
@@ -990,12 +930,16 @@ export default function CheckoutPage() {
         ward: prev.ward || user.ward || '',
         note: prev.note || '',
       }));
+      // Địa chỉ đã lưu trong tài khoản (khách chưa tự gõ gì): không bật gợi ý cho đúng dòng đó
+      if (user.address && !latestAddressRef.current) {
+        addr.controller.commitText(user.address, 'saved');
+        setAddressSource('saved');
+      }
       if (user.latitude && user.longitude && !customerCoords) {
-        // Địa chỉ đã lưu kèm tọa độ: không bật gợi ý, không geocode lại đè tọa độ đã lưu
-        if (user.address) chosenAddressRef.current = user.address;
         setCustomerCoords({ lat: Number(user.latitude), lng: Number(user.longitude) });
-        setLocationConfirmed(true);
-        setLocationConfirmedBy('USER_SAVED_PROFILE');
+        // Địa chỉ đã lưu chỉ được tin khi đã xác nhận ghim và chưa sửa từ lúc đó (server kiểm lại khi đặt đơn)
+        setLocationConfirmed(!!user.locationConfirmed);
+        setLocationConfirmedBy(user.locationConfirmed ? 'USER_SAVED_PROFILE_PIN' : 'USER_SAVED_PROFILE');
       }
     }
   }, [user]);
@@ -1054,12 +998,20 @@ export default function CheckoutPage() {
   // Tính phí vận chuyển theo config (hỗ trợ cả bậc khoảng cách km khi bật cấu hình hoặc theo đề xuất)
   // km tính phí = quãng đường đi thật tới chi nhánh đang chọn (cùng cách server tính khi đặt đơn);
   // chưa có kết quả đường đi thì tạm ước đường chim bay × 1,35
-  const shippingDistanceKm =
-    typeof activeRecommendedItem?.roadKm === 'number'
-      ? activeRecommendedItem.roadKm
-      : currentStoreDistanceKm !== null
-      ? Math.round(currentStoreDistanceKm * 1.35 * 10) / 10
+  // Chưa có vị trí đáng tin (chỉ là tâm phường / giữa đường) thì KHÔNG tính phí theo km: chỉ phí cơ bản
+  // Đường lui "cửa hàng gọi xác nhận": phí tạm tính theo tâm Phường/Quận đã chọn (server tính lại theo đường đi thật)
+  const fallbackCenter = useCallFallback ? getAreaCenter(form.ward, form.district) : null;
+  const fallbackKm =
+    fallbackCenter && selectedStore?.latitude && selectedStore?.longitude
+      ? Math.round(calculateHaversineDistance(fallbackCenter.lat, fallbackCenter.lng, Number(selectedStore.latitude), Number(selectedStore.longitude)) * 1.35 * 10) / 10
       : null;
+  const shippingDistanceKm = !locationTrusted
+    ? fallbackKm
+    : typeof activeRecommendedItem?.roadKm === 'number'
+    ? activeRecommendedItem.roadKm
+    : currentStoreDistanceKm !== null
+    ? Math.round(currentStoreDistanceKm * 1.35 * 10) / 10
+    : null;
   const shippingInfo = calculateShippingFee(subtotal, shippingDistanceKm);
   // Phép tính nhẹ, không cần useMemo
   const calculatedShippingFee =
@@ -1142,6 +1094,13 @@ export default function CheckoutPage() {
     }
     if (!validate()) return;
 
+    // Không giao theo tọa độ "gần đúng": cần khách xác nhận ghim (hoặc GPS, địa chỉ đã lưu, gợi ý đúng số nhà)
+    if (!locationTrusted && !useCallFallback) {
+      setLocationRequired(true);
+      setIsMapModalOpen(true);
+      return;
+    }
+
     // Chặn gửi đơn nếu chi nhánh thiếu hàng
     if (!isStockAvailable) {
       showAlert(
@@ -1182,7 +1141,26 @@ export default function CheckoutPage() {
           locationConfirmed,
           locationConfirmedBy,
           saveDefaultAddress,
-          addressNew: geoResolvedDesc || (form.address ? `${form.address}, ${form.ward}, ${form.district}, ${form.province}` : null),
+          // Địa chỉ đã xác nhận, tách số nhà / đường, mã gợi ý và nguồn của vị trí (server không geocode lại chuỗi)
+          addressLine: form.address,
+          houseNumber: splitHouseAndStreet(form.address.split(',')[0]).houseNumber || undefined,
+          street: splitHouseAndStreet(form.address.split(',')[0]).street || undefined,
+          providerPlaceId:
+            addr.state.anchor === 'matched' && selectedPlace ? selectedPlace.suggestion.place_id : undefined,
+          addressSource: addr.state.anchor === 'stale' ? 'manual' : addressSource,
+          addressPrecision: addr.state.anchor === 'matched' && selectedPlace ? selectedPlace.suggestion.precision : undefined,
+          // Đường lui khi bản đồ lỗi: server chỉ nhận khi có mã lỗi + còn hạn mức phiên; đơn mang cờ needs_call
+          locationFallback: !locationTrusted && useCallFallback ? { code: mapFailure || 'GEO_ERROR' } : undefined,
+          addressTelemetry: {
+            query: telemetryRef.current.query,
+            total: telemetryRef.current.total,
+            rank: telemetryRef.current.rank,
+            source: telemetryRef.current.source,
+            pinMovedM: telemetryRef.current.pinMovedM,
+            pinChoice: telemetryRef.current.pinChoice,
+          },
+          addressNew: addressNewText,
+          addressOld: addressOldText,
           recommendedStoreId: recommendData?.recommended?.code || null,
           wasOverridden,
           rankingSnapshot: recommendData
@@ -1242,6 +1220,12 @@ export default function CheckoutPage() {
 
       const data = await safeParseJson<any>(res);
       if (!res.ok || !data?.success || data?.savedToPostgres === false) {
+        // Server từ chối vì vị trí chưa đáng tin: mở bản đồ để khách xác nhận ghim
+        if (data?.code === 'LOCATION_UNCONFIRMED') {
+          setLocationRequired(true);
+          setIsMapModalOpen(true);
+          return;
+        }
         // Phí ship đo lại cao hơn số khách đang thấy: tải lại đề xuất chi nhánh để cập nhật phí
         if (data?.code === 'SHIPPING_FEE_CHANGED' && customerCoords) {
           fetchStoreRecommendation(customerCoords);
@@ -1724,6 +1708,10 @@ export default function CheckoutPage() {
                       {d.name}
                     </option>
                   ))}
+                  {/* Quận cũ do gợi ý/ghim suy ra mà danh mục ô chọn chưa có (ví dụ Bình Dương cũ): vẫn hiện để không mất lựa chọn */}
+                  {form.district && !availableDistricts.some((d) => d.name === form.district) && (
+                    <option value={form.district}>{form.district}</option>
+                  )}
                 </select>
                 {errors.district && (
                   <p className="mt-1 text-xs text-sale">{errors.district}</p>
@@ -1756,6 +1744,10 @@ export default function CheckoutPage() {
                       {w.name}
                     </option>
                   ))}
+                  {/* Phường mới của nhà cung cấp mà danh mục chưa có (ví dụ Phường Chợ Quán): vẫn hiện để không mất lựa chọn */}
+                  {form.ward && !availableWards.some((w) => w.name === form.ward) && (
+                    <option value={form.ward}>{form.ward}</option>
+                  )}
                 </select>
                 {errors.ward && (
                   <p className="mt-1 text-xs text-sale">{errors.ward}</p>
@@ -1763,13 +1755,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Address */}
-              <div
-                className={cn(
-                  'sm:col-span-2 relative',
-                  showSuggestions && suggestions.length > 0 ? 'z-30' : 'z-10'
-                )}
-                ref={suggestionsRef}
-              >
+              <div className={cn('sm:col-span-2 relative', addr.panelOpen ? 'z-30' : 'z-10')}>
                 <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
                   <label htmlFor="address" className="block text-sm font-medium text-text-dark">
                     {language === 'en' ? 'House number & street name' : 'Số nhà, tên đường'}{' '}
@@ -1799,33 +1785,11 @@ export default function CheckoutPage() {
                 </div>
                 <div className="relative">
                   <input
+                    {...addr.inputProps}
                     id="address"
                     name="address"
                     type="text"
-                    autoComplete="off"
                     value={form.address}
-                    onChange={handleAddressInputChange}
-                    onFocus={() => {
-                      if (suggestions.length > 0) setShowSuggestions(true);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (suggestions.length > 0) {
-                          handleSelectSuggestion(suggestions[0]);
-                        }
-                      }
-                    }}
-                    onBlur={() => {
-                      // Nếu khách hàng gõ số nhà tên đường xong mà rời ô input, tự động chọn gợi ý VIP số 1 nếu chưa có quận/phường
-                      setTimeout(() => {
-                        // Khách vừa bấm chọn 1 gợi ý: giữ đúng lựa chọn đó, không tự chọn gợi ý đầu tiên đè lên
-                        if (Date.now() - lastPickAtRef.current < 1500) return;
-                        if (suggestions.length > 0 && (!form.district || !form.ward)) {
-                          handleSelectSuggestion(suggestions[0]);
-                        }
-                      }, 250);
-                    }}
                     className={cn(
                       'w-full pl-4 pr-10 py-3 rounded-xl border bg-white text-text-dark text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-primary/30 focus:border-green-primary transition-colors',
                       errors.address ? 'border-sale' : 'border-border'
@@ -1837,7 +1801,7 @@ export default function CheckoutPage() {
                     }
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-400 pointer-events-none">
-                    {isSearchingAddress ? (
+                    {addr.state.status === 'loading' ? (
                       <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
                     ) : (
                       <Search className="w-4 h-4" />
@@ -1848,129 +1812,159 @@ export default function CheckoutPage() {
                   <p className="mt-1 text-xs text-sale">{errors.address}</p>
                 )}
 
-                {/* Dropdown Gợi ý từ Google Maps / OpenStreetMap / Tuyến đường GPS */}
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-white rounded-2xl shadow-2xl border border-emerald-100 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-                    <div className="px-3.5 py-2 bg-emerald-50/80 flex items-center justify-between text-[12px] text-emerald-950 border-b border-emerald-100">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                {/* Gợi ý địa chỉ: 2 dòng (số nhà + đường / phường mới + quận cũ), chọn bằng chuột, chạm hoặc phím mũi tên + Enter */}
+                {addr.panelOpen && (
+                  <AddressSuggestionList
+                    id={addr.listboxId}
+                    optionId={addr.optionId}
+                    suggestions={addr.state.suggestions}
+                    activeIndex={addr.state.activeIndex}
+                    status={addr.state.status}
+                    degraded={addr.state.degraded}
+                    outOfZone={addr.state.outOfZone}
+                    query={addr.state.inputText}
+                    language={language === 'en' ? 'en' : 'vi'}
+                    onPick={(i) => addr.controller.select(i)}
+                    onPickMap={() => {
+                      addr.controller.close();
+                      setIsMapModalOpen(true);
+                    }}
+                    renderMeta={(s) => {
+                      const nearest = getNearestBranchPreview(s.lat, s.lng);
+                      if (!nearest) return null;
+                      return (
+                        <span className="text-2xs text-emerald-800 shrink-0 text-right leading-snug">
+                          {language === 'en' ? 'Near' : 'Gần'} {nearest.name}
+                          <br />({nearest.dist.toFixed(1)} km)
+                        </span>
+                      );
+                    }}
+                  />
+                )}
+
+                {/* Khách đã sửa địa chỉ sang đường khác: ghim bên dưới chưa đổi theo (không tự dời ghim) */}
+                {addr.state.anchor === 'stale' && customerCoords && !pinReview && (
+                  <div className="mt-2 p-2.5 bg-amber-50 rounded-xl border border-amber-300 flex items-start gap-2 text-xs text-amber-900 shadow-2xs">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-2xs leading-snug">
                         {language === 'en'
-                          ? `Found ${suggestions.length} GPS suggestions`
-                          : `Tìm thấy ${suggestions.length} vị trí GPS chính xác`}
-                      </span>
-                      <span className="text-[10px] text-emerald-700 font-normal">
-                        {language === 'en' ? 'Click to auto-fill ward & district' : 'Bấm để tự điền đúng Phường & Quận'}
-                      </span>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
-                      {suggestions.map((item, idx) => (
-                        <button
-                          key={`${item.place_id}_${idx}`}
-                          type="button"
-                          onClick={() => handleSelectSuggestion(item)}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/70 transition-colors flex items-start gap-2.5 cursor-pointer group"
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-emerald-100/90 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-200 transition-colors text-emerald-800 text-sm">
-                            <MapPin className="w-3.5 h-3.5 text-emerald-700" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                              <p className="text-sm text-gray-900 group-hover:text-emerald-800">
-                                {removeKhuPho(item.main_text)}
-                              </p>
-                              <span
-                                className={cn(
-                                  'text-[10px] px-1.5 py-0.5 rounded-md border shrink-0',
-                                  item.source === 'google'
-                                    ? 'text-blue-700 bg-blue-50 border-blue-200'
-                                    : item.source === 'nominatim'
-                                    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                                    : 'text-amber-800 bg-amber-50 border-amber-200'
-                                )}
-                              >
-                                {item.source === 'google'
-                                  ? 'Google Maps'
-                                  : item.source === 'nominatim'
-                                  ? 'Bản đồ OSM'
-                                  : 'Tuyến đường GPS'}
-                              </span>
-                              {item.lat && item.lng && (
-                                <span className="text-[9px] text-emerald-700 bg-emerald-50/80 px-1.5 py-0.5 rounded font-mono font-medium">
-                                  GPS: {item.lat.toFixed(4)}, {item.lng.toFixed(4)}
-                                </span>
-                              )}
-                              {(() => {
-                                const nearest = getNearestBranchPreview(item.lat, item.lng);
-                                if (!nearest) return null;
-                                return (
-                                  <span className="text-[9px] text-emerald-800 bg-emerald-100/70 border border-emerald-200 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
-                                    Gần {nearest.name} ({nearest.dist.toFixed(1)} km)
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                            <p className="text-[11px] text-gray-600 truncate leading-snug">
-                              {removeKhuPho(item.secondary_text || item.description)}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
+                          ? 'You edited the address, but the pin below has not moved. Pick a suggestion or place the pin again.'
+                          : 'Bạn đã sửa địa chỉ nên ghim bên dưới chưa đổi theo. Hãy chọn một gợi ý hoặc chấm lại ghim trên bản đồ.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsMapModalOpen(true)}
+                        className="mt-1.5 px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-xs cursor-pointer"
+                      >
+                        {language === 'en' ? 'Adjust pin' : 'Chấm lại ghim'}
+                      </button>
                     </div>
                   </div>
                 )}
 
-                {/* Thông báo định vị thành công */}
-                {hasPinMismatch && (
-                  <div className="mt-2 p-2.5 bg-amber-50 rounded-xl border border-amber-300 flex items-start gap-2 text-xs text-amber-900 shadow-2xs">
+                {/* Ghim/GPS cho ra địa chỉ khác chữ đã nhập, hoặc phường không khớp: hỏi, không tự đè */}
+                {pinReview && (
+                  <div className="mt-2 p-2.5 bg-amber-50 rounded-xl border border-amber-300 flex items-start gap-2 text-xs text-amber-900 shadow-2xs" role="status">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="mb-0.5 text-[1.125em]">
-                        {language === 'en' ? 'Typed address does not match your map pin' : 'Địa chỉ đã nhập không khớp với ghim trên bản đồ'}
-                      </p>
-                      <p className="text-[11px] leading-snug">
-                        {language === 'en'
-                          ? `The pin is about ${pinMismatchKm.toFixed(1)} km from the typed address. Please check before ordering.`
-                          : `Ghim đang cách địa chỉ bạn gõ khoảng ${pinMismatchKm.toFixed(1)} km. Vui lòng kiểm tra lại trước khi đặt hàng.`}
-                      </p>
+                      {pinReview.kind === 'pin-differs' ? (
+                        <>
+                          <p className="mb-0.5 text-emph">
+                            {language === 'en' ? 'The pin shows a different address. Use it?' : 'Vị trí ghim cho ra địa chỉ khác. Dùng địa chỉ này?'}
+                          </p>
+                          <p className="text-2xs leading-snug">
+                            {language === 'en' ? 'Pin location: ' : 'Vị trí ghim: '}
+                            {pinReview.pin.formatted ||
+                              [pinReview.pin.street, pinReview.pin.ward, pinReview.pin.district].filter(Boolean).join(', ')}
+                          </p>
+                          <p className="text-2xs leading-snug">
+                            {language === 'en' ? 'You typed: ' : 'Bạn đã nhập: '}
+                            {pinReview.typed}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="mb-0.5 text-emph">
+                            {language === 'en' ? 'The ward does not match the pin' : 'Phường của địa chỉ không khớp với ghim'}
+                          </p>
+                          <p className="text-2xs leading-snug">
+                            {language === 'en'
+                              ? `The chosen address is in ${pinReview.chosenWard || '—'}, but the pin is in ${pinReview.pinWard || '—'}.`
+                              : `Địa chỉ đã chọn thuộc ${pinReview.chosenWard || '—'}, nhưng ghim đang ở ${pinReview.pinWard || '—'}.`}
+                          </p>
+                        </>
+                      )}
                       <div className="mt-1.5 flex flex-wrap gap-2">
+                        {pinReview.kind === 'pin-differs' && (
+                          <button
+                            type="button"
+                            onClick={acceptPinAddress}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-xs cursor-pointer"
+                          >
+                            {language === 'en' ? 'Use pin address' : 'Dùng địa chỉ này'}
+                          </button>
+                        )}
+                        {/* Kết quả mức đường: phường cuối cùng theo ghim đã xác nhận, khách bấm một lần để đổi */}
+                        {pinReview.kind === 'ward-mismatch' && pinReview.pinWard && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const pin = pinReview.pin;
+                              setForm((prev) => ({
+                                ...prev,
+                                ward: removeKhuPho(pin.ward || prev.ward),
+                                district: pin.district || prev.district,
+                              }));
+                              setPinReview(null);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-xs cursor-pointer"
+                          >
+                            {language === 'en'
+                              ? `Switch to ${pinReview.pinWard}`
+                              : `Đổi sang ${pinReview.pinWard.replace(/^Phường\s+/, 'P. ')}`}
+                          </button>
+                        )}
                         <button
                           type="button"
-                          onClick={() => setIsMapModalOpen(true)}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-[12px] cursor-pointer"
+                          onClick={dismissPinReview}
+                          className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 text-xs cursor-pointer"
                         >
-                          {language === 'en' ? 'Adjust pin' : 'Chỉnh lại ghim'}
+                          {pinReview.kind === 'pin-differs'
+                            ? language === 'en' ? 'Keep my address' : 'Giữ địa chỉ của tôi'
+                            : language === 'en' ? 'Keep as is' : 'Vẫn dùng'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (typedAddrCoords) setCustomerCoords(typedAddrCoords);
-                            pinAddressRef.current = null;
-                            setLocationConfirmed(false);
-                            setLocationConfirmedBy('MANUAL_INPUT');
-                            setTypedAddrCoords(null);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 text-[12px] cursor-pointer"
+                          onClick={() => setIsMapModalOpen(true)}
+                          className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 text-xs cursor-pointer"
                         >
-                          {language === 'en' ? 'Use typed address location' : 'Dùng vị trí theo địa chỉ đã gõ'}
+                          {language === 'en' ? 'Adjust pin' : 'Chấm lại ghim'}
                         </button>
                       </div>
                     </div>
                   </div>
                 )}
-                {geoResolvedDesc && !hasPinMismatch && (
+
+                {/* Địa chỉ đã chốt (chọn gợi ý, ghim, GPS hoặc đã lưu) */}
+                {customerCoords && form.address && addr.state.anchor === 'matched' && addressSource !== 'manual' && !pinReview && (
                   <div className="mt-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200/90 flex items-start gap-2 text-xs text-emerald-900 shadow-2xs">
                     <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-emerald-950 mb-0.5 flex items-center justify-between text-[1.125em]">
-                        <span>{language === 'en' ? 'Verified Delivery Location' : 'Đã xác định vị trí giao hàng chuẩn xác'}</span>
-                        {customerCoords && (
-                          <span className="text-[10px] text-emerald-700 font-mono font-normal">
-                            GPS: {customerCoords.lat.toFixed(6)}, {customerCoords.lng.toFixed(6)}
-                          </span>
-                        )}
+                      <p className="text-emerald-950 mb-0.5 flex items-center justify-between text-emph">
+                        <span>
+                          {selectedPlace?.suggestion.precision === 'area'
+                            ? language === 'en' ? 'Approximate location: please adjust the pin' : 'Vị trí gần đúng: hãy chấm lại ghim cho đúng nhà'
+                            : language === 'en' ? 'Delivery address selected' : 'Đã chọn địa chỉ giao hàng'}
+                        </span>
+                        <span className="text-2xs text-emerald-700 font-mono font-normal">
+                          GPS: {customerCoords.lat.toFixed(6)}, {customerCoords.lng.toFixed(6)}
+                        </span>
                       </p>
-                      <p className="text-[11px] text-emerald-900 leading-snug">
-                        {geoResolvedDesc}
+                      <p className="text-2xs text-emerald-900 leading-snug">
+                        {[form.address, formatAdminLine({ ward: form.ward, district: form.district, province: form.province })]
+                          .filter(Boolean)
+                          .join(', ')}
                       </p>
                     </div>
                   </div>
@@ -1995,12 +1989,55 @@ export default function CheckoutPage() {
                   addressText={form.address ? `${form.address}, ${form.ward || ''}` : undefined}
                   onOpenModal={() => setIsMapModalOpen(true)}
                 />
-                {customerCoords && !locationConfirmed && locationConfirmedBy === 'AUTOCOMPLETE_SUGGESTION' && (
-                  <p className="mt-1.5 text-[11px] text-amber-800">
-                    {language === 'en'
-                      ? 'Is the pin on your house? If not, tap the map to move it — the address will update to the new pin.'
-                      : 'Ghim đã đúng nhà bạn chưa? Nếu chưa, chạm vào bản đồ để chấm lại, ô số nhà tên đường sẽ tự đổi theo ghim mới.'}
-                  </p>
+                {/* Đường lui: bản đồ hoặc dịch vụ địa chỉ không dùng được → vẫn đặt được, cửa hàng gọi xác nhận vị trí */}
+                {!locationTrusted && (mapFailure || addr.state.status === 'error') && (
+                  <label className="mt-2 p-2.5 rounded-xl border border-amber-300 bg-amber-50 flex items-start gap-2 text-xs text-amber-900 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useCallFallback}
+                      onChange={(e) => {
+                        setUseCallFallback(e.target.checked);
+                        if (!mapFailure) setMapFailure('GEO_ERROR');
+                      }}
+                      className="mt-0.5 w-4 h-4 cursor-pointer"
+                    />
+                    <span className="leading-snug">
+                      {language === 'en'
+                        ? 'The map is not working right now. Place the order anyway: the store will call you to confirm the location. Shipping is estimated from your ward and district. Cash on delivery only.'
+                        : 'Bản đồ đang không dùng được. Vẫn đặt hàng, cửa hàng sẽ gọi bạn xác nhận vị trí. Phí ship tạm tính theo Phường / Quận bạn chọn. Chỉ thanh toán khi nhận hàng (COD).'}
+                    </span>
+                  </label>
+                )}
+                {/* Vị trí mới chỉ là gần đúng (tâm phường / giữa đường): phải xác nhận ghim mới đặt được, phí ship chưa tính theo km */}
+                {customerCoords && !locationTrusted && !pinReview && (
+                  <div
+                    className={cn(
+                      'mt-2 p-2.5 rounded-xl border flex items-start gap-2 text-xs shadow-2xs',
+                      locationRequired ? 'bg-amber-50 border-sale text-amber-900' : 'bg-amber-50 border-amber-300 text-amber-900'
+                    )}
+                    role="status"
+                  >
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="mb-0.5 text-emph">
+                        {selectedPlace?.suggestion.precision === 'area' || addressSource === 'manual'
+                          ? language === 'en' ? 'This is only an approximate location' : 'Đây mới là vị trí gần đúng của khu vực'
+                          : language === 'en' ? 'Please confirm the pin on your house' : 'Hãy xác nhận ghim đúng nhà bạn'}
+                      </p>
+                      <p className="text-2xs leading-snug">
+                        {language === 'en'
+                          ? 'We deliver to the pin you confirm, and the shipping fee by distance is calculated after you confirm it.'
+                          : 'Chúng tôi giao đến đúng ghim bạn xác nhận, và phí ship theo khoảng cách chỉ được tính sau khi bạn xác nhận vị trí.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsMapModalOpen(true)}
+                        className="mt-1.5 px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-xs cursor-pointer"
+                      >
+                        {language === 'en' ? 'Confirm delivery location' : 'Xác nhận vị trí giao hàng'}
+                      </button>
+                    </div>
+                  </div>
                 )}
 
                 {/* Tùy chọn lưu làm địa chỉ mặc định cho tài khoản đã đăng nhập */}
@@ -2473,8 +2510,12 @@ export default function CheckoutPage() {
       <LocationConfirmMapModal
         isOpen={isMapModalOpen}
         onClose={() => setIsMapModalOpen(false)}
-        initialCoords={customerCoords}
+        // Chưa có tọa độ: mở ở tâm khu khách đã gõ (không mặc định về Quận 1)
+        initialCoords={customerCoords ?? typedAreaCenter}
         initialAddress={form.address}
+        // Tọa độ gần đúng (tâm phường): phải kéo ghim đi đúng nhà rồi mới xác nhận được
+        requireMove={!locationTrusted && (selectedPlace?.suggestion.precision === 'area' || addressSource === 'manual')}
+        onMapError={(code) => setMapFailure(code)}
         onConfirm={handleMapLocationConfirm}
       />
 

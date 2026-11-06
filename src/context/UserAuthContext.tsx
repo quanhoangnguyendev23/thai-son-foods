@@ -16,6 +16,8 @@ export interface CustomerUser {
   provider?: string;
   latitude?: number | null;
   longitude?: number | null;
+  /** Địa chỉ đã lưu có xác nhận ghim còn hiệu lực (chưa sửa từ lúc xác nhận) */
+  locationConfirmed?: boolean;
   createdAt?: string;
 }
 
@@ -40,6 +42,8 @@ export interface UpdateProfileInput {
   /** Tọa độ vị trí giao hàng cố định; null = xóa tọa độ cũ, bỏ trống = giữ nguyên */
   latitude?: number | null;
   longitude?: number | null;
+  /** Khách vừa xác nhận ghim trên bản đồ cho địa chỉ này */
+  pinConfirmed?: boolean;
 }
 
 interface UserAuthContextType {

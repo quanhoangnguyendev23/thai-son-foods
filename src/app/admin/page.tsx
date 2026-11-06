@@ -241,6 +241,9 @@ interface Order {
   longitude?: number | null;
   location_confirmed?: boolean | null;
   location_confirmed_by?: string | null;
+  address_precision?: string | null;
+  location_check?: string | null;
+  address_source?: string | null;
   address_new?: string | null;
   created_at: string;
 }
@@ -2277,6 +2280,37 @@ export default function AdminPage() {
         fetchInventory(selectedStoreCode);
       } else {
         showToast(data.error || 'Không thể xác nhận thanh toán', 'error');
+      }
+    } catch (err: any) {
+      showToast('Lỗi: ' + err.message, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Đơn đặt khi bản đồ lỗi: nhân viên gọi khách xác nhận vị trí, có thể sửa phí ship, rồi mới được giao
+  const [locationFeeInput, setLocationFeeInput] = useState('');
+  const handleConfirmLocationCall = async (orderId: string) => {
+    const feeText = locationFeeInput.trim().replace(/[.,\s]/g, '');
+    if (feeText && !/^\d+$/.test(feeText)) {
+      showToast('Phí ship phải là số (đồng)', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}/confirm-location`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(feeText ? { shippingFee: Number(feeText) } : {}),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.alreadyConfirmed ? 'Đơn đã được xác nhận vị trí trước đó' : 'Đã ghi nhận: đã gọi xác nhận vị trí');
+        setLocationFeeInput('');
+        if (data.order) setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, ...data.order, items: prev.items } : prev));
+        refreshOrderList();
+      } else {
+        showToast(data.error || 'Không xác nhận được vị trí', 'error');
       }
     } catch (err: any) {
       showToast('Lỗi: ' + err.message, 'error');
@@ -7829,7 +7863,9 @@ export default function AdminPage() {
                         selectedOrder.latitude >= -90 &&
                         selectedOrder.latitude <= 90 &&
                         selectedOrder.longitude >= -180 &&
-                        selectedOrder.longitude <= 180;
+                        selectedOrder.longitude <= 180 &&
+                        // (0, 0) là giá trị mặc định do lỗi, coi như chưa có vị trí
+                        !(selectedOrder.latitude === 0 && selectedOrder.longitude === 0);
 
                       if (hasValidCoords) {
                         const lat = selectedOrder.latitude!;
@@ -7856,6 +7892,68 @@ export default function AdminPage() {
                                 <span className="px-2 py-0.5 rounded-md text-[11px] bg-amber-500/20 text-amber-800 border border-amber-500/30">
                                   📍 Tọa độ ước tính / gợi ý
                                 </span>
+                              )}
+                              {selectedOrder.location_confirmed_by && (
+                                <span className="text-2xs text-ink-600">
+                                  Nguồn vị trí:{' '}
+                                  {({
+                                    USER_MAP_PIN: 'khách tự chấm ghim',
+                                    AUTOCOMPLETE_SUGGESTION: 'gợi ý địa chỉ (chưa chấm ghim)',
+                                    DEVICE_GPS: 'GPS thiết bị',
+                                    USER_SAVED_PROFILE: 'địa chỉ đã lưu ở tài khoản',
+                                    MANUAL_INPUT: 'gõ tay / chọn quận phường (tâm khu vực)',
+                                    USER_GEOCODE: 'ước tính từ chữ',
+                                  } as Record<string, string>)[selectedOrder.location_confirmed_by] || selectedOrder.location_confirmed_by}
+                                </span>
+                              )}
+                              {selectedOrder.address_precision && (
+                                <span className="text-2xs text-ink-600">
+                                  Độ chính xác:{' '}
+                                  {({ house: 'đúng số nhà', street: 'mức đường', area: 'gần đúng (tâm khu vực)' } as Record<string, string>)[selectedOrder.address_precision] || selectedOrder.address_precision}
+                                </span>
+                              )}
+                              {selectedOrder.location_check && (
+                                <span
+                                  className={
+                                    selectedOrder.location_check === 'ok' || selectedOrder.location_check === 'unknown'
+                                      ? 'text-2xs text-ink-600'
+                                      : 'px-2 py-0.5 rounded-md text-2xs bg-amber-500/20 text-amber-800 border border-amber-500/30'
+                                  }
+                                >
+                                  Kiểm tra phường:{' '}
+                                  {({
+                                    ok: 'khớp',
+                                    unknown: 'chưa tra được',
+                                    ward_mismatch: 'ghim nằm ở phường khác',
+                                    district_mismatch: 'ghim nằm ở quận khác',
+                                    far_from_area: 'ghim cách xa khu đã chọn',
+                                    needs_call: '⚠ CẦN GỌI XÁC NHẬN VỊ TRÍ (khách đặt khi bản đồ lỗi, phí tạm theo phường)',
+                                    call_confirmed: 'đã gọi xác nhận vị trí',
+                                  } as Record<string, string>)[selectedOrder.location_check] || selectedOrder.location_check}
+                                </span>
+                              )}
+                              {selectedOrder.location_check === 'needs_call' && (
+                                <div className="w-full mt-1 p-2 rounded-lg border border-amber-500/30 bg-amber-500/10 flex flex-wrap items-center gap-2">
+                                  <span className="text-xs text-amber-800">
+                                    Gọi khách xác nhận vị trí trước khi giao. Phí ship hiện tại {Number(selectedOrder.shipping_fee || 0).toLocaleString('vi-VN')}đ.
+                                  </span>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={locationFeeInput}
+                                    onChange={(e) => setLocationFeeInput(e.target.value)}
+                                    placeholder="Phí ship mới (bỏ trống nếu giữ)"
+                                    className="px-2 py-1 rounded-md border border-ink-200 text-sm w-52"
+                                  />
+                                  <button
+                                    type="button"
+                                    disabled={actionLoading}
+                                    onClick={() => handleConfirmLocationCall(selectedOrder.id)}
+                                    className="px-3 py-1 rounded-md bg-emerald-600 text-white text-sm disabled:opacity-60"
+                                  >
+                                    Đã gọi xác nhận
+                                  </button>
+                                </div>
                               )}
                             </div>
                             <div className="flex items-center gap-2">

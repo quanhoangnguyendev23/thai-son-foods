@@ -38,8 +38,19 @@ import {
   getWardsByDistrict,
   findPreciseCoordinates,
 } from '@/data/vietnam-addresses';
-import type { AutocompleteSuggestion } from '@/app/api/geo/autocomplete/route';
 import LocationConfirmMapModal from '@/components/checkout/LocationConfirmMapModal';
+import AddressSuggestionList from '@/components/checkout/AddressSuggestionList';
+import { useAddressSearch } from '@/hooks/useAddressSearch';
+import { sameAddressLine } from '@/lib/address/normalize';
+
+/** Địa chỉ tại điểm ghim / GPS (kết quả reverse geocode) */
+interface ProfilePinParts {
+  street?: string;
+  ward?: string;
+  district?: string;
+  province?: string;
+  formatted?: string;
+}
 
 interface OrderItem {
   id: string;
@@ -87,22 +98,6 @@ interface UserReviewRecord {
 
 const PAGE_SIZE = 5;
 
-/** Địa chỉ mới vẫn cùng con đường với địa chỉ đã ghim (chỉ khác số nhà) */
-function isSameStreetText(pinned: string | null, typed: string): boolean {
-  const roadOf = (t: string) =>
-    t
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/đ/g, 'd')
-      .replace(/^(so\s*)?\d+[a-z0-9\/\-\.]*\s+/, '')
-      .replace(/^(duong|pho)\s+/, '')
-      .trim();
-  const a = roadOf(pinned || '');
-  const b = roadOf(typed || '');
-  return a.length >= 3 && b.length >= 3 && (a.includes(b) || b.includes(a));
-}
-
 /** Bản đồ nhỏ xem trước vị trí giao hàng cố định (chạm để mở bản đồ lớn chỉnh ghim) */
 function ProfileLocationPreview({
   coords,
@@ -131,9 +126,9 @@ function ProfileLocationPreview({
         scrollWheelZoom: false,
         doubleClickZoom: false,
         touchZoom: false,
-        attributionControl: false,
+        attributionControl: true,
       });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>' }).addTo(map);
       mapRef.current = map;
       setTimeout(() => !cancelled && mapRef.current?.invalidateSize(), 250);
     })();
@@ -292,139 +287,84 @@ function AccountContent() {
   );
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  // Vị trí giao hàng cố định (tọa độ) + gợi ý địa chỉ cho form hồ sơ
+  // Vị trí giao hàng cố định (tọa độ) + gợi ý địa chỉ cho form hồ sơ.
+  // Gợi ý dùng chung useAddressSearch với trang thanh toán: không tự chọn, không tự đổi chữ khách gõ, chọn xong thì hết gợi ý.
   const [profileCoords, setProfileCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [addrSuggestions, setAddrSuggestions] = useState<AutocompleteSuggestion[]>([]);
-  const [showAddrSuggestions, setShowAddrSuggestions] = useState(false);
-  const [isSearchingAddr, setIsSearchingAddr] = useState(false);
+  // Khách vừa xác nhận ghim trên bản đồ cho địa chỉ đang sửa (server lưu xác nhận theo bản chụp địa chỉ + tọa độ)
+  const [profilePinConfirmed, setProfilePinConfirmed] = useState(false);
   const [isLocatingProfile, setIsLocatingProfile] = useState(false);
   const [isProfileMapOpen, setIsProfileMapOpen] = useState(false);
-  // Địa chỉ khách đã chốt (chọn gợi ý / ghim / GPS / đã lưu): không gợi ý thêm
-  // (ref để đọc trong bước bất đồng bộ, state để hiển thị)
-  const profileChosenAddrRef = useRef<string | null>(null);
-  const [profileChosenAddr, setProfileChosenAddr] = useState('');
-  const markProfileChosen = (value: string) => {
-    profileChosenAddrRef.current = value;
-    setProfileChosenAddr(value);
-  };
-  const addrBoxRef = useRef<HTMLDivElement>(null);
+  // Ghim/GPS cho ra địa chỉ khác chữ khách đã nhập: hỏi "Dùng địa chỉ này?", không tự đè
+  const [profilePinReview, setProfilePinReview] = useState<ProfilePinParts | null>(null);
+  const profileFormRef = useRef(profileForm);
+  useEffect(() => {
+    profileFormRef.current = profileForm;
+  });
 
-  // Ghim còn đúng với địa chỉ đang nhập: cùng địa chỉ đã chốt, hoặc chỉ khác số nhà trên cùng con đường.
-  // Khách gõ sang đường khác thì ẩn ghim (không lưu tọa độ cũ), gõ lại đúng đường thì ghim hiện lại.
-  const activeProfileCoords =
-    profileCoords &&
-    (profileForm.address === profileChosenAddr || isSameStreetText(profileChosenAddr, profileForm.address))
-      ? profileCoords
-      : null;
+  const addr = useAddressSearch({
+    getContext: () => ({ ward: profileForm.ward || undefined, district: profileForm.district || undefined }),
+    onSelect: (sel) => {
+      const s = sel.suggestion;
+      setProfilePinReview(null);
+      setProfileForm((prev) => ({
+        ...prev,
+        province: s.province || prev.province || 'TP. Hồ Chí Minh',
+        district: s.district || prev.district,
+        ward: s.ward ? removeKhuPho(s.ward) : prev.ward,
+        address: sel.text,
+      }));
+      if (typeof s.lat === 'number' && typeof s.lng === 'number') setProfileCoords({ lat: s.lat, lng: s.lng });
+      setProfilePinConfirmed(false);
+    },
+    onTextChange: (text) => {
+      setProfileForm((prev) => ({ ...prev, address: text }));
+      setProfilePinConfirmed(false);
+    },
+  });
+
+  // Ghim còn đúng khi chữ trong ô vẫn là địa chỉ đã chốt (hoặc chỉ đổi số nhà trên cùng đường).
+  // Khách gõ sang đường khác (stale) thì không lưu tọa độ cũ để khỏi lệch.
+  const activeProfileCoords = profileCoords && addr.state.anchor !== 'stale' ? profileCoords : null;
 
   // Danh mục hành chính giống trang thanh toán (hiện chỉ giao tại TP. Hồ Chí Minh)
   const profileProvinces = getProvinceNames().filter((p) => p === 'TP. Hồ Chí Minh');
   const profileDistricts = getDistrictsByProvince(profileForm.province);
   const profileWards = getWardsByDistrict(profileForm.province, profileForm.district);
 
-  // Điền phần địa chỉ từ kết quả bản đồ (gợi ý / ghim / GPS)
-  const applyProfileAddress = (parts: {
-    province?: string;
-    district?: string;
-    ward?: string;
-    street?: string;
-  }) => {
-    const street = parts.street ? removeKhuPho(parts.street) : undefined;
-    markProfileChosen(street || profileForm.address);
-    setShowAddrSuggestions(false);
-    setAddrSuggestions([]);
+  // Điền địa chỉ tại ghim/GPS vào form (ô còn trống hoặc khách bấm "Dùng địa chỉ này")
+  const applyProfilePin = (pin: ProfilePinParts) => {
+    const street = pin.street ? removeKhuPho(pin.street) : profileFormRef.current.address;
     setProfileForm((prev) => ({
       ...prev,
-      province: parts.province || prev.province || 'TP. Hồ Chí Minh',
-      district: parts.district || prev.district,
-      ward: parts.ward ? removeKhuPho(parts.ward) : prev.ward,
+      province: pin.province || prev.province || 'TP. Hồ Chí Minh',
+      district: pin.district || prev.district,
+      ward: pin.ward ? removeKhuPho(pin.ward) : prev.ward,
       address: street || prev.address,
     }));
+    if (street) addr.controller.commitText(street, 'pin');
+    setProfilePinReview(null);
   };
 
-  // Gợi ý địa chỉ khi gõ số nhà, tên đường (dừng gợi ý khi đã chọn xong)
-  useEffect(() => {
-    const text = profileForm.address;
-    if (!text || text.trim().length < 2 || text === profileChosenAddr) {
-      setAddrSuggestions([]);
-      setShowAddrSuggestions(false);
+  // Đã có chữ thì giữ nguyên, chỉ điền ô hành chính còn trống; địa chỉ tại ghim khác chữ thì hỏi
+  const reviewProfilePin = (pin: ProfilePinParts) => {
+    const current = profileFormRef.current;
+    const typed = current.address.trim();
+    if (!typed) {
+      applyProfilePin(pin);
       return;
     }
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setIsSearchingAddr(true);
-      try {
-        const params = new URLSearchParams({ input: text });
-        if (profileForm.province) params.set('province', profileForm.province);
-        if (profileForm.district) params.set('district', profileForm.district);
-        if (profileForm.ward) params.set('ward', profileForm.ward);
-        const data = await safeFetchJson<{ success: boolean; predictions?: AutocompleteSuggestion[] }>(
-          `/api/geo/autocomplete?${params.toString()}`
-        );
-        if (cancelled) return;
-        if (data?.success && Array.isArray(data.predictions)) {
-          setAddrSuggestions(data.predictions);
-          setShowAddrSuggestions(data.predictions.length > 0);
-        }
-      } catch {
-        // bỏ qua, khách vẫn tự gõ được
-      } finally {
-        if (!cancelled) setIsSearchingAddr(false);
-      }
-    }, 350);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [profileForm.address, profileForm.province, profileForm.district, profileForm.ward, profileChosenAddr]);
-
-  // Đóng danh sách gợi ý khi bấm ra ngoài
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (addrBoxRef.current && !addrBoxRef.current.contains(e.target as Node)) {
-        setShowAddrSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, []);
-
-  // Chọn 1 gợi ý: tự điền phường/quận + tọa độ, không gợi ý thêm
-  const handleSelectProfileSuggestion = async (s: AutocompleteSuggestion) => {
-    const street = removeKhuPho(s.main_text || profileForm.address);
-    applyProfileAddress({ province: s.province, district: s.district, ward: s.ward, street });
-    if (s.lat && s.lng) setProfileCoords({ lat: s.lat, lng: s.lng });
-
-    // Thiếu tọa độ / phường / quận, hoặc có số nhà: tra thêm để lấy đúng vị trí căn nhà
-    const hasHouse = /^\d/.test(street);
-    if (!s.lat || !s.lng || !s.district || !s.ward || hasHouse) {
-      try {
-        const data = await safeFetchJson<any>(
-          `/api/geo/geocode?place_id=${encodeURIComponent(s.place_id)}&address=${encodeURIComponent(
-            s.description
-          )}&province=${encodeURIComponent(s.province || profileForm.province || 'TP. Hồ Chí Minh')}&district=${encodeURIComponent(
-            s.district || ''
-          )}&ward=${encodeURIComponent(s.ward || '')}`
-        );
-        if (profileChosenAddrRef.current !== street || !data?.success) return;
-        if (data.lat && data.lng && (!s.lat || !s.lng || data.precision === 'house')) {
-          setProfileCoords({ lat: data.lat, lng: data.lng });
-        }
-        if ((!s.district || !s.ward) && data.components) {
-          applyProfileAddress({
-            province: data.components.province,
-            district: s.district || data.components.district,
-            ward: s.ward || data.components.ward,
-            street,
-          });
-        }
-      } catch {
-        // giữ tọa độ của gợi ý
-      }
-    }
+    setProfileForm((prev) => ({
+      ...prev,
+      province: prev.province || pin.province || '',
+      district: prev.district || pin.district || '',
+      ward: prev.ward || (pin.ward ? removeKhuPho(pin.ward) : ''),
+    }));
+    addr.controller.commitText(current.address, 'pin');
+    const pinLine = pin.street ? removeKhuPho(pin.street) : '';
+    setProfilePinReview(pinLine && !sameAddressLine(typed, pinLine) ? pin : null);
   };
 
-  // Lấy vị trí GPS của thiết bị rồi tự điền địa chỉ
+  // Lấy vị trí GPS của thiết bị rồi điền địa chỉ (không đè chữ khách đã nhập)
   const handleProfileGPS = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setProfileMsg({ text: 'Trình duyệt không hỗ trợ định vị GPS.', type: 'error' });
@@ -435,9 +375,12 @@ function AccountContent() {
       async (pos) => {
         const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setProfileCoords(c);
+        setProfilePinConfirmed(false);
         try {
-          const rev = await safeFetchJson<any>(`/api/geo/reverse?lat=${c.lat}&lng=${c.lng}`);
-          if (rev?.success && rev.components) applyProfileAddress(rev.components);
+          const rev = await safeFetchJson<{ success: boolean; formattedAddress?: string; components?: ProfilePinParts }>(
+            `/api/geo/reverse?lat=${c.lat}&lng=${c.lng}`
+          );
+          if (rev?.success && rev.components) reviewProfilePin({ ...rev.components, formatted: rev.formattedAddress });
         } catch {
           // vẫn giữ tọa độ GPS
         } finally {
@@ -480,8 +423,8 @@ function AccountContent() {
         district: user.district || '',
         ward: user.ward || '',
       });
-      // Địa chỉ đã lưu: không bật gợi ý; có tọa độ thì hiện ghim trên bản đồ
-      markProfileChosen(user.address || '');
+      // Địa chỉ đã lưu: không bật gợi ý cho đúng dòng đó; có tọa độ thì hiện ghim trên bản đồ
+      if (user.address) addr.controller.commitText(user.address, 'saved');
       setProfileCoords(
         user.latitude && user.longitude ? { lat: Number(user.latitude), lng: Number(user.longitude) } : null
       );
@@ -523,6 +466,7 @@ function AccountContent() {
       ...profileForm,
       latitude: activeProfileCoords ? activeProfileCoords.lat : null,
       longitude: activeProfileCoords ? activeProfileCoords.lng : null,
+      pinConfirmed: !!activeProfileCoords && profilePinConfirmed,
     });
     setIsSavingProfile(false);
 
@@ -1056,58 +1000,69 @@ function AccountContent() {
                     </select>
                   </div>
 
-                  <div className="sm:col-span-2 relative" ref={addrBoxRef}>
-                    <label className="block text-sm text-gray-700 mb-1.5">
+                  <div className="sm:col-span-2 relative">
+                    <label htmlFor="profile-address" className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Street Address' : 'Địa chỉ chi tiết (Số nhà, tên đường)'}
                     </label>
                     <div className="relative">
                       <input
+                        {...addr.inputProps}
+                        id="profile-address"
                         type="text"
-                        autoComplete="off"
                         value={profileForm.address}
-                        onChange={(e) => {
-                          // Ghim chỉ còn hiệu lực khi địa chỉ vẫn cùng con đường đã ghim (xem activeProfileCoords)
-                          setProfileForm({ ...profileForm, address: e.target.value });
-                        }}
-                        onFocus={() => addrSuggestions.length > 0 && setShowAddrSuggestions(true)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && showAddrSuggestions && addrSuggestions.length > 0) {
-                            e.preventDefault();
-                            handleSelectProfileSuggestion(addrSuggestions[0]);
-                          }
-                        }}
                         placeholder={language === 'en' ? '123 Le Van Sy...' : '123 Lê Văn Sỹ...'}
                         className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
                       />
-                      {isSearchingAddr && (
+                      {addr.state.status === 'loading' && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-forest-700" />
                       )}
                     </div>
 
-                    {showAddrSuggestions && addrSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                        <p className="px-3.5 py-2 text-xs text-forest-700 bg-gray-50 border-b border-gray-100">
-                          {language === 'en'
-                            ? 'Pick your address to auto-fill ward, district and map pin'
-                            : 'Chọn đúng địa chỉ để tự điền phường, quận và ghim bản đồ'}
+                    {addr.panelOpen && (
+                      <AddressSuggestionList
+                        id={addr.listboxId}
+                        optionId={addr.optionId}
+                        suggestions={addr.state.suggestions}
+                        activeIndex={addr.state.activeIndex}
+                        status={addr.state.status}
+                        degraded={addr.state.degraded}
+                    outOfZone={addr.state.outOfZone}
+                        query={addr.state.inputText}
+                        language={language === 'en' ? 'en' : 'vi'}
+                        onPick={(i) => addr.controller.select(i)}
+                        onPickMap={() => {
+                          addr.controller.close();
+                          setIsProfileMapOpen(true);
+                        }}
+                      />
+                    )}
+
+                    {/* Ghim/GPS cho ra địa chỉ khác chữ đã nhập: hỏi, không tự đè */}
+                    {profilePinReview && (
+                      <div className="mt-2 p-2.5 bg-amber-50 rounded-xl border border-amber-300 text-xs text-amber-900" role="status">
+                        <p className="mb-0.5 text-emph">
+                          {language === 'en' ? 'The pin shows a different address. Use it?' : 'Vị trí ghim cho ra địa chỉ khác. Dùng địa chỉ này?'}
                         </p>
-                        <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
-                          {addrSuggestions.map((s, idx) => (
-                            <button
-                              key={`${s.place_id}_${idx}`}
-                              type="button"
-                              onClick={() => handleSelectProfileSuggestion(s)}
-                              className="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 flex items-start gap-2.5 cursor-pointer"
-                            >
-                              <MapPin className="w-4 h-4 text-forest-700 shrink-0 mt-0.5" />
-                              <span className="min-w-0">
-                                <span className="block text-sm text-gray-900">{removeKhuPho(s.main_text)}</span>
-                                <span className="block text-xs text-gray-500 truncate">
-                                  {removeKhuPho(s.secondary_text || s.description)}
-                                </span>
-                              </span>
-                            </button>
-                          ))}
+                        <p className="text-2xs leading-snug">
+                          {language === 'en' ? 'Pin location: ' : 'Vị trí ghim: '}
+                          {profilePinReview.formatted ||
+                            [profilePinReview.street, profilePinReview.ward, profilePinReview.district].filter(Boolean).join(', ')}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => applyProfilePin(profilePinReview)}
+                            className="px-2.5 py-1 rounded-lg bg-forest-700 text-white text-xs cursor-pointer"
+                          >
+                            {language === 'en' ? 'Use pin address' : 'Dùng địa chỉ này'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProfilePinReview(null)}
+                            className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 text-xs cursor-pointer"
+                          >
+                            {language === 'en' ? 'Keep my address' : 'Giữ địa chỉ của tôi'}
+                          </button>
                         </div>
                       </div>
                     )}
@@ -1191,7 +1146,10 @@ function AccountContent() {
                 initialAddress={profileForm.address}
                 onConfirm={(confirmed) => {
                   setProfileCoords({ lat: confirmed.lat, lng: confirmed.lng });
-                  if (confirmed.components) applyProfileAddress(confirmed.components);
+                  setProfilePinConfirmed(true);
+                  if (confirmed.components) {
+                    reviewProfilePin({ ...confirmed.components, formatted: confirmed.formattedAddress });
+                  }
                 }}
               />
             </div>

@@ -13,16 +13,12 @@ import {
   Building,
 } from 'lucide-react';
 import { cn, safeFetchJson } from '@/lib/utils';
+import { distanceMeters as distanceBetween } from '@/lib/address/normalize';
+import { formatAdminLine } from '@/lib/address/admin';
 
-/** Khoảng cách chính xác tới từng mét (hàm dùng chung làm tròn 0,1 km nên không đo được vài chục mét) */
+/** Khoảng cách chính xác tới từng mét (hàm trong lib/geo làm tròn 0,1 km nên không đo được vài chục mét) */
 function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  return distanceBetween({ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 });
 }
 
 type AddressComponents = { province?: string; district?: string; ward?: string; street?: string };
@@ -94,6 +90,10 @@ interface LocationConfirmMapModalProps {
   onClose: () => void;
   initialCoords?: { lat: number; lng: number } | null;
   initialAddress?: string;
+  /** Điểm bắt đầu chỉ là gần đúng (tâm phường): khách phải kéo ghim đi chỗ khác rồi mới xác nhận được */
+  requireMove?: boolean;
+  /** Bản đồ nền không tải được hoặc không tra được địa chỉ tại ghim: báo cho trang để mở đường lui "gọi xác nhận" */
+  onMapError?: (code: 'TILES_FAILED' | 'REVERSE_FAILED') => void;
   onConfirm: (confirmed: {
     lat: number;
     lng: number;
@@ -103,11 +103,16 @@ interface LocationConfirmMapModalProps {
   }) => void;
 }
 
+/** Lớp ảnh vệ tinh Esri: chỉ bật khi đã có giấy phép thương mại của Esri (NEXT_PUBLIC_MAP_SATELLITE=1). */
+const SATELLITE_ENABLED = process.env.NEXT_PUBLIC_MAP_SATELLITE === '1';
+
 export default function LocationConfirmMapModal({
   isOpen,
   onClose,
   initialCoords,
   initialAddress,
+  requireMove = false,
+  onMapError,
   onConfirm,
 }: LocationConfirmMapModalProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -148,10 +153,12 @@ export default function LocationConfirmMapModal({
   );
 
   // Giá trị ban đầu chỉ đọc lúc mở popup; thay đổi props khi đang mở không được dựng lại bản đồ (làm nhảy ghim)
+  const onMapErrorRef = useRef(onMapError);
   const initialCoordsRef = useRef(initialCoords);
   const initialAddressRef = useRef(initialAddress);
   // Cập nhật ref sau khi render (không ghi ref trong lúc render); khai báo trước effect khởi tạo bản đồ để giữ thứ tự chạy
   useEffect(() => {
+    onMapErrorRef.current = onMapError;
     initialCoordsRef.current = initialCoords;
     initialAddressRef.current = initialAddress;
   });
@@ -163,6 +170,9 @@ export default function LocationConfirmMapModal({
     const initialCoords = initialCoordsRef.current;
     const initialAddress = initialAddressRef.current;
     let isMounted = true;
+    // Chỉ hỏi địa chỉ tại ghim SAU KHI dừng kéo 400 ms và ghim đã dời ≥ 5 m (không hỏi khi zoom bằng nút, không hỏi mỗi lần map di chuyển)
+    let moveTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastResolved: { lat: number; lng: number } = { lat: 0, lng: 0 };
 
     async function initMap() {
       const L = (await import('leaflet')).default;
@@ -195,11 +205,20 @@ export default function LocationConfirmMapModal({
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
       // Lớp tile bản đồ đường phố mặc định (OpenStreetMap Standard)
-      const streetTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const streetTile = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
         maxZoom: 19,
       });
 
+      // Đếm ô bản đồ lỗi: lỗi liên tiếp nhiều ô = nền bản đồ không dùng được
+      let tileErrors = 0;
+      streetTile.on('tileerror', () => {
+        tileErrors++;
+        if (tileErrors === 6) onMapErrorRef.current?.('TILES_FAILED');
+      });
+      streetTile.on('tileload', () => {
+        tileErrors = 0;
+      });
       streetTile.addTo(map);
       tileLayerRef.current = streetTile;
       mapInstanceRef.current = map;
@@ -225,6 +244,7 @@ export default function LocationConfirmMapModal({
         setIsReverseGeocoding(true);
         try {
           const rev = await safeFetchJson<any>(`/api/geo/reverse?lat=${lat}&lng=${lng}`);
+          if (isMounted && seq === reverseSeqRef.current && !rev?.success) onMapErrorRef.current?.('REVERSE_FAILED');
           if (!isMounted || seq !== reverseSeqRef.current || !rev?.success) return null;
           const shiftMeters = distanceMeters(originalCoords.current.lat, originalCoords.current.lng, lat, lng);
           const { street, houseNote: note } = buildStreetFromPin(
@@ -248,6 +268,7 @@ export default function LocationConfirmMapModal({
           resolvedForRef.current = { lat, lng, components, display };
           return { components, display };
         } catch {
+          if (isMounted) onMapErrorRef.current?.('REVERSE_FAILED');
           // Khi reverse geocoding lỗi, vẫn giữ nguyên tọa độ ghim và địa chỉ thủ công của khách
           return null;
         } finally {
@@ -257,13 +278,20 @@ export default function LocationConfirmMapModal({
       resolveAtRef.current = resolveAt;
       resolvedForRef.current = null;
 
-      map.on('moveend', async () => {
+      lastResolved = { lat: startLat, lng: startLng };
+      map.on('moveend', () => {
         if (!isMounted) return;
         setIsDragging(false);
         const c = map.getCenter();
         setCenterCoords({ lat: c.lat, lng: c.lng });
-        // Reverse geocode khi dừng kéo
-        await resolveAt(c.lat, c.lng);
+        if (distanceMeters(lastResolved.lat, lastResolved.lng, c.lat, c.lng) < 5) return;
+        if (moveTimer) clearTimeout(moveTimer);
+        moveTimer = setTimeout(() => {
+          moveTimer = null;
+          if (!isMounted) return;
+          lastResolved = { lat: c.lat, lng: c.lng };
+          void resolveAt(c.lat, c.lng);
+        }, 400);
       });
 
       if (isMounted) setMapReady(true);
@@ -278,6 +306,7 @@ export default function LocationConfirmMapModal({
 
     return () => {
       isMounted = false;
+      if (moveTimer) clearTimeout(moveTimer);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -359,7 +388,7 @@ export default function LocationConfirmMapModal({
       setIsSatellite(true);
     } else {
       // Về lớp đường phố OpenStreetMap Standard
-      const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
         maxZoom: 19,
       });
@@ -491,7 +520,9 @@ export default function LocationConfirmMapModal({
 
           {/* Các nút điều khiển nổi trên bản đồ */}
           <div className="absolute top-3 right-3 z-30 flex flex-col gap-2">
-            {/* Nút bật/tắt lớp vệ tinh */}
+            {/* Nút bật/tắt lớp vệ tinh: ảnh Esri dùng cho site thương mại cần giấy phép trả phí, nên mặc định ẩn;
+                bật bằng NEXT_PUBLIC_MAP_SATELLITE=1 khi đã có giấy phép (xem docs/DEPLOY-DIA-CHI.md) */}
+            {SATELLITE_ENABLED && (
             <button
               type="button"
               onClick={toggleSatellite}
@@ -506,6 +537,7 @@ export default function LocationConfirmMapModal({
               <Layers className="w-4 h-4" />
               <span>{isSatellite ? 'Vệ tinh' : 'Bản đồ'}</span>
             </button>
+            )}
 
             {/* Nút định vị vị trí hiện tại */}
             <button
@@ -554,9 +586,24 @@ export default function LocationConfirmMapModal({
               </span>
               {isReverseGeocoding && <Loader2 className="w-3 h-3 animate-spin text-emerald-600" />}
             </div>
+            {/* Phường tại ghim, cập nhật sau khi dừng kéo (khi tra địa chỉ xong) */}
+            {addressComponents.ward && !isReverseGeocoding && (
+              <p className="text-xs text-emerald-800 mb-0.5">
+                Ghim đang ở {formatAdminLine({ ward: addressComponents.ward, district: addressComponents.district, province: addressComponents.province })}
+              </p>
+            )}
             <p className="text-base text-gray-900 truncate">
+              <span className="text-xs text-gray-500">Vị trí ghim: </span>
               {resolvedAddress || initialAddress || 'Đang cập nhật địa chỉ...'}
             </p>
+            <p className="text-2xs text-gray-500 mt-0.5">
+              Xác nhận chỉ lưu vị trí ghim. Nếu địa chỉ tại ghim khác chữ bạn đã nhập, trang sẽ hỏi bạn có dùng địa chỉ này không.
+            </p>
+            {requireMove && distanceShiftMeters < 5 && (
+              <p className="text-2xs text-amber-800 mt-0.5">
+                Điểm này mới là vị trí gần đúng của khu vực. Hãy kéo bản đồ để đặt ghim vào đúng cổng hoặc cửa nhà bạn rồi mới xác nhận.
+              </p>
+            )}
             {houseNote !== 'none' && !isReverseGeocoding && (
               <p className="text-[11px] text-amber-800 mt-0.5">
                 {houseNote === 'kept'
@@ -579,7 +626,7 @@ export default function LocationConfirmMapModal({
             <button
               type="button"
               onClick={handleConfirm}
-              disabled={isConfirming}
+              disabled={isConfirming || (requireMove && distanceShiftMeters < 5)}
               className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-base shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-70"
             >
               {isConfirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
