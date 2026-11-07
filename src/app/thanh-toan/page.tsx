@@ -1100,6 +1100,13 @@ export default function CheckoutPage() {
       setIsMapModalOpen(true);
       return;
     }
+    // Khách đã sửa địa chỉ sang đường khác sau khi ghim: ghim cũ không còn khớp chữ → mở bản đồ để chấm lại / xác nhận
+    // (không gửi đơn với chữ "5 Nguyễn Trãi" nhưng ghim vẫn ở "101 Lê Lợi")
+    if (addr.state.anchor === 'stale' && customerCoords && !useCallFallback) {
+      setLocationRequired(true);
+      setIsMapModalOpen(true);
+      return;
+    }
 
     // Chặn gửi đơn nếu chi nhánh thiếu hàng
     if (!isStockAvailable) {
@@ -1985,7 +1992,8 @@ export default function CheckoutPage() {
                 </div>
                 <DeliveryMiniMap
                   coords={customerCoords}
-                  isConfirmed={locationConfirmed}
+                  // Đã sửa địa chỉ sang đường khác: ghim cũ không còn tính là "đã xác nhận" cho địa chỉ mới
+                  isConfirmed={locationConfirmed && addr.state.anchor !== 'stale'}
                   addressText={form.address ? `${form.address}, ${form.ward || ''}` : undefined}
                   onOpenModal={() => setIsMapModalOpen(true)}
                 />

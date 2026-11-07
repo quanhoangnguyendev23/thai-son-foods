@@ -10,7 +10,7 @@
  * danh sách cũ được giữ trong lúc tải; không có effect nào tự gọi lại khi ô chọn hay tọa độ thay đổi.
  */
 
-import { hasSearchableText, MAX_SUGGESTIONS, parseAddressInput, rankSuggestions } from './suggest';
+import { hasSearchableText, inTypedArea, MAX_SUGGESTIONS, parseAddressInput, rankSuggestions } from './suggest';
 import { splitHouseAndStreet, streetKeyOf } from './normalize';
 import type { AddressSuggestion, LatLng } from './types';
 
@@ -163,7 +163,17 @@ export function createAddressSearchController(initialOptions: AddressSearchOptio
 
   const relationFor = (text: string, anchorText: string | null): AnchorRelation => {
     if (anchorText === null) return 'none';
-    return text === anchorText || sameStreetLine(text, anchorText) ? 'matched' : 'stale';
+    if (text === anchorText) return 'matched';
+    if (!sameStreetLine(text, anchorText)) return 'stale';
+    // Cùng tên đường nhưng khách gõ thêm khu khác ("101 Lê Lợi" → "101 Lê Lợi, Vũng Tàu"): ghim cũ không còn đúng.
+    // Khu gõ thêm trùng khu của chữ đã chốt, hoặc đúng phường / quận của gợi ý đã chọn, thì vẫn là cùng chỗ.
+    const typed = parseAddressInput(text).hints;
+    if (!(typed.wards.length || typed.districts.length || typed.ambiguous.length)) return 'matched';
+    const anchorAreas = new Set(parseAddressInput(anchorText).hints.recognized.map((r) => r.toLowerCase().trim()));
+    if (typed.recognized.every((r) => anchorAreas.has(r.toLowerCase().trim()))) return 'matched';
+    const sel = state.selected?.suggestion;
+    if (sel && (sel.ward || sel.district) && inTypedArea(sel, typed)) return 'matched';
+    return 'stale';
   };
 
   /** Hủy hẹn giờ và câu hỏi đang bay; phản hồi của chúng (nếu về muộn) sẽ bị bỏ vì seq đã đổi. */

@@ -389,5 +389,23 @@ section('7. Hàm gọi API gợi ý');
   check('HTTP lỗi thì ném lỗi (để hiện trạng thái error)', threw);
 }
 
+console.log('\n── Ghim cũ còn đúng không khi khách sửa chữ (cùng tên đường, khác khu)');
+{
+  const t = setup();
+  t.controller.commitText('103 Lê Lợi', 'saved');
+  t.controller.setText('101 Lê Lợi');
+  check('đổi số nhà, cùng đường → ghim vẫn tính là khớp', t.controller.getState().anchor === 'matched');
+  t.controller.setText('101 Lê Lợi, Vũng Tàu');
+  check('gõ thêm khu khác ("…, Vũng Tàu") → ghim cũ không còn đúng (stale)', t.controller.getState().anchor === 'stale');
+  t.controller.setText('101 Lê Lợi, Quận 1');
+  check('gõ thêm "Quận 1" → stale', t.controller.getState().anchor === 'stale');
+}
+{
+  const t = setup();
+  t.controller.commitText('101 Lê Lợi, Hạnh Thông', 'pin');
+  t.controller.setText('103 Lê Lợi, Hạnh Thông');
+  check('khu gõ thêm trùng khu đã chốt → vẫn khớp', t.controller.getState().anchor === 'matched');
+}
+
 console.log(`\nKết quả: ${pass} đạt, ${fail} lỗi`);
 process.exit(fail ? 1 : 0);
