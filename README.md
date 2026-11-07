@@ -46,3 +46,10 @@ node scripts/test_inventory_phase1.mjs
 # Kiểm thử Giai đoạn 4: Checkout chặn thiếu hàng, Admin 3 cột, Chuyển kho & Logs (32 assertions)
 node scripts/test_inventory_phase4.mjs
 ```
+
+---
+
+## Tìm nhanh mã nguồn
+
+- Phần nào trên web nằm ở file nào: [docs/BAN-DO-MA-NGUON.md](docs/BAN-DO-MA-NGUON.md)
+- Mở các thư mục `src/app`, `src/app/api`, `src/components` (và `home`, `layout`, `product`), `src/lib`, `src/data`, `src/config` trên GitHub để xem bảng chú thích từng file.
