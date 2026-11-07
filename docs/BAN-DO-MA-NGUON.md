@@ -58,3 +58,4 @@ Mở thư mục trên GitHub sẽ thấy file `README.md` của thư mục đó 
 - Lược đồ CSDL: `prisma/schema.prisma`, migration trong `scripts/migrations/`.
 - Script chạy tay (sao lưu, migration, đo, quét): `scripts/`. Test: `tests/`.
 - Các nhánh Git theo chức năng: `docs/NHANH-GIT.md`.
+- Chú thích lại các commit ghi vắn tắt (a, b, c…): `docs/LICH-SU-COMMIT.md` và các tag `chu-thich/*`.
