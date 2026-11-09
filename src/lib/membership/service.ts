@@ -400,14 +400,6 @@ export function validateCodEligibility(input: {
 // 6. KIỂM SOÁT ĐĂNG KÝ TRÙNG LẶP (DUPLICATE REGISTRATION PREVENTION)
 // ==============================================================================
 
-export interface ActiveSubscriptionRecord {
-  id?: string;
-  userId: string;
-  status: string;
-  productId?: string;
-  items?: Array<{ productId: string }>;
-}
-
 export function checkDuplicateSubscription(
   firstArg: any,
   secondArg?: any,

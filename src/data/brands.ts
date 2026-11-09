@@ -45,7 +45,3 @@ export const brands: Brand[] = [
 export function getBrandBySlug(slug: string): Brand | undefined {
   return brands.find((b) => b.slug === slug);
 }
-
-export function getBrandOfProduct(productId: string): Brand | undefined {
-  return brands.find((b) => b.productIds.includes(productId));
-}

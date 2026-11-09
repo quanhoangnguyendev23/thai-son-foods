@@ -563,12 +563,3 @@ export const WAREHOUSES: StoreBranchData[] = [
     type: 'warehouse',
   },
 ];
-
-export const ALL_STORES: StoreBranchData[] = [...ACTIVE_STORES, ...WAREHOUSES];
-
-/**
- * Chi nhánh mặc định toàn hệ thống: Cửa hàng Vườn Lài (Tân Phú)
- */
-export const DEFAULT_ACTIVE_STORE: StoreBranchData = ACTIVE_STORES.find(
-  (s) => s.code === 'NH'
-) || ACTIVE_STORES[0];

@@ -42,8 +42,6 @@ export function getItemMaxQuantity(item: { productId?: string; variantId?: strin
   return MAX_BOTTLES_LIMIT;
 }
 
-export const MAX_QUANTITY_PER_ITEM = 1000;
-
 // Khóa gộp dòng trong giỏ: cùng sản phẩm + cùng số chai/lốc thì là MỘT dòng,
 // dù mã quy cách khác nhau (trang chi tiết dùng mã quy cách trong CSDL như "var_...",
 // còn thẻ sản phẩm/kệ gợi ý dùng mã tĩnh như "sb-7chai").

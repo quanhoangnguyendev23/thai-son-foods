@@ -121,12 +121,6 @@ export function parseSheetDateTime(raw: string | undefined): string | null {
   return `${date}T${pad2(hh)}:${pad2(mm)}:${pad2(ss)}+07:00`;
 }
 
-export function addDaysIso(iso: string, days: number): string {
-  const dt = new Date(`${iso}T00:00:00Z`);
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
-}
-
 export function daysBetweenIso(fromIso: string, toIso: string): number {
   return Math.round((Date.parse(`${toIso}T00:00:00Z`) - Date.parse(`${fromIso}T00:00:00Z`)) / 86_400_000);
 }

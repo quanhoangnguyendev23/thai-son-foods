@@ -94,13 +94,3 @@ export interface SubscriptionSchedule {
   skipReason?: string | null;
   reminderSentAt?: Date | string | null;
 }
-
-export interface LoyaltyPointLedgerEntry {
-  id: string;
-  userId: string;
-  points: number;
-  balanceAfter: number;
-  sourceType: 'ORDER_REWARD' | 'SIGNUP_BONUS' | 'REDEEM_DISCOUNT' | 'EXPIRED';
-  referenceId?: string | null;
-  description: string;
-}
