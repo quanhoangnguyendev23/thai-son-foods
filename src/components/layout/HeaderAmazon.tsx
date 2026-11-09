@@ -280,7 +280,7 @@ export default function HeaderAmazon() {
             id={`home-search-category-${variant}`}
             value={searchCategory}
             onChange={(e) => setSearchCategory(e.target.value)}
-            className="appearance-none h-full max-w-[96px] sm:max-w-[150px] pl-2.5 pr-6 bg-transparent text-[12px] sm:text-[13px] text-text-body font-medium cursor-pointer focus:outline-none"
+            className="appearance-none h-full max-w-[96px] sm:max-w-[150px] pl-2.5 pr-6 bg-transparent text-xs sm:text-sm text-text-body font-medium cursor-pointer focus:outline-none"
           >
             <option value="all">{isEn ? 'All' : 'Tất cả'}</option>
             {SEARCH_CATEGORIES.map((c) => (
@@ -348,8 +348,8 @@ export default function HeaderAmazon() {
                     onClick={() => handleSelectProduct(item.slug)}
                     className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-emerald-50/50 transition-colors cursor-pointer group text-left"
                   >
-                    <span className="relative w-12 h-12 rounded-lg bg-ivory border border-gray-200/80 overflow-hidden shrink-0">
-                      <Image src={item.thumbnail || '/images/logo-clean-1000.png'} alt={name} fill className="object-contain p-1" sizes="48px" />
+                    <span className="relative w-16 h-12 rounded-lg bg-white border border-gray-200/80 overflow-hidden shrink-0">
+                      <Image src={item.thumbnail || '/images/logo-clean-1000.png'} alt={name} fill className="object-contain" sizes="64px" />
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm sm:text-base text-gray-900 group-hover:text-green-primary leading-snug line-clamp-2">
@@ -357,7 +357,7 @@ export default function HeaderAmazon() {
                       </span>
                       <span className="flex items-center gap-2 mt-0.5">
                         <span className="text-sm text-emerald-700">{formatPrice(price)} ₫</span>
-                        <span className="text-[10px] text-gray-400">/{isEn ? `Pack of ${qty}` : `lốc ${qty} chai`}</span>
+                        <span className="text-2xs text-gray-400">/{isEn ? `Pack of ${qty}` : `lốc ${qty} chai`}</span>
                       </span>
                     </span>
                     <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-green-primary" />
@@ -396,11 +396,11 @@ export default function HeaderAmazon() {
     >
       <MapPin className="w-4 h-4 text-corn shrink-0 mb-0.5" aria-hidden />
       <span className="min-w-0 leading-tight">
-        {!compact && <span className="block text-[11px] text-white/70">{isEn ? 'Delivering from' : 'Giao từ chi nhánh'}</span>}
-        <span className={cn('block text-white truncate', compact ? 'text-[12px]' : 'text-[13px] max-w-[170px]')}>
+        {!compact && <span className="block text-2xs text-white/70">{isEn ? 'Delivering from' : 'Giao từ chi nhánh'}</span>}
+        <span className={cn('block text-white truncate', compact ? 'text-xs' : 'text-sm max-w-[170px]')}>
           {compact && <span className="font-normal text-white/75">{isEn ? 'Delivering from ' : 'Giao từ '}</span>}
           {isMounted ? branchName : DELIVER_TO_PLACEHOLDER.guestHint}
-          {compact && <span className="ml-1 underline text-amber-300 text-[1.125em]">{isEn ? 'Change' : 'Đổi'}</span>}
+          {compact && <span className="ml-1 underline text-amber-300 text-emph">{isEn ? 'Change' : 'Đổi'}</span>}
         </span>
       </span>
     </button>
@@ -410,7 +410,7 @@ export default function HeaderAmazon() {
     <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[60] text-left">
       <div className="px-4 py-2 border-b border-gray-100">
         <p className="text-sm text-gray-900 line-clamp-1">{user.fullName}</p>
-        <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
+        <p className="text-2xs text-gray-400 truncate">{user.email}</p>
       </div>
       <Link href="/tai-khoan?tab=orders" onClick={() => setIsUserOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-green-primary">
         <ShoppingBag className="w-4 h-4 text-emerald-700" />
@@ -493,7 +493,7 @@ export default function HeaderAmazon() {
               <button
                 type="button"
                 onClick={() => setIsLangOpen((o) => !o)}
-                className={cn(navBtn, 'gap-1 px-2 py-2 text-[15px] max-lg:min-h-11')}
+                className={cn(navBtn, 'gap-1 px-2 py-2 text-base max-lg:min-h-11')}
                 aria-label={t('changeLanguage')}
                 aria-expanded={isLangOpen}
                 title={t('changeLanguage')}
@@ -540,10 +540,10 @@ export default function HeaderAmazon() {
                 <User className="w-5 h-5 lg:hidden" />
                 {/* Chữ "Xin chào, đăng nhập" chỉ hiện khi đủ chỗ (từ 768px), tránh đẩy giỏ hàng ra ngoài ở 400–767px */}
                 <span className="hidden md:block leading-tight">
-                  <span className="block text-[11px] text-white/70 max-w-[110px] truncate">
+                  <span className="block text-2xs text-white/70 max-w-[110px] truncate">
                     {user ? `${isEn ? 'Hello' : 'Xin chào'}, ${firstName}` : isEn ? 'Hello, sign in' : 'Xin chào, đăng nhập'}
                   </span>
-                  <span className="hidden lg:flex items-center gap-0.5 text-[15px]">
+                  <span className="hidden lg:flex items-center gap-0.5 text-base">
                     {isEn ? 'Account' : 'Tài khoản'}
                     <ChevronDown className="w-3 h-3 text-white/70" />
                   </span>
@@ -558,8 +558,8 @@ export default function HeaderAmazon() {
               onClick={openOrders}
               className={cn(navBtn, 'hidden xl:block px-2 py-1 text-left leading-tight')}
             >
-              <span className="block text-[11px] text-white/70">{isEn ? 'Track' : 'Theo dõi'}</span>
-              <span className="block text-[15px]">{isEn ? 'Orders' : 'Đơn hàng'}</span>
+              <span className="block text-2xs text-white/70">{isEn ? 'Track' : 'Theo dõi'}</span>
+              <span className="block text-base">{isEn ? 'Orders' : 'Đơn hàng'}</span>
             </button>
 
             {/* Túi tiết kiệm — cạnh Giỏ hàng */}
@@ -578,14 +578,14 @@ export default function HeaderAmazon() {
                 <span
                   key={`cart-badge-${cartCount}`}
                   className={cn(
-                    'absolute -top-1.5 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full text-[12px]',
+                    'absolute -top-1.5 -right-2 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full text-xs',
                     cartCount > 0 ? 'bg-corn text-text-dark animate-pulse-badge' : 'bg-white/20 text-white'
                   )}
                 >
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               </span>
-              <span className="hidden xl:block text-[15px]">{isEn ? 'Cart' : 'Giỏ hàng'}</span>
+              <span className="hidden xl:block text-base">{isEn ? 'Cart' : 'Giỏ hàng'}</span>
             </Link>
           </div>
 
@@ -615,18 +615,18 @@ export default function HeaderAmazon() {
           onFocusCapture={() => setIsNavHidden(false)}
         >
           <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-11 lg:h-10">
-            <nav className="flex w-full lg:w-auto flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
+            <nav className="flex w-full lg:w-auto lg:flex-[0_1_auto] flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(true)}
-                className={cn(navBtn, 'hidden lg:flex gap-1.5 px-2 py-1 text-[15px] shrink-0')}
+                className={cn(navBtn, 'hidden lg:flex gap-1.5 px-2 py-1 text-base shrink-0')}
                 aria-expanded={isDrawerOpen}
               >
                 <Menu className="w-5 h-5" />
                 {isEn ? 'All' : 'Tất cả'}
               </button>
               {taskbagItems.map((item) => {
-                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-[15px] whitespace-nowrap shrink-0 max-lg:min-h-10 max-md:text-[14px]');
+                const cls = cn(navBtn, 'gap-1.5 px-2 py-1 text-base whitespace-nowrap shrink-0 max-lg:min-h-10 max-md:text-sm');
                 if (item.action === 'open-support') {
                   return (
                     <button key={item.id} type="button" onClick={() => setIsSupportModalOpen(true)} className={cls}>
@@ -638,36 +638,36 @@ export default function HeaderAmazon() {
                   <Link key={item.id} href={item.href} className={cls}>
                     {item.label}
                     {item.badge && (
-                      <span className="px-1.5 text-[10px] text-white bg-red-500 rounded-full animate-pulse">{item.badge}</span>
+                      <span className="px-1.5 text-2xs text-white bg-red-500 rounded-full animate-pulse">{item.badge}</span>
                     )}
                   </Link>
                 );
               })}
               <span className="hidden md:block w-px h-5 bg-white/25 mx-1 shrink-0" aria-hidden />
               {categoryLinks.map((c) => (
-                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-[13px] whitespace-nowrap shrink-0 max-lg:min-h-10')}>
+                <Link key={c.id} href={c.href} className={cn(navBtn, 'hidden md:flex px-2 py-1 text-sm whitespace-nowrap shrink-0 max-lg:min-h-10')}>
                   {c.label}
                 </Link>
               ))}
             </nav>
 
-            {/* Dải tin cậy: cam kết + hotline (từ Header gốc & BranchTopBar), chữ ≥ 13px */}
-            <div className="hidden xl:flex items-center gap-2.5 ml-auto text-[13px] text-white/90 shrink-0" aria-label={isEn ? 'Our commitments' : 'Cam kết'}>
-              {/* 1280–1439px chỉ đủ chỗ cho hotline; từ 1440px hiện đủ 3 mục */}
-              <span className="hidden min-[1440px]:flex items-center gap-1">
-                <Leaf className="w-3.5 h-3.5 text-corn" aria-hidden />
-                {t('naturalIngredients')}
-              </span>
-              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
-              <span className="hidden min-[1440px]:flex items-center gap-1">
-                <Truck className="w-3.5 h-3.5 text-corn" aria-hidden />
-                {t('fastDelivery')}
-              </span>
-              <span className="hidden min-[1440px]:inline text-white/40" aria-hidden>•</span>
-              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex items-center gap-1 hover:text-corn cursor-pointer">
+            {/* Dải tin cậy: menu bên trái luôn hiện đủ, dải này chỉ lấp phần còn trống.
+                Xếp từ phải sang trái (hotline ưu tiên nhất); mục nào không đủ chỗ sẽ rơi xuống dòng 2 và bị ẩn. */}
+            <div className="hidden xl:flex flex-[1_1_0%] min-w-0 h-10 flex-row-reverse flex-wrap justify-start items-center gap-x-2.5 overflow-hidden text-sm text-white/90" aria-label={isEn ? 'Our commitments' : 'Cam kết'}>
+              <button type="button" onClick={() => setIsSupportModalOpen(true)} className="flex h-10 shrink-0 items-center gap-1 whitespace-nowrap hover:text-corn cursor-pointer">
                 <Headphones className="w-3.5 h-3.5 text-corn" />
                 {t('support247')}: <strong className="text-white font-normal">028 6291 5024</strong>
               </button>
+              <span className="flex h-10 shrink-0 items-center gap-1 whitespace-nowrap">
+                <Truck className="w-3.5 h-3.5 text-corn" aria-hidden />
+                {t('fastDelivery')}
+                <span className="ml-1.5 text-white/40" aria-hidden>•</span>
+              </span>
+              <span className="flex h-10 shrink-0 items-center gap-1 whitespace-nowrap">
+                <Leaf className="w-3.5 h-3.5 text-corn" aria-hidden />
+                {t('naturalIngredients')}
+                <span className="ml-1.5 text-white/40" aria-hidden>•</span>
+              </span>
             </div>
           </div>
         </div>
@@ -695,10 +695,10 @@ export default function HeaderAmazon() {
                 }}
                 className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer"
               >
-                <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0 text-[1.125em]">
+                <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0 text-emph">
                   {user?.fullName ? user.fullName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
                 </span>
-                <span className="text-[17px] truncate">
+                <span className="text-lg truncate">
                   {user ? `${isEn ? 'Hello' : 'Xin chào'}, ${user.fullName}` : isEn ? 'Hello, sign in' : 'Xin chào, đăng nhập'}
                 </span>
               </button>
@@ -709,7 +709,7 @@ export default function HeaderAmazon() {
 
             <div className="flex-1 overflow-y-auto">
               <section className="px-4 py-4 border-b border-gray-200">
-                <h3 className="text-[17px] text-text-dark mb-3">{isEn ? 'Shop by category' : 'Mua theo danh mục'}</h3>
+                <h3 className="text-lg text-text-dark mb-3">{isEn ? 'Shop by category' : 'Mua theo danh mục'}</h3>
                 {/* Tái sử dụng nguyên CategorySidebar của trang chủ cũ (12 sản phẩm theo 3 nhóm, đồng bộ API) */}
                 <div onClick={(e) => (e.target as HTMLElement).closest('a') && setIsDrawerOpen(false)}>
                   <CategorySidebar />
@@ -717,10 +717,10 @@ export default function HeaderAmazon() {
               </section>
 
               <section className="px-2 py-3 border-b border-gray-200">
-                <h3 className="px-2 text-[17px] text-text-dark mb-1">{isEn ? 'Shortcuts' : 'Tiện ích'}</h3>
+                <h3 className="px-2 text-lg text-text-dark mb-1">{isEn ? 'Shortcuts' : 'Tiện ích'}</h3>
                 {taskbagItems.map((item) => {
                   const Icon = item.icon;
-                  const cls = 'w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer';
+                  const cls = 'w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-base text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer';
                   if (item.action === 'open-support') {
                     return (
                       <button
@@ -741,13 +741,13 @@ export default function HeaderAmazon() {
                     <Link key={item.id} href={item.href} className={cls} onClick={() => setIsDrawerOpen(false)}>
                       <Icon className="w-4 h-4 text-green-primary" />
                       {item.label}
-                      {item.badge && <span className="ml-auto px-2 py-0.5 text-[11px] text-white bg-red-500 rounded-full">{item.badge}</span>}
+                      {item.badge && <span className="ml-auto px-2 py-0.5 text-2xs text-white bg-red-500 rounded-full">{item.badge}</span>}
                     </Link>
                   );
                 })}
                 <button
                   type="button"
-                  className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-base text-text-body hover:bg-ivory hover:text-green-primary text-left cursor-pointer"
                   onClick={() => {
                     setIsDrawerOpen(false);
                     openBranchModal();
@@ -761,14 +761,14 @@ export default function HeaderAmazon() {
               </section>
 
               <section className="px-2 py-3 border-b border-gray-200">
-                <h3 className="px-2 text-[17px] text-text-dark mb-1">{isEn ? 'Account' : 'Tài khoản'}</h3>
+                <h3 className="px-2 text-lg text-text-dark mb-1">{isEn ? 'Account' : 'Tài khoản'}</h3>
                 {user ? (
                   <>
-                    <Link href="/tai-khoan?tab=orders" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory">
+                    <Link href="/tai-khoan?tab=orders" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-base text-text-body hover:bg-ivory">
                       <Package className="w-4 h-4 text-green-primary" />
                       {isEn ? 'My Orders' : 'Đơn hàng của tôi'}
                     </Link>
-                    <Link href="/tai-khoan?tab=profile" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-text-body hover:bg-ivory">
+                    <Link href="/tai-khoan?tab=profile" onClick={() => setIsDrawerOpen(false)} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-base text-text-body hover:bg-ivory">
                       <User className="w-4 h-4 text-green-primary" />
                       {isEn ? 'Account Details' : 'Thông tin tài khoản'}
                     </Link>
@@ -778,7 +778,7 @@ export default function HeaderAmazon() {
                         setIsDrawerOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-[16px] text-red-600 hover:bg-red-50 text-left cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg text-base text-red-600 hover:bg-red-50 text-left cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />
                       {isEn ? 'Log Out' : 'Đăng xuất'}
@@ -799,7 +799,7 @@ export default function HeaderAmazon() {
               </section>
 
               <section className="px-4 py-4 flex items-center justify-between">
-                <span className="text-[15px] text-gray-600 flex items-center gap-1.5">
+                <span className="text-base text-gray-600 flex items-center gap-1.5">
                   <Globe className="w-4 h-4 text-emerald-700" />
                   {t('changeLanguage')}
                 </span>
@@ -838,7 +838,7 @@ export default function HeaderAmazon() {
                 </div>
                 <div>
                   <h3 className="text-gray-900 text-lg leading-tight">{t('supportTitle')}</h3>
-                  <p className="text-[11px] text-gray-500">{t('supportSubtitle')}</p>
+                  <p className="text-2xs text-gray-500">{t('supportSubtitle')}</p>
                 </div>
               </div>
               <button
@@ -881,18 +881,18 @@ export default function HeaderAmazon() {
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>
-                    <strong className="text-[1.125em]">{isEn ? 'Service hours:' : 'Thời gian phục vụ:'}</strong> {isEn ? '07:30 - 21:30 daily' : '07:30 - 21:30 hàng ngày'}
+                    <strong className="text-emph">{isEn ? 'Service hours:' : 'Thời gian phục vụ:'}</strong> {isEn ? '07:30 - 21:30 daily' : '07:30 - 21:30 hàng ngày'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>
-                    <strong className="text-[1.125em]">{isEn ? 'Delivery:' : 'Giao hàng:'}</strong> {isEn ? 'Express delivery in 2 hours in HCMC' : 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận'}
+                    <strong className="text-emph">{isEn ? 'Delivery:' : 'Giao hàng:'}</strong> {isEn ? 'Express delivery in 2 hours in HCMC' : 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>
-                    <strong className="text-[1.125em]">{isEn ? 'Returns:' : 'Đổi trả:'}</strong> {isEn ? '100% exchange if any issue' : 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào'}
+                    <strong className="text-emph">{isEn ? 'Returns:' : 'Đổi trả:'}</strong> {isEn ? '100% exchange if any issue' : 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào'}
                   </span>
                 </div>
               </div>

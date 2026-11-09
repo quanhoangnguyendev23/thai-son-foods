@@ -85,7 +85,9 @@ export default function ProductCarousel({
           ref={trackRef}
           className={cn(
             'gap-3 md:gap-4 sm:overflow-x-auto sm:snap-x sm:snap-mandatory scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-            mobileGrid ? 'grid grid-cols-2 sm:flex' : 'flex overflow-x-auto snap-x snap-mandatory'
+            mobileGrid ? 'grid grid-cols-2 sm:flex' : 'flex overflow-x-auto snap-x snap-mandatory',
+            // Có nhãn hạng (#4, #5...) ở đầu thẻ: nới khoảng cách giữa các hàng trên mobile để nhãn không dính vào thẻ phía trên
+            mobileGrid && ranks && 'gap-y-5'
           )}
         >
           {products.map((p, idx) => (
@@ -95,11 +97,13 @@ export default function ProductCarousel({
                 'snap-start sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%]',
                 wide && '2xl:w-[13.3%]',
                 mobileGrid ? 'min-w-0' : 'shrink-0 w-[46%]',
-                mobileGrid && !expanded && idx >= mobileInitialCount && 'max-sm:hidden'
+                mobileGrid && !expanded && idx >= mobileInitialCount && 'max-sm:hidden',
+                // Chừa chỗ cho nhãn hạng bằng padding: thẻ (h-full) chỉ cao bằng phần còn lại nên không tràn xuống hàng dưới, không bị cắt chữ
+                ranks?.[idx] && 'relative pt-6'
               )}
             >
               {ranks?.[idx] && (
-                <p className="mb-1.5 text-xs font-semibold text-brand-copper">#{ranks[idx]}</p>
+                <p className="absolute top-0 left-0 text-xs leading-4 font-semibold text-brand-copper">#{ranks[idx]}</p>
               )}
               {/* Bố cục compact + tên giới hạn 2 dòng để các thẻ đồng bộ chiều cao */}
               <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} />
@@ -108,7 +112,7 @@ export default function ProductCarousel({
         </div>
 
         {mobileGrid && products.length > mobileInitialCount && (
-          <div className="sm:hidden pt-3 text-center">
+          <div className="sm:hidden pt-5 pb-1 text-center">
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}

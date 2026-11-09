@@ -91,7 +91,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       {/* Giá */}
       <div>
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-[28px] leading-none text-ink-950">{formatPrice(price)}đ</span>
+          <span className="text-3xl leading-none text-ink-950">{formatPrice(price)}đ</span>
           {originalPrice && (
             <span className="text-sm text-gray-500 line-through">{formatPrice(originalPrice)}đ</span>
           )}
@@ -105,26 +105,26 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       </div>
 
       {/* Giao hàng */}
-      <div className="space-y-2 text-[13px] text-ink-950 border-t border-gray-100 pt-3">
+      <div className="space-y-2 text-sm text-ink-950 border-t border-gray-100 pt-3">
         <DeliveryAddressInfo />
         <div className="flex items-start gap-2">
           <Truck className="w-4 h-4 text-green-primary shrink-0 mt-0.5" aria-hidden />
           <div className="leading-snug">
             {shipping.isFree ? (
               <span>
-                <strong className="text-green-primary text-[1.125em]">{isEn ? 'Free delivery' : 'Miễn phí giao hàng'}</strong>{' '}
+                <strong className="text-green-primary text-emph">{isEn ? 'Free delivery' : 'Miễn phí giao hàng'}</strong>{' '}
                 {isEn ? 'for this order value' : 'cho giá trị đơn này'}
               </span>
             ) : (
               <span>
                 {isEn ? 'Delivery fee ' : 'Phí giao hàng '}
-                <strong className="text-[1.125em]">{formatPrice(shipping.fee)}đ</strong>.{' '}
+                <strong className="text-emph">{formatPrice(shipping.fee)}đ</strong>.{' '}
                 {isEn ? 'Add ' : 'Mua thêm '}
-                <strong className="text-[1.125em]">{formatPrice(remainingForFree)}đ</strong>
+                <strong className="text-emph">{formatPrice(remainingForFree)}đ</strong>
                 {isEn ? ' for free delivery' : ' để được miễn phí giao hàng'}
               </span>
             )}
-            <span className="block text-[11px] text-gray-500 mt-0.5">
+            <span className="block text-2xs text-gray-500 mt-0.5">
               {isEn
                 ? `Free delivery from ${formatPrice(freeThreshold)}đ. Final fee is confirmed at checkout.`
                 : `Miễn phí cho đơn từ ${formatPrice(freeThreshold)}đ. Phí chính xác được xác nhận ở bước thanh toán.`}
@@ -137,7 +137,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       {showPlaceholders && <PreorderSchedulePlaceholder />}
 
       {/* Tồn kho */}
-      <div className="text-[17px]" aria-live="polite">
+      <div className="text-lg" aria-live="polite">
         {stock.isOutOfStock ? (
           <div className="space-y-1">
             <p className="text-red-600">{isEn ? 'Out of stock at this branch' : 'Tạm hết hàng tại chi nhánh này'}</p>
@@ -149,7 +149,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             {stock.alternativeStoreName && (
               <p className="text-xs font-normal text-gray-600">
                 {isEn ? 'Available at: ' : 'Còn hàng tại: '}
-                <strong className="text-[1.125em]">{stock.alternativeStoreName}</strong>
+                <strong className="text-emph">{stock.alternativeStoreName}</strong>
               </p>
             )}
           </div>
@@ -177,7 +177,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
       ) : (
         <div ref={actionsRef} className="space-y-2.5">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[13px] text-gray-700">
+            <span className="text-sm text-gray-700">
               {isEn ? 'Quantity' : 'Số lượng'}
             </span>
             <QuantitySelector

@@ -35,7 +35,7 @@ export default function PackSizeSelector({
     <fieldset className="space-y-2">
       <legend className="text-sm text-ink-950 mb-2">
         {language === 'en' ? 'Pack size: ' : 'Quy cách: '}
-        <strong className="text-[1.125em]">
+        <strong className="text-emph">
           {getVariantLabel(active, language)}
           {bottleVolume ? ` × ${bottleVolume}` : ''}
         </strong>
@@ -63,20 +63,20 @@ export default function PackSizeSelector({
                 isUnavailable && !isSelected && 'border-dashed opacity-60'
               )}
             >
-              <span className="block text-[15px] text-ink-950 leading-tight">
+              <span className="block text-base text-ink-950 leading-tight">
                 {getVariantLabel(v, language)}
               </span>
-              <span className="block text-[17px] text-ink-950 mt-1 leading-none">
+              <span className="block text-lg text-ink-950 mt-1 leading-none">
                 {formatPrice(v.price)}đ
               </span>
-              <span className="block text-[11px] text-gray-500 mt-1">
+              <span className="block text-2xs text-gray-500 mt-1">
                 {formatPrice(getUnitPrice(v))}đ/{language === 'en' ? 'bottle' : 'chai'}
               </span>
               {originalPrice && (
-                <span className="block text-[11px] text-gray-400 line-through">{formatPrice(originalPrice)}đ</span>
+                <span className="block text-2xs text-gray-400 line-through">{formatPrice(originalPrice)}đ</span>
               )}
               {isUnavailable && (
-                <span className="block text-[11px] text-red-600 font-medium mt-0.5">
+                <span className="block text-2xs text-red-600 font-medium mt-0.5">
                   {language === 'en' ? 'Not enough stock' : 'Không đủ hàng'}
                 </span>
               )}

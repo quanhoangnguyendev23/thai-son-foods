@@ -278,8 +278,8 @@ export default function Header() {
               >
                 <MapPin className="w-4 h-4 text-green-primary shrink-0 mb-0.5" aria-hidden />
                 <span className="min-w-0 leading-tight">
-                  <span className="block text-[11px] text-gray-500">Giao từ chi nhánh</span>
-                  <span className="block text-[15px] text-gray-900 truncate">
+                  <span className="block text-2xs text-gray-500">Giao từ chi nhánh</span>
+                  <span className="block text-base text-gray-900 truncate">
                     {selectedBranch?.name || 'Chọn chi nhánh'}
                   </span>
                 </span>
@@ -368,7 +368,7 @@ export default function Header() {
                                 <span className="text-sm text-emerald-700">
                                   {formatPrice(itemPrice)} ₫
                                 </span>
-                                <span className="text-[10px] text-gray-400">
+                                <span className="text-2xs text-gray-400">
                                   /{itemUnitStr}
                                 </span>
                               </div>
@@ -426,7 +426,7 @@ export default function Header() {
                   title={t('changeLanguage')}
                 >
                   <Globe className="w-3.5 h-3.5 text-emerald-700 transition-transform" />
-                  <span className="text-[12px] sm:text-sm tracking-wider">
+                  <span className="text-xs sm:text-sm tracking-wider">
                     {language === 'vi' ? 'VI' : 'EN'}
                   </span>
                   <ChevronDown
@@ -494,7 +494,7 @@ export default function Header() {
                     title={language === 'en' ? 'Sign In / Register' : 'Đăng nhập / Đăng ký'}
                   >
                     <User className="w-3.5 h-3.5 text-emerald-700 transition-transform" />
-                    <span className="hidden md:inline text-[1.125em]">
+                    <span className="hidden md:inline text-emph">
                       {language === 'en' ? 'Sign In' : 'Đăng nhập'}
                     </span>
                   </button>
@@ -506,7 +506,7 @@ export default function Header() {
                       className="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/60 text-emerald-900 text-sm transition-all cursor-pointer shadow-2xs"
                       aria-label="Tài khoản cá nhân"
                     >
-                      <span className="w-6 h-6 rounded-full bg-forest-700 text-white flex items-center justify-center text-[12px] shadow-2xs">
+                      <span className="w-6 h-6 rounded-full bg-forest-700 text-white flex items-center justify-center text-xs shadow-2xs">
                         {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
                       </span>
                       <span className="hidden md:inline max-w-[110px] truncate">
@@ -525,7 +525,7 @@ export default function Header() {
                       <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                         <div className="px-4 py-2 border-b border-gray-100">
                           <p className="text-sm text-gray-900 line-clamp-1">{user.fullName}</p>
-                          <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
+                          <p className="text-2xs text-gray-400 truncate">{user.email}</p>
                         </div>
                         <Link
                           href="/tai-khoan?tab=orders"
@@ -604,7 +604,7 @@ export default function Header() {
                   {isMounted && totalQuantity > 0 && (
                     <span
                       key={`mobile-badge-${totalQuantity}`}
-                      className="sm:hidden absolute -top-1.5 -right-2 min-w-[16px] h-4 flex items-center justify-center px-1 text-[11px] text-white bg-sale rounded-full animate-pulse-badge shadow-2xs"
+                      className="sm:hidden absolute -top-1.5 -right-2 min-w-[16px] h-4 flex items-center justify-center px-1 text-2xs text-white bg-sale rounded-full animate-pulse-badge shadow-2xs"
                     >
                       {totalQuantity > 99 ? '99+' : totalQuantity}
                     </span>
@@ -619,7 +619,7 @@ export default function Header() {
                 <span
                   key={`desktop-badge-${totalQuantity}`}
                   className={cn(
-                    'hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[12px] transition-all',
+                    'hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs transition-all',
                     isMounted && totalQuantity > 0
                       ? 'bg-forest-700 text-white shadow-2xs animate-pulse-badge'
                       : 'bg-gray-200/80 text-gray-600'
@@ -699,7 +699,7 @@ export default function Header() {
                     >
                       <span>{item.label}</span>
                       {item.badge && (
-                        <span className="px-1.5 py-0.2 text-[10px] text-white bg-red-500 rounded-full animate-pulse">
+                        <span className="px-1.5 py-0.2 text-2xs text-white bg-red-500 rounded-full animate-pulse">
                           {item.badge}
                         </span>
                       )}
@@ -744,7 +744,7 @@ export default function Header() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm text-gray-900 truncate">{user.fullName}</div>
-                    <div className="text-[10px] text-gray-500 truncate">{user.email}</div>
+                    <div className="text-2xs text-gray-500 truncate">{user.email}</div>
                   </div>
                 </Link>
                 <div className="flex items-center gap-1 shrink-0">
@@ -775,7 +775,7 @@ export default function Header() {
                   <div className="text-sm text-gray-800">
                     {language === 'en' ? 'Customer Account' : 'Tài khoản khách hàng'}
                   </div>
-                  <div className="text-[10px] text-gray-500">
+                  <div className="text-2xs text-gray-500">
                     {language === 'en' ? 'Track orders & fast checkout' : 'Theo dõi đơn hàng & tích điểm'}
                   </div>
                 </div>
@@ -821,7 +821,7 @@ export default function Header() {
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
-                    <span className="px-2 py-0.5 text-[11px] text-white bg-red-500 rounded-full">
+                    <span className="px-2 py-0.5 text-2xs text-white bg-red-500 rounded-full">
                       {item.badge}
                     </span>
                   )}
@@ -886,7 +886,7 @@ export default function Header() {
                   <h3 className="text-gray-900 text-lg leading-tight">
                     {t('supportTitle')}
                   </h3>
-                  <p className="text-[11px] text-gray-500">
+                  <p className="text-2xs text-gray-500">
                     {t('supportSubtitle')}
                   </p>
                 </div>
@@ -950,14 +950,14 @@ export default function Header() {
               <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 space-y-2 text-xs text-gray-600">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span><strong className="text-[1.125em]">{language === 'vi' ? 'Thời gian phục vụ:' : 'Service hours:'}</strong> {language === 'vi' ? '07:30 - 21:30 hàng ngày' : '07:30 - 21:30 daily'}</span>
+                  <span><strong className="text-emph">{language === 'vi' ? 'Thời gian phục vụ:' : 'Service hours:'}</strong> {language === 'vi' ? '07:30 - 21:30 hàng ngày' : '07:30 - 21:30 daily'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span><strong className="text-[1.125em]">{language === 'vi' ? 'Giao hàng:' : 'Delivery:'}</strong> {language === 'vi' ? 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận' : 'Express delivery in 2 hours in HCMC'}</span>
+                  <span><strong className="text-emph">{language === 'vi' ? 'Giao hàng:' : 'Delivery:'}</strong> {language === 'vi' ? 'Hỏa tốc trong 2 giờ tại TP.HCM & lân cận' : 'Express delivery in 2 hours in HCMC'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span><strong className="text-[1.125em]">{language === 'vi' ? 'Đổi trả:' : 'Returns:'}</strong> {language === 'vi' ? 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào' : '100% exchange if any issue'}</span>
+                  <span><strong className="text-emph">{language === 'vi' ? 'Đổi trả:' : 'Returns:'}</strong> {language === 'vi' ? 'Đổi mới 100% nếu sản phẩm có bất kỳ lỗi nào' : '100% exchange if any issue'}</span>
                 </div>
               </div>
 

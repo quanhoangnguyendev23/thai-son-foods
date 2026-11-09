@@ -166,7 +166,7 @@ export default function SavingsBagButton({ isEn, navBtn }: { isEn: boolean; navB
           {cartSavings > 0 ? (
             <span
               key={`bag-${bump}`}
-              className="absolute -top-2 -right-3 h-[18px] px-1 rounded-full bg-corn text-text-dark text-[10px] leading-[18px] tabular-nums animate-pulse-badge"
+              className="absolute -top-2 -right-3 h-[18px] px-1 rounded-full bg-corn text-text-dark text-2xs leading-[18px] tabular-nums animate-pulse-badge"
             >
               +{formatShortVND(cartSavings)}
             </span>
@@ -175,8 +175,8 @@ export default function SavingsBagButton({ isEn, navBtn }: { isEn: boolean; navB
           )}
         </span>
         <span className="hidden xl:block leading-tight text-left">
-          <span className="block text-[11px] text-white/70">{label}</span>
-          <span className="block text-[15px] tabular-nums max-w-[120px] truncate">
+          <span className="block text-2xs text-white/70">{label}</span>
+          <span className="block text-base tabular-nums max-w-[120px] truncate">
             {showAmount ? vnd(totalSaved!) : isNew ? (isEn ? 'New' : 'Mới') : isEn ? 'View' : 'Xem ngay'}
           </span>
         </span>
@@ -207,7 +207,7 @@ export default function SavingsBagButton({ isEn, navBtn }: { isEn: boolean; navB
             </button>
             {callout.kind === 'intro' ? (
               <>
-                <p className="text-[11px] uppercase tracking-wide text-green-primary">{isEn ? 'New' : 'Mới'}</p>
+                <p className="text-2xs uppercase tracking-wide text-green-primary">{isEn ? 'New' : 'Mới'}</p>
                 <p className="text-base mt-0.5 pr-6">{label}</p>
                 <p className="text-sm text-text-body mt-1.5">
                   {isEn

@@ -154,7 +154,7 @@ export default function WarehouseSection() {
                     >
                       <span>{tab.num}</span>
                       {isActive && (
-                        <span className="font-sans font-medium text-[11px] max-w-[125px] truncate">
+                        <span className="font-sans font-medium text-2xs max-w-[125px] truncate">
                           {language === 'en' ? tab.titleEn : tab.title}
                         </span>
                       )}
@@ -185,7 +185,7 @@ export default function WarehouseSection() {
                   {language === 'en' ? currentTab.titleEn : currentTab.title}
                 </h4>
 
-                <p className="text-xs sm:text-[13px] text-forest-950/80 leading-relaxed font-sans mb-3">
+                <p className="text-xs sm:text-sm text-forest-950/80 leading-relaxed font-sans mb-3">
                   {language === 'en' ? currentTab.descriptionEn : currentTab.description}
                 </p>
               </motion.div>
@@ -294,7 +294,7 @@ export default function WarehouseSection() {
                       {language === 'en' ? currentTab.titleEn : currentTab.title}
                     </h4>
 
-                    <p className="text-xs sm:text-[13px] text-forest-950/80 leading-relaxed font-sans mb-4">
+                    <p className="text-xs sm:text-sm text-forest-950/80 leading-relaxed font-sans mb-4">
                       {language === 'en' ? currentTab.descriptionEn : currentTab.description}
                     </p>
                   </motion.div>

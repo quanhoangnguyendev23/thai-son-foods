@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
+import { loadBottleCosts } from '@/lib/costSnapshot';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
 import { calculateNextDeliveryDate, getVietnamDate } from '@/lib/membership/service';
 
@@ -162,6 +163,7 @@ export async function POST(req: NextRequest) {
         ]);
 
         // 4. Lưu từng món vào order_items & Khóa tồn kho khả dụng (Zero-Oversell Guarantee)
+        const bottleCosts = await loadBottleCosts(client, processedItems.map((it: any) => String(it.product_id || '')));
         for (const it of processedItems) {
           const orderItemId = `oi_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
           const is5Pack = it.unit?.includes('5 chai');
@@ -171,8 +173,8 @@ export async function POST(req: NextRequest) {
           await client.query(
             `INSERT INTO order_items (
               id, order_id, product_id, name, price, quantity, unit,
-              canonical_product_id, bottle_multiplier, total_bottles
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`,
+              canonical_product_id, bottle_multiplier, total_bottles, cost_price
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`,
             [
               orderItemId,
               orderId,
@@ -184,6 +186,8 @@ export async function POST(req: NextRequest) {
               it.product_id,
               bottleMultiplier,
               totalBottles,
+              // Giá vốn 1 đơn vị (lốc) = giá vốn/chai × số chai; null nếu chưa nhập giá vốn
+              bottleCosts.has(String(it.product_id)) ? bottleCosts.get(String(it.product_id))! * bottleMultiplier : null,
             ]
           );
 

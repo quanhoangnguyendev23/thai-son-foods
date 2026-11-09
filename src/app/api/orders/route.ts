@@ -9,6 +9,15 @@ import { notifyNewOrderTelegram } from '@/lib/notify/telegram';
 import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
+import { computeLineUnitCosts } from '@/lib/costSnapshot';
+import { getDeliveryOptions, findSlot, describeOrderDelivery, type DeliveryMode } from '@/lib/deliverySlots';
+import { logAddressEvent } from '@/lib/address/anonymousLog';
+import { hasRealCoords } from '@/lib/address/normalize';
+import { isSavedPinValid, readSavedPin } from '@/lib/address/savedAddressPin';
+import { isFallbackCode, takeFallbackQuota } from '@/lib/address/locationFallback';
+import { getAreaCenter } from '@/lib/address/admin';
+import { saveAddressEvent } from '@/lib/address/addressEventStore';
+import { runOrderAddressChecks } from '@/lib/address/orderLocationCheck';
 
 /** Số dòng sản phẩm tối đa trong 1 đơn (sau đó mới gộp dòng trùng) */
 const MAX_ORDER_LINES = 50;
@@ -74,7 +83,9 @@ export async function POST(request: Request) {
       rawLatInput >= -90 &&
       rawLatInput <= 90 &&
       rawLngInput >= -180 &&
-      rawLngInput <= 180
+      rawLngInput <= 180 &&
+      // (0, 0) là giá trị mặc định do lỗi, không phải vị trí: coi như THIẾU, lưu NULL
+      hasRealCoords(rawLatInput, rawLngInput)
     ) {
       rawLat = rawLatInput;
       rawLng = rawLngInput;
@@ -89,8 +100,118 @@ export async function POST(request: Request) {
       ? (locationConfirmed ? 'USER_MAP_PIN' : (clientConfirmedBy || 'USER_GEOCODE'))
       : null;
     const saveDefaultAddress = Boolean(body.saveDefaultAddress);
-    const addressNew = body.addressNew || body.address_new || null;
-    const addressOld = body.addressOld || body.address_old || null;
+    // Địa chỉ dạng mới (phường mới) và dạng cũ (quận cũ) do trình duyệt gửi: chỉ làm sạch và lưu, không ghi đè
+    const cleanAddressText = (v: unknown) => (v ? stripHtml(String(v)).slice(0, 300) || null : null);
+    const addressNew = cleanAddressText(body.addressNew || body.address_new);
+    const addressOld = cleanAddressText(body.addressOld || body.address_old);
+    // Nguồn của địa chỉ/vị trí do khách chọn: gợi ý, ghim, GPS, đã lưu hay tự gõ. Chỉ để ghi log, không dùng để đổi dữ liệu.
+    const ADDRESS_SOURCES = ['autocomplete', 'pin', 'gps', 'saved', 'manual'];
+    const addressSource = ADDRESS_SOURCES.includes(String(body.addressSource)) ? String(body.addressSource) : null;
+    // Mã gợi ý của nhà cung cấp, luôn có tiền tố ("photon:N5", "local:…", "area:…", "google:…"); id có thể dài nên lưu TEXT
+    const rawPlaceId = typeof body.providerPlaceId === 'string' ? body.providerPlaceId.trim().slice(0, 500) : '';
+    const providerPlaceId = !rawPlaceId
+      ? null
+      : rawPlaceId.startsWith('ph:')
+      ? `photon:${rawPlaceId.slice(3)}`
+      : rawPlaceId.startsWith('loc:')
+      ? `local:${rawPlaceId.slice(4)}`
+      : /^(area|photon|local|google|goong|vietmap):/.test(rawPlaceId)
+      ? rawPlaceId
+      : `google:${rawPlaceId}`;
+    const addressPrecision = ['house', 'street', 'area'].includes(String(body.addressPrecision)) ? String(body.addressPrecision) : null;
+    // Vị trí đáng tin: ghim khách xác nhận, GPS thiết bị sai số ≤ 100 m (trình duyệt gửi DEVICE_GPS), hoặc gợi ý đúng số
+    // nhà. Tâm phường / giữa đường / GPS sai số lớn / tọa độ ước từ ô Quận-Phường / địa chỉ đã lưu chưa xác nhận: KHÔNG
+    // nhận đơn (trả LOCATION_UNCONFIRMED, trang mở bản đồ), không thu phí cơ bản thay thế.
+    // Địa chỉ đã lưu có xác nhận ghim: server tự kiểm trong DB (đúng tài khoản, chữ + phường + tọa độ chưa đổi), không tin lời client
+    let savedPinTrusted = false;
+    if (clientConfirmedBy === 'USER_SAVED_PROFILE_PIN' && userId && rawLat !== null && rawLng !== null) {
+      savedPinTrusted = isSavedPinValid(await readSavedPin(userId), {
+        address,
+        ward,
+        district,
+        province,
+        latitude: rawLat,
+        longitude: rawLng,
+      });
+    }
+    const locationTrusted =
+      rawLat !== null &&
+      rawLng !== null &&
+      (locationConfirmed ||
+        savedPinTrusted ||
+        clientConfirmedBy === 'DEVICE_GPS' ||
+        (addressSource === 'autocomplete' && addressPrecision === 'house'));
+    // Đường lui: bản đồ / dịch vụ địa chỉ lỗi → nhận đơn với cờ "needs_call", phí theo tâm Phường/Quận đã chọn.
+    // Chỉ khi có mã lỗi bản đồ hợp lệ, có Phường + Quận, và phiên còn hạn mức (2 lần / 24 giờ).
+    const fallbackCode = body.locationFallback && typeof body.locationFallback === 'object' ? (body.locationFallback as { code?: unknown }).code : null;
+    let needsCall = false;
+    let fallbackCenter: { lat: number; lng: number } | null = null;
+    if (!locationTrusted && isFallbackCode(fallbackCode) && ward && district) {
+      // Đơn "cần gọi xác nhận" chỉ nhận thanh toán khi nhận hàng (COD): chưa chắc vị trí thì không thu tiền trước
+      const earlyPaymentMethod = String(body.paymentMethod || customerObj.paymentMethod || 'cod').trim().toLowerCase();
+      if (earlyPaymentMethod !== 'cod') {
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'NEEDS_CALL_COD_ONLY',
+            error: 'Bản đồ đang lỗi nên đơn cần gọi xác nhận vị trí chỉ thanh toán khi nhận hàng (COD).',
+          },
+          { status: 400 }
+        );
+      }
+      fallbackCenter = getAreaCenter(ward, district);
+      const sid = (request.headers.get('cookie') || '').match(/(?:^|;\s*)tsf_geo_sid=([a-zA-Z0-9_-]{8,64})/)?.[1];
+      const quotaKey = sid ? `sid:${sid}` : `ip:${getClientIp(request.headers) || UNKNOWN_CLIENT_IP}`;
+      if (fallbackCenter && takeFallbackQuota(quotaKey)) needsCall = true;
+    }
+    if (!locationTrusted && !needsCall) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'LOCATION_UNCONFIRMED',
+          error: 'Vui lòng xác nhận vị trí giao hàng trên bản đồ trước khi đặt hàng.',
+        },
+        { status: 400 }
+      );
+    }
+    // Kiểm tra phụ, KHÔNG chờ, KHÔNG sửa, KHÔNG chặn đơn: phường tại tọa độ đơn có khớp phường khách chọn không (tính cả
+    // tên cũ / mới); khoảng cách tới tâm phường chỉ là kiểm tra thứ hai, ngưỡng theo cỡ phường. Hiện chỉ ghi log ẩn danh
+    // (không mã đơn, không IP); lưu cờ vào đơn cần thêm cột nên đang chờ chủ dự án duyệt (xem báo cáo, mục 7).
+    // Log ẩn danh (không mã đơn / mã khách / IP; chuỗi bỏ hết chữ số; tọa độ làm tròn; giờ làm tròn): xem anonymousLog.ts
+    const telemetry: Record<string, unknown> =
+      body.addressTelemetry && typeof body.addressTelemetry === 'object' ? body.addressTelemetry : {};
+    const emitAddressEvent = (check: string | null) =>
+      saveAddressEvent(logAddressEvent({
+        query: typeof telemetry.query === 'string' ? telemetry.query : null,
+        resultCount: typeof telemetry.total === 'number' ? telemetry.total : null,
+        rank: typeof telemetry.rank === 'number' ? telemetry.rank : null,
+        source: typeof telemetry.source === 'string' ? telemetry.source : null,
+        precision: addressPrecision,
+        addressSource,
+        locationTrusted,
+        check,
+        pinMovedMeters: typeof telemetry.pinMovedM === 'number' ? telemetry.pinMovedM : null,
+        pinChoice: telemetry.pinChoice === 'use' || telemetry.pinChoice === 'keep' ? telemetry.pinChoice : null,
+        lat: rawLat,
+        lng: rawLng,
+      })).catch((e) => console.warn('[orders] Không lưu được address_events:', (e as Error)?.message));
+    // Chạy SAU KHI tạo đơn (after(): Vercel giữ hàm sống tới khi xong): kiểm phường, lưu location_check, ghi log ẩn danh
+    const runAddressChecks = async (savedOrderId: string) => {
+      // Đơn đi đường lui: giữ cờ needs_call (cửa hàng gọi xác nhận), không kiểm phường theo tọa độ chưa đáng tin
+      if (needsCall) {
+        await emitAddressEvent('needs_call');
+        return;
+      }
+      await runOrderAddressChecks({
+        orderId: savedOrderId,
+        ward,
+        district,
+        lat: rawLat,
+        lng: rawLng,
+        addressSource,
+        emit: emitAddressEvent,
+      });
+    };
     const recommendedStoreId = (body.recommendedStoreId || body.recommended_store_id || null)?.toString().slice(0, 50) || null;
     const wasOverridden = Boolean(body.wasOverridden ?? body.was_overridden ?? (recommendedStoreId && storeCode && recommendedStoreId !== storeCode));
     const rankingSnapshot = body.rankingSnapshot ? JSON.stringify(body.rankingSnapshot) : null;
@@ -313,6 +434,51 @@ export async function POST(request: Request) {
         }
       }
 
+      // 2.5. GIỜ GIAO HÀNG (giờ hành chính 07:00–16:30, giờ VN). Máy chủ tự kiểm tra, không tin đồng hồ trình duyệt.
+      // Khách chọn "Giao ngay" mà đã quá giờ (trang mở lâu / bản trang cũ) → tự xếp vào khung trống sớm nhất.
+      const deliveryNow = new Date();
+      const deliveryOptions = getDeliveryOptions(deliveryNow, body.etaMinutes ?? body.eta_minutes);
+      const requestedDeliveryMode = String(body.deliveryMode || body.delivery_mode || 'ASAP').toUpperCase();
+      let deliveryMode: DeliveryMode;
+      let deliverySlotStart: string;
+      let deliverySlotEnd: string;
+      if (requestedDeliveryMode === 'SCHEDULED') {
+        const slot = findSlot(deliveryOptions, body.deliverySlotStart ?? body.delivery_slot_start);
+        if (!slot) {
+          return NextResponse.json(
+            { success: false, error: 'Khung giờ giao không hợp lệ. Vui lòng chọn lại khung giờ nhận hàng.', code: 'DELIVERY_SLOT_INVALID' },
+            { status: 400 }
+          );
+        }
+        if (slot.reason === 'TOO_LATE') {
+          return NextResponse.json(
+            { success: false, error: `Khung ${slot.startLabel}–${slot.endLabel} không còn kịp giao. Vui lòng chọn khung giờ khác.`, code: 'DELIVERY_SLOT_TOO_LATE' },
+            { status: 409 }
+          );
+        }
+        deliveryMode = 'SCHEDULED';
+        deliverySlotStart = slot.start;
+        deliverySlotEnd = slot.end;
+      } else if (deliveryOptions.canDeliverNow) {
+        deliveryMode = 'ASAP';
+        deliverySlotStart = deliveryOptions.now;
+        deliverySlotEnd = deliveryOptions.asapArrival;
+      } else if (deliveryOptions.earliestSlot) {
+        deliveryMode = 'SCHEDULED';
+        deliverySlotStart = deliveryOptions.earliestSlot.start;
+        deliverySlotEnd = deliveryOptions.earliestSlot.end;
+      } else {
+        return NextResponse.json(
+          { success: false, error: 'Hiện chưa chọn được khung giờ giao. Vui lòng thử lại hoặc gọi hotline.', code: 'DELIVERY_SLOT_FULL' },
+          { status: 409 }
+        );
+      }
+      // Đơn hẹn: giữ hàng tới hết khung hẹn (+2 giờ) để không bị tự hủy vì quá hạn giữ chỗ trước ngày giao
+      const reservationHours = Math.max(
+        INVENTORY_CONFIG.RESERVATION_EXPIRY_HOURS,
+        Math.ceil((new Date(deliverySlotEnd).getTime() - deliveryNow.getTime()) / 3600000) + 2
+      );
+
       // 3. SERVER TỰ TÍNH LẠI GIÁ (không tin client)
       let serverCalculatedSubtotal = 0;
       const revalidatedItems = [];
@@ -434,13 +600,25 @@ export async function POST(request: Request) {
       // 4. SERVER TỰ TÍNH PHÍ VẬN CHUYỂN
       const { calculateShippingFee } = await import('@/config/inventory');
       let customerDistanceKm: number | null = null;
-      if (customerCoords && targetStoreLat !== null && targetStoreLng !== null) {
-        customerDistanceKm = calculateHaversineDistance(
-          customerCoords.lat,
-          customerCoords.lng,
-          targetStoreLat,
-          targetStoreLng
-        );
+      // Phí theo km dùng quãng đường đi thật (cùng nguồn với khung "Chi nhánh phục vụ" ở trang thanh toán).
+      // Chỉ tính khi khách gửi tọa độ thật; tọa độ ước từ tên quận/phường quá thô để thu phụ phí.
+      // Vị trí dùng tính km: tọa độ đáng tin, hoặc tâm Phường/Quận đã chọn khi đi đường lui "needs_call"
+      const feeAt = locationTrusted && rawLat !== null && rawLng !== null ? { lat: rawLat, lng: rawLng } : needsCall ? fallbackCenter : null;
+      if (feeAt && targetStoreLat !== null && targetStoreLng !== null) {
+        try {
+          const { getRoadDistanceAndDuration } = await import('@/lib/storeRecommender');
+          const road = await getRoadDistanceAndDuration(
+            feeAt.lat,
+            feeAt.lng,
+            targetStoreLat,
+            targetStoreLng,
+            targetStoreCode || ''
+          );
+          customerDistanceKm = road.roadKm;
+        } catch {
+          customerDistanceKm =
+            Math.round(calculateHaversineDistance(feeAt.lat, feeAt.lng, targetStoreLat, targetStoreLng) * 1.35 * 10) / 10;
+        }
       }
       const shippingCalc = calculateShippingFee(serverCalculatedSubtotal, customerDistanceKm);
       if (shippingCalc.isBeyondRadius && INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED.ENABLED) {
@@ -453,6 +631,25 @@ export async function POST(request: Request) {
         );
       }
       const serverShippingFee = shippingCalc.fee;
+      // Phí thật cao hơn phí khách đang thấy (vd. vừa đổi ghim/cửa hàng, km đo lại vượt mốc 11 km):
+      // dừng lại báo khách xem phí mới, không tự thu nhiều hơn số đã hiển thị (422: 409 đã dùng cho lỗi tồn kho)
+      if (
+        typeof body.shippingFee === 'number' &&
+        Number.isFinite(body.shippingFee) &&
+        serverShippingFee > Math.round(body.shippingFee)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'SHIPPING_FEE_CHANGED',
+            shippingFee: serverShippingFee,
+            error: `Phí giao hàng đã cập nhật theo khoảng cách thực tế${
+              customerDistanceKm !== null ? ` (~${customerDistanceKm} km)` : ''
+            }: ${serverShippingFee.toLocaleString('vi-VN')}đ. Vui lòng kiểm tra lại rồi đặt hàng.`,
+          },
+          { status: 422 }
+        );
+      }
       const serverTotal = serverCalculatedSubtotal + serverShippingFee;
 
       // 5. BÓC TÁCH COMBO VÀ CHUẨN BỊ ĐƠN HÀNG
@@ -621,14 +818,18 @@ export async function POST(request: Request) {
                payment_method, shipping_fee, subtotal, total, status, user_id, store_code, store_address,
                items_total_count, items_resolved_count, order_channel,
                latitude, longitude, location_confirmed, location_confirmed_by, address_new, address_old,
-               recommended_store_id, was_overridden, ranking_snapshot
+               recommended_store_id, was_overridden, ranking_snapshot,
+               delivery_mode, delivery_slot_start, delivery_slot_end,
+               address_source, address_precision, provider_place_id, location_check
              )
              VALUES (
                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                $11, $12, $13, $14, $15, $16, $17, $18,
                $19, $20, $21,
                $22, $23, $24, $25, $26, $27,
-               $28, $29, $30
+               $28, $29, $30,
+               $31, $32, $33,
+               $34, $35, $36, $37
              )`,
             [
               orderId,
@@ -661,9 +862,27 @@ export async function POST(request: Request) {
               recommendedStoreId,
               wasOverridden,
               rankingSnapshot,
+              deliveryMode,
+              deliverySlotStart,
+              deliverySlotEnd,
+              addressSource,
+              addressPrecision,
+              providerPlaceId,
+              needsCall ? 'needs_call' : null,
             ]
           );
 
+          // Số chai dùng tính giá vốn: sản phẩm lẻ/lốc theo đúng hệ số chai đã dùng tính giá bán; combo theo thành phần đã bóc tách
+          const costBottles = revalidatedItems.flatMap((it: any, idx: number) =>
+            it.canonicalProductId
+              ? [{ productId: it.canonicalProductId, bottleQuantity: (it.bottleMultiplier || 1) * Math.max(1, Math.round(Number(it.quantity) || 1)), originalItemIndex: idx }]
+              : expandedBottles.filter((b: any) => b.originalItemIndex === idx)
+          );
+          const lineUnitCosts = await computeLineUnitCosts(
+            client,
+            revalidatedItems.map((it: any) => it.quantity),
+            costBottles
+          );
           for (let i = 0; i < revalidatedItems.length; i++) {
             const item = revalidatedItems[i];
             const itemId = `item_${Date.now()}_${crypto.randomBytes(3).toString('hex')}_${i}`;
@@ -674,7 +893,8 @@ export async function POST(request: Request) {
             let canonicalProductId: string | null = null;
             let bottleMultiplier = 1;
             let totalBottlesVal = item.quantity || 1;
-            let itemCostPriceSnapshot: number | null = null;
+            // Giá vốn/đơn vị dòng hàng: tính từ giá vốn từng chai đã bóc tách (chai lẻ, lốc, combo đều cùng cách)
+            let itemCostPriceSnapshot: number | null = lineUnitCosts[i] ?? null;
 
             if (rawPId && !rawPId.startsWith('combo-')) {
               // Đã resolve và tính hệ số chai từ DB ở bước tính giá phía trên
@@ -682,17 +902,15 @@ export async function POST(request: Request) {
                 canonicalProductId = item.canonicalProductId;
                 bottleMultiplier = item.bottleMultiplier;
                 totalBottlesVal = bottleMultiplier * (item.quantity || 1);
-
-                const prodCostRes = await client.query('SELECT cost_price FROM products WHERE id = $1 LIMIT 1;', [canonicalProductId]);
-                if (prodCostRes.rows.length > 0 && prodCostRes.rows[0].cost_price !== null && prodCostRes.rows[0].cost_price !== undefined) {
-                  itemCostPriceSnapshot = (Number(prodCostRes.rows[0].cost_price) || 0) * bottleMultiplier;
-                }
               }
-            } else if (rawPId && (rawPId.startsWith('combo-') || rawPId.includes('combo'))) {
+            } else if (itemCostPriceSnapshot === null && rawPId && (rawPId.startsWith('combo-') || rawPId.includes('combo'))) {
+              // Dự phòng: thành phần combo chưa đủ giá vốn nhưng combo có nhập giá vốn riêng
               const comboCostRes = await client.query('SELECT cost_price FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;', [rawPId]);
-              if (comboCostRes.rows.length > 0 && comboCostRes.rows[0].cost_price !== null && comboCostRes.rows[0].cost_price !== undefined) {
-                itemCostPriceSnapshot = Number(comboCostRes.rows[0].cost_price) || 0;
-              }
+              const comboCost = Number(comboCostRes.rows[0]?.cost_price) || 0;
+              if (comboCost > 0) itemCostPriceSnapshot = comboCost;
+            }
+            if (itemCostPriceSnapshot === null) {
+              console.warn(`[Orders] Đơn ${orderCode}: dòng "${item.name}" (${rawPId}) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.`);
             }
 
             await client.query(
@@ -723,7 +941,7 @@ export async function POST(request: Request) {
             orderId,
             expandedBottles,
             client,
-            INVENTORY_CONFIG.RESERVATION_EXPIRY_HOURS
+            reservationHours
           );
 
           // 7.5. GHI NHẬN ATTRIBUTION VÀ SỔ CÁI ĐỐI TÁC TRONG CÙNG TRANSACTION (ROLLBACK NẾU LỖI)
@@ -818,6 +1036,8 @@ export async function POST(request: Request) {
         }
       }
 
+      const deliveryLabel = describeOrderDelivery(deliveryMode, deliverySlotStart, deliverySlotEnd);
+
       // Kích hoạt gửi email xác nhận đặt hàng cho khách (Non-blocking async)
       if (finalEmail && finalEmail.includes('@')) {
         sendOrderEmail('ORDER_CONFIRMATION', {
@@ -837,6 +1057,7 @@ export async function POST(request: Request) {
           note,
           storeCode: targetStoreCode,
           storeAddress: targetStoreAddress,
+          deliveryLabel,
           items: revalidatedItems,
         }).catch((err) => console.error('[Order] Error sending confirmation email:', err));
       }
@@ -851,6 +1072,8 @@ export async function POST(request: Request) {
         paymentMethod,
         total: serverTotal,
         note,
+        deliveryLabel,
+        deliveryScheduled: deliveryMode === 'SCHEDULED',
         items: revalidatedItems.map((it: any) => ({
           name: it.name,
           quantity: it.quantity,
@@ -869,6 +1092,8 @@ export async function POST(request: Request) {
         items: revalidatedItems.map((it: any, i: number) => ({ ...orderNotice.items[i], price: Number(it.price) || 0 })),
       };
       after(() => notifyNewOrderTelegram(telegramNotice).catch(() => {}));
+      // Ô địa chỉ: kiểm phường tại tọa độ + lưu location_check + log ẩn danh, chạy sau khi đã trả phản hồi cho khách
+      after(() => runAddressChecks(orderId).catch(() => {}));
 
       return NextResponse.json({
         success: true,
@@ -883,6 +1108,12 @@ export async function POST(request: Request) {
           (sum: number, it: any) => sum + Math.max(0, (Number(it.originalPrice) || 0) - (Number(it.price) || 0)) * (Number(it.quantity) || 0),
           0
         ),
+        delivery: {
+          mode: deliveryMode,
+          start: deliverySlotStart,
+          end: deliverySlotEnd,
+          label: deliveryLabel,
+        },
         savedToPostgres: true,
         order: {
           id: orderId,
@@ -999,6 +1230,7 @@ export async function GET(request: Request) {
             storeCode: order.store_code,
             storeAddress: order.store_address,
             createdAt: order.created_at,
+            deliveryLabel: describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end) || null,
             items: itemsRes.rows.map((it: any) => ({
               id: it.id,
               name: it.name,
@@ -1084,6 +1316,7 @@ export async function GET(request: Request) {
         storeCode: order.store_code,
         storeAddress: order.store_address,
         createdAt: order.created_at,
+        deliveryLabel: describeOrderDelivery(order.delivery_mode, order.delivery_slot_start, order.delivery_slot_end) || null,
         items: itemsRes.rows.map((it: any) => ({
           id: it.id,
           name: it.name,

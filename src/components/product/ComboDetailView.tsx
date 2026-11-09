@@ -366,12 +366,12 @@ export default function ComboDetailView({
           <div className="min-w-0 md:col-start-2 md:row-start-1 xl:col-start-2 space-y-3">
             <Link
               href="/#ve-chung-toi"
-              className="inline-block text-[13px] text-forest-700 hover:text-copper-600 hover:underline"
+              className="inline-block text-sm text-forest-700 hover:text-copper-600 hover:underline"
             >
               {isEn ? 'Visit the Thái Sơn Foods store' : 'Ghé thăm cửa hàng Thái Sơn Foods'}
             </Link>
 
-            <h1 className="text-xl sm:text-2xl xl:text-[24px] font-medium text-ink-950 leading-snug break-words">
+            <h1 className="text-xl sm:text-2xl xl:text-2xl font-medium text-ink-950 leading-snug break-words">
               {comboTitle}
             </h1>
 
@@ -379,7 +379,7 @@ export default function ComboDetailView({
             <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-sm">
               {reviewSummary && reviewSummary.totalReviews > 0 ? (
                 <a href="#danh-gia" onClick={scrollToReviews} className="inline-flex items-center gap-1.5 group">
-                  <span className="text-ink-950 text-[1.125em]">{reviewSummary.averageRating.toFixed(1)}</span>
+                  <span className="text-ink-950 text-emph">{reviewSummary.averageRating.toFixed(1)}</span>
                   <span className="flex items-center gap-0.5" aria-hidden>
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
@@ -416,14 +416,14 @@ export default function ComboDetailView({
             {/* Nhãn thuộc tính */}
             <div className="flex flex-wrap gap-1.5">
               {combo.discount > 0 && (
-                <span className="text-[12px] px-2 py-0.5 rounded bg-sale text-white">-{combo.discount}%</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">-{combo.discount}%</span>
               )}
-              <span className="text-[12px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                 {isCustomizable
                   ? (isEn ? 'Customizable Combo' : 'Combo tự chọn vị')
                   : (isEn ? 'Pre-packed Combo' : 'Combo đóng gói sẵn')}
               </span>
-              <span className="text-[12px] px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
                 {combo.totalItems} {isEn ? 'bottles' : 'chai'}
               </span>
             </div>
@@ -431,7 +431,7 @@ export default function ComboDetailView({
             {/* Giá */}
             <div className="border-t border-gray-200 pt-3">
               <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-[26px] leading-none text-ink-950">{formatPrice(combo.salePrice)}đ</span>
+                <span className="text-2xl leading-none text-ink-950">{formatPrice(combo.salePrice)}đ</span>
                 <span className="text-sm text-gray-600">
                   ({formatPrice(avgBottlePrice)}đ/{isEn ? 'bottle' : 'chai'})
                 </span>
@@ -455,11 +455,11 @@ export default function ComboDetailView({
             <CouponPlaceholder />
 
             {/* Bảng tóm tắt thuộc tính chính */}
-            <table className="w-full text-[13px]">
+            <table className="w-full text-sm">
               <tbody>
                 {overviewRows.map((row) => (
                   <tr key={row.label}>
-                    <th scope="row" className="w-[42%] py-1 pr-3 text-left text-ink-950 align-top text-[1.125em]">
+                    <th scope="row" className="w-[42%] py-1 pr-3 text-left text-ink-950 align-top text-emph">
                       {row.label}
                     </th>
                     <td className="py-1 text-ink-950">{row.value}</td>
@@ -474,13 +474,13 @@ export default function ComboDetailView({
             {isCustomizable ? (
               <div className="rounded-xl border border-gray-300 bg-white p-4 space-y-3.5">
                 <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-[28px] leading-none text-ink-950">{formatPrice(combo.salePrice)}đ</span>
+                  <span className="text-3xl leading-none text-ink-950">{formatPrice(combo.salePrice)}đ</span>
                   {combo.originalPrice > combo.salePrice && (
                     <span className="text-sm text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>
                   )}
                 </div>
                 <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/70 text-sm text-emerald-900">
-                  <p className="mb-1 text-[1.125em]">
+                  <p className="mb-1 text-emph">
                     {isEn
                       ? 'This combo supports flexible flavor customization!'
                       : 'Combo này hỗ trợ tự chọn vị linh hoạt theo sở thích!'}
@@ -559,7 +559,7 @@ export default function ComboDetailView({
                     : getShortBottleName(pFullName);
                   return (
                     <li key={`${item.productId}-${idx}`} className="flex items-center gap-3 py-2" title={pFullName}>
-                      <div className="relative w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-gray-200/80">
+                      <div className="relative w-16 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-gray-200/80">
                         <Image
                           src={item.product?.thumbnail || combo.image}
                           alt={pFullName}
@@ -577,7 +577,7 @@ export default function ComboDetailView({
                       {item.product && (
                         <Link
                           href={`/san-pham/${item.product.slug}`}
-                          className="shrink-0 inline-flex items-center gap-0.5 text-[13px] text-forest-700 hover:text-copper-600 hover:underline"
+                          className="shrink-0 inline-flex items-center gap-0.5 text-sm text-forest-700 hover:text-copper-600 hover:underline"
                           title={isEn ? `View ${pFullName}` : `Xem chi tiết ${item.product.name}`}
                         >
                           <span className="hidden sm:inline">{isEn ? 'View' : 'Xem vị'}</span>
@@ -596,13 +596,13 @@ export default function ComboDetailView({
               </h2>
               <ul className="list-disc pl-5 space-y-1.5 text-sm text-ink-950 leading-relaxed marker:text-gray-400">
                 <li>
-                  <strong className="text-[1.125em]">{isEn ? 'Cooling & Nutritious' : 'Thanh mát bổ dưỡng'}:</strong>{' '}
+                  <strong className="text-emph">{isEn ? 'Cooling & Nutritious' : 'Thanh mát bổ dưỡng'}:</strong>{' '}
                   {isEn
                     ? 'Helps cool the body and provide natural healthy vitality.'
                     : 'Giúp giải nhiệt cơ thể và cung cấp năng lượng lành mạnh.'}
                 </li>
                 <li>
-                  <strong className="text-[1.125em]">{isEn ? '100% Fresh Ingredients' : '100% Nguyên liệu tươi'}:</strong>{' '}
+                  <strong className="text-emph">{isEn ? '100% Fresh Ingredients' : '100% Nguyên liệu tươi'}:</strong>{' '}
                   {isEn
                     ? 'No chemical preservatives, strict food safety certification.'
                     : 'Không chất bảo quản, chuẩn vệ sinh an toàn thực phẩm.'}

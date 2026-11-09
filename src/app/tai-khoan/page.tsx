@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -24,11 +24,33 @@ import {
   Heart,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  Navigation,
 } from 'lucide-react';
 import { useUserAuth } from '@/context/UserAuthContext';
 import WishlistPanel from '@/components/product/WishlistPanel';
 import { useLanguage } from '@/context/LanguageContext';
 import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
+import { removeKhuPho } from '@/lib/geo';
+import {
+  getProvinceNames,
+  getDistrictsByProvince,
+  getWardsByDistrict,
+  findPreciseCoordinates,
+} from '@/data/vietnam-addresses';
+import LocationConfirmMapModal from '@/components/checkout/LocationConfirmMapModal';
+import AddressSuggestionList from '@/components/checkout/AddressSuggestionList';
+import { useAddressSearch } from '@/hooks/useAddressSearch';
+import { sameAddressLine } from '@/lib/address/normalize';
+
+/** Địa chỉ tại điểm ghim / GPS (kết quả reverse geocode) */
+interface ProfilePinParts {
+  street?: string;
+  ward?: string;
+  district?: string;
+  province?: string;
+  formatted?: string;
+}
 
 interface OrderItem {
   id: string;
@@ -75,6 +97,79 @@ interface UserReviewRecord {
 }
 
 const PAGE_SIZE = 5;
+
+/** Bản đồ nhỏ xem trước vị trí giao hàng cố định (chạm để mở bản đồ lớn chỉnh ghim) */
+function ProfileLocationPreview({
+  coords,
+  onOpen,
+}: {
+  coords: { lat: number; lng: number } | null;
+  onOpen: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const coordsRef = useRef(coords);
+  const pinLat = coords?.lat;
+  const pinLng = coords?.lng;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const L = (await import('leaflet')).default;
+      if (cancelled || !containerRef.current || mapRef.current) return;
+      const start = coordsRef.current;
+      const map = L.map(containerRef.current, {
+        center: [start?.lat || 10.7769, start?.lng || 106.7009],
+        zoom: start ? 17 : 12,
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+        attributionControl: true,
+      });
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>' }).addTo(map);
+      mapRef.current = map;
+      setTimeout(() => !cancelled && mapRef.current?.invalidateSize(), 250);
+    })();
+    return () => {
+      cancelled = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Đổi vị trí: ghim nhảy tới chỗ mới
+  useEffect(() => {
+    coordsRef.current = pinLat !== undefined && pinLng !== undefined ? { lat: pinLat, lng: pinLng } : null;
+    const map = mapRef.current;
+    if (!map) return;
+    if (pinLat !== undefined && pinLng !== undefined) {
+      map.flyTo([pinLat, pinLng], 17, { duration: 0.6 });
+    } else {
+      map.setView([10.7769, 106.7009], 12);
+    }
+  }, [pinLat, pinLng]);
+
+  return (
+    <div className="relative w-full h-44 rounded-2xl border border-gray-200 overflow-hidden isolate z-0">
+      <div ref={containerRef} onClick={onOpen} className="relative z-0 w-full h-full cursor-pointer" />
+      {coords ? (
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-10">
+          <MapPin className="w-8 h-8 text-forest-700 fill-white drop-shadow-md" />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 text-sm text-forest-700 cursor-pointer"
+        >
+          Chạm để chấm ghim vị trí nhà bạn
+        </button>
+      )}
+    </div>
+  );
+}
 
 /** Dãy số trang rút gọn: 1 … 4 5 6 … 20 */
 function buildPageList(current: number, total: number): Array<number | 'gap'> {
@@ -192,6 +287,118 @@ function AccountContent() {
   );
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
+  // Vị trí giao hàng cố định (tọa độ) + gợi ý địa chỉ cho form hồ sơ.
+  // Gợi ý dùng chung useAddressSearch với trang thanh toán: không tự chọn, không tự đổi chữ khách gõ, chọn xong thì hết gợi ý.
+  const [profileCoords, setProfileCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // Khách vừa xác nhận ghim trên bản đồ cho địa chỉ đang sửa (server lưu xác nhận theo bản chụp địa chỉ + tọa độ)
+  const [profilePinConfirmed, setProfilePinConfirmed] = useState(false);
+  const [isLocatingProfile, setIsLocatingProfile] = useState(false);
+  const [isProfileMapOpen, setIsProfileMapOpen] = useState(false);
+  // Ghim/GPS cho ra địa chỉ khác chữ khách đã nhập: hỏi "Dùng địa chỉ này?", không tự đè
+  const [profilePinReview, setProfilePinReview] = useState<ProfilePinParts | null>(null);
+  const profileFormRef = useRef(profileForm);
+  useEffect(() => {
+    profileFormRef.current = profileForm;
+  });
+
+  const addr = useAddressSearch({
+    getContext: () => ({ ward: profileForm.ward || undefined, district: profileForm.district || undefined }),
+    onSelect: (sel) => {
+      const s = sel.suggestion;
+      setProfilePinReview(null);
+      setProfileForm((prev) => ({
+        ...prev,
+        province: s.province || prev.province || 'TP. Hồ Chí Minh',
+        district: s.district || prev.district,
+        ward: s.ward ? removeKhuPho(s.ward) : prev.ward,
+        address: sel.text,
+      }));
+      if (typeof s.lat === 'number' && typeof s.lng === 'number') setProfileCoords({ lat: s.lat, lng: s.lng });
+      setProfilePinConfirmed(false);
+    },
+    onTextChange: (text) => {
+      setProfileForm((prev) => ({ ...prev, address: text }));
+      setProfilePinConfirmed(false);
+    },
+  });
+
+  // Ghim còn đúng khi chữ trong ô vẫn là địa chỉ đã chốt (hoặc chỉ đổi số nhà trên cùng đường).
+  // Khách gõ sang đường khác (stale) thì không lưu tọa độ cũ để khỏi lệch.
+  const activeProfileCoords = profileCoords && addr.state.anchor !== 'stale' ? profileCoords : null;
+
+  // Danh mục hành chính giống trang thanh toán (hiện chỉ giao tại TP. Hồ Chí Minh)
+  const profileProvinces = getProvinceNames().filter((p) => p === 'TP. Hồ Chí Minh');
+  const profileDistricts = getDistrictsByProvince(profileForm.province);
+  const profileWards = getWardsByDistrict(profileForm.province, profileForm.district);
+
+  // Điền địa chỉ tại ghim/GPS vào form (ô còn trống hoặc khách bấm "Dùng địa chỉ này")
+  const applyProfilePin = (pin: ProfilePinParts) => {
+    const street = pin.street ? removeKhuPho(pin.street) : profileFormRef.current.address;
+    setProfileForm((prev) => ({
+      ...prev,
+      province: pin.province || prev.province || 'TP. Hồ Chí Minh',
+      district: pin.district || prev.district,
+      ward: pin.ward ? removeKhuPho(pin.ward) : prev.ward,
+      address: street || prev.address,
+    }));
+    if (street) addr.controller.commitText(street, 'pin');
+    setProfilePinReview(null);
+  };
+
+  // Đã có chữ thì giữ nguyên, chỉ điền ô hành chính còn trống; địa chỉ tại ghim khác chữ thì hỏi
+  const reviewProfilePin = (pin: ProfilePinParts) => {
+    const current = profileFormRef.current;
+    const typed = current.address.trim();
+    if (!typed) {
+      applyProfilePin(pin);
+      return;
+    }
+    setProfileForm((prev) => ({
+      ...prev,
+      province: prev.province || pin.province || '',
+      district: prev.district || pin.district || '',
+      ward: prev.ward || (pin.ward ? removeKhuPho(pin.ward) : ''),
+    }));
+    addr.controller.commitText(current.address, 'pin');
+    const pinLine = pin.street ? removeKhuPho(pin.street) : '';
+    setProfilePinReview(pinLine && !sameAddressLine(typed, pinLine) ? pin : null);
+  };
+
+  // Lấy vị trí GPS của thiết bị rồi điền địa chỉ (không đè chữ khách đã nhập)
+  const handleProfileGPS = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setProfileMsg({ text: 'Trình duyệt không hỗ trợ định vị GPS.', type: 'error' });
+      return;
+    }
+    setIsLocatingProfile(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setProfileCoords(c);
+        setProfilePinConfirmed(false);
+        try {
+          const rev = await safeFetchJson<{ success: boolean; formattedAddress?: string; components?: ProfilePinParts }>(
+            `/api/geo/reverse?lat=${c.lat}&lng=${c.lng}`
+          );
+          if (rev?.success && rev.components) reviewProfilePin({ ...rev.components, formatted: rev.formattedAddress });
+        } catch {
+          // vẫn giữ tọa độ GPS
+        } finally {
+          setIsLocatingProfile(false);
+        }
+      },
+      () => {
+        setIsLocatingProfile(false);
+        setProfileMsg({
+          text: 'Không lấy được vị trí GPS. Bạn hãy bật quyền vị trí hoặc chấm ghim trên bản đồ.',
+          type: 'error',
+        });
+      },
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  };
+
+
   // Sync tab from query param if available
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -217,6 +424,11 @@ function AccountContent() {
         district: user.district || '',
         ward: user.ward || '',
       });
+      // Địa chỉ đã lưu: không bật gợi ý cho đúng dòng đó; có tọa độ thì hiện ghim trên bản đồ
+      if (user.address) addr.controller.commitText(user.address, 'saved');
+      setProfileCoords(
+        user.latitude && user.longitude ? { lat: Number(user.latitude), lng: Number(user.longitude) } : null
+      );
     }
   }, [user]);
 
@@ -250,7 +462,13 @@ function AccountContent() {
     setProfileMsg(null);
     setIsSavingProfile(true);
 
-    const res = await updateProfile(profileForm);
+    // Luôn gửi tọa độ hiện tại; null = đã đổi địa chỉ mà chưa ghim lại → xóa tọa độ cũ
+    const res = await updateProfile({
+      ...profileForm,
+      latitude: activeProfileCoords ? activeProfileCoords.lat : null,
+      longitude: activeProfileCoords ? activeProfileCoords.lng : null,
+      pinConfirmed: !!activeProfileCoords && profilePinConfirmed,
+    });
     setIsSavingProfile(false);
 
     if (res.success) {
@@ -371,7 +589,7 @@ function AccountContent() {
             </Link>
           </li>
           <li>/</li>
-          <li className="text-gray-900 text-[1.125em]">
+          <li className="text-gray-900 text-emph">
             {language === 'en' ? 'My Account' : 'Tài khoản của tôi'}
           </li>
         </ol>
@@ -557,7 +775,7 @@ function AccountContent() {
                           </span>
                           {getStatusBadge(order.status)}
                         </div>
-                        <p className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
+                        <p className="text-2xs text-gray-400 mt-1 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5" />
                           <span>
                             {new Date(order.created_at).toLocaleString('vi-VN', {
@@ -585,7 +803,7 @@ function AccountContent() {
                           <div key={idx} className="flex items-center justify-between py-2 text-xs">
                             <div className="flex items-center gap-3">
                               {item.thumbnail ? (
-                                <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                                <div className="relative w-[52px] h-[39px] rounded-lg overflow-hidden bg-white border border-gray-100 shrink-0">
                                   <Image
                                     src={item.thumbnail}
                                     alt={item.name}
@@ -599,15 +817,15 @@ function AccountContent() {
                                 </div>
                               )}
                               <div>
-                                <span className="text-gray-800 line-clamp-1 text-[1.125em]">
+                                <span className="text-gray-800 line-clamp-1 text-emph">
                                   {item.name}
                                 </span>
-                                <span className="text-gray-400 text-[11px]">
+                                <span className="text-gray-400 text-2xs">
                                   {formatPrice(item.price)} ₫ x {item.quantity} {item.unit}
                                 </span>
                               </div>
                             </div>
-                            <span className="text-gray-900 shrink-0 text-[1.125em]">
+                            <span className="text-gray-900 shrink-0 text-emph">
                               {formatPrice(item.price * item.quantity)} ₫
                             </span>
                           </div>
@@ -715,58 +933,183 @@ function AccountContent() {
                     <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Province / City' : 'Tỉnh / Thành phố'}
                     </label>
-                    <input
-                      type="text"
+                    {/* Ô chọn theo danh mục hành chính giống trang thanh toán để tự điền khớp khi đặt hàng */}
+                    <select
                       value={profileForm.province}
-                      onChange={(e) =>
-                        setProfileForm({ ...profileForm, province: e.target.value })
-                      }
-                      placeholder={language === 'en' ? 'Ho Chi Minh City' : 'TP. Hồ Chí Minh'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
-                    />
+                      onChange={(e) => {
+                        setProfileForm({ ...profileForm, province: e.target.value, district: '', ward: '' });
+                        setProfileCoords(null);
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
+                    >
+                      <option value="">{language === 'en' ? '-- Select province --' : '-- Chọn Tỉnh / Thành phố --'}</option>
+                      {profileForm.province && !profileProvinces.some((p) => p === profileForm.province) && (
+                        <option value={profileForm.province}>{profileForm.province}</option>
+                      )}
+                      {profileProvinces.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
                     <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'District' : 'Quận / Huyện'}
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={profileForm.district}
-                      onChange={(e) =>
-                        setProfileForm({ ...profileForm, district: e.target.value })
-                      }
-                      placeholder={language === 'en' ? 'Tan Binh District' : 'Quận Tân Bình'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
-                    />
+                      disabled={!profileForm.province}
+                      onChange={(e) => {
+                        setProfileForm({ ...profileForm, district: e.target.value, ward: '' });
+                        setProfileCoords(null);
+                      }}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 disabled:bg-gray-50"
+                    >
+                      <option value="">{language === 'en' ? '-- Select district --' : '-- Chọn Quận / Huyện --'}</option>
+                      {profileForm.district && !profileDistricts.some((d) => d.name === profileForm.district) && (
+                        <option value={profileForm.district}>{profileForm.district}</option>
+                      )}
+                      {profileDistricts.map((d) => (
+                        <option key={d.name} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
                     <label className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Ward' : 'Phường / Xã'}
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={profileForm.ward}
+                      disabled={!profileForm.district && !profileForm.ward}
                       onChange={(e) => setProfileForm({ ...profileForm, ward: e.target.value })}
-                      placeholder={language === 'en' ? 'Tan Son Hoa Ward' : 'Phường Tân Sơn Hòa'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
-                    />
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10 disabled:bg-gray-50"
+                    >
+                      <option value="">{language === 'en' ? '-- Select ward --' : '-- Chọn Phường / Xã --'}</option>
+                      {profileForm.ward && !profileWards.some((w) => w.name === profileForm.ward) && (
+                        <option value={profileForm.ward}>{profileForm.ward}</option>
+                      )}
+                      {profileWards.map((w) => (
+                        <option key={w.name} value={w.name}>
+                          {w.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm text-gray-700 mb-1.5">
+                  <div className="sm:col-span-2 relative">
+                    <label htmlFor="profile-address" className="block text-sm text-gray-700 mb-1.5">
                       {language === 'en' ? 'Street Address' : 'Địa chỉ chi tiết (Số nhà, tên đường)'}
                     </label>
-                    <input
-                      type="text"
-                      value={profileForm.address}
-                      onChange={(e) =>
-                        setProfileForm({ ...profileForm, address: e.target.value })
-                      }
-                      placeholder={language === 'en' ? '123 Le Van Sy...' : '123 Lê Văn Sỹ...'}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
-                    />
+                    <div className="relative">
+                      <input
+                        {...addr.inputProps}
+                        id="profile-address"
+                        type="text"
+                        value={profileForm.address}
+                        placeholder={language === 'en' ? '123 Le Van Sy...' : '123 Lê Văn Sỹ...'}
+                        className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-base sm:text-sm focus:outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/10"
+                      />
+                      {addr.state.status === 'loading' && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-forest-700" />
+                      )}
+                    </div>
+
+                    {addr.panelOpen && (
+                      <AddressSuggestionList
+                        id={addr.listboxId}
+                        optionId={addr.optionId}
+                        suggestions={addr.state.suggestions}
+                        activeIndex={addr.state.activeIndex}
+                        status={addr.state.status}
+                        degraded={addr.state.degraded}
+                    outOfZone={addr.state.outOfZone}
+                        query={addr.state.inputText}
+                        language={language === 'en' ? 'en' : 'vi'}
+                        onPick={(i) => addr.controller.select(i)}
+                        onPickMap={() => {
+                          addr.controller.close();
+                          setIsProfileMapOpen(true);
+                        }}
+                      />
+                    )}
+
+                    {/* Ghim/GPS cho ra địa chỉ khác chữ đã nhập: hỏi, không tự đè */}
+                    {profilePinReview && (
+                      <div className="mt-2 p-2.5 bg-amber-50 rounded-xl border border-amber-300 text-xs text-amber-900" role="status">
+                        <p className="mb-0.5 text-emph">
+                          {language === 'en' ? 'The pin shows a different address. Use it?' : 'Vị trí ghim cho ra địa chỉ khác. Dùng địa chỉ này?'}
+                        </p>
+                        <p className="text-2xs leading-snug">
+                          {language === 'en' ? 'Pin location: ' : 'Vị trí ghim: '}
+                          {profilePinReview.formatted ||
+                            [profilePinReview.street, profilePinReview.ward, profilePinReview.district].filter(Boolean).join(', ')}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => applyProfilePin(profilePinReview)}
+                            className="px-2.5 py-1 rounded-lg bg-forest-700 text-white text-xs cursor-pointer"
+                          >
+                            {language === 'en' ? 'Use pin address' : 'Dùng địa chỉ này'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProfilePinReview(null)}
+                            className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 text-xs cursor-pointer"
+                          >
+                            {language === 'en' ? 'Keep my address' : 'Giữ địa chỉ của tôi'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+
+                  {/* Vị trí giao hàng cố định trên bản đồ: dùng sẵn ở trang thanh toán */}
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                      <label className="block text-sm text-gray-700">
+                        {language === 'en' ? 'Delivery location on map' : 'Vị trí giao hàng trên bản đồ'}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleProfileGPS}
+                          disabled={isLocatingProfile}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs text-forest-700 cursor-pointer disabled:opacity-60"
+                        >
+                          <Navigation className={cn('w-3.5 h-3.5', isLocatingProfile && 'animate-spin')} />
+                          <span>
+                            {isLocatingProfile
+                              ? language === 'en' ? 'Locating...' : 'Đang lấy vị trí...'
+                              : language === 'en' ? 'Use my GPS' : 'Lấy vị trí GPS'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsProfileMapOpen(true)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-forest-700 hover:bg-forest-800 text-xs text-white cursor-pointer"
+                        >
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>{language === 'en' ? 'Pin on map' : 'Chọn trên bản đồ'}</span>
+                        </button>
+                      </div>
+                    </div>
+                    <ProfileLocationPreview coords={activeProfileCoords} onOpen={() => setIsProfileMapOpen(true)} />
+                    <p className={cn('mt-1.5 text-xs', activeProfileCoords ? 'text-forest-700' : 'text-amber-700')}>
+                      {activeProfileCoords
+                        ? language === 'en'
+                          ? 'Location set. Checkout will fill in this address and pin automatically.'
+                          : 'Đã có vị trí. Khi thanh toán sẽ tự điền địa chỉ và ghim này, không cần nhập lại.'
+                        : language === 'en'
+                        ? 'No map pin yet: pick a suggestion above, use GPS or pin on the map so the shipper finds you easily.'
+                        : 'Chưa có ghim: chọn 1 gợi ý ở trên, lấy vị trí GPS hoặc chấm trên bản đồ để shipper tìm nhà dễ hơn.'}
+                    </p>
                   </div>
                 </div>
 
@@ -789,6 +1132,28 @@ function AccountContent() {
                   </button>
                 </div>
               </form>
+
+              {/* Bản đồ lớn để chấm ghim vị trí nhà: ghim xong tự điền số nhà, tên đường */}
+              <LocationConfirmMapModal
+                isOpen={isProfileMapOpen}
+                onClose={() => setIsProfileMapOpen(false)}
+                initialCoords={
+                  activeProfileCoords ||
+                  findPreciseCoordinates(
+                    profileForm.province || 'TP. Hồ Chí Minh',
+                    profileForm.district,
+                    profileForm.ward
+                  )
+                }
+                initialAddress={profileForm.address}
+                onConfirm={(confirmed) => {
+                  setProfileCoords({ lat: confirmed.lat, lng: confirmed.lng });
+                  setProfilePinConfirmed(true);
+                  if (confirmed.components) {
+                    reviewProfilePin({ ...confirmed.components, formatted: confirmed.formattedAddress });
+                  }
+                }}
+              />
             </div>
           ) : null}
 
@@ -858,7 +1223,7 @@ function AccountContent() {
                                 {rev.productId}
                               </span>
                               {rev.isVerifiedBuyer && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] border border-emerald-200">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-2xs border border-emerald-200">
                                   <CheckCircle className="w-2.5 h-2.5" /> Đã mua hàng
                                 </span>
                               )}
@@ -873,7 +1238,7 @@ function AccountContent() {
                           <div className="flex items-center gap-2">
                             <span
                               className={cn(
-                                'px-2.5 py-1 rounded-full text-[12px] border',
+                                'px-2.5 py-1 rounded-full text-xs border',
                                 rev.status === 'APPROVED'
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   : rev.status === 'PENDING'
@@ -912,7 +1277,7 @@ function AccountContent() {
                         {/* Brand official response if exists */}
                         {rev.adminReply && (
                           <div className="bg-emerald-50/70 border-l-4 border-emerald-600 p-3 rounded-r-xl text-xs space-y-1">
-                            <div className="flex items-center gap-1 text-emerald-900 text-[1.125em]">
+                            <div className="flex items-center gap-1 text-emerald-900 text-emph">
                               <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
                               <span>Phản hồi từ Thái Sơn Foods</span>
                             </div>

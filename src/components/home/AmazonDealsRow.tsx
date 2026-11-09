@@ -38,7 +38,7 @@ function PlaceholderCountdown() {
   const parts = [Math.floor(total / 3600), Math.floor((total % 3600) / 60), total % 60];
 
   return (
-    <span className="inline-flex items-center gap-1 font-mono text-[15px] text-text-dark" aria-label="Đồng hồ đếm ngược minh hoạ">
+    <span className="inline-flex items-center gap-1 font-mono text-base text-text-dark" aria-label="Đồng hồ đếm ngược minh hoạ">
       <Clock className="w-4 h-4 text-sale" />
       {ms === null ? '--:--:--' : parts.map(pad).join(':')}
     </span>
@@ -53,7 +53,7 @@ function DealTile({ combo, className }: { combo: Combo; className?: string }) {
   return (
     <Link
       href={`/combo/${combo.slug}`}
-      className={`group snap-start min-w-0 sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%] flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${className || ''}`}
+      className={`group snap-start min-w-0 sm:shrink-0 sm:w-[31%] md:w-[23.5%] lg:w-[18.8%] xl:w-[15.6%] flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:shadow-md ${className || ''}`}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center bg-ivory">
         <Image
@@ -61,12 +61,12 @@ function DealTile({ combo, className }: { combo: Combo; className?: string }) {
           alt={name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw"
-          className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          className="object-cover object-top transition-transform duration-500"
           onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
         />
         {combo.discount > 0 && (
           <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
-            <span className="px-1.5 py-0.5 text-[11px] lg:text-[10px] bg-sale text-white rounded shadow-xs">
+            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
               -{combo.discount}%
             </span>
           </div>
@@ -75,7 +75,7 @@ function DealTile({ combo, className }: { combo: Combo; className?: string }) {
       <div className="p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col justify-between">
         <div>
           <h3
-            className="text-[15px] sm:text-[15px] text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors line-clamp-2"
+            className="text-base sm:text-base text-text-dark mb-1 leading-snug group-hover:text-green-primary transition-colors line-clamp-2"
             title={name}
           >
             {name}
@@ -83,16 +83,16 @@ function DealTile({ combo, className }: { combo: Combo; className?: string }) {
         </div>
         <div className="flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
           <div className="flex flex-col">
-            <span className="text-base sm:text-[15px] text-green-primary">
+            <span className="text-base sm:text-base text-green-primary">
               {formatPrice(combo.salePrice)}đ
             </span>
             {combo.originalPrice > combo.salePrice && (
-              <span className="text-[10px] lg:text-[8.5px] text-text-muted font-normal line-through">
+              <span className="text-2xs lg:text-2xs text-text-muted font-normal line-through">
                 {formatPrice(combo.originalPrice)}đ
               </span>
             )}
           </div>
-          <span className="text-[11px] lg:text-[10px] text-sale font-medium">
+          <span className="text-2xs lg:text-2xs text-sale font-medium">
             {language === 'en' ? 'Combo deal' : 'Ưu đãi combo'}
           </span>
         </div>
@@ -125,9 +125,9 @@ export default function AmazonDealsRow({ combos }: { combos: Combo[] }) {
         {SHOW_PLACEHOLDER_BLOCKS && <PlaceholderCountdown />}
         <PlaceholderBadge />
         {SHOW_PLACEHOLDER_BLOCKS && (
-          <span className="text-[11px] text-text-muted">{DEAL_COUNTDOWN_PLACEHOLDER.note}</span>
+          <span className="text-2xs text-text-muted">{DEAL_COUNTDOWN_PLACEHOLDER.note}</span>
         )}
-        <Link href="/#combo" className="relative before:absolute before:-inset-y-3 before:inset-x-0 before:content-[''] ml-auto text-[15px] text-green-primary hover:underline">
+        <Link href="/#combo" className="relative before:absolute before:-inset-y-3 before:inset-x-0 before:content-[''] ml-auto text-base text-green-primary hover:underline">
           {language === 'en' ? 'See all deals' : 'Xem tất cả ưu đãi'}
         </Link>
       </div>

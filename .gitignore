@@ -44,11 +44,13 @@ next-env.d.ts
 # database backups
 /backups/
 *.sql
+!scripts/migrations/*.sql
 
 # Sao lưu cục bộ / tài nguyên thô — không đưa vào repo
 /_backup/
 /backups/
 /ảnh/
 /.next-build/
+/.next-verify/
 # mật khẩu tạm admin (golive_secure_admin_accounts)
 admin-credentials-*.csv

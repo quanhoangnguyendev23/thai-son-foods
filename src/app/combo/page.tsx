@@ -304,9 +304,9 @@ function Combo01View() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl text-forest-950 font-heading tracking-tight">
             Chọn 4 chai cho Combo 01
           </h1>
-          <p className="text-text-muted text-sm md:text-[15px] mt-1">
+          <p className="text-text-muted text-sm md:text-base mt-1">
             Tự do chọn 4 chai bất kỳ trong 12 thức uống bên dưới — Giá trọn gói chỉ{' '}
-            <strong className="text-text-dark text-[1.125em]">{formatPrice(COMBO_01_PRICE)}đ</strong>
+            <strong className="text-text-dark text-emph">{formatPrice(COMBO_01_PRICE)}đ</strong>
           </p>
         </div>
 
@@ -338,7 +338,7 @@ function Combo01View() {
                       key={`slot-${index}-${product.id}`}
                       className="relative rounded-2xl border-2 border-forest-800 bg-ivory p-3 flex flex-col items-center justify-between text-center min-h-[145px] shadow-xs group transition-all"
                     >
-                      <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-forest-800 text-white text-[12px] flex items-center justify-center shadow-xs">
+                      <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-forest-800 text-white text-xs flex items-center justify-center shadow-xs">
                         {index + 1}
                       </span>
 
@@ -351,7 +351,7 @@ function Combo01View() {
                         <X className="w-3 h-3" />
                       </button>
 
-                      <div className="relative w-16 h-20 my-1">
+                      <div className="relative w-20 h-[60px] my-1">
                         <Image
                           src={product.thumbnail}
                           alt={product.name}
@@ -365,7 +365,7 @@ function Combo01View() {
                         <p className="text-sm text-text-dark leading-tight">
                           {product.name}
                         </p>
-                        <span className="text-[11px] text-emerald-700">Đã chọn</span>
+                        <span className="text-2xs text-emerald-700">Đã chọn</span>
                       </div>
                     </div>
                   );
@@ -376,14 +376,14 @@ function Combo01View() {
                     key={`slot-empty-${index}`}
                     className="relative rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/60 p-3 flex flex-col items-center justify-center text-center min-h-[145px] transition-all"
                   >
-                    <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-gray-200 text-gray-500 text-[12px] flex items-center justify-center">
+                    <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-gray-200 text-gray-500 text-xs flex items-center justify-center">
                       {index + 1}
                     </span>
                     <div className="w-8 h-8 rounded-full bg-gray-200/80 flex items-center justify-center text-gray-400 mb-2">
                       <Plus className="w-4 h-4" />
                     </div>
                     <span className="text-sm text-gray-400">Chai {index + 1}</span>
-                    <span className="text-[10px] text-gray-400">Chọn bên dưới</span>
+                    <span className="text-2xs text-gray-400">Chọn bên dưới</span>
                   </div>
                 );
               })}
@@ -394,7 +394,7 @@ function Combo01View() {
             <div>
               <div className="flex items-center justify-between text-sm text-text-dark mb-1.5">
                 <span>Tiến độ hoàn tất Combo</span>
-                <span className="text-emerald-700 text-[1.125em]">{totalSelected} / {COMBO_01_TARGET} chai</span>
+                <span className="text-emerald-700 text-emph">{totalSelected} / {COMBO_01_TARGET} chai</span>
               </div>
               <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden mb-3">
                 <div
@@ -406,12 +406,12 @@ function Combo01View() {
               {totalSelected < COMBO_01_TARGET ? (
                 <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/70 text-amber-800 text-xs flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span>Vui lòng chọn thêm <strong className="text-[1.125em]">{COMBO_01_TARGET - totalSelected} chai</strong> nữa để đủ 4 chai cho combo.</span>
+                  <span>Vui lòng chọn thêm <strong className="text-emph">{COMBO_01_TARGET - totalSelected} chai</strong> nữa để đủ 4 chai cho combo.</span>
                 </div>
               ) : (
                 <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="text-[1.125em]">Đã đủ 4 chai! Bạn có thể thêm ngay vào giỏ hàng.</span>
+                  <span className="text-emph">Đã đủ 4 chai! Bạn có thể thêm ngay vào giỏ hàng.</span>
                 </div>
               )}
             </div>
@@ -483,12 +483,12 @@ function Combo01View() {
                 )}
 
                 <div>
-                  <div className="relative w-full aspect-square mb-3 bg-ivory rounded-xl p-2 flex items-center justify-center overflow-hidden">
+                  <div className="relative w-full aspect-[4/3] mb-3 bg-white border border-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
                     <Image
                       src={prod.thumbnail}
                       alt={prod.name}
                       fill
-                      className="object-contain p-2 transition-transform"
+                      className="object-contain transition-transform"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </div>
@@ -504,11 +504,11 @@ function Combo01View() {
                       {formatPrice(prod.price)}đ
                     </span>
                     {isOutOfStock ? (
-                      <span className="text-[12px] text-red-700 bg-red-50 px-1.5 py-0.5 rounded">
+                      <span className="text-xs text-red-700 bg-red-50 px-1.5 py-0.5 rounded">
                         Hết hàng tại kho
                       </span>
                     ) : (
-                      <span className="text-[12px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      <span className="text-xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
                         Gói Combo
                       </span>
                     )}
@@ -752,7 +752,7 @@ function Combo02View() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl text-forest-950 font-heading tracking-tight">
             Combo khám phá thức uống đa dạng, trải nghiệm hương vị mới gồm sữa hạt, nước giải khát và trà sữa (10 chai)
           </h1>
-          <p className="text-text-muted text-sm md:text-[15px] mt-1.5 max-w-2xl">
+          <p className="text-text-muted text-sm md:text-base mt-1.5 max-w-2xl">
             Thành phần tự nhiên, kết hợp hài hòa giữa dinh dưỡng từ hạt và sự thanh mát, phù hợp để dùng thử và khám phá đa dạng các dòng đồ uống.
           </p>
         </div>
@@ -799,11 +799,11 @@ function Combo02View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-forest-800 text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-forest-800 text-white text-xs">
                 1. Chủ đạo • 5 chai
               </span>
               {currentStep === 1 && (
-                <span className="text-[11px] text-forest-800 bg-emerald-100 px-1.5 py-0.2 rounded-full">
+                <span className="text-2xs text-forest-800 bg-emerald-100 px-1.5 py-0.2 rounded-full">
                   Đang chọn
                 </span>
               )}
@@ -824,7 +824,7 @@ function Combo02View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={selectedStep1Obj.image}
                     alt={selectedStep1Obj.name}
@@ -848,7 +848,7 @@ function Combo02View() {
                   <Plus className="w-5 h-5" />
                 </div>
                 <p className="text-sm text-gray-500">Chưa chọn món chủ đạo</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Bấm vào để chọn (5 chai)</p>
+                <p className="text-2xs text-gray-400 mt-0.5">Bấm vào để chọn (5 chai)</p>
               </div>
             )}
           </div>
@@ -865,11 +865,11 @@ function Combo02View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-brand-emerald text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-brand-emerald text-white text-xs">
                 2. Bổ trợ • 3 chai
               </span>
               {currentStep === 2 && (
-                <span className="text-[11px] text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded-full">
+                <span className="text-2xs text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded-full">
                   Đang chọn
                 </span>
               )}
@@ -889,7 +889,7 @@ function Combo02View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={selectedStep2Obj.image}
                     alt={selectedStep2Obj.name}
@@ -913,7 +913,7 @@ function Combo02View() {
                   <Plus className="w-5 h-5" />
                 </div>
                 <p className="text-sm text-gray-500">Chưa chọn món bổ trợ</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">
+                <p className="text-2xs text-gray-400 mt-0.5">
                   {step1 ? 'Bấm vào để chọn (3 chai)' : 'Chọn bước 1 trước'}
                 </p>
               </div>
@@ -932,11 +932,11 @@ function Combo02View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-teal-700 text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-teal-700 text-white text-xs">
                 3. Trà thạch • 2 chai
               </span>
               {currentStep === 3 && (
-                <span className="text-[11px] text-teal-800 bg-teal-100 px-1.5 py-0.2 rounded-full">
+                <span className="text-2xs text-teal-800 bg-teal-100 px-1.5 py-0.2 rounded-full">
                   Đang chọn
                 </span>
               )}
@@ -956,7 +956,7 @@ function Combo02View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={selectedStep3Obj.image}
                     alt={selectedStep3Obj.name}
@@ -980,7 +980,7 @@ function Combo02View() {
                   <Plus className="w-5 h-5" />
                 </div>
                 <p className="text-sm text-gray-500">Chưa chọn trà thạch</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Bấm vào để chọn (2 chai)</p>
+                <p className="text-2xs text-gray-400 mt-0.5">Bấm vào để chọn (2 chai)</p>
               </div>
             )}
           </div>
@@ -1003,7 +1003,7 @@ function Combo02View() {
           )}
         >
           <span className={cn(
-            'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+            'w-5 h-5 rounded-full text-xs flex items-center justify-center',
             currentStep === 1 ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
           )}>
             1
@@ -1023,7 +1023,7 @@ function Combo02View() {
           )}
         >
           <span className={cn(
-            'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+            'w-5 h-5 rounded-full text-xs flex items-center justify-center',
             currentStep === 2 ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
           )}>
             2
@@ -1043,7 +1043,7 @@ function Combo02View() {
           )}
         >
           <span className={cn(
-            'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+            'w-5 h-5 rounded-full text-xs flex items-center justify-center',
             currentStep === 3 ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
           )}>
             3
@@ -1066,7 +1066,7 @@ function Combo02View() {
                 </h3>
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                Nhấn chọn 1 loại bên dưới — Sau khi nhấn sẽ <strong className="text-[1.125em]">tự động chuyển sang Bước 2</strong>
+                Nhấn chọn 1 loại bên dưới — Sau khi nhấn sẽ <strong className="text-emph">tự động chuyển sang Bước 2</strong>
               </p>
             </div>
             <span
@@ -1094,18 +1094,18 @@ function Combo02View() {
                   )}
                 >
                   {item.badge && (
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[12px]">
+                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs">
                       {item.badge}
                     </span>
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1169,7 +1169,7 @@ function Combo02View() {
               <div className="flex items-center gap-2 text-emerald-900">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>
-                  Đã chọn: <strong className="text-[1.125em]">{selectedStep1Obj?.name}</strong> (5 chai). Đang mở danh sách bổ trợ phù hợp nhất:
+                  Đã chọn: <strong className="text-emph">{selectedStep1Obj?.name}</strong> (5 chai). Đang mở danh sách bổ trợ phù hợp nhất:
                 </span>
               </div>
               <button
@@ -1205,7 +1205,7 @@ function Combo02View() {
                 </h3>
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                Nhấn chọn 1 loại bên dưới — Sau khi nhấn sẽ <strong className="text-[1.125em]">tự động chuyển sang Bước 3</strong>
+                Nhấn chọn 1 loại bên dưới — Sau khi nhấn sẽ <strong className="text-emph">tự động chuyển sang Bước 3</strong>
               </p>
             </div>
             <span
@@ -1233,18 +1233,18 @@ function Combo02View() {
                   )}
                 >
                   {item.badge && (
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[12px]">
+                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs">
                       {item.badge}
                     </span>
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1349,18 +1349,18 @@ function Combo02View() {
                   )}
                 >
                   {item.badge && (
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[12px]">
+                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-xs">
                       {item.badge}
                     </span>
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 50vw"
                       />
                     </div>
@@ -1432,7 +1432,7 @@ function Combo02View() {
                 <span className="text-xs text-gray-400 line-through">
                   {formatPrice(COMBO_02_ORIGINAL_PRICE)}đ
                 </span>
-                <span className="text-[12px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                <span className="text-xs text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
                   Tiết kiệm 20.000đ
                 </span>
               </div>
@@ -1581,7 +1581,7 @@ function Combo05View() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl text-forest-950 font-heading tracking-tight">
             Combo siêu hời tiết kiệm, tích trữ thông minh cho gia đình (17 chai)
           </h1>
-          <p className="text-text-muted text-sm md:text-[15px] mt-1.5 max-w-2xl">
+          <p className="text-text-muted text-sm md:text-base mt-1.5 max-w-2xl">
             Gồm 10 chai cùng loại + 5 chai sản phẩm khác, tặng thêm 2 chai. Lựa chọn hoàn hảo để dự trữ trong tủ lạnh cho nhu cầu sử dụng thường xuyên.
           </p>
         </div>
@@ -1627,11 +1627,11 @@ function Combo05View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-forest-800 text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-forest-800 text-white text-xs">
                 1. Sản phẩm A • 10 chai
               </span>
               {currentStep === 'A' && (
-                <span className="text-[11px] text-forest-800 bg-emerald-100 px-1.5 py-0.2 rounded-full">
+                <span className="text-2xs text-forest-800 bg-emerald-100 px-1.5 py-0.2 rounded-full">
                   Đang chọn
                 </span>
               )}
@@ -1651,7 +1651,7 @@ function Combo05View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={prodA.thumbnail}
                     alt={prodA.name}
@@ -1675,7 +1675,7 @@ function Combo05View() {
                   <Plus className="w-5 h-5" />
                 </div>
                 <p className="text-sm text-gray-500">Chưa chọn sản phẩm A</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Bấm vào để chọn (10 chai)</p>
+                <p className="text-2xs text-gray-400 mt-0.5">Bấm vào để chọn (10 chai)</p>
               </div>
             )}
           </div>
@@ -1692,11 +1692,11 @@ function Combo05View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-teal-700 text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-teal-700 text-white text-xs">
                 2. Sản phẩm B • 5 chai
               </span>
               {currentStep === 'B' && (
-                <span className="text-[11px] text-teal-800 bg-teal-100 px-1.5 py-0.2 rounded-full">
+                <span className="text-2xs text-teal-800 bg-teal-100 px-1.5 py-0.2 rounded-full">
                   Đang chọn
                 </span>
               )}
@@ -1716,7 +1716,7 @@ function Combo05View() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={prodB.thumbnail}
                     alt={prodB.name}
@@ -1740,7 +1740,7 @@ function Combo05View() {
                   <Plus className="w-5 h-5" />
                 </div>
                 <p className="text-sm text-gray-500">Chưa chọn sản phẩm B</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Bấm vào để chọn (5 chai)</p>
+                <p className="text-2xs text-gray-400 mt-0.5">Bấm vào để chọn (5 chai)</p>
               </div>
             )}
           </div>
@@ -1756,13 +1756,13 @@ function Combo05View() {
                 : 'border-dashed border-amber-300 bg-amber-50/30 hover:border-amber-400'
             )}
           >
-            <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-[12px] shadow-xs">
+            <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-xs shadow-xs">
               <span>TẶNG THÊM 2 CHAI B</span>
             </div>
 
             {prodB ? (
               <>
-                <div className="relative w-20 h-24 my-2">
+                <div className="relative w-24 h-[72px] my-2">
                   <Image
                     src={prodB.thumbnail}
                     alt={prodB.name}
@@ -1770,7 +1770,7 @@ function Combo05View() {
                     className="object-contain"
                     sizes="90px"
                   />
-                  <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-sale text-white text-[11px] shadow-xs">
+                  <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-sale text-white text-2xs shadow-xs">
                     x2 chai
                   </span>
                 </div>
@@ -1786,7 +1786,7 @@ function Combo05View() {
             ) : (
               <div className="my-auto py-6">
                 <p className="text-sm text-amber-900">Quà tặng 2 chai B (0đ)</p>
-                <p className="text-[11px] text-amber-700/80 mt-0.5">Tự động tặng khi bạn chọn sản phẩm B</p>
+                <p className="text-2xs text-amber-700/80 mt-0.5">Tự động tặng khi bạn chọn sản phẩm B</p>
               </div>
             )}
           </div>
@@ -1809,7 +1809,7 @@ function Combo05View() {
           )}
         >
           <span className={cn(
-            'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+            'w-5 h-5 rounded-full text-xs flex items-center justify-center',
             currentStep === 'A' ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
           )}>
             1
@@ -1829,7 +1829,7 @@ function Combo05View() {
           )}
         >
           <span className={cn(
-            'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+            'w-5 h-5 rounded-full text-xs flex items-center justify-center',
             currentStep === 'B' ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
           )}>
             2
@@ -1852,7 +1852,7 @@ function Combo05View() {
                 </h3>
               </div>
               <p className="text-xs text-text-muted mt-0.5">
-                Nhấn chọn 1 thức uống bên dưới — Sau khi nhấn xong sẽ <strong className="text-[1.125em]">tự động chuyển tab qua chọn sản phẩm B ngay</strong>
+                Nhấn chọn 1 thức uống bên dưới — Sau khi nhấn xong sẽ <strong className="text-emph">tự động chuyển tab qua chọn sản phẩm B ngay</strong>
               </p>
             </div>
             <span
@@ -1880,25 +1880,25 @@ function Combo05View() {
                   )}
                 >
                   {isSelected && (
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-forest-800 text-white text-[12px] shadow-xs">
+                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-forest-800 text-white text-xs shadow-xs">
                       ✓ Đang chọn 10 chai
                     </span>
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={prod.thumbnail}
                         alt={prod.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 25vw"
                       />
                     </div>
                     <h4 className="text-text-dark text-base mb-0.5">
                       {prod.name}
                     </h4>
-                    <p className="text-[11px] text-text-muted mb-2">
+                    <p className="text-2xs text-text-muted mb-2">
                       {PRODUCT_SUBTITLES[prod.id] || prod.volume || '330ml'}
                     </p>
                   </div>
@@ -1955,7 +1955,7 @@ function Combo05View() {
               <div className="flex items-center gap-2 text-emerald-900">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>
-                  Đã chọn A: <strong className="text-[1.125em]">{prodA.name}</strong> (10 chai). Giờ hãy chọn <strong className="text-[1.125em]">sản phẩm B</strong> bên dưới để nhận thêm 2 chai B miễn phí!
+                  Đã chọn A: <strong className="text-emph">{prodA.name}</strong> (10 chai). Giờ hãy chọn <strong className="text-emph">sản phẩm B</strong> bên dưới để nhận thêm 2 chai B miễn phí!
                 </span>
               </div>
               <button
@@ -2024,33 +2024,33 @@ function Combo05View() {
                 >
                   {/* Badge trạng thái */}
                   {isSameAsA ? (
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 text-[11px]">
+                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 text-2xs">
                       Trùng với A
                     </span>
                   ) : isSelected ? (
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-[11px] shadow-xs">
+                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-2xs shadow-xs">
                       ✓ Đã chọn (5+2 tặng)
                     </span>
                   ) : (
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px]">
+                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-2xs">
                       Tặng thêm 2
                     </span>
                   )}
 
                   <div>
-                    <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                       <Image
                         src={prod.thumbnail}
                         alt={prod.name}
                         fill
-                        className="object-contain p-1 transition-transform"
+                        className="object-contain transition-transform"
                         sizes="(max-width: 640px) 100vw, 25vw"
                       />
                     </div>
                     <h4 className="text-text-dark text-base mb-0.5">
                       {prod.name}
                     </h4>
-                    <p className="text-[11px] text-text-muted mb-2">
+                    <p className="text-2xs text-text-muted mb-2">
                       {PRODUCT_SUBTITLES[prod.id] || prod.volume || '330ml'}
                     </p>
                   </div>
@@ -2118,7 +2118,7 @@ function Combo05View() {
                 <span className="text-xs text-gray-400 line-through">
                   {formatPrice(marketPrice)}đ
                 </span>
-                <span className="text-[12px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                <span className="text-xs text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
                   Tặng 2 chai
                 </span>
               </div>
@@ -2295,7 +2295,7 @@ function Combo06View() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl text-forest-950 font-heading tracking-tight">
             Combo giảm giá bậc thang mua nhiều giảm sâu, tùy chọn hương vị theo sở thích của mình
           </h1>
-          <p className="text-text-muted text-sm md:text-[15px] mt-1.5 max-w-2xl">
+          <p className="text-text-muted text-sm md:text-base mt-1.5 max-w-2xl">
             Gói ưu đãi thiết kế theo 3 mức giá khác nhau (10 chai giá 18.000đ, 10 chai sau giá 15.000đ, 10 chai tiếp giá 12.000đ)
           </p>
         </div>
@@ -2372,7 +2372,7 @@ function Combo06View() {
 
             <div className="pt-3 border-t border-gray-100 flex items-baseline justify-between mt-2">
               <span className="text-xs text-text-muted">
-                Giá trung bình: <strong className="text-emerald-800 text-[1.125em]">16.500đ/chai</strong>
+                Giá trung bình: <strong className="text-emerald-800 text-emph">16.500đ/chai</strong>
               </span>
               <div className="text-right">
                 <span className="text-xs text-gray-400 line-through mr-1.5">360.000đ</span>
@@ -2406,13 +2406,13 @@ function Combo06View() {
                   </span>
                   <h3 className="text-xl text-text-dark flex items-center gap-2">
                     <span>Gói 30 chai</span>
-                    <span className="text-[11px] uppercase px-2 py-0.5 rounded-full bg-sale text-white shadow-xs">
+                    <span className="text-2xs uppercase px-2 py-0.5 rounded-full bg-sale text-white shadow-xs">
                       Siêu hời
                     </span>
                   </h3>
                 </div>
                 <p className="text-xs text-text-muted mt-1 ml-7">
-                  10 chai đầu x 18.000đ + 10 chai tiếp theo x 15.000đ + <strong className="text-[1.125em]">10 chai tiếp theo chỉ 12.000đ/chai</strong>
+                  10 chai đầu x 18.000đ + 10 chai tiếp theo x 15.000đ + <strong className="text-emph">10 chai tiếp theo chỉ 12.000đ/chai</strong>
                 </p>
               </div>
 
@@ -2423,7 +2423,7 @@ function Combo06View() {
 
             <div className="pt-3 border-t border-gray-100 flex items-baseline justify-between mt-2">
               <span className="text-xs text-text-muted">
-                Giá trung bình: <strong className="text-sale text-[1.125em]">15.000đ/chai</strong> (Giảm sâu)
+                Giá trung bình: <strong className="text-sale text-emph">15.000đ/chai</strong> (Giảm sâu)
               </span>
               <div className="text-right">
                 <span className="text-xs text-gray-400 line-through mr-1.5">540.000đ</span>
@@ -2501,17 +2501,17 @@ function Combo06View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-forest-800 text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-forest-800 text-white text-xs">
                 1. Đợt 1 • 10 chai
               </span>
               {!isSameFlavor && activeSlot === 1 && (
-                <span className="text-[11px] text-forest-800 bg-emerald-100 px-1.5 py-0.2 rounded-full">
+                <span className="text-2xs text-forest-800 bg-emerald-100 px-1.5 py-0.2 rounded-full">
                   Đang chọn
                 </span>
               )}
             </div>
 
-            <div className="relative w-20 h-24 my-2">
+            <div className="relative w-24 h-[72px] my-2">
               <Image
                 src={prod1.thumbnail}
                 alt={prod1.name}
@@ -2536,17 +2536,17 @@ function Combo06View() {
             )}
           >
             <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-              <span className="px-2 py-0.5 rounded-full bg-emerald-700 text-white text-[12px]">
+              <span className="px-2 py-0.5 rounded-full bg-emerald-700 text-white text-xs">
                 2. Đợt 2 • 10 chai
               </span>
               {!isSameFlavor && activeSlot === 2 && (
-                <span className="text-[11px] text-emerald-800 bg-emerald-200 px-1.5 py-0.2 rounded-full">
+                <span className="text-2xs text-emerald-800 bg-emerald-200 px-1.5 py-0.2 rounded-full">
                   Đang chọn
                 </span>
               )}
             </div>
 
-            <div className="relative w-20 h-24 my-2">
+            <div className="relative w-24 h-[72px] my-2">
               <Image
                 src={prod2.thumbnail}
                 alt={prod2.name}
@@ -2572,17 +2572,17 @@ function Combo06View() {
               )}
             >
               <div className="flex items-center gap-1 absolute top-2.5 left-2.5">
-                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-[12px]">
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-xs">
                   3. Đợt 3 • 10 chai
                 </span>
                 {!isSameFlavor && activeSlot === 3 && (
-                  <span className="text-[11px] text-amber-900 bg-amber-200 px-1.5 py-0.2 rounded-full">
+                  <span className="text-2xs text-amber-900 bg-amber-200 px-1.5 py-0.2 rounded-full">
                     Đang chọn
                   </span>
                 )}
               </div>
 
-              <div className="relative w-20 h-24 my-2">
+              <div className="relative w-24 h-[72px] my-2">
                 <Image
                   src={prod3.thumbnail}
                   alt={prod3.name}
@@ -2600,13 +2600,13 @@ function Combo06View() {
               }}
               className="relative rounded-2xl p-4 flex flex-col items-center text-center justify-between min-h-[180px] border-2 border-dashed border-amber-400 bg-gradient-to-b from-amber-50/60 to-amber-100/40 hover:border-amber-500 hover:shadow-xs transition-all cursor-pointer select-none"
             >
-              <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-[12px] shadow-xs">
+              <div className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500 text-ink-950 text-xs shadow-xs">
                 <span>NÂNG CẤP GÓI 30 CHAI</span>
               </div>
 
               <div className="my-auto py-6">
                 <p className="text-sm text-amber-900">Thêm 10 chai chỉ 12.000đ/chai</p>
-                <p className="text-[11px] text-amber-700/90 mt-0.5">Bấm để nâng cấp lên 30 chai (Tiết kiệm 90.000đ)</p>
+                <p className="text-2xs text-amber-700/90 mt-0.5">Bấm để nâng cấp lên 30 chai (Tiết kiệm 90.000đ)</p>
               </div>
             </div>
           )}
@@ -2630,7 +2630,7 @@ function Combo06View() {
             )}
           >
             <span className={cn(
-              'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+              'w-5 h-5 rounded-full text-xs flex items-center justify-center',
               activeSlot === 1 ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
             )}>
               1
@@ -2650,7 +2650,7 @@ function Combo06View() {
             )}
           >
             <span className={cn(
-              'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+              'w-5 h-5 rounded-full text-xs flex items-center justify-center',
               activeSlot === 2 ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
             )}>
               2
@@ -2671,7 +2671,7 @@ function Combo06View() {
               )}
             >
               <span className={cn(
-                'w-5 h-5 rounded-full text-[12px] flex items-center justify-center',
+                'w-5 h-5 rounded-full text-xs flex items-center justify-center',
                 activeSlot === 3 ? 'bg-white/20 text-white' : 'bg-gray-300 text-gray-700'
               )}>
                 3
@@ -2736,32 +2736,32 @@ function Combo06View() {
               >
                 {/* Badge trạng thái */}
                 {isSelectedForCombo && (
-                  <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-forest-800 text-white text-[12px] shadow-xs">
+                  <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-forest-800 text-white text-xs shadow-xs">
                     ✓ Đang chọn
                   </span>
                 )}
 
                 <div>
-                  <div className="relative w-full aspect-square mb-2.5 bg-white rounded-xl p-2 flex items-center justify-center">
+                  <div className="relative w-full aspect-[4/3] mb-2.5 bg-white border border-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
                     <Image
                       src={prod.thumbnail}
                       alt={prod.name}
                       fill
-                      className="object-contain p-1 transition-transform"
+                      className="object-contain transition-transform"
                       sizes="(max-width: 640px) 100vw, 25vw"
                     />
                   </div>
                   <h4 className="text-text-dark text-base mb-0.5">
                     {prod.name}
                   </h4>
-                  <p className="text-[11px] text-text-muted mb-2">
+                  <p className="text-2xs text-text-muted mb-2">
                     {PRODUCT_SUBTITLES[prod.id] || prod.volume || '330ml'}
                   </p>
                 </div>
 
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-gray-400 block">Đơn giá gốc:</span>
+                    <span className="text-2xs text-gray-400 block">Đơn giá gốc:</span>
                     <span className="text-sm text-text-muted line-through">
                       18.000đ/chai
                     </span>
@@ -2830,7 +2830,7 @@ function Combo06View() {
                 <span className="text-xs text-gray-400 line-through">
                   {formatPrice(marketPrice)}đ
                 </span>
-                <span className="text-[12px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                <span className="text-xs text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
                   Tiết kiệm {formatPrice(savings)}đ
                 </span>
               </div>
@@ -2929,7 +2929,7 @@ function ComboContent() {
               <div className="flex items-center gap-2 text-emerald-950 font-medium truncate">
                 <MapPin className="w-4 h-4 text-emerald-700 shrink-0" />
                 <span className="truncate">
-                  Đang chọn món tại kho: <strong className="text-[1.125em]">{selectedBranch?.name || 'Chi nhánh'}</strong> {selectedBranch?.address ? `(${selectedBranch.address})` : ''}
+                  Đang chọn món tại kho: <strong className="text-emph">{selectedBranch?.name || 'Chi nhánh'}</strong> {selectedBranch?.address ? `(${selectedBranch.address})` : ''}
                 </span>
               </div>
               <button

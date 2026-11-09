@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Info,
 } from 'lucide-react';
+import { showAlert } from '@/components/ui/AppDialog';
 
 type EmailTab = 'confirmation' | 'shipping' | 'completed';
 
@@ -119,7 +120,7 @@ export default function EmailTestingStudio() {
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!testEmail || !testEmail.includes('@')) {
-      alert('Vui lòng nhập địa chỉ email hợp lệ!');
+      showAlert('Vui lòng nhập địa chỉ email hợp lệ!', { tone: 'warning' });
       return;
     }
 
@@ -165,7 +166,7 @@ export default function EmailTestingStudio() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <h1 className="text-5xl text-slate-800 mb-2">404</h1>
+          <h1 className="text-4xl text-slate-800 mb-2">404</h1>
           <p className="text-slate-600 font-medium mb-4">Trang không tồn tại hoặc đã bị vô hiệu hóa.</p>
           <Link
             href="/"
@@ -270,7 +271,7 @@ export default function EmailTestingStudio() {
                       {conf.icon}
                     </div>
                     <span
-                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                      className={`inline-block px-1.5 py-0.5 rounded text-2xs font-medium ${
                         isActive
                           ? 'bg-emerald-100 text-emerald-800'
                           : 'bg-slate-100 text-slate-600'
@@ -287,7 +288,7 @@ export default function EmailTestingStudio() {
           {/* Email Info Bar */}
           <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 flex-1 min-w-[260px]">
-              <span className="text-slate-500 whitespace-nowrap text-[1.125em]">Tiêu đề gửi:</span>
+              <span className="text-slate-500 whitespace-nowrap text-emph">Tiêu đề gửi:</span>
               <span className="font-medium text-slate-800 bg-white px-2.5 py-1 rounded-md border border-slate-200 truncate select-all">
                 {currentTab.subject}
               </span>
@@ -368,7 +369,7 @@ export default function EmailTestingStudio() {
           {/* Card: Test Send Controller */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-[1.125em]">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-emph">
                 <Send className="w-4 h-4" />
               </div>
               <h2 className="text-base text-slate-900">
@@ -378,7 +379,7 @@ export default function EmailTestingStudio() {
 
             <p className="text-xs text-slate-500 mb-4 leading-relaxed">
               Nhập email thực tế của bạn để gửi mẫu thư đang chọn (
-              <span className="text-emerald-800 text-[1.125em]">{currentTab.title}</span>).
+              <span className="text-emerald-800 text-emph">{currentTab.title}</span>).
             </p>
 
             <form onSubmit={handleSendTest} className="space-y-3">
@@ -431,12 +432,12 @@ export default function EmailTestingStudio() {
                     <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   )}
                   <div>
-                    <div className="mb-0.5 text-[1.125em]">
+                    <div className="mb-0.5 text-emph">
                       {sendResult.success ? 'Gửi thành công!' : 'Chưa gửi được'}
                     </div>
                     <div>{sendResult.message}</div>
                     {sendResult.provider && (
-                      <div className="mt-1 font-mono text-[10px] text-slate-500">
+                      <div className="mt-1 font-mono text-2xs text-slate-500">
                         Cổng phát: {sendResult.provider}
                       </div>
                     )}
@@ -448,12 +449,12 @@ export default function EmailTestingStudio() {
 
           {/* Card: Configuration Note */}
           <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-900">
-            <div className="flex items-center gap-1.5 mb-1.5 text-[1.125em]">
+            <div className="flex items-center gap-1.5 mb-1.5 text-emph">
               <Info className="w-4 h-4 text-amber-700" />
               Lưu ý về môi trường:
             </div>
-            <p className="text-[11px] leading-relaxed text-amber-800">
-              Hiện tại nếu bạn chưa điền <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">RESEND_API_KEY</code> hoặc tài khoản Gmail SMTP trong file <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">.env</code>, hệ thống chạy ở chế độ <strong className="text-[1.125em]">MOCK Development</strong> (ghi lưu vết trực tiếp vào cơ sở dữ liệu PostgreSQL bên dưới mà không lo phát sinh lỗi).
+            <p className="text-2xs leading-relaxed text-amber-800">
+              Hiện tại nếu bạn chưa điền <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">RESEND_API_KEY</code> hoặc tài khoản Gmail SMTP trong file <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-950 font-mono">.env</code>, hệ thống chạy ở chế độ <strong className="text-emph">MOCK Development</strong> (ghi lưu vết trực tiếp vào cơ sở dữ liệu PostgreSQL bên dưới mà không lo phát sinh lỗi).
             </p>
           </div>
 
@@ -469,7 +470,7 @@ export default function EmailTestingStudio() {
               <button
                 onClick={fetchLogs}
                 disabled={loadingLogs}
-                className="text-[11px] text-forest-800 hover:underline flex items-center gap-1"
+                className="text-2xs text-forest-800 hover:underline flex items-center gap-1"
               >
                 <RefreshCw className={`w-3 h-3 ${loadingLogs ? 'animate-spin' : ''}`} />
                 Làm mới
@@ -485,11 +486,11 @@ export default function EmailTestingStudio() {
                 logs.map((log) => (
                   <div key={log.id} className="py-2.5 text-xs">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-slate-800 truncate text-[1.125em]">
+                      <span className="text-slate-800 truncate text-emph">
                         {log.recipient}
                       </span>
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[11px] ${
+                        className={`px-1.5 py-0.5 rounded text-2xs ${
                           log.status === 'SENT'
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-rose-100 text-rose-800'
@@ -498,10 +499,10 @@ export default function EmailTestingStudio() {
                         {log.status} • {log.provider}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-600 truncate mb-0.5">
+                    <div className="text-2xs text-slate-600 truncate mb-0.5">
                       {log.subject}
                     </div>
-                    <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                    <div className="text-2xs text-slate-400 flex items-center justify-between">
                       <span>Đơn: #{log.order_code || '---'}</span>
                       <span>{new Date(log.created_at).toLocaleTimeString('vi-VN')}</span>
                     </div>

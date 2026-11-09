@@ -6,8 +6,8 @@ import { getClientIp, UNKNOWN_CLIENT_IP, isCookieSecure } from '@/lib/runtimeCon
 
 export const dynamic = 'force-dynamic';
 
-// Quy tắc mật khẩu an toàn: >= 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
+// Quy tắc mật khẩu: >= 8 ký tự, có ít nhất 1 chữ cái và 1 chữ số (ký tự đặc biệt như @ được phép, không bắt buộc)
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
 function stripHtmlTags(input: string): string {
   return input.replace(/<[^>]*>?/gm, '').trim();
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt (VD: MyPass@123)',
+          error: 'Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ và số (VD: thaison123)',
         },
         { status: 400 }
       );

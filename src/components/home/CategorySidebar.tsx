@@ -116,7 +116,7 @@ export default function CategorySidebar() {
             {/* Tiêu đề nhóm danh mục: Font đậm, sắc nét, tương phản cao */}
             <div className="flex items-center gap-2 pb-2 mb-2 border-b border-emerald-900/20">
               <span className="w-1.5 h-4 bg-forest-700 rounded-full shrink-0 shadow-2xs" />
-              <h3 className="text-[16px] uppercase tracking-wider text-forest-950 leading-tight cursor-default select-none">
+              <h3 className="text-base uppercase tracking-wider text-forest-950 leading-tight cursor-default select-none">
                 {categoryTitles[group.title]?.[language] || group.title}
               </h3>
             </div>
@@ -127,7 +127,7 @@ export default function CategorySidebar() {
                 <li key={item.slug}>
                   <Link
                     href={`/san-pham/${item.slug}`}
-                    className="group/item flex items-center justify-between text-[16px] min-[1800px]:text-[16.5px] leading-snug text-forest-950 hover:text-forest-700 py-2 px-2.5 rounded-xl hover:bg-white hover:shadow-xs hover:border hover:border-emerald-200/80 transition-all duration-200"
+                    className="group/item flex items-center justify-between text-base min-[1800px]:text-base leading-snug text-forest-950 hover:text-forest-700 py-2 px-2.5 rounded-xl hover:bg-white hover:shadow-xs hover:border hover:border-emerald-200/80 transition-all duration-200"
                   >
                     <span className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-800/40 group-hover/item:bg-forest-700 group-hover/item:scale-125 transition-all shrink-0" />
@@ -135,7 +135,7 @@ export default function CategorySidebar() {
                         {language === 'en' ? item.nameEn : item.name}
                       </span>
                     </span>
-                    <span className="text-[15px] text-forest-700 opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all shrink-0 ml-1">
+                    <span className="text-base text-forest-700 opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all shrink-0 ml-1">
                       →
                     </span>
                   </Link>

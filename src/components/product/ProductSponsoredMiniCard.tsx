@@ -105,7 +105,7 @@ export default function ProductSponsoredMiniCard({
           {/* Tên sản phẩm */}
           <Link
             href={productLink}
-            className="text-xs sm:text-[13px] font-medium text-gray-900 hover:text-forest-700 transition-colors leading-snug line-clamp-2"
+            className="text-xs sm:text-sm font-medium text-gray-900 hover:text-forest-700 transition-colors leading-snug line-clamp-2"
             title={displayTitle}
           >
             {displayTitle}
@@ -123,23 +123,23 @@ export default function ProductSponsoredMiniCard({
                 />
               ))}
             </div>
-            <span className="text-[11px] text-forest-700 font-medium">
+            <span className="text-2xs text-forest-700 font-medium">
               77
             </span>
             <span className="text-gray-300 text-xs">|</span>
               </>
             )}
-            <span className="text-sm sm:text-[15px] text-gray-900">
+            <span className="text-sm sm:text-base text-gray-900">
               {price.toLocaleString('vi-VN')}₫
             </span>
-            <span className="text-[11px] text-gray-500 font-normal">
+            <span className="text-2xs text-gray-500 font-normal">
               ({unitPrice.toLocaleString('vi-VN')} đ/chai)
             </span>
             {/* Huy hiệu Prime chuẩn Amazon */}
             {!hideUnverifiedStats && (
             <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter ml-auto sm:ml-1">
-              <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
-              <span className="text-forest-700 not-italic text-[12px] font-sans">
+              <span className="text-forest-700 mr-0.5 not-italic text-emph">✓</span>
+              <span className="text-forest-700 not-italic text-xs font-sans">
                 prime
               </span>
             </span>
@@ -154,7 +154,7 @@ export default function ProductSponsoredMiniCard({
             >
               Mua ngay ›
             </Link>
-            <span className="text-[10px] text-gray-400 flex items-center gap-0.5 select-none">
+            <span className="text-2xs text-gray-400 flex items-center gap-0.5 select-none">
               <span>Được tài trợ</span>
               <Info className="w-2.5 h-2.5 text-gray-400" />
             </span>

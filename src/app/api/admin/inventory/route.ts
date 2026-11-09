@@ -94,16 +94,29 @@ export async function GET(req: NextRequest) {
 
     // Nếu là STORE_STAFF, chỉ được xem kho của cửa hàng mình
     const storeScope = getStoreScope(session);
+
+    // Danh sách chi nhánh đang hoạt động: nạp trước để ô "Chọn chi nhánh" luôn có dữ liệu,
+    // kể cả khi chi nhánh đang chọn không hợp lệ.
+    const storeQuery = await query(
+      `SELECT code, name, address, phone, district, province, map_url FROM stores WHERE is_active = true ORDER BY code ASC;`
+    );
+    const activeStores = storeQuery.rows.length > 0 ? storeQuery.rows : STORE_LIST;
+
     if (storeScope) {
       requestedStore = storeScope;
-    } else {
-      // Super admin mặc định xem NH (Vườn Lài - Tân Phú) nếu chưa chọn
-      if (!requestedStore) {
-        requestedStore = 'NH';
-      }
+    } else if (!requestedStore || !storeQuery.rows.some((s: any) => s.code === requestedStore)) {
+      // Super admin: mặc định NH (Vườn Lài - Tân Phú); nếu NH (hoặc mã đang chọn) không có trong bảng stores
+      // thì lấy chi nhánh đang hoạt động đầu tiên, thay vì báo lỗi làm trống cả trang kho.
+      const fallback =
+        storeQuery.rows.find((s: any) => s.code === 'NH')?.code || storeQuery.rows[0]?.code;
+      if (!requestedStore || fallback) requestedStore = fallback || 'NH';
     }
-    const invalidStore = await rejectInvalidStore(requestedStore);
-    if (invalidStore) return invalidStore;
+    const invalidStore = await rejectInvalidStore(requestedStore as string);
+    if (invalidStore) {
+      // Vẫn trả danh sách chi nhánh để giao diện cho chọn lại
+      const body = await invalidStore.json();
+      return NextResponse.json({ ...body, stores: storeScope ? [] : activeStores }, { status: invalidStore.status });
+    }
 
     // Tồn kho lấy từ Google Sheet: đọc lại sheet nếu đã quá chu kỳ trước khi trả số cho admin
     const sheetMode = isSheetInventoryMode();
@@ -146,11 +159,6 @@ export async function GET(req: NextRequest) {
     `;
 
     const res = await query(sql, [requestedStore]);
-
-    const storeQuery = await query(
-      `SELECT code, name, address, phone, district, province, map_url FROM stores WHERE is_active = true ORDER BY code ASC;`
-    );
-    const activeStores = storeQuery.rows.length > 0 ? storeQuery.rows : STORE_LIST;
 
     return NextResponse.json({
       success: true,

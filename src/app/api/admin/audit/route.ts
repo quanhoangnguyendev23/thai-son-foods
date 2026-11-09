@@ -22,6 +22,22 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
+
+    // Xem chi tiết 1 dòng (bấm "Xem thay đổi"): chỉ lúc này mới tải dữ liệu trước/sau, danh sách không kèm
+    const detailId = searchParams.get('id');
+    if (detailId) {
+      const detail = await query(
+        `SELECT id, created_at, admin_id, admin_username, role, action,
+           entity_type, entity_id, store_code, before_json, after_json, ip, user_agent
+         FROM audit_logs WHERE id = $1;`,
+        [detailId]
+      );
+      if (detail.rows.length === 0) {
+        return NextResponse.json({ success: false, error: 'Không tìm thấy dòng nhật ký này (có thể đã quá hạn lưu giữ).' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, data: detail.rows[0] });
+    }
+
     const action = searchParams.get('action');
     const entityType = searchParams.get('entityType');
     const storeCode = searchParams.get('storeCode');
@@ -32,10 +48,11 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '', 10) || 1);
     const offset = (page - 1) * limit;
 
+    // Danh sách không kèm before_json/after_json (có dòng tới vài KB); xem chi tiết qua ?id=
     let sql = `
       SELECT 
         id, created_at, admin_id, admin_username, role, action,
-        entity_type, entity_id, store_code, before_json, after_json, ip, user_agent
+        entity_type, entity_id, store_code, ip, user_agent
       FROM audit_logs
       WHERE 1=1
     `;

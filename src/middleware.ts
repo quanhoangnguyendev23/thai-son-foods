@@ -72,6 +72,35 @@ if (typeof setInterval !== 'undefined') {
   if (t.unref) t.unref();
 }
 
+// /api/geo/*: mỗi lượt gõ có thể kéo theo 1–2 lượt gọi dịch vụ bản đồ công cộng, nên giới hạn riêng theo cửa sổ 10 giây.
+// Khóa CHÍNH là phiên ẩn danh (cookie tsf_geo_sid do trình duyệt tự tạo, chỉ là số ngẫu nhiên); IP chỉ là trần cao hơn vì
+// mạng di động dùng chung IP. Gợi ý khi gõ (autocomplete) và tra ghim (reverse / geocode) có hạn mức riêng. Vượt thì 429,
+// giao diện xử lý như trạng thái "đang chậm". Trạng thái nằm trong bộ nhớ từng instance (như các bộ đếm khác ở file này).
+const GEO_SESSION_COOKIE = 'tsf_geo_sid';
+const GEO_RATE_WINDOW_MS = 10 * 1000;
+const GEO_LIMITS = {
+  suggest: { session: 10, ip: 60 },
+  pin: { session: 6, ip: 30 },
+} as const;
+const geoRateStore = new Map<string, number[]>();
+
+function checkGeoRateLimit(key: string, max: number): { blocked: boolean; retryAfterSec: number } {
+  const now = Date.now();
+  const recent = (geoRateStore.get(key) || []).filter((t) => now - t < GEO_RATE_WINDOW_MS);
+  if (recent.length >= max) {
+    geoRateStore.set(key, recent);
+    return { blocked: true, retryAfterSec: Math.max(1, Math.ceil((recent[0] + GEO_RATE_WINDOW_MS - now) / 1000)) };
+  }
+  recent.push(now);
+  geoRateStore.set(key, recent);
+  if (geoRateStore.size > 5000) {
+    for (const [key, times] of geoRateStore) {
+      if (!times.length || now - times[times.length - 1] >= GEO_RATE_WINDOW_MS) geoRateStore.delete(key);
+    }
+  }
+  return { blocked: false, retryAfterSec: 0 };
+}
+
 function checkGlobalRateLimit(
   ip: string,
   max: number = GLOBAL_MAX_REQUESTS
@@ -234,6 +263,24 @@ export async function middleware(req: NextRequest) {
   // nên vài lần đặt đơn thử / tải trang là tự chặn chính mình (429). Bỏ giới hạn chung trong trường hợp này.
   // Bản build production (npm start) vẫn giữ nguyên giới hạn; các kiểm tra riêng trong route vẫn chạy.
   const skipGlobalLimitInDev = process.env.NODE_ENV !== 'production' && !clientIp;
+  // Giới hạn riêng cho /api/geo/*. Không biết IP khách thì bỏ qua (dùng chung nhóm "unknown" sẽ chặn nhầm mọi khách).
+  // Theo phiên ẩn danh (chính) và theo IP (trần cao hơn; bỏ qua khi không biết IP).
+  if (isApiRoute && pathname.startsWith('/api/geo/')) {
+    const group = pathname.startsWith('/api/geo/autocomplete') ? 'suggest' : 'pin';
+    const limits = GEO_LIMITS[group];
+    const sid = (req.cookies.get(GEO_SESSION_COOKIE)?.value || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+    const checks = [
+      sid ? checkGeoRateLimit(`geo:${group}:sid:${sid}`, limits.session) : null,
+      clientIp ? checkGeoRateLimit(`geo:${group}:ip:${clientIp}`, limits.ip) : null,
+    ].filter((c): c is { blocked: boolean; retryAfterSec: number } => !!c);
+    const hit = checks.find((c) => c.blocked);
+    if (hit) {
+      return NextResponse.json(
+        { success: false, error: 'Bạn thao tác hơi nhanh. Vui lòng chờ một lát rồi thử lại.', code: 'RATE_LIMITED', predictions: [] },
+        { status: 429, headers: { 'Retry-After': String(hit.retryAfterSec), 'X-RateLimit-Remaining': '0' } }
+      );
+    }
+  }
   if (
     !skipGlobalLimitInDev &&
     isApiRoute &&

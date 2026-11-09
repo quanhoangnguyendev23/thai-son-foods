@@ -9,10 +9,60 @@ export const dynamic = 'force-dynamic';
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Biên lợi nhuận chỉ tính trên phần doanh thu CÓ giá vốn (cùng cách tính với tổng quan) — dòng thiếu giá vốn không bị kéo lệch */
-function marginOnCosted(r: { revenue: unknown; profit: unknown; revenue_without_cost?: unknown }): number {
-  const costedRevenue = Number(r.revenue) - Number(r.revenue_without_cost || 0);
-  return costedRevenue > 0 ? Math.round((Number(r.profit) / costedRevenue) * 1000) / 10 : 0;
+/** Ngày/tháng của đơn tính theo giờ Việt Nam (không phụ thuộc múi giờ của máy chủ DB) */
+const LOCAL_TS = `(o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')`;
+
+/** Dòng hàng có snapshot giá vốn lúc đặt đơn */
+const HAS_COST = `COALESCE(oi.cost_price, 0) > 0`;
+
+/**
+ * Các chỉ số dùng chung cho tổng quan và mọi cách nhóm.
+ * Lợi nhuận gộp CHỈ tính trên phần doanh thu có giá vốn: profit = revenue_with_cost - cost.
+ * Phần doanh thu chưa có giá vốn được tách riêng (revenue_without_cost), không cộng vào lợi nhuận.
+ */
+const MEASURES = `
+  COUNT(DISTINCT o.id) AS orders_count,
+  COALESCE(SUM(oi.price * oi.quantity), 0) AS revenue,
+  COALESCE(SUM(CASE WHEN ${HAS_COST} THEN oi.price * oi.quantity ELSE 0 END), 0) AS revenue_with_cost,
+  COALESCE(SUM(CASE WHEN ${HAS_COST} THEN oi.cost_price * oi.quantity ELSE 0 END), 0) AS cost,
+  COALESCE(SUM(CASE WHEN ${HAS_COST} THEN 0 ELSE oi.price * oi.quantity END), 0) AS revenue_without_cost,
+  COUNT(*) FILTER (WHERE ${HAS_COST}) AS items_with_cost,
+  COUNT(*) FILTER (WHERE NOT (${HAS_COST})) AS missing_cost_items
+`;
+
+type MeasureRow = {
+  orders_count?: unknown;
+  revenue: unknown;
+  revenue_with_cost: unknown;
+  cost: unknown;
+  revenue_without_cost: unknown;
+  items_with_cost?: unknown;
+  missing_cost_items?: unknown;
+};
+
+function roundPct(part: number, whole: number): number {
+  return whole > 0 ? Math.round((part / whole) * 1000) / 10 : 0;
+}
+
+/** Chuẩn hoá một dòng kết quả: số cho mọi chỉ số + lợi nhuận, tỷ suất, tỷ lệ doanh thu có giá vốn */
+function normalize<T extends MeasureRow>(r: T) {
+  const revenue = Number(r.revenue) || 0;
+  const revenueWithCost = Number(r.revenue_with_cost) || 0;
+  const cost = Number(r.cost) || 0;
+  const profit = revenueWithCost - cost;
+  return {
+    ...r,
+    orders_count: r.orders_count !== undefined ? Number(r.orders_count) || 0 : undefined,
+    revenue,
+    revenue_with_cost: revenueWithCost,
+    revenue_without_cost: Number(r.revenue_without_cost) || 0,
+    cost,
+    profit,
+    margin: roundPct(profit, revenueWithCost),
+    cost_coverage: roundPct(revenueWithCost, revenue),
+    items_with_cost: Number(r.items_with_cost) || 0,
+    missing_cost_items: Number(r.missing_cost_items) || 0,
+  };
 }
 
 export async function GET(req: NextRequest) {
@@ -31,11 +81,10 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    // Điều kiện lọc chung cho orders: mặc định chỉ tính các đơn hàng đã hoàn tất (COMPLETED), loại bỏ hoàn toàn đơn hủy
+    // Mặc định chỉ tính các đơn đã hoàn tất (COMPLETED), loại bỏ hoàn toàn đơn hủy
     const statusParam = searchParams.get('status');
     const statusFilter = statusParam ? statusParam.toUpperCase() : 'COMPLETED';
 
-    // Kiểm tra tham số đầu vào (tránh lỗi 500 do ép kiểu ngày / trạng thái lạ)
     if (statusFilter !== 'ALL' && !isOrderStatus(statusFilter)) {
       return NextResponse.json({ success: false, error: `Trạng thái không hợp lệ: ${statusFilter}` }, { status: 400 });
     }
@@ -60,181 +109,113 @@ export async function GET(req: NextRequest) {
       whereClauses.push(`o.store_code = $${params.length}`);
     }
 
+    // Lọc ngày theo giờ Việt Nam: [startDate 00:00, endDate + 1 ngày 00:00)
     if (startDate) {
       params.push(startDate);
-      whereClauses.push(`o.created_at >= $${params.length}::timestamp`);
+      whereClauses.push(`${LOCAL_TS} >= $${params.length}::date`);
     }
 
     if (endDate) {
-      params.push(`${endDate} 23:59:59`);
-      whereClauses.push(`o.created_at <= $${params.length}::timestamp`);
+      params.push(endDate);
+      whereClauses.push(`${LOCAL_TS} < ($${params.length}::date + 1)`);
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const fromSql = `FROM orders o JOIN order_items oi ON oi.order_id = o.id`;
 
-    // 1. Thống kê tổng quan (Overall Summary)
-    const summarySql = `
-      SELECT
-        COUNT(DISTINCT o.id) AS total_orders,
-        COALESCE(SUM(oi.price * oi.quantity), 0) AS total_revenue,
-        COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN (oi.cost_price * oi.quantity) ELSE 0 END), 0) AS total_cost,
-        COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN ((oi.price - oi.cost_price) * oi.quantity) ELSE 0 END), 0) AS gross_profit,
-        COUNT(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN 1 END) AS items_with_cost,
-        COUNT(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN 1 END) AS items_without_cost,
-        COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN (oi.price * oi.quantity) ELSE 0 END), 0) AS revenue_without_cost
-      FROM orders o
-      JOIN order_items oi ON oi.order_id = o.id
-      ${whereSql};
-    `;
+    // 1. Tổng quan
+    const summaryRes = await query(`SELECT ${MEASURES} ${fromSql} ${whereSql};`, params);
+    const s = normalize(summaryRes.rows[0] || { revenue: 0, revenue_with_cost: 0, cost: 0, revenue_without_cost: 0 });
 
-    const summaryRes = await query(summarySql, params);
-    const rawSummary = summaryRes.rows[0] || {};
+    // Sản phẩm đang thiếu giá vốn (để biết cần nhập giá vốn cho món nào)
+    const missingRes = await query(
+      `SELECT oi.name,
+              COUNT(*) AS items,
+              COALESCE(SUM(oi.price * oi.quantity), 0) AS revenue
+       ${fromSql}
+       ${whereSql ? `${whereSql} AND` : 'WHERE'} NOT (${HAS_COST})
+       GROUP BY oi.name
+       ORDER BY revenue DESC
+       LIMIT 10;`,
+      params
+    );
+    const missingCostProducts = missingRes.rows.map((r: any) => ({
+      name: r.name,
+      items: Number(r.items) || 0,
+      revenue: Number(r.revenue) || 0,
+    }));
 
-    const totalRevenue = Number(rawSummary.total_revenue) || 0;
-    const totalCost = Number(rawSummary.total_cost) || 0;
-    const grossProfit = Number(rawSummary.gross_profit) || 0;
-    const itemsWithCost = Number(rawSummary.items_with_cost) || 0;
-    const itemsWithoutCost = Number(rawSummary.items_without_cost) || 0;
-    const revenueWithoutCost = Number(rawSummary.revenue_without_cost) || 0;
-    const totalOrders = Number(rawSummary.total_orders) || 0;
-
-    // Doanh thu chỉ tính cho các items đã có giá vốn để tính tỷ suất chính xác
-    const revenueOfCostedItems = totalRevenue - revenueWithoutCost;
-    const marginPercent = revenueOfCostedItems > 0
-      ? Math.round((grossProfit / revenueOfCostedItems) * 1000) / 10
-      : 0;
-
-    // 2. Chi tiết theo tiêu chí phân nhóm (Breakdown)
-    let breakdownRows: any[] = [];
-
+    // 2. Chi tiết theo cách nhóm
+    let breakdownSql: string;
     if (groupBy === 'month') {
-      const monthSql = `
-        SELECT
-          to_char(o.created_at, 'YYYY-MM') AS period,
-          to_char(o.created_at, 'MM/YYYY') AS label,
-          COUNT(DISTINCT o.id) AS orders_count,
-          COALESCE(SUM(oi.price * oi.quantity), 0) AS revenue,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN (oi.cost_price * oi.quantity) ELSE 0 END), 0) AS cost,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN ((oi.price - oi.cost_price) * oi.quantity) ELSE 0 END), 0) AS profit,
-          COUNT(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN 1 END) AS missing_cost_items,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN (oi.price * oi.quantity) ELSE 0 END), 0) AS revenue_without_cost
-        FROM orders o
-        JOIN order_items oi ON oi.order_id = o.id
+      breakdownSql = `
+        SELECT to_char(${LOCAL_TS}, 'YYYY-MM') AS period,
+               to_char(${LOCAL_TS}, 'MM/YYYY') AS label,
+               ${MEASURES}
+        ${fromSql}
         ${whereSql}
         GROUP BY period, label
-        ORDER BY period DESC;
-      `;
-      const res = await query(monthSql, params);
-      breakdownRows = res.rows.map(r => ({
-        ...r,
-        revenue: Number(r.revenue),
-        cost: Number(r.cost),
-        profit: Number(r.profit),
-        orders_count: Number(r.orders_count),
-        missing_cost_items: Number(r.missing_cost_items),
-        margin: marginOnCosted(r),
-      }));
+        ORDER BY period DESC;`;
     } else if (groupBy === 'product') {
-      const productSql = `
-        SELECT
-          COALESCE(oi.canonical_product_id, oi.product_id, 'unassigned') AS product_id,
-          oi.name,
-          COALESCE(SUM(oi.quantity), 0) AS quantity_sold,
-          COALESCE(SUM(oi.price * oi.quantity), 0) AS revenue,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN (oi.cost_price * oi.quantity) ELSE 0 END), 0) AS cost,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN ((oi.price - oi.cost_price) * oi.quantity) ELSE 0 END), 0) AS profit,
-          COUNT(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN 1 END) AS missing_cost_items,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN (oi.price * oi.quantity) ELSE 0 END), 0) AS revenue_without_cost
-        FROM orders o
-        JOIN order_items oi ON oi.order_id = o.id
+      breakdownSql = `
+        SELECT COALESCE(oi.canonical_product_id, oi.product_id, 'unassigned') AS product_id,
+               oi.name,
+               COALESCE(SUM(oi.quantity), 0) AS quantity_sold,
+               ${MEASURES}
+        ${fromSql}
         ${whereSql}
         GROUP BY COALESCE(oi.canonical_product_id, oi.product_id, 'unassigned'), oi.name
-        ORDER BY revenue DESC;
-      `;
-      const res = await query(productSql, params);
-      breakdownRows = res.rows.map(r => ({
-        ...r,
-        quantity_sold: Number(r.quantity_sold),
-        revenue: Number(r.revenue),
-        cost: Number(r.cost),
-        profit: Number(r.profit),
-        missing_cost_items: Number(r.missing_cost_items),
-        margin: marginOnCosted(r),
-      }));
+        ORDER BY revenue DESC;`;
     } else if (groupBy === 'store') {
-      const storeSql = `
-        SELECT
-          COALESCE(o.store_code, 'CHƯA_GÁN') AS store_code,
-          COALESCE(s.name, 'Chưa xác định') AS store_name,
-          COUNT(DISTINCT o.id) AS orders_count,
-          COALESCE(SUM(oi.price * oi.quantity), 0) AS revenue,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN (oi.cost_price * oi.quantity) ELSE 0 END), 0) AS cost,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN ((oi.price - oi.cost_price) * oi.quantity) ELSE 0 END), 0) AS profit,
-          COUNT(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN 1 END) AS missing_cost_items,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN (oi.price * oi.quantity) ELSE 0 END), 0) AS revenue_without_cost
-        FROM orders o
-        JOIN order_items oi ON oi.order_id = o.id
+      breakdownSql = `
+        SELECT COALESCE(o.store_code, 'CHƯA_GÁN') AS store_code,
+               COALESCE(s.name, 'Chưa xác định') AS store_name,
+               ${MEASURES}
+        ${fromSql}
         LEFT JOIN stores s ON s.code = o.store_code
         ${whereSql}
         GROUP BY o.store_code, s.name
-        ORDER BY revenue DESC;
-      `;
-      const res = await query(storeSql, params);
-      breakdownRows = res.rows.map(r => ({
-        ...r,
-        orders_count: Number(r.orders_count),
-        revenue: Number(r.revenue),
-        cost: Number(r.cost),
-        profit: Number(r.profit),
-        missing_cost_items: Number(r.missing_cost_items),
-        margin: marginOnCosted(r),
-      }));
+        ORDER BY revenue DESC;`;
     } else {
-      // Default: 'day'
-      const daySql = `
-        SELECT
-          to_char(o.created_at, 'YYYY-MM-DD') AS period,
-          to_char(o.created_at, 'DD/MM/YYYY') AS label,
-          COUNT(DISTINCT o.id) AS orders_count,
-          COALESCE(SUM(oi.price * oi.quantity), 0) AS revenue,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN (oi.cost_price * oi.quantity) ELSE 0 END), 0) AS cost,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) > 0 THEN ((oi.price - oi.cost_price) * oi.quantity) ELSE 0 END), 0) AS profit,
-          COUNT(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN 1 END) AS missing_cost_items,
-          COALESCE(SUM(CASE WHEN COALESCE(oi.cost_price, 0) <= 0 THEN (oi.price * oi.quantity) ELSE 0 END), 0) AS revenue_without_cost
-        FROM orders o
-        JOIN order_items oi ON oi.order_id = o.id
+      breakdownSql = `
+        SELECT to_char(${LOCAL_TS}, 'YYYY-MM-DD') AS period,
+               to_char(${LOCAL_TS}, 'DD/MM/YYYY') AS label,
+               ${MEASURES}
+        ${fromSql}
         ${whereSql}
         GROUP BY period, label
         ORDER BY period DESC
-        LIMIT 60;
-      `;
-      const res = await query(daySql, params);
-      breakdownRows = res.rows.map(r => ({
-        ...r,
-        revenue: Number(r.revenue),
-        cost: Number(r.cost),
-        profit: Number(r.profit),
-        orders_count: Number(r.orders_count),
-        missing_cost_items: Number(r.missing_cost_items),
-        margin: marginOnCosted(r),
-      }));
+        LIMIT 60;`;
     }
+
+    const breakdownRes = await query(breakdownSql, params);
+    const breakdownRows = breakdownRes.rows.map((r: any) => {
+      const row = normalize(r);
+      if (groupBy === 'product') {
+        // Theo sản phẩm hiển thị số lượng bán thay cho số đơn
+        return { ...row, orders_count: undefined, quantity_sold: Number(r.quantity_sold) || 0 };
+      }
+      return row;
+    });
 
     return NextResponse.json({
       success: true,
       summary: {
-        totalRevenue,
-        totalCost,
-        grossProfit,
-        marginPercent,
-        totalOrders,
-        itemsWithCost,
-        itemsWithoutCost,
-        revenueWithoutCost,
-        hasMissingCostData: itemsWithoutCost > 0,
-        note: itemsWithoutCost > 0 
-          ? `Có ${itemsWithoutCost} mục đơn hàng cũ chưa có snapshot giá vốn (tạo trước khi cấu hình giá vốn). Các mục này không bị tính sai lệch.`
-          : 'Toàn bộ mục đơn hàng đã có đầy đủ snapshot giá vốn.',
+        totalOrders: s.orders_count || 0,
+        totalRevenue: s.revenue,
+        revenueWithCost: s.revenue_with_cost,
+        revenueWithoutCost: s.revenue_without_cost,
+        totalCost: s.cost,
+        grossProfit: s.profit,
+        marginPercent: s.margin,
+        costCoveragePercent: s.cost_coverage,
+        itemsWithCost: s.items_with_cost,
+        itemsWithoutCost: s.missing_cost_items,
+        hasMissingCostData: s.missing_cost_items > 0,
+        missingCostProducts,
+        note: s.missing_cost_items > 0
+          ? `Có ${s.missing_cost_items} dòng hàng chưa có giá vốn lúc đặt đơn (sản phẩm chưa được nhập giá vốn). Phần doanh thu này được tách riêng, không tính vào giá vốn và lợi nhuận gộp.`
+          : 'Toàn bộ dòng hàng đã có giá vốn.',
       },
       groupBy,
       breakdown: breakdownRows,

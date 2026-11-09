@@ -118,7 +118,7 @@ export default function ProductSidebarSponsoredCard({
           </Link>
 
           {/* Nội dung giới thiệu dịch vụ hội viên */}
-          <p className="text-xs sm:text-[13px] text-gray-900 leading-relaxed font-normal">
+          <p className="text-xs sm:text-sm text-gray-900 leading-relaxed font-normal">
             Tận hưởng dịch vụ giao hàng nhanh chóng, miễn phí, ưu đãi độc quyền và các đặc quyền dinh dưỡng dành riêng cho hội viên.
           </p>
         </div>
@@ -157,17 +157,17 @@ export default function ProductSidebarSponsoredCard({
             <div className="pt-2">
               {/* Tag định danh Bán chạy nhất */}
               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[11px] px-1.5 py-0.5 rounded tracking-tight uppercase">
+                <span className="bg-amber-100 text-amber-900 border border-amber-300 text-2xs px-1.5 py-0.5 rounded tracking-tight uppercase">
                   Bán chạy nhất
                 </span>
-                <span className="text-[11px] text-gray-500 font-medium">
+                <span className="text-2xs text-gray-500 font-medium">
                   100% Tự nhiên
                 </span>
               </div>
 
               {/* Tên sản phẩm chuẩn xác, gọn gàng */}
               <h4
-                className="text-sm sm:text-[15px] text-gray-900 group-hover:text-forest-700 transition-colors leading-snug line-clamp-2"
+                className="text-sm sm:text-base text-gray-900 group-hover:text-forest-700 transition-colors leading-snug line-clamp-2"
                 title={`${cleanName} (${packUnit})`}
               >
                 {cleanName} ({packUnit})
@@ -182,7 +182,7 @@ export default function ProductSidebarSponsoredCard({
                     <Star key={i} className="w-3 h-3 fill-amber-500 stroke-amber-500" />
                   ))}
                 </div>
-                <span className="text-[11px] text-forest-700 font-medium ml-0.5">
+                <span className="text-2xs text-forest-700 font-medium ml-0.5">
                   548
                 </span>
               </div>
@@ -201,8 +201,8 @@ export default function ProductSidebarSponsoredCard({
                 {/* Huy hiệu Prime chuẩn Amazon */}
                 {!hideUnverifiedStats && MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP && (
                 <span className="inline-flex items-center text-forest-700 text-sm italic tracking-tighter">
-                  <span className="text-forest-700 mr-0.5 not-italic text-[1.125em]">✓</span>
-                  <span className="text-forest-700 not-italic text-[12px] font-sans">prime</span>
+                  <span className="text-forest-700 mr-0.5 not-italic text-emph">✓</span>
+                  <span className="text-forest-700 not-italic text-xs font-sans">prime</span>
                 </span>
                 )}
                 <button
@@ -219,10 +219,10 @@ export default function ProductSidebarSponsoredCard({
               {/* Huy hiệu Ưu đãi / Subscribe & Save chuẩn Ahorra con Planea y ahorra */}
               {!hideUnverifiedStats && (
               <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-                <span className="bg-crimson-600 text-white text-[11px] px-1.5 py-0.5 rounded-xs tracking-tight uppercase">
+                <span className="bg-crimson-600 text-white text-2xs px-1.5 py-0.5 rounded-xs tracking-tight uppercase">
                   Tiết kiệm 15%
                 </span>
-                <span className="text-[11px] text-gray-700 font-medium">
+                <span className="text-2xs text-gray-700 font-medium">
                   khi Đăng ký định kỳ
                 </span>
               </div>
@@ -232,7 +232,7 @@ export default function ProductSidebarSponsoredCard({
         </div>
 
         {/* Dòng ghi chú Patrocinado / Được tài trợ góc dưới bên phải */}
-        <div className="flex items-center justify-end gap-1 mt-1 pr-1 text-[11px] text-gray-400 select-none">
+        <div className="flex items-center justify-end gap-1 mt-1 pr-1 text-2xs text-gray-400 select-none">
           <span>Được tài trợ</span>
           <Info className="w-3 h-3 text-gray-400" />
         </div>

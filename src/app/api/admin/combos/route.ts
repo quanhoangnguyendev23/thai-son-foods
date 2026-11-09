@@ -423,11 +423,11 @@ export async function PUT(request: Request) {
     }
     if (body.cost_price !== undefined && hasPermission(session, 'cost_price.edit')) {
       params.push(parseInt(body.cost_price, 10));
-      updates.push(`cost_price = ${params.length}`);
+      updates.push(`cost_price = $${params.length}`);
     }
     if (body.sold_offset !== undefined && body.sold_offset !== null && body.sold_offset !== '') {
       params.push(Math.max(0, parseInt(body.sold_offset, 10) || 0));
-      updates.push(`sold_offset = ${params.length}`);
+      updates.push(`sold_offset = $${params.length}`);
     }
 
     updates.push(`updated_at = CURRENT_TIMESTAMP`);

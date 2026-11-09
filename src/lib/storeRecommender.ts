@@ -11,12 +11,13 @@
 import { query } from '@/lib/db';
 import { calculateHaversineDistance } from '@/lib/geo';
 import { getSellableQuantity } from '@/lib/inventory';
+import { calculateShippingFee as calculatePolicyShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
 
 export interface RecommenderInput {
   lat: number;
   lng: number;
   mode?: 'delivery' | 'pickup';
-  cartItems?: Array<{ productId: string; quantity: number }>;
+  cartItems?: Array<{ productId: string; quantity: number; price?: number }>;
   previousStoreCode?: string | null;
   scheduledAt?: string | null;
 }
@@ -55,7 +56,64 @@ export interface RecommendationResult {
 }
 
 // Bộ nhớ đệm Matrix khoảng cách/thời gian đường đi thực tế (Key: store_code:lat_4:lng_4, TTL: 24 giờ)
-const matrixCache = new Map<string, { roadKm: number; durationMin: number; timestamp: number }>();
+const matrixCache = new Map<
+  string,
+  { roadKm: number; durationMin: number; timestamp: number; isFallback?: boolean }
+>();
+// Kết quả ước lượng (OSRM lỗi/timeout) chỉ giữ 2 phút để lần sau thử lại đường đi thật
+const FALLBACK_CACHE_TTL_MS = 2 * 60 * 1000;
+
+/** Thời gian chạy xe máy: không nhanh hơn 20 km/h trong đô thị (OSRM tính theo ô tô đường trống) */
+function motorbikeMinutes(roadKm: number, osrmSeconds?: number): number {
+  const byCitySpeed = Math.round((roadKm / 20) * 60);
+  const byOsrm = typeof osrmSeconds === 'number' ? Math.round(osrmSeconds / 60) : 0;
+  return Math.max(1, byCitySpeed, byOsrm);
+}
+
+/**
+ * Lấy quãng đường thực tế từ khách tới nhiều cửa hàng trong 1 lần gọi (OSRM Table API),
+ * ghi vào bộ nhớ đệm để getRoadDistanceAndDuration dùng lại. Lỗi thì bỏ qua (từng cửa hàng tự xử lý).
+ */
+async function prefetchRoadMatrix(
+  originLat: number,
+  originLng: number,
+  stores: Array<{ code: string; sLat: number; sLng: number }>
+): Promise<boolean> {
+  const pending = stores.filter((s) => {
+    const cached = matrixCache.get(`${s.code}:${originLat.toFixed(4)}:${originLng.toFixed(4)}`);
+    return !cached || cached.isFallback || Date.now() - cached.timestamp >= CACHE_TTL_MS;
+  });
+  if (pending.length === 0) return true;
+  try {
+    const coords = [`${originLng},${originLat}`, ...pending.map((s) => `${s.sLng},${s.sLat}`)].join(';');
+    const url = `https://router.project-osrm.org/table/v1/driving/${coords}?sources=0&annotations=distance,duration`;
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(3000),
+      headers: { 'User-Agent': 'ThaiSonFoods-Routing/1.0' },
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    // OSRM trả code "Ok" (không phải "OK")
+    if (String(data?.code).toLowerCase() !== 'ok') return false;
+    const distances: Array<number | null> = data.distances?.[0] || [];
+    const durations: Array<number | null> = data.durations?.[0] || [];
+    pending.forEach((s, i) => {
+      const meters = distances[i + 1];
+      if (typeof meters !== 'number') return;
+      const roadKm = Math.round((meters / 1000) * 10) / 10;
+      const sec = durations[i + 1];
+      matrixCache.set(`${s.code}:${originLat.toFixed(4)}:${originLng.toFixed(4)}`, {
+        roadKm,
+        durationMin: motorbikeMinutes(roadKm, typeof sec === 'number' ? sec : undefined),
+        timestamp: Date.now(),
+      });
+    });
+    return true;
+  } catch {
+    // Mạng lỗi / timeout: dùng ước lượng, không gọi lại từng cửa hàng (tránh khách chờ lâu)
+    return false;
+  }
+}
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
@@ -116,8 +174,11 @@ export async function getRoadDistanceAndDuration(
   const cacheKey = `${storeCode}:${originLat.toFixed(4)}:${originLng.toFixed(4)}`;
 
   const cached = matrixCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return { roadKm: cached.roadKm, durationMin: cached.durationMin, isFallback: false };
+  if (
+    cached &&
+    Date.now() - cached.timestamp < (cached.isFallback ? FALLBACK_CACHE_TTL_MS : CACHE_TTL_MS)
+  ) {
+    return { roadKm: cached.roadKm, durationMin: cached.durationMin, isFallback: !!cached.isFallback };
   }
 
   // 1. Thử gọi OSRM Driving Matrix (timeout 2500ms)
@@ -130,10 +191,11 @@ export async function getRoadDistanceAndDuration(
 
     if (res.ok) {
       const data = await res.json();
-      if (data.code === 'OK' && Array.isArray(data.routes) && data.routes.length > 0) {
+      // OSRM trả code "Ok" (không phải "OK"): so không phân biệt hoa thường
+      if (String(data.code).toLowerCase() === 'ok' && Array.isArray(data.routes) && data.routes.length > 0) {
         const route = data.routes[0];
         const roadKm = Math.round((route.distance / 1000) * 10) / 10;
-        const durationMin = Math.max(1, Math.round(route.duration / 60));
+        const durationMin = motorbikeMinutes(roadKm, route.duration);
 
         matrixCache.set(cacheKey, { roadKm, durationMin, timestamp: Date.now() });
         return { roadKm, durationMin, isFallback: false };
@@ -145,9 +207,9 @@ export async function getRoadDistanceAndDuration(
 
   // 2. Fallback nội suy: Đường chim bay × 1.35 và vận tốc xe máy đô thị 20 km/h
   const roadKm = Math.round(straightKm * 1.35 * 10) / 10;
-  const durationMin = Math.max(1, Math.round((roadKm / 20) * 60));
+  const durationMin = motorbikeMinutes(roadKm);
 
-  matrixCache.set(cacheKey, { roadKm, durationMin, timestamp: Date.now() });
+  matrixCache.set(cacheKey, { roadKm, durationMin, timestamp: Date.now(), isFallback: true });
   return { roadKm, durationMin, isFallback: true };
 }
 
@@ -248,8 +310,19 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
   const topCandidates = storeDistances.slice(0, 6);
   const peakMultiplier = getPeakHourMultiplier();
 
-  // Tính tổng tiền giỏ hàng sơ bộ
-  const subtotalEstimate = cartItems.reduce((acc, it) => acc + (it.quantity || 1) * 35000, 0);
+  // Lấy quãng đường thật tới các cửa hàng gần nhất trong 1 lần gọi (thay vì gọi lần lượt từng cửa hàng)
+  const roadMatrixOk = await prefetchRoadMatrix(
+    lat,
+    lng,
+    topCandidates.map((c) => ({ code: c.store.code, sLat: c.sLat, sLng: c.sLng }))
+  );
+
+  // Tổng tiền giỏ hàng theo giá thật khách gửi lên (thiếu giá thì ước 35.000đ/món)
+  const subtotalEstimate = cartItems.reduce(
+    (acc, it) =>
+      acc + (it.quantity || 1) * (typeof it.price === 'number' && it.price > 0 ? it.price : 35000),
+    0
+  );
 
   const processedItems: StoreRecommendationItem[] = [];
   const unavailableItems: Array<{ store: Partial<StoreRecommendationItem>; reason: string }> = [];
@@ -262,18 +335,22 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
     let roadKm: number;
     let durationMin: number;
 
-    if (isTopCandidate) {
+    if (isTopCandidate && roadMatrixOk) {
       const road = await getRoadDistanceAndDuration(lat, lng, item.sLat, item.sLng, s.code);
       roadKm = road.roadKm;
       durationMin = road.durationMin;
     } else {
       roadKm = Math.round(item.straightKm * 1.35 * 10) / 10;
-      durationMin = Math.max(1, Math.round((roadKm / 20) * 60));
+      durationMin = motorbikeMinutes(roadKm);
     }
 
     const prepMin = s.prep_minutes ? Number(s.prep_minutes) : 15;
     const openingCheck = checkStoreOpening(s.opening_hours, prepMin, durationMin);
-    const maxRadiusKm = s.delivery_radius_km ? Number(s.delivery_radius_km) : 10.0;
+    // Bán kính giao tối đa theo chính sách phí ship (20 km); cửa hàng đặt bán kính riêng lớn hơn thì dùng số đó
+    const maxRadiusKm = Math.max(
+      s.delivery_radius_km ? Number(s.delivery_radius_km) : 0,
+      INVENTORY_CONFIG.SHIPPING.DISTANCE_BASED.MAX_DELIVERY_RADIUS_KM
+    );
 
     // Kiểm tra hàng tồn kho cho chi nhánh này
     let missingItemsCount = 0;
@@ -309,7 +386,8 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
     if (!s.is_accepting_orders) {
       canDeliver = false;
       rejectReason = s.pause_reason || 'Chi nhánh đang tạm ngưng nhận đơn';
-    } else if (!openingCheck.canFulfill) {
+    } else if (mode === 'pickup' && !openingCheck.canFulfill) {
+      // Giao hàng ngoài giờ không loại chi nhánh nữa: đơn được xếp vào khung hẹn (07:00–16:30, xem lib/deliverySlots)
       canDeliver = false;
       rejectReason = openingCheck.reason;
     } else if (mode === 'delivery' && roadKm > maxRadiusKm) {
@@ -319,12 +397,16 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
 
     // Tính ETA: prep + duration × hệ số giờ cao điểm
     const etaMinutes = Math.round(prepMin + durationMin * peakMultiplier);
-    const shippingFee = calculateShippingFee(roadKm, subtotalEstimate);
+    // Cùng chính sách phí với lúc đặt đơn (/api/orders) để phí khách thấy khi chọn cửa hàng = phí thật bị tính
+    // (server cũng tính phí theo quãng đường đi thật khi đặt đơn)
+    const shippingFee = calculatePolicyShippingFee(subtotalEstimate, roadKm).fee;
 
     // Tính điểm xếp hạng (Mục 18.3: Điểm càng thấp càng ưu tiên)
     // Điểm = ETA + 15 × số món thiếu + 2 × đơn quá tải + 10 nếu sắp đóng cửa
     let score = etaMinutes;
     score += missingItemsCount * 15;
+    // Phụ thu giao xa: mỗi 1.000đ phụ thu tính như 1 phút chậm, để ưu tiên chi nhánh không phát sinh phụ thu
+    score += Math.round(calculatePolicyShippingFee(subtotalEstimate, roadKm).surcharge / 1000);
     if (openingCheck.isClosingSoon) score += 10;
     if (previousStoreCode && previousStoreCode === s.code) score -= 3; // Ưu tiên nhẹ cửa hàng khách từng chọn
 
@@ -366,7 +448,10 @@ export async function recommendStore(input: RecommenderInput): Promise<Recommend
   }
 
   // 3. Sắp xếp các cửa hàng hợp lệ theo điểm Score tăng dần
-  processedItems.sort((a, b) => a.score - b.score);
+  // Chi nhánh đủ hàng luôn đứng trước chi nhánh thiếu hàng; cùng nhóm thì xét điểm (gần, nhanh, không phụ thu)
+  const stockRank = (st: StoreRecommendationItem) =>
+    st.stockStatus === 'partial' ? 1 : st.stockStatus === 'out_of_stock' ? 2 : 0;
+  processedItems.sort((a, b) => stockRank(a) - stockRank(b) || a.score - b.score);
 
   // Gắn nhãn badge cho Top đề xuất
   if (processedItems.length > 0) {

@@ -44,6 +44,21 @@ export function getItemMaxQuantity(item: { productId?: string; variantId?: strin
 
 export const MAX_QUANTITY_PER_ITEM = 1000;
 
+// Khóa gộp dòng trong giỏ: cùng sản phẩm + cùng số chai/lốc thì là MỘT dòng,
+// dù mã quy cách khác nhau (trang chi tiết dùng mã quy cách trong CSDL như "var_...",
+// còn thẻ sản phẩm/kệ gợi ý dùng mã tĩnh như "sb-7chai").
+export function getCartMergeKey(item: { productId: string; variantId?: string; variantName?: string; unit?: string }): string {
+  const pid = String(item.productId || '');
+  const vid = item.variantId ? String(item.variantId) : '';
+  if (!vid || !pid.endsWith(`-${vid}`)) return pid;
+  const baseId = pid.slice(0, pid.length - vid.length - 1);
+  const fromName = (item.variantName || '').match(/(\d+)/);
+  const fromUnit = (item.unit || '').match(/(\d+)\s*(?:chai|bottle)/i);
+  const bottles = fromName ? parseInt(fromName[1], 10) : fromUnit ? parseInt(fromUnit[1], 10) : NaN;
+  if (!baseId || !Number.isFinite(bottles) || bottles <= 0) return pid;
+  return `${baseId}::${bottles}`;
+}
+
 // Chuẩn hóa sản phẩm: Tuyệt đối không cho phép bán hoặc thêm chai lẻ (1 chai), luôn quy đổi về Lốc nhỏ nhất
 function sanitizeCartProduct(product: Omit<CartItem, 'quantity'>): Omit<CartItem, 'quantity'> {
   const rawUnit = (product.unit || '').trim().toLowerCase();
@@ -116,7 +131,7 @@ function sanitizeCartItems(items: CartItem[]): CartItem[] {
       const sanitizedMax = getItemMaxQuantity(sanitized);
       const packQty = Math.max(1, Math.min(sanitizedMax, Math.round(safeQty / packDivisor)));
 
-      const existing = result.find((r) => r.productId === sanitized.productId);
+      const existing = result.find((r) => getCartMergeKey(r) === getCartMergeKey(sanitized));
       if (existing) {
         existing.quantity = Math.min(sanitizedMax, existing.quantity + packQty);
       } else {
@@ -126,7 +141,7 @@ function sanitizeCartItems(items: CartItem[]): CartItem[] {
         });
       }
     } else {
-      const existing = result.find((r) => r.productId === item.productId);
+      const existing = result.find((r) => getCartMergeKey(r) === getCartMergeKey(item));
       if (existing) {
         existing.quantity = Math.min(maxAllowed, existing.quantity + safeQty);
       } else {
@@ -180,16 +195,18 @@ export const useCartStore = create<CartState>()(
         const validQuantity = Math.max(1, Math.min(maxAllowed, quantity));
 
         set((state) => {
+          const mergeKey = getCartMergeKey(sanitized);
           const existingItem = state.items.find(
-            (item) => item.productId === sanitized.productId
+            (item) => getCartMergeKey(item) === mergeKey
           );
 
           const addedItem: CartItem = { ...sanitized, quantity: validQuantity };
 
           if (existingItem) {
+            // Cộng vào dòng đã có (giữ nguyên mã của dòng đó để các nút +/−/xóa vẫn đúng)
             return {
               items: state.items.map((item) =>
-                item.productId === sanitized.productId
+                item === existingItem
                   ? { ...item, quantity: Math.min(maxAllowed, item.quantity + validQuantity) }
                   : item
               ),

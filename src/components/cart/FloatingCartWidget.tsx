@@ -86,7 +86,7 @@ export default function FloatingCartWidget() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-xl bg-ivory p-1 shrink-0 border border-emerald-100/80 flex items-center justify-center overflow-hidden">
+              <div className="relative w-16 h-12 rounded-lg bg-white shrink-0 border border-emerald-100/80 flex items-center justify-center overflow-hidden">
                 <Image
                   src={toastItem.thumbnail}
                   alt={toastName}
@@ -97,7 +97,7 @@ export default function FloatingCartWidget() {
               </div>
 
               <div className="min-w-0 flex-1">
-                <h4 className="text-sm sm:text-[15px] text-forest-950 leading-snug">
+                <h4 className="text-sm sm:text-base text-forest-950 leading-snug">
                   {toastName}
                 </h4>
                 <p className="text-sm text-emerald-700 mt-1">
@@ -113,7 +113,7 @@ export default function FloatingCartWidget() {
                 setToastItem(null);
                 clearLastAddedItem();
               }}
-              className="flex items-center justify-center gap-1.5 w-full py-1.5 mt-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[12px] transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 mt-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs transition-colors cursor-pointer"
             >
               <span>{language === 'vi' ? 'Xem giỏ hàng & thanh toán' : 'View cart & checkout'}</span>
               <ArrowRight className="w-3 h-3" />
@@ -135,7 +135,6 @@ export default function FloatingCartWidget() {
             : { scale: 1 }
         }
         transition={{ duration: 0.45, ease: 'easeOut' }}
-        whileHover={{ scale: 1.04, y: -2 }}
         whileTap={{ scale: 0.96 }}
         className="pointer-events-auto"
       >
@@ -161,7 +160,7 @@ export default function FloatingCartWidget() {
                 initial={{ scale: 0.5 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', damping: 15 }}
-                className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-sale text-white text-[12px] flex items-center justify-center shadow-md border-2 border-emerald-900"
+                className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-sale text-white text-xs flex items-center justify-center shadow-md border-2 border-emerald-900"
               >
                 {totalQuantity > 99 ? '99+' : totalQuantity}
               </motion.span>
@@ -170,12 +169,12 @@ export default function FloatingCartWidget() {
 
           {/* Nhãn giỏ hàng & Tạm tính */}
           <div className="relative z-10 text-left min-w-0 pr-0.5">
-            <div className="text-[12px] text-emerald-200 leading-tight">
+            <div className="text-xs text-emerald-200 leading-tight">
               {isMounted && totalQuantity > 0
                 ? (language === 'vi' ? 'Giỏ hàng của bạn' : 'Your Cart')
                 : (language === 'vi' ? 'Giỏ hàng' : 'Cart')}
             </div>
-            <div className="text-sm sm:text-[15px] text-white leading-tight mt-0.5">
+            <div className="text-sm sm:text-base text-white leading-tight mt-0.5">
               {isMounted && totalQuantity > 0
                 ? `${formatPrice(totalPrice)}đ`
                 : (language === 'vi' ? '0 món' : '0 items')}

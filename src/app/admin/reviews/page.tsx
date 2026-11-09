@@ -18,6 +18,7 @@ import {
   Clock,
   AlertTriangle,
 } from 'lucide-react';
+import { showAlert, showConfirm } from '@/components/ui/AppDialog';
 
 interface AdminReviewRow {
   id: string;
@@ -100,18 +101,19 @@ export default function AdminReviewsPage() {
         );
         fetchReviews();
       } else {
-        alert(data.error || 'Cập nhật thất bại');
+        showAlert(data.error || 'Cập nhật thất bại', { tone: 'error' });
       }
     } catch {
-      alert('Lỗi kết nối máy chủ');
+      showAlert('Lỗi kết nối máy chủ', { tone: 'error' });
     }
   };
 
   const handleDeleteReview = async (id: string) => {
     if (
-      !window.confirm(
-        'Bạn có chắc chắn muốn xóa đánh giá này không? Thao tác này sẽ xóa vĩnh viễn đánh giá và các lượt bình chọn liên quan.'
-      )
+      !(await showConfirm(
+        'Bạn có chắc chắn muốn xóa đánh giá này không? Thao tác này sẽ xóa vĩnh viễn đánh giá và các lượt bình chọn liên quan.',
+        { tone: 'danger', title: 'Xóa đánh giá?', okText: 'Xóa đánh giá' }
+      ))
     ) {
       return;
     }
@@ -124,10 +126,10 @@ export default function AdminReviewsPage() {
         setReviews((prev) => prev.filter((r) => r.id !== id));
         fetchReviews();
       } else {
-        alert(data.error || 'Xóa đánh giá thất bại');
+        showAlert(data.error || 'Xóa đánh giá thất bại', { tone: 'error' });
       }
     } catch {
-      alert('Lỗi kết nối máy chủ khi xóa đánh giá');
+      showAlert('Lỗi kết nối máy chủ khi xóa đánh giá', { tone: 'error' });
     }
   };
 
@@ -161,10 +163,10 @@ export default function AdminReviewsPage() {
         setActiveReview(null);
         setReplyText('');
       } else {
-        alert(data.error || 'Lỗi gửi phản hồi');
+        showAlert(data.error || 'Lỗi gửi phản hồi', { tone: 'error' });
       }
     } catch {
-      alert('Lỗi kết nối máy chủ');
+      showAlert('Lỗi kết nối máy chủ', { tone: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -218,7 +220,7 @@ export default function AdminReviewsPage() {
               Chờ Kiểm Duyệt
             </div>
             <div className="text-3xl text-amber-600">{counts.pendingCount}</div>
-            <p className="text-[11px] text-gray-500 mt-1">
+            <p className="text-2xs text-gray-500 mt-1">
               {counts.pendingCount > 0
                 ? 'Cần duyệt trước khi hiển thị ra trang sản phẩm'
                 : 'Tất cả đánh giá đã được xử lý'}
@@ -239,7 +241,7 @@ export default function AdminReviewsPage() {
               Đã Duyệt Công Khai
             </div>
             <div className="text-3xl text-emerald-700">{counts.approvedCount}</div>
-            <p className="text-[11px] text-gray-500 mt-1">Đang hiển thị trên trang công khai</p>
+            <p className="text-2xs text-gray-500 mt-1">Đang hiển thị trên trang công khai</p>
           </div>
 
           {/* Card 3: Đã Mua Hàng (Verified) */}
@@ -249,7 +251,7 @@ export default function AdminReviewsPage() {
               Đã Mua Hàng (Verified)
             </div>
             <div className="text-3xl text-teal-700">{counts.verifiedCount}</div>
-            <p className="text-[11px] text-gray-500 mt-1">Có đơn hoàn tất đúng sản phẩm</p>
+            <p className="text-2xs text-gray-500 mt-1">Có đơn hoàn tất đúng sản phẩm</p>
           </div>
 
           {/* Card 4: Tổng Số Đánh Giá */}
@@ -266,7 +268,7 @@ export default function AdminReviewsPage() {
               Tổng Số Đánh Giá
             </div>
             <div className="text-3xl text-gray-900">{counts.total}</div>
-            <p className="text-[11px] text-gray-500 mt-1">Ghi nhận trong toàn bộ cơ sở dữ liệu</p>
+            <p className="text-2xs text-gray-500 mt-1">Ghi nhận trong toàn bộ cơ sở dữ liệu</p>
           </div>
         </div>
 
@@ -291,7 +293,7 @@ export default function AdminReviewsPage() {
                 <span>{tab.label}</span>
                 {typeof tab.count === 'number' && (
                   <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                    className={`px-1.5 py-0.2 rounded-full text-2xs ${
                       filterStatus === tab.id
                         ? 'bg-white/20 text-white'
                         : tab.id === 'PENDING' && tab.count > 0
@@ -330,7 +332,7 @@ export default function AdminReviewsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-gray-600">
-                <thead className="bg-gray-50 border-b border-gray-200 text-gray-700 uppercase text-[12px]">
+                <thead className="bg-gray-50 border-b border-gray-200 text-gray-700 uppercase text-xs">
                   <tr>
                     <th className="py-3.5 px-4">Khách Hàng</th>
                     <th className="py-3.5 px-4">Sản Phẩm & Phân Loại</th>
@@ -345,16 +347,16 @@ export default function AdminReviewsPage() {
                     <tr key={r.id} className="hover:bg-gray-50/60 transition">
                       {/* Khách hàng */}
                       <td className="py-4 px-4 align-top">
-                        <div className="text-gray-900 text-[1.125em]">{r.customerName}</div>
+                        <div className="text-gray-900 text-emph">{r.customerName}</div>
                         {r.customerPhone && (
-                          <div className="text-[11px] text-gray-400">{r.customerPhone}</div>
+                          <div className="text-2xs text-gray-400">{r.customerPhone}</div>
                         )}
                         {r.isVerifiedBuyer ? (
-                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] border border-emerald-200/60">
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-2xs border border-emerald-200/60">
                             <CheckCircle2 className="w-2.5 h-2.5" /> Đã mua hàng
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-gray-50 text-gray-500 text-[10px] font-medium border border-gray-200">
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-gray-50 text-gray-500 text-2xs font-medium border border-gray-200">
                             Khách vãng lai
                           </span>
                         )}
@@ -362,8 +364,8 @@ export default function AdminReviewsPage() {
 
                       {/* Sản phẩm */}
                       <td className="py-4 px-4 align-top">
-                        <div className="text-gray-800 text-[1.125em]">{r.productId}</div>
-                        <div className="text-[11px] text-gray-500">{r.variantInfo}</div>
+                        <div className="text-gray-800 text-emph">{r.productId}</div>
+                        <div className="text-2xs text-gray-500">{r.variantInfo}</div>
                       </td>
 
                       {/* Nội dung */}
@@ -380,20 +382,20 @@ export default function AdminReviewsPage() {
                             />
                           ))}
                         </div>
-                        <div className="text-gray-900 mb-0.5 text-[1.125em]">{r.title}</div>
+                        <div className="text-gray-900 mb-0.5 text-emph">{r.title}</div>
                         <p className="text-gray-600 line-clamp-3">{r.comment}</p>
 
                         {/* Phản hồi hiện tại */}
                         {r.adminReply && (
-                          <div className="mt-2 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100 text-[11px]">
-                            <span className="text-emerald-800 text-[1.125em]">Thái Sơn Foods: </span>
+                          <div className="mt-2 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100 text-2xs">
+                            <span className="text-emerald-800 text-emph">Thái Sơn Foods: </span>
                             <span className="text-emerald-900">{r.adminReply}</span>
                           </div>
                         )}
                       </td>
 
                       {/* Hữu ích */}
-                      <td className="py-4 px-4 align-top text-center text-gray-700 text-[1.125em]">
+                      <td className="py-4 px-4 align-top text-center text-gray-700 text-emph">
                         <span className="inline-flex items-center gap-1">
                           <ThumbsUp className="w-3 h-3 text-gray-400" /> {r.helpfulCount}
                         </span>
@@ -402,7 +404,7 @@ export default function AdminReviewsPage() {
                       {/* Trạng thái */}
                       <td className="py-4 px-4 align-top text-center">
                         <span
-                          className={`inline-block px-2.5 py-1 rounded-full text-[11px] border ${
+                          className={`inline-block px-2.5 py-1 rounded-full text-2xs border ${
                             r.status === 'APPROVED'
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                               : r.status === 'PENDING'
@@ -422,13 +424,13 @@ export default function AdminReviewsPage() {
                           <>
                             <button
                               onClick={() => handleUpdateStatus(r.id, 'APPROVED')}
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] transition cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs transition cursor-pointer"
                             >
                               Duyệt
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(r.id, 'HIDDEN')}
-                              className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[12px] transition cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs transition cursor-pointer"
                             >
                               Từ chối
                             </button>
@@ -436,14 +438,14 @@ export default function AdminReviewsPage() {
                         ) : r.status === 'APPROVED' ? (
                           <button
                             onClick={() => handleUpdateStatus(r.id, 'HIDDEN')}
-                            className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-[12px] transition cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs transition cursor-pointer"
                           >
                             Ẩn
                           </button>
                         ) : (
                           <button
                             onClick={() => handleUpdateStatus(r.id, 'APPROVED')}
-                            className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[12px] transition cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs transition cursor-pointer"
                           >
                             Duyệt lại
                           </button>
@@ -451,7 +453,7 @@ export default function AdminReviewsPage() {
 
                         <button
                           onClick={() => handleOpenReplyModal(r)}
-                          className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[12px] transition cursor-pointer"
+                          className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs transition cursor-pointer"
                         >
                           Phản hồi
                         </button>
@@ -459,7 +461,7 @@ export default function AdminReviewsPage() {
                         <button
                           onClick={() => handleDeleteReview(r.id)}
                           title="Xóa vĩnh viễn"
-                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-[12px] transition cursor-pointer inline-flex items-center"
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs transition cursor-pointer inline-flex items-center"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -489,11 +491,11 @@ export default function AdminReviewsPage() {
               Phản Hồi Đánh Giá Khách Hàng
             </h3>
             <p className="text-xs text-gray-500 mb-4">
-              Khách hàng: <span className="text-gray-800 text-[1.125em]">{activeReview.customerName}</span> ({activeReview.rating} sao)
+              Khách hàng: <span className="text-gray-800 text-emph">{activeReview.customerName}</span> ({activeReview.rating} sao)
             </p>
 
             <div className="bg-gray-50 p-3 rounded-xl mb-4 text-xs text-gray-600">
-              <div className="text-gray-800 mb-0.5 text-[1.125em]">{activeReview.title}</div>
+              <div className="text-gray-800 mb-0.5 text-emph">{activeReview.title}</div>
               <p className="line-clamp-3 italic">&quot;{activeReview.comment}&quot;</p>
             </div>
 

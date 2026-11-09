@@ -85,10 +85,9 @@ export default function BrandShowcase() {
 
                 {/* Title with Left-to-Right Scroll Animation (luôn luôn kích hoạt mỗi lần lướt tới) */}
                 <h2
-                  className="text-balance overflow-hidden"
+                  className="text-balance overflow-hidden text-2xl md:text-3xl xl:text-4xl"
                   style={{
                     fontFamily: 'var(--font-fira-sans), sans-serif',
-                    fontSize: 'clamp(24px, 3.1vw, 48px)',
                     fontWeight: 400,
                     lineHeight: '1.26',
                     letterSpacing: '-0.02em',
@@ -137,7 +136,7 @@ export default function BrandShowcase() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: false, amount: 0.25 }}
                   transition={{ duration: 1.2, ease: 'easeOut', delay: 0.85 }}
-                  className="text-[14px] sm:text-[15.5px] lg:text-[18px] leading-[1.65] lg:leading-[1.75]"
+                  className="text-sm sm:text-base lg:text-lg leading-[1.65] lg:leading-[1.75]"
                   style={{
                     borderLeft: '2.5px solid var(--color-amber-400)',
                     paddingLeft: 'clamp(16px, 2vw, 26px)',
@@ -155,12 +154,12 @@ export default function BrandShowcase() {
                       </p>
                       <p>
                         Guided by our core motto{' '}
-                        <strong className="text-forest-950 text-[1.125em]">
+                        <strong className="text-forest-950 text-emph">
                           &ldquo;Wholesome – Natural – Convenient&rdquo;
                         </strong>
                         , Thai Son Foods continuously innovates to offer beverages that enrich every life moment, bringing familiar comforting tastes of home to everyone.
                       </p>
-                      <p className="text-forest-700 text-[17px] sm:text-[19px] lg:text-[22px]">
+                      <p className="text-forest-700 text-lg sm:text-lg lg:text-2xl">
                         Thai Son Foods – A wholesome nutritious meal in every sip.
                       </p>
                     </>
@@ -174,14 +173,14 @@ export default function BrandShowcase() {
                       </p>
                       <p>
                         Với định hướng{' '}
-                        <strong className="text-forest-950 text-[1.125em]">
+                        <strong className="text-forest-950 text-emph">
                           &ldquo;Ngon lành – Tự nhiên – Tiện lợi&rdquo;
                         </strong>
                         , Thái Sơn Foods không ngừng phát triển danh mục sản phẩm, mang đến những thức
                         uống phù hợp cho nhiều khoảnh khắc trong cuộc sống và đưa hương vị quen thuộc của
                         quê hương đến mọi người.
                       </p>
-                      <p className="text-forest-700 text-[17px] sm:text-[19px] lg:text-[22px]">
+                      <p className="text-forest-700 text-lg sm:text-lg lg:text-2xl">
                         Thái Sơn Foods – Uống một bữa ăn ngon lành.
                       </p>
                     </>
@@ -207,7 +206,7 @@ export default function BrandShowcase() {
                 >
                   <span>{language === 'en' ? 'About Us' : 'Về chúng tôi'}</span>
                   <ArrowRight
-                    className="transition-transform duration-200 group-hover:translate-x-1 w-4 h-4 sm:w-5 sm:h-5"
+                    className="transition-transform duration-200 w-4 h-4 sm:w-5 sm:h-5"
                   />
                 </Link>
               </motion.div>

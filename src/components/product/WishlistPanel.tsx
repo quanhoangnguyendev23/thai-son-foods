@@ -127,8 +127,8 @@ export default function WishlistPanel() {
         <ul className="divide-y divide-gray-100">
           {items.map((it) => (
             <li key={it.key} className="flex items-center gap-3 py-3">
-              <Link href={it.href} className="relative w-16 h-16 rounded-lg overflow-hidden bg-ivory border border-gray-100 shrink-0">
-                <Image src={it.image} alt={it.name} fill sizes="64px" className="object-contain p-1" />
+              <Link href={it.href} className="relative w-20 h-[60px] rounded-lg overflow-hidden bg-white border border-gray-100 shrink-0">
+                <Image src={it.image} alt={it.name} fill sizes="80px" className="object-contain" />
               </Link>
               <div className="min-w-0 flex-1">
                 <Link href={it.href} className="text-sm text-ink-950 hover:text-forest-700 line-clamp-2">

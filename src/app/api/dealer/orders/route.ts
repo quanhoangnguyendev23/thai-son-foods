@@ -5,6 +5,7 @@ import { getPartnerSession } from '@/lib/partner/auth';
 import { reserveStock, InsufficientStockError } from '@/lib/inventory';
 import { INVENTORY_CONFIG } from '@/config/inventory';
 import { publicErrorMessage } from '@/lib/apiError';
+import { loadBottleCosts } from '@/lib/costSnapshot';
 
 export const dynamic = 'force-dynamic';
 
@@ -155,13 +156,18 @@ export async function POST(request: Request) {
         ]
       );
 
+      // Snapshot giá vốn/chai tại thời điểm đặt (null nếu sản phẩm chưa nhập giá vốn)
+      const bottleCosts = await loadBottleCosts(client, resolvedItems.map((it: any) => it.productId));
       for (let i = 0; i < resolvedItems.length; i++) {
         const item = resolvedItems[i];
         const itemId = `item_dl_${Date.now()}_${i}`;
         await client.query(
-          `INSERT INTO order_items (id, order_id, product_id, name, price, quantity, unit, total_bottles)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
-          [itemId, orderId, item.productId, item.name, item.price, item.quantity, item.unit, item.quantity]
+          `INSERT INTO order_items (id, order_id, product_id, name, price, quantity, unit, total_bottles, cost_price)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+          [
+            itemId, orderId, item.productId, item.name, item.price, item.quantity, item.unit, item.quantity,
+            bottleCosts.get(item.productId) ?? null,
+          ]
         );
       }
 

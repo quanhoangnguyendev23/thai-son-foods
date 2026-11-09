@@ -278,7 +278,7 @@ function RangeSelect({
               />
             </label>
           </div>
-          <p className={`mt-2 text-[11px] ${invalid ? 'text-crimson-600' : 'text-ink-800'}`}>
+          <p className={`mt-2 text-2xs ${invalid ? 'text-crimson-600' : 'text-ink-800'}`}>
             {invalid || `${daysInclusive(draftFrom, draftTo)} ngày · tối đa ${MAX_RANGE_DAYS} ngày`}
           </p>
           <div className="mt-3 flex justify-end gap-2">
@@ -321,7 +321,7 @@ function DeltaBadge({ cur, prev, loading }: { cur: number; prev: number | null |
           ? 'bg-amber-300/15 text-amber-800'
           : 'bg-ink-100 text-ink-800';
   return (
-    <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10.5px] font-medium tabular-nums ${cls}`} title="So với kỳ trước cùng độ dài">
+    <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-2xs font-medium tabular-nums ${cls}`} title="So với kỳ trước cùng độ dài">
       {d.text}
     </span>
   );
@@ -332,7 +332,7 @@ function KpiStrip({ items, prevLoading, loading }: { items: Kpi[]; prevLoading: 
     <dl className="grid grid-cols-2 content-start gap-2 sm:grid-cols-4 lg:grid-cols-1">
       {items.map((k) => (
         <div key={k.label} className="min-w-0 rounded-xl border border-ink-200 bg-ink-50 px-3 py-2.5">
-          <dt className="truncate text-[11px] text-ink-800">{k.label}</dt>
+          <dt className="truncate text-2xs text-ink-800">{k.label}</dt>
           <dd className="mt-1 flex flex-col items-start gap-1 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
             {loading ? (
               <span className="my-1 inline-block h-4 w-24 rounded bg-ink-100 animate-pulse motion-reduce:animate-none" />
@@ -421,7 +421,7 @@ function TooltipValueRow({ name, value, sub, stacked = false }: { name: string; 
   );
 }
 
-const AXIS_TICK = { fontSize: 11 };
+const AXIS_TICK = { fontSize: 12 };
 const GRID_PROPS = { vertical: false, stroke: 'var(--color-ink-200)', strokeOpacity: 1 } as const;
 
 // ---------------------------------------------------------------------------
@@ -593,7 +593,7 @@ export function RevenueCard({
                       y={y}
                       dy={12}
                       textAnchor="middle"
-                      fontSize={11}
+                      fontSize={12}
                       fontWeight={today ? 600 : 400}
                       fill={today ? 'var(--color-amber-700)' : 'var(--color-ink-600)'}
                       style={{ fontVariantNumeric: 'tabular-nums' }}
@@ -829,7 +829,7 @@ function TopSellersCard({
                 {data.map((p, i) => (
                   <Cell key={p.key} fill={i === 0 && p.done > 0 ? 'var(--color-amber-700)' : 'var(--color-done)'} />
                 ))}
-                <LabelList dataKey="done" position="top" offset={6} fontSize={11} fill="var(--color-ink-950)" formatter={(v: unknown) => (num(v) > 0 ? fmtShort(num(v)) : '')} />
+                <LabelList dataKey="done" position="top" offset={6} fontSize={12} fill="var(--color-ink-950)" formatter={(v: unknown) => (num(v) > 0 ? fmtShort(num(v)) : '')} />
               </Bar>
             </BarChart>
           </ChartContainer>

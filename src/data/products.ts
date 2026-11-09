@@ -187,7 +187,7 @@ export const products: Product[] = [
     name: "Bình sữa Gạo Lứt Yoo 568ml - 36Kcal/100ml - Lốc 6 bình chỉ 150.000đ. Dùng mỗi ngày - ở nhà như một bữa ăn dặm nhẹ nhàng.",
     nameEn: 'Ohsawa Yoo Brown Rice Milk, Natural Red Dragon Brown Rice, Convenient Drink, 568ml, Pack of 6',
     slug: 'sua-gao-lut-ohsawa-yoo',
-    sku: "SL-01",
+    sku: "SL",
     energyKcal: 36,
     volume: '568ml',
     shortDescription: "Nấu từ gạo lứt huyết rồng nguyên cám, sánh mịn đậm vị gạo rang, chai lớn 568ml siêu tiết kiệm, ngọt thanh béo nhẹ, nạp năng lượng sạch, trữ lạnh uống liền.",

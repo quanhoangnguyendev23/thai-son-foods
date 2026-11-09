@@ -277,17 +277,17 @@ export default function AmazonHeroCarousel({
                 )}
               >
                 {hasText && copy.tag && (
-                  <p className="mb-1 text-[12px] sm:text-[13px] uppercase tracking-wide text-corn-light [text-shadow:0_1px_2px_rgb(0_0_0/0.4)]">
+                  <p className="mb-1 text-xs sm:text-sm uppercase tracking-wide text-corn-light [text-shadow:0_1px_2px_rgb(0_0_0/0.4)]">
                     {copy.tag}
                   </p>
                 )}
                 {copy.title && (
-                  <h2 className="font-heading text-white text-[20px] sm:text-[28px] lg:text-[clamp(26px,2.2vw,36px)] leading-[1.15] line-clamp-2 [text-shadow:0_1px_3px_rgb(0_0_0/0.35)]">
+                  <h2 className="font-heading text-white text-xl sm:text-3xl lg:text-3xl xl:text-4xl leading-[1.15] line-clamp-2 [text-shadow:0_1px_3px_rgb(0_0_0/0.35)]">
                     {copy.title}
                   </h2>
                 )}
                 {copy.subtitle && (
-                  <p className="mt-1 sm:mt-1.5 text-[13px] sm:text-[15px] lg:text-[16px] text-white/95 line-clamp-1 [text-shadow:0_1px_2px_rgb(0_0_0/0.4)]">
+                  <p className="mt-1 sm:mt-1.5 text-sm sm:text-base lg:text-base text-white/95 line-clamp-1 [text-shadow:0_1px_2px_rgb(0_0_0/0.4)]">
                     {copy.subtitle}
                   </p>
                 )}
@@ -295,7 +295,7 @@ export default function AmazonHeroCarousel({
                   href={copy.href}
                   className={cn(
                     'inline-flex items-center gap-1.5 self-start rounded-full bg-corn hover:bg-corn-dark text-text-dark shadow-xs transition-colors',
-                    'min-h-10 sm:min-h-11 px-4 sm:px-5 text-[14px] sm:text-[15px]',
+                    'min-h-10 sm:min-h-11 px-4 sm:px-5 text-sm sm:text-base',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950',
                     hasText ? 'mt-3 sm:mt-4' : ''
                   )}

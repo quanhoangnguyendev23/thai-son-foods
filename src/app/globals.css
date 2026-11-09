@@ -46,6 +46,27 @@
   --font-sans: var(--font-roboto), sans-serif;
   --font-mono: var(--font-roboto), sans-serif;
   --font-serif: var(--font-fira-sans), sans-serif;
+
+  /* Thang cỡ chữ cố định (quy tắc: .agents/rules/font-sizes.md, kiểm bằng npm run lint:font-sizes).
+     Chỉ dùng: text-2xs 11 · xs 12 · sm 14 · base 16 · lg 18 · xl 20 · 2xl 24 · 3xl 30 · 4xl 36 (px)
+     và text-emph (1.125em, nhấn mạnh trong câu thay cho chữ đậm). Các cỡ xs…4xl là mặc định của Tailwind. */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.45;
+  --text-emph: 1.125em;
+}
+
+/* Ô nhập trên điện thoại luôn >= 16px để iPhone không tự phóng to khi chạm vào ô */
+@layer base {
+  @media (width < 40rem) {
+    input, select, textarea {
+      font-size: 16px;
+    }
+  }
+}
+@media (width < 40rem) {
+  :is(input, select, textarea):is(.text-2xs, .text-xs, .text-sm) {
+    font-size: 16px;
+  }
 }
 
 /* ===== BASE STYLES ===== */
@@ -294,8 +315,11 @@ select:-webkit-autofill {
   caret-color: var(--color-ink-950);
 }
 
+/* Chữ gợi ý (placeholder) mờ hơn chữ đã gõ: 65% màu chữ của ô (chữ xanh rêu trên nền trắng ≈ #6F908B, tương phản ~3.5:1).
+   Không dùng var(--color-ink-500): plugin postcss-brand-colors.cjs ép màu chữ về 7 màu gốc nên ink-500 bị đổi thành #22544C (đậm như chữ đã gõ).
+   currentcolor không bị plugin đổi, và trên ô nền tối (chữ trắng) gợi ý thành trắng mờ. */
 ::placeholder {
-  color: var(--color-ink-500);
+  color: color-mix(in srgb, currentcolor 65%, transparent);
   opacity: 1;
 }
 

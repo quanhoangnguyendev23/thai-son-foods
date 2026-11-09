@@ -20,6 +20,10 @@ export interface ZaloOrderNotice {
   paymentMethod?: string | null;
   total: number;
   note?: string | null;
+  /** Giờ giao: "Thứ Sáu 06/11, 08:00–09:00" hoặc "Giao ngay, dự kiến 10:15 hôm nay" */
+  deliveryLabel?: string | null;
+  /** true = đơn hẹn khung giờ (đặt ngoài giờ hoặc khách tự hẹn) */
+  deliveryScheduled?: boolean;
   items: {
     name: string;
     quantity: number;
@@ -54,6 +58,7 @@ export function buildOrderText(o: ZaloOrderNotice): string {
     `Khách: ${o.fullName} - ${o.phone}`,
     `Địa chỉ: ${o.address}`,
     o.storeCode ? `Chi nhánh: ${o.storeCode}` : '',
+    o.deliveryLabel ? `Giao: ${o.deliveryLabel}${o.deliveryScheduled ? ' (ĐƠN HẸN)' : ''}` : '',
     '',
     ...o.items.slice(0, 20).map((it) => `• ${shortItemCode(it)}${it.unit ? ` (${it.unit})` : ''} x${it.quantity}`),
     o.items.length > 20 ? `… và ${o.items.length - 20} dòng khác` : '',
