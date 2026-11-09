@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -9,9 +9,6 @@ import {
   MapPin,
   RefreshCw,
   SkipForward,
-  Trash2,
-  AlertCircle,
-  CheckCircle2,
   ChevronRight,
   ShoppingBag,
 } from 'lucide-react';

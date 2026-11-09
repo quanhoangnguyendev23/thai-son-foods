@@ -7,7 +7,6 @@ import {
   Users,
   CheckCircle2,
   ArrowRight,
-  Building,
   CreditCard,
   Phone,
   Mail,
@@ -15,7 +14,6 @@ import {
   Lock,
   KeyRound,
   AlertCircle,
-  Clock,
   ArrowLeft,
 } from 'lucide-react';
 

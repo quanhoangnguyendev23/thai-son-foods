@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
-import path from 'path';
 import { query } from '@/lib/db';
 import { isOptionalSafeUrl, isSafeUrl } from '@/lib/content-validation';
 import { getAdminSession } from '@/lib/auth';

@@ -17,12 +17,10 @@ import {
   RefreshCw,
   Search,
   Navigation,
-  Compass,
   Loader2,
   Clock,
   Phone,
   Truck,
-  ChevronRight,
   Maximize2,
   CheckCircle2,
 } from 'lucide-react';
@@ -33,7 +31,7 @@ import { combos } from '@/data/combos';
 import { getCartSavings, useComboCatalog } from '@/lib/savings';
 import { useBranchStore } from '@/store/branch';
 import { calculateShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
-import { calculateHaversineDistance, estimateCoordinatesFromAddress, findNearestStore, removeKhuPho } from '@/lib/geo';
+import { calculateHaversineDistance, removeKhuPho } from '@/lib/geo';
 import {
   getProvinceNames,
   getDistrictsByProvince,

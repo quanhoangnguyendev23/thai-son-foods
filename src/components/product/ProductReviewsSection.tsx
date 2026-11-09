@@ -57,25 +57,6 @@ function compressImageToDataUrl(file: File): Promise<string> {
   });
 }
 
-// Bảng màu avatar ngẫu nhiên theo tên
-const AVATAR_COLORS = [
-  'bg-emerald-600 text-white',
-  'bg-blue-600 text-white',
-  'bg-amber-600 text-white',
-  'bg-brand-leaf text-white',
-  'bg-teal-600 text-white',
-  'bg-rose-600 text-white',
-];
-
-function getAvatarColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[index];
-}
-
 function formatRelativeTime(dateStr: string): string {
   try {
     const diffMs = Date.now() - new Date(dateStr).getTime();

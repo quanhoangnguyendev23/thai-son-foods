@@ -37,16 +37,13 @@ import {
   Menu,
   FileSpreadsheet,
   Layers,
-  ChevronDown,
   LogOut,
   UserCheck,
   UserPlus,
   ShieldCheck,
   Lock,
   Store,
-  Save,
   PackageCheck,
-  SlidersHorizontal,
   Key,
   History,
   ArrowRightLeft,
@@ -56,7 +53,6 @@ import {
   ArrowDown,
   Star,
   EyeOff,
-  GripVertical,
   ShieldAlert,
   Copy
 } from 'lucide-react';
@@ -573,7 +569,6 @@ export default function AdminPage() {
   const [inventorySearch, setInventorySearch] = useState('');
   const [inventoryStockFilter, setInventoryStockFilter] = useState('ALL');
   const [editedStock, setEditedStock] = useState<Record<string, number>>({});
-  const [inventorySaving, setInventorySaving] = useState(false);
   // true khi tồn kho lấy từ Google Sheet (chỉ đọc): ẩn các nút nhập tay số lượng / nhập lô
   const [inventorySheetMode, setInventorySheetMode] = useState(false);
 
@@ -1784,51 +1779,6 @@ export default function AdminPage() {
     showToast('Đã xuất danh sách thành viên ra file CSV!');
   };
 
-  // Thay đổi số lượng mặt hàng trong state
-  const handleStockChange = (productId: string, value: number) => {
-    setEditedStock((prev) => ({
-      ...prev,
-      [productId]: Math.max(0, value),
-    }));
-  };
-
-  // Thêm nhanh số lượng (+1, +5, +10, -1, -5)
-  const handleQuickStockAdd = (productId: string, amount: number) => {
-    setEditedStock((prev) => {
-      const current = prev[productId] !== undefined ? prev[productId] : 100;
-      return {
-        ...prev,
-        [productId]: Math.max(0, current + amount),
-      };
-    });
-  };
-
-  // Lưu số lượng của 1 mặt hàng
-  const handleSaveInventoryItem = async (productId: string) => {
-    const qty = editedStock[productId];
-    if (qty === undefined) return;
-    try {
-      const res = await fetch('/api/admin/inventory', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storeCode: selectedStoreCode,
-          productId,
-          stockQuantity: qty,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message || 'Đã cập nhật số lượng mặt hàng!');
-        fetchInventory(selectedStoreCode);
-      } else {
-        showToast(data.error || 'Lỗi khi cập nhật tồn kho', 'error');
-      }
-    } catch (err: any) {
-      showToast('Lỗi: ' + err.message, 'error');
-    }
-  };
-
   // Mở Pop-up cập nhật số lượng chai cho mặt hàng
   const handleOpenStockModal = (item: InventoryItem) => {
     const currentQty = editedStock[item.product_id] !== undefined ? editedStock[item.product_id] : item.stock_quantity;
@@ -1875,37 +1825,6 @@ export default function AdminPage() {
       showToast('Lỗi: ' + err.message, 'error');
     } finally {
       setActionLoading(false);
-    }
-  };
-
-  // Lưu tất cả số lượng của tất cả mặt hàng
-  const handleSaveAllInventory = async () => {
-    setInventorySaving(true);
-    try {
-      const itemsToUpdate = Object.entries(editedStock).map(([productId, stockQuantity]) => ({
-        productId,
-        stockQuantity,
-      }));
-
-      const res = await fetch('/api/admin/inventory', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storeCode: selectedStoreCode,
-          items: itemsToUpdate,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message || 'Đã lưu tất cả số lượng mặt hàng thành công!');
-        fetchInventory(selectedStoreCode);
-      } else {
-        showToast(data.error || 'Lỗi khi lưu số lượng', 'error');
-      }
-    } catch (err: any) {
-      showToast('Lỗi: ' + err.message, 'error');
-    } finally {
-      setInventorySaving(false);
     }
   };
 

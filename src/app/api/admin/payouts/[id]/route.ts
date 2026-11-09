@@ -1,6 +1,5 @@
-import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { query, pool } from '@/lib/db';
+import { pool } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';

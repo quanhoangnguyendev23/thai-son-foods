@@ -1,21 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Store,
   MapPin,
   Clock,
   Phone,
-  Sparkles,
   ChevronRight,
   X,
   Search,
   Check,
-  Compass,
-  AlertCircle,
   Truck,
   ShoppingBag,
-  Info,
 } from 'lucide-react';
 import { StoreRecommendationItem } from '@/lib/storeRecommender';
 import { cn } from '@/lib/utils';

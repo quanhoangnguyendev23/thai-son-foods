@@ -12,22 +12,14 @@ import {
   Building2,
   Copy,
   Check,
-  TrendingUp,
   AlertCircle,
   CheckCircle2,
   Clock,
-  ExternalLink,
   RefreshCw,
   LogOut,
-  ShieldCheck,
-  Package,
   Layers,
   ArrowRight,
-  Info,
-  Calendar,
-  CreditCard,
   Send,
-  Plus
 } from 'lucide-react';
 import { showAlert } from '@/components/ui/AppDialog';
 

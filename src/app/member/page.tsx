@@ -1,22 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  CheckCircle2,
   Truck,
   RefreshCw,
   Clock,
-  Calendar,
   AlertCircle,
   PauseCircle,
-  XCircle,
-  ArrowRight,
   ChevronRight,
 } from 'lucide-react';
 import { useUserAuth } from '@/context/UserAuthContext';
-import { formatPrice, safeFetchJson, safeParseJson } from '@/lib/utils';
+import { safeFetchJson, safeParseJson } from '@/lib/utils';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
 
 export default function MemberPage() {

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Product, ProductImage } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Share2, ZoomIn, X, Check, PlayCircle, Copy, QrCode, Smartphone } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Share2, ZoomIn, X, Check, PlayCircle, Copy, QrCode, Smartphone } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface ProductGalleryProps {
@@ -171,40 +171,6 @@ export default function ProductGallery({
   );
   const currentPrice = currentProduct?.price;
 
-  const isLandscape =
-    activeImage.url.includes('600X400') ||
-    activeImage.url.includes('combo') ||
-    activeImage.url.includes('lifestyle');
-  const is2x3 =
-    activeImage.url.includes('620x930') ||
-    activeImage.url.includes('620X930') ||
-    activeImage.url.includes('800x1200') ||
-    activeImage.url.includes('800X1200');
-  const is3x4 = activeImage.url.includes('dreamina');
-  const aspectClass = isLandscape
-    ? 'aspect-[3/2]'
-    : is2x3
-      ? 'aspect-[2/3]'
-      : is3x4
-        ? 'aspect-[3/4]'
-        : 'aspect-[4/5]';
-
-  const isChart = activeImage.url.includes('bang-icon') || activeImage.url.includes('bang-thong-tin');
-  const isPoster =
-    isChart ||
-    (!activeImage.url.endsWith('.png') && (
-      activeImage.url.includes('620x930') ||
-      activeImage.url.includes('800x1200') ||
-      activeImage.url.includes('banner') ||
-      activeImage.url.includes('lifestyle') ||
-      activeImage.url.includes('poster') ||
-      activeImage.url.includes('canh-dong') ||
-      activeImage.url.includes('1789') ||
-      activeImage.url.endsWith('.jpg') ||
-      activeImage.url.endsWith('.jpeg') ||
-      activeImage.url.endsWith('.webp')
-    )) || (imageFit === 'cover' && !activeImage.url.endsWith('.png'));
-  const isBottle = !isChart && (!isPoster || activeImage.url.endsWith('.png'));
   const isVideo = activeImage.url.endsWith('.mp4');
 
   return (

@@ -14,7 +14,6 @@ import {
   UserPlus,
   AlertCircle,
   CheckCircle2,
-  Sparkles,
   Loader2,
   Database,
   Crown,

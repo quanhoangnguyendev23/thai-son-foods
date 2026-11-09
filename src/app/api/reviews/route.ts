@@ -5,7 +5,6 @@ import {
   getProductReviews,
   createProductReview,
   checkAndRecordReviewRateLimit,
-  normalizePhoneNumber,
 } from '@/lib/reviews/repository';
 import { CreateReviewInput } from '@/types/reviews';
 

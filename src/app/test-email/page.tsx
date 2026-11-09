@@ -12,10 +12,8 @@ import {
   AlertCircle,
   RefreshCw,
   Clock,
-  ShieldCheck,
   ShieldAlert,
   Truck,
-  ArrowRight,
   Info,
 } from 'lucide-react';
 import { showAlert } from '@/components/ui/AppDialog';

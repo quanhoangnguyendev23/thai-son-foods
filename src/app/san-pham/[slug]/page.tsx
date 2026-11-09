@@ -25,7 +25,6 @@ import ProductDetailTabs from '@/components/product/ProductDetailTabs';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import RecentlyViewedProducts from '@/components/product/RecentlyViewedProducts';
 import ProductCompareTable from '@/components/product/ProductCompareTable';
-import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
 import { getProductDetailContent } from '@/data/product-detail-content';
 import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold } from '@/lib/product-stats';

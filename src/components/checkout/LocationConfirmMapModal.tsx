@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin,
   X,
@@ -9,8 +9,6 @@ import {
   Check,
   AlertTriangle,
   Loader2,
-  Compass,
-  Building,
 } from 'lucide-react';
 import { cn, safeFetchJson } from '@/lib/utils';
 import { distanceMeters as distanceBetween } from '@/lib/address/normalize';

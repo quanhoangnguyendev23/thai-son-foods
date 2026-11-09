@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCartStore, getItemBottleMultiplier, getItemMaxQuantity } from '@/store/cart';
+import { useCartStore, getItemMaxQuantity } from '@/store/cart';
 import { formatPrice, safeFetchJson } from '@/lib/utils';
 import {
   Trash2,
@@ -15,13 +15,12 @@ import {
   CheckCircle2,
   Minus,
   Plus,
-  RotateCcw,
   Store,
   ChevronLeft,
   ChevronRight,
   Check,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
 import { products } from '@/data/products';
 import { combos } from '@/data/combos';
@@ -815,11 +814,9 @@ export default function CartPage() {
 
                       {/* 3. Bộ tăng giảm số lượng (Ràng buộc tối đa 1.000 chai) */}
                       {(() => {
-                        const itemMultiplier = getItemBottleMultiplier(item);
                         const stockLimit = itemLimits.find((l) => l.productId === item.productId)?.maxQuantity;
                         const ruleMax = getItemMaxQuantity(item);
                         const maxAllowed = typeof stockLimit === 'number' ? Math.max(1, Math.min(ruleMax, stockLimit)) : ruleMax;
-                        const totalBottles = item.quantity * itemMultiplier;
                         const isAtMax = item.quantity >= maxAllowed;
                         const atStockLimit = typeof stockLimit === 'number' && stockLimit < ruleMax && item.quantity >= stockLimit;
 

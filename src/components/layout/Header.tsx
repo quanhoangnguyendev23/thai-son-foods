@@ -15,7 +15,6 @@ import {
   Truck,
   Headphones,
   Phone,
-  MessageCircle,
   Clock,
   ChevronRight,
   Globe,
@@ -75,7 +74,7 @@ export default function Header() {
     const preview = new URLSearchParams(window.location.search).get('giao-dien') === 'moi';
     setShowDeliverTo(isPdp && (PRODUCT_DETAIL_CONFIG.ENABLE_NEW_LAYOUT || preview));
   }, [pathname]);
-  const { language, setLanguage, toggleLanguage, t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { user, openAuthModal, logout } = useUserAuth();
   const [isMounted, setIsMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);

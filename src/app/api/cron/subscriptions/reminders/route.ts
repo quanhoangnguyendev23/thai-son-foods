@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { pool, query } from '@/lib/db';
+import { query } from '@/lib/db';
 
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
 

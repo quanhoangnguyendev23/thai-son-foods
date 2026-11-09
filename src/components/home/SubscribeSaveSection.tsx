@@ -1,19 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  ChevronLeft,
-  ChevronRight,
   CheckCircle2,
   RefreshCw,
   Star,
-  Truck,
   X,
-  Phone,
-  Calendar,
-  Send,
   Lock,
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';

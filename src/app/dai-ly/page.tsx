@@ -5,18 +5,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Users,
-  Percent,
-  Truck,
   ArrowRight,
   CheckCircle2,
-  DollarSign,
   Package,
   Headphones,
   HelpCircle,
   Building2,
   ChevronRight,
   Calculator,
-  FileText,
 } from 'lucide-react';
 
 export default function DaiLyLandingPage() {

@@ -12,7 +12,6 @@ import {
   EyeOff,
   AlertCircle,
   CheckCircle2,
-  Sparkles,
   ShoppingBag,
 } from 'lucide-react';
 import { useUserAuth } from '@/context/UserAuthContext';

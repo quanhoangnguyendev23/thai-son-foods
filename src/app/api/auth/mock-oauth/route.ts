@@ -24,7 +24,6 @@ export async function GET(req: NextRequest) {
   const providerTitle = isGoogle ? 'Google' : 'Facebook';
   const defaultEmail = isGoogle ? 'demo.google@gmail.com' : 'demo.facebook@gmail.com';
   const defaultName = isGoogle ? 'Nguyễn Văn Google' : 'Trần Thị Facebook';
-  const brandColor = isGoogle ? '#EA4335' : '#1877F2';
 
   const html = `
     <!DOCTYPE html>

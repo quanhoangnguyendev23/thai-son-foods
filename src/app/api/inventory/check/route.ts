@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import {
   getAvailability,
-  getComboStockDetails,
   getSellableQuantity,
   cleanupExpiredReservationsThrottled,
 } from '@/lib/inventory';

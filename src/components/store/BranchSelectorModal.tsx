@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   MapPin,
   Navigation,
   X,
   Search,
   Check,
-  ChevronRight,
   Phone,
   AlertCircle,
-  Clock,
   Loader2,
 } from 'lucide-react';
 import { useBranchStore, StoreBranch } from '@/store/branch';

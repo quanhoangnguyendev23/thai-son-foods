@@ -6,7 +6,6 @@ import {
   OrderEmailData,
 } from '@/lib/email/templates';
 import { sendOrderEmail, EmailType } from '@/lib/email/service';
-import { query } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac';
 

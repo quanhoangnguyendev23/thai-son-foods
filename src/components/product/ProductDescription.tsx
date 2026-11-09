@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { formatKcal } from '@/lib/utils';
 
 interface ProductDescriptionProps {

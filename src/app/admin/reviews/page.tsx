@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Star,
   Search,
   CheckCircle2,
-  XCircle,
   MessageCircle,
   ArrowLeft,
   X,
@@ -16,7 +15,6 @@ import {
   ShieldCheck,
   Trash2,
   Clock,
-  AlertTriangle,
 } from 'lucide-react';
 import { showAlert, showConfirm } from '@/components/ui/AppDialog';
 

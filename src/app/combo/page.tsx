@@ -14,8 +14,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Lock,
-  RotateCcw,
-  Layers,
   ArrowRight,
   MapPin,
 } from 'lucide-react';
@@ -182,7 +180,6 @@ const STEP3_OPTIONS: OptionItem[] = [
 // COMPONENT CHỌN COMBO 01 (TỰ DO 4 CHAI)
 // ==========================================
 function Combo01View() {
-  const { flyToCart } = useFlyToCart();
   const { selectedBranch, openBranchModal, getAvailable } = useBranchStockMap();
   const [selectedBottles, setSelectedBottles] = useState<Record<string, number>>({
     'sua-bap-nep': 1,
@@ -702,14 +699,6 @@ function Combo02View() {
   // Xử lý chọn Bước 3 (2 chai)
   const handleSelectStep3 = (id: 'tra-sua-go' | 'tra-xanh-go') => {
     setStep3(id);
-  };
-
-  // Làm mới toàn bộ
-  const handleReset = () => {
-    setStep1(null);
-    setStep2(null);
-    setStep3(null);
-    setCurrentStep(1);
   };
 
   // Thêm vào giỏ hàng
@@ -1491,7 +1480,6 @@ function Combo02View() {
 const EXCLUDED_COMBO_05_IDS = new Set(['sua-hat-sen-lotus', 'sua-gao-lut-ohsawa']);
 
 function Combo05View() {
-  const { flyToCart } = useFlyToCart();
   const stepContainerRef = useRef<HTMLDivElement>(null);
   const [currentStep, setCurrentStep] = useState<'A' | 'B'>('A');
   const [selectedA, setSelectedA] = useState<string | null>(null);
@@ -2184,7 +2172,6 @@ const EXCLUDED_COMBO_06_IDS = new Set([
 ]);
 
 function Combo06View() {
-  const { flyToCart } = useFlyToCart();
   const stepContainerRef = useRef<HTMLDivElement>(null);
   const [packageSize, setPackageSize] = useState<20 | 30>(20);
   const [isSameFlavor, setIsSameFlavor] = useState<boolean>(true);

@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findPreciseCoordinates, VIETNAM_ADDRESSES } from '@/data/vietnam-addresses';
+import { findPreciseCoordinates } from '@/data/vietnam-addresses';
 import { findStreetCoordinates, extractHouseNumberAndStreet } from '@/data/vietnam-streets';
 import { matchStandardAdministrative, isKhuPho, removeKhuPho } from '@/lib/geo';
 import { nominatimJson } from '@/lib/address/osmQueue';
 
 export const dynamic = 'force-dynamic';
-
-function cleanComponent(val: string): string {
-  return val.replace(/^(Thành phố|Tỉnh|Quận|Huyện|Thị xã|Phường|Xã|Thị trấn|Khu phố|Tổ dân phố|KP|Tổ)\s+/i, '').trim();
-}
 
 /**
  * Khớp tên hành chính với danh mục chuẩn VIETNAM_ADDRESSES
