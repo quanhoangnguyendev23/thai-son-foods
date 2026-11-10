@@ -229,7 +229,7 @@ export async function verifyUserToken(token: string): Promise<UserJWTPayload | n
   }
 }
 
-const userLockCache = new Map<string, { locked: boolean; expiresAt: number }>();
+const userLockCache = new Map<string, { locked: boolean; oauthOnlyProvider: string | null; expiresAt: number }>();
 const USER_LOCK_CACHE_TTL_MS = 10_000;
 
 export function invalidateUserSessionCache(id?: string) {
@@ -238,23 +238,53 @@ export function invalidateUserSessionCache(id?: string) {
 }
 
 /**
- * Tài khoản khách có bị admin KHÓA không (users.is_active = false)?
- * Chỉ coi là khóa khi có dòng và is_active === false; không có dòng / lỗi CSDL → không chặn (giữ hành vi cũ).
- * Cache 10 giây để không truy vấn mỗi request.
+ * Tài khoản chỉ đăng nhập được bằng Google/Facebook: provider là mạng xã hội và không còn mật khẩu dùng được
+ * (password_hash không phải chuỗi bcrypt).
  */
-async function isUserLocked(id: string): Promise<boolean> {
+export function isOAuthOnlyAccount(provider: unknown, passwordHash: unknown): boolean {
+  return (provider === 'google' || provider === 'facebook') && !/^\$2[aby]\$/.test(String(passwordHash || ''));
+}
+
+/**
+ * Phiên của khách có bị từ chối không?
+ *  - Tài khoản bị admin KHÓA (users.is_active = false).
+ *  - Tài khoản chỉ đăng nhập bằng Google/Facebook nhưng phiên được cấp theo cách khác (vd. mật khẩu, trước khi
+ *    tài khoản được gộp vào Google): mật khẩu cũ đã bị vô hiệu thì phiên cũ cũng phải mất hiệu lực.
+ * Không có dòng / lỗi CSDL → không chặn (giữ hành vi cũ). Cache 10 giây để không truy vấn mỗi request.
+ */
+async function isUserLocked(id: string, tokenProvider?: string | null): Promise<boolean> {
   const now = Date.now();
-  const cached = userLockCache.get(id);
-  if (cached && cached.expiresAt > now) return cached.locked;
-  try {
-    const res = await query(`SELECT is_active FROM users WHERE id = $1 LIMIT 1;`, [id]);
-    const locked = res.rows.length > 0 && res.rows[0].is_active === false;
-    userLockCache.set(id, { locked, expiresAt: now + USER_LOCK_CACHE_TTL_MS });
-    return locked;
-  } catch (err) {
-    console.error('Error checking customer lock status:', err);
-    return false;
+  let entry = userLockCache.get(id);
+  if (!entry || entry.expiresAt <= now) {
+    try {
+      const res = await query(`SELECT is_active, provider, password_hash FROM users WHERE id = $1 LIMIT 1;`, [id]);
+      const row = res.rows[0];
+      entry = {
+        locked: Boolean(row) && row.is_active === false,
+        oauthOnlyProvider: row && isOAuthOnlyAccount(row.provider, row.password_hash) ? String(row.provider) : null,
+        expiresAt: now + USER_LOCK_CACHE_TTL_MS,
+      };
+      userLockCache.set(id, entry);
+    } catch (err) {
+      console.error('Error checking customer lock status:', err);
+      return false;
+    }
   }
+  if (entry.locked) return true;
+  return entry.oauthOnlyProvider !== null && (tokenProvider || 'local') !== entry.oauthOnlyProvider;
+}
+
+/**
+ * Xác minh token phiên của khách (chữ ký + hạn dùng + trạng thái tài khoản trong CSDL).
+ * Mọi nơi nhận token ngoài cookie (vd. header Authorization của cổng đối tác) phải đi qua hàm này,
+ * không gọi thẳng verifyUserToken, để tài khoản bị khóa hoặc phiên đã bị thu hồi không lọt qua.
+ */
+export async function getUserSessionFromToken(token: string | null | undefined): Promise<UserJWTPayload | null> {
+  if (!token) return null;
+  const session = await verifyUserToken(token);
+  if (!session) return null;
+  if (session.id && (await isUserLocked(session.id, session.provider))) return null;
+  return session;
 }
 
 /**
@@ -265,11 +295,7 @@ export async function getUserSession(): Promise<UserJWTPayload | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(USER_COOKIE_NAME)?.value;
-    if (!token) return null;
-    const session = await verifyUserToken(token);
-    if (!session) return null;
-    if (session.id && (await isUserLocked(session.id))) return null;
-    return session;
+    return await getUserSessionFromToken(token);
   } catch {
     return null;
   }

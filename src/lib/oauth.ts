@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 import type { NextRequest, NextResponse } from 'next/server';
 import { isCookieSecure } from '@/lib/runtimeConfig';
+import { query } from '@/lib/db';
+import { invalidateUserSessionCache } from '@/lib/auth';
 
 /**
  * Tiện ích dùng chung cho đăng nhập Google / Facebook (OAuth 2.0 Authorization Code).
@@ -105,4 +107,80 @@ export function verifyOAuthCallback(
     // giữ mặc định
   }
   return { ok: true, returnUrl };
+}
+
+export type OAuthAccountResult =
+  | { ok: true; userId: string; created: boolean }
+  | { ok: false; code: 'account_disabled' | 'email_in_use' };
+
+/**
+ * Tìm hoặc tạo tài khoản khách cho một lần đăng nhập Google / Facebook đã xác thực xong với nhà cung cấp.
+ *
+ * Email khách tự khai lúc đăng ký bằng mật khẩu CHƯA được xác minh, nên không được gộp bừa theo email:
+ *  1. Khớp đúng danh tính mạng xã hội (provider + provider_id) → đăng nhập tài khoản đó.
+ *  2. Email đã thuộc một tài khoản khác:
+ *     - emailVerified = true (Google đã xác minh email): người đăng nhập là chủ thật của email → nhận tài khoản,
+ *       đồng thời VÔ HIỆU mật khẩu cũ. Ai đã đăng ký trước bằng email này sẽ không đăng nhập lại được,
+ *       phiên cũ của họ cũng bị từ chối (xem isUserLocked trong lib/auth.ts).
+ *     - emailVerified = false (Facebook không cam kết email đã xác minh): từ chối (email_in_use), không gộp.
+ *  3. Chưa có tài khoản → tạo mới, không có mật khẩu dùng được.
+ */
+export async function resolveOAuthAccount(params: {
+  provider: OAuthProvider;
+  providerId: string | null;
+  email: string;
+  emailVerified: boolean;
+  fullName: string;
+  avatarUrl: string | null;
+}): Promise<OAuthAccountResult> {
+  const { provider, providerId, email, emailVerified, fullName, avatarUrl } = params;
+  const unusablePassword = `oauth_${provider}_${providerId || Date.now()}`;
+
+  let row: { id: string; is_active: boolean | null; provider: string | null; provider_id: string | null } | undefined;
+  if (providerId) {
+    const byIdentity = await query(
+      'SELECT id, is_active, provider, provider_id FROM users WHERE provider = $1 AND provider_id = $2 LIMIT 1;',
+      [provider, providerId]
+    );
+    row = byIdentity.rows[0];
+  }
+  if (!row) {
+    const byEmail = await query('SELECT id, is_active, provider, provider_id FROM users WHERE email = $1 LIMIT 1;', [email]);
+    const found = byEmail.rows[0];
+    if (found) {
+      // Dòng cũ cùng nhà cung cấp nhưng chưa lưu provider_id vẫn được coi là đúng tài khoản
+      const sameProviderLegacy = found.provider === provider && !found.provider_id;
+      if (!emailVerified && !sameProviderLegacy) return { ok: false, code: 'email_in_use' };
+      row = found;
+    }
+  }
+
+  if (row) {
+    if (row.is_active === false) return { ok: false, code: 'account_disabled' };
+    await query(
+      `UPDATE users
+       SET full_name = COALESCE(NULLIF(full_name, ''), $1),
+           avatar_url = COALESCE($2, avatar_url),
+           provider = $3,
+           provider_id = COALESCE($4, provider_id),
+           password_hash = CASE WHEN $5::boolean AND password_hash LIKE '$2%' THEN $6 ELSE password_hash END,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $7;`,
+      // Chỉ vô hiệu mật khẩu cũ khi nhà cung cấp đã xác minh email (Google). Với Facebook giữ nguyên mật khẩu:
+      // không đủ căn cứ để coi danh tính Facebook là chủ thật của email.
+      [fullName, avatarUrl, provider, providerId, emailVerified, unusablePassword, row.id]
+    );
+    // Phiên cấp theo cách đăng nhập cũ mất hiệu lực ngay trên tiến trình này (tiến trình khác: tối đa 10 giây)
+    invalidateUserSessionCache(row.id);
+    return { ok: true, userId: row.id, created: false };
+  }
+
+  const prefix = provider === 'google' ? 'gg' : 'fb';
+  const userId = `usr_${prefix}_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+  await query(
+    `INSERT INTO users (id, email, password_hash, full_name, avatar_url, provider, provider_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7);`,
+    [userId, email, unusablePassword, fullName, avatarUrl, provider, providerId]
+  );
+  return { ok: true, userId, created: true };
 }

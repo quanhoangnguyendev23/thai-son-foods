@@ -46,6 +46,10 @@ export default function AuthModal() {
       google_email_unverified: ['Your Google email is not verified.', 'Email Google của bạn chưa được xác minh.'],
       google_no_email: ['Google did not share your email.', 'Google không cung cấp email của bạn.'],
       account_disabled: ['This account has been disabled.', 'Tài khoản này đã bị vô hiệu hóa.'],
+      email_in_use: [
+        'This email already has an account. Please sign in the way you used before (password or Google).',
+        'Email này đã có tài khoản. Vui lòng đăng nhập bằng cách bạn đã dùng trước đó (mật khẩu hoặc Google).',
+      ],
     };
     const found = messages[code];
     pendingOAuthErrorRef.current =

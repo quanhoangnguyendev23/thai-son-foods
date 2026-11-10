@@ -46,16 +46,16 @@ export async function getPartnerSession(req?: Request): Promise<PartnerSession |
     const authHeader = req.headers.get('authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7).trim();
-      const { verifyUserToken } = await import('@/lib/auth');
-      user = await verifyUserToken(token);
+      const { getUserSessionFromToken } = await import('@/lib/auth');
+      user = await getUserSessionFromToken(token);
     }
 
     if (!user) {
       const cookieHeader = req.headers.get('cookie') || '';
       const match = cookieHeader.match(/tsf_user_session=([^;]+)/);
       if (match) {
-        const { verifyUserToken } = await import('@/lib/auth');
-        user = await verifyUserToken(match[1]);
+        const { getUserSessionFromToken } = await import('@/lib/auth');
+        user = await getUserSessionFromToken(match[1]);
       }
     }
   }

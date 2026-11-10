@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, initDatabase } from '@/lib/db';
+import { initDatabase } from '@/lib/db';
 import { signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS, getSafeAppOrigin } from '@/lib/auth';
-import { clearOAuthCookies, FACEBOOK_GRAPH_VERSION, verifyOAuthCallback } from '@/lib/oauth';
+import { clearOAuthCookies, FACEBOOK_GRAPH_VERSION, resolveOAuthAccount, verifyOAuthCallback } from '@/lib/oauth';
 import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
@@ -67,34 +67,18 @@ export async function GET(req: NextRequest) {
     const fullName = profile.name || `Facebook User ${fbId.slice(-4)}`;
     const avatarUrl = profile.picture?.data?.url || null;
 
-    // 3. Tạo mới / liên kết tài khoản theo email hoặc theo ID Facebook
-    const existing = await query(
-      'SELECT id, is_active FROM users WHERE email = $1 OR (provider = $2 AND provider_id = $3) LIMIT 1;',
-      [email, 'facebook', fbId]
-    );
-
-    let userId = '';
-    if (existing.rows.length > 0) {
-      if (existing.rows[0].is_active === false) return fail(origin, 'account_disabled');
-      userId = existing.rows[0].id;
-      await query(
-        `UPDATE users
-         SET full_name = COALESCE(NULLIF(full_name, ''), $1),
-             avatar_url = COALESCE($2, avatar_url),
-             provider = 'facebook',
-             provider_id = COALESCE($3, provider_id),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = $4;`,
-        [fullName, avatarUrl, fbId, userId]
-      );
-    } else {
-      userId = `usr_fb_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
-      await query(
-        `INSERT INTO users (id, email, password_hash, full_name, avatar_url, provider, provider_id)
-         VALUES ($1, $2, $3, $4, $5, 'facebook', $6);`,
-        [userId, email, `oauth_facebook_${fbId}`, fullName, avatarUrl, fbId]
-      );
-    }
+    // 3. Tạo mới / đăng nhập theo ID Facebook. Facebook không cam kết email đã xác minh,
+    //    nên KHÔNG gộp vào tài khoản khác chỉ vì trùng email (trả lỗi email_in_use).
+    const account = await resolveOAuthAccount({
+      provider: 'facebook',
+      providerId: fbId,
+      email,
+      emailVerified: false,
+      fullName,
+      avatarUrl,
+    });
+    if (!account.ok) return fail(origin, account.code);
+    const userId = account.userId;
 
     // 4. Ký JWT & đặt cookie đăng nhập
     const token = await signUserToken({

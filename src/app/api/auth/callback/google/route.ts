@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, initDatabase } from '@/lib/db';
+import { initDatabase } from '@/lib/db';
 import { signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS, getSafeAppOrigin } from '@/lib/auth';
-import { clearOAuthCookies, verifyOAuthCallback } from '@/lib/oauth';
+import { clearOAuthCookies, resolveOAuthAccount, verifyOAuthCallback } from '@/lib/oauth';
 import { isCookieSecure } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
@@ -71,31 +71,17 @@ export async function GET(req: NextRequest) {
     const avatarUrl = profile.picture || null;
     const googleSub = profile.sub || null;
 
-    // 3. Tạo mới / liên kết tài khoản theo email
-    const existing = await query('SELECT id, is_active FROM users WHERE email = $1 LIMIT 1;', [email]);
-
-    let userId = '';
-    if (existing.rows.length > 0) {
-      if (existing.rows[0].is_active === false) return fail(origin, 'account_disabled');
-      userId = existing.rows[0].id;
-      await query(
-        `UPDATE users
-         SET full_name = COALESCE(NULLIF(full_name, ''), $1),
-             avatar_url = COALESCE($2, avatar_url),
-             provider = 'google',
-             provider_id = COALESCE($3, provider_id),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = $4;`,
-        [fullName, avatarUrl, googleSub, userId]
-      );
-    } else {
-      userId = `usr_gg_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
-      await query(
-        `INSERT INTO users (id, email, password_hash, full_name, avatar_url, provider, provider_id)
-         VALUES ($1, $2, $3, $4, $5, 'google', $6);`,
-        [userId, email, `oauth_google_${googleSub || Date.now()}`, fullName, avatarUrl, googleSub]
-      );
-    }
+    // 3. Tạo mới / nhận tài khoản theo email đã được Google xác minh (mật khẩu cũ, nếu có, bị vô hiệu)
+    const account = await resolveOAuthAccount({
+      provider: 'google',
+      providerId: googleSub ? String(googleSub) : null,
+      email,
+      emailVerified: true,
+      fullName,
+      avatarUrl,
+    });
+    if (!account.ok) return fail(origin, account.code);
+    const userId = account.userId;
 
     // 4. Ký JWT & đặt cookie đăng nhập
     const token = await signUserToken({
