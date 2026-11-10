@@ -34,6 +34,15 @@ export function validateProductionEnvironment(): { isValid: boolean; errors: str
     console.error('CRITICAL PRODUCTION CONFIGURATION ERRORS DETECTED:\n' + errors.join('\n'));
   }
 
+  // Cảnh báo (không chặn khởi động): thiếu TRUSTED_PROXY_COUNT thì mọi khách vô danh dùng chung một bộ đếm rate limit,
+  // một người gửi dồn request là chặn đặt hàng / đăng nhập của tất cả. Đặt đúng số reverse proxy đứng trước app (thường là 1).
+  if (isProd && !(parseInt(process.env.TRUSTED_PROXY_COUNT || '0', 10) > 0)) {
+    console.warn(
+      '[Cấu hình] TRUSTED_PROXY_COUNT=0 ở production: không xác định được IP khách, rate limit của khách vô danh dùng chung cho cả web. ' +
+        'Đặt TRUSTED_PROXY_COUNT=1 nếu app chạy sau 1 reverse proxy (nginx/IIS) có nối IP khách vào X-Forwarded-For.'
+    );
+  }
+
   return { isValid: errors.length === 0, errors };
 }
 

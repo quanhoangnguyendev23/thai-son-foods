@@ -72,6 +72,26 @@ if (typeof setInterval !== 'undefined') {
   if (t.unref) t.unref();
 }
 
+/**
+ * Khóa bộ đếm rate limit khi KHÔNG xác định được IP khách (TRUSTED_PROXY_COUNT=0 hoặc proxy cấu hình sai).
+ * Khách có phiên đăng nhập hợp lệ (chữ ký JWT đúng) được đếm riêng theo phiên, để một người spam
+ * không làm nghẽn cả web; khách vô danh vẫn dùng chung nhóm "unknown".
+ * Cookie giả / hết hạn không qua được jwtVerify nên không tự tạo được bộ đếm mới để lách giới hạn.
+ */
+async function getSessionRateKey(req: NextRequest): Promise<string | null> {
+  for (const name of ['tsf_user_session', ADMIN_COOKIE_NAME]) {
+    const token = req.cookies.get(name)?.value;
+    if (!token) continue;
+    try {
+      await jwtVerify(token, getJwtSecretBytes());
+      return `sess:${token.slice(-32)}`;
+    } catch {
+      // token sai: bỏ qua, thử cookie kế tiếp
+    }
+  }
+  return null;
+}
+
 function checkGlobalRateLimit(
   ip: string,
   max: number = GLOBAL_MAX_REQUESTS
@@ -241,11 +261,13 @@ export async function middleware(req: NextRequest) {
   ) {
     const strict = STRICT_API_LIMITS.find((r) => r.methods.includes(req.method) && r.regex.test(pathname));
     const isReadOnlyExempt = req.method === 'GET' && READ_ONLY_EXEMPT_API_REGEX.test(pathname);
+    // Không có IP: khách đã đăng nhập đếm theo phiên, chỉ khách vô danh dùng chung nhóm "unknown"
+    const rateKey = clientIp ? ip : (await getSessionRateKey(req)) ?? ip;
     const rl = strict
-      ? checkGlobalRateLimit(`strict:${strict.key}:${ip}`, strict.max)
+      ? checkGlobalRateLimit(`strict:${strict.key}:${rateKey}`, strict.max)
       : isReadOnlyExempt
       ? { blocked: false, remaining: GLOBAL_MAX_REQUESTS, resetInSec: 0, limit: GLOBAL_MAX_REQUESTS }
-      : checkGlobalRateLimit(`global:${ip}`);
+      : checkGlobalRateLimit(`global:${rateKey}`);
     if (rl.blocked) {
       return NextResponse.json(
         {
