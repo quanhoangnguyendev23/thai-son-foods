@@ -16,6 +16,11 @@ const cspReportOnly = [
   "form-action 'self'",
 ].join('; ');
 
+// Kho Vercel Blob của dự án, lấy từ BLOB_READ_WRITE_TOKEN (dạng vercel_blob_rw_<mãKho>_...), giống cách @vercel/blob dựng URL.
+// Không dùng wildcard *.public.blob.vercel-storage.com cho next/image: wildcard khớp kho blob của mọi tài khoản Vercel.
+// Không có token (server công ty lưu ảnh ở thư mục uploads) thì không cho tối ưu ảnh từ blob.
+const blobStoreId = process.env.BLOB_READ_WRITE_TOKEN?.split('_')[3]?.trim().toLowerCase();
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Cho phép build kiểm tra song song với dev server (NEXT_DIST_DIR=.next-build)
@@ -43,10 +48,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
-      {
-        protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com',
-      },
+      ...(blobStoreId
+        ? [
+            {
+              protocol: 'https' as const,
+              hostname: `${blobStoreId}.public.blob.vercel-storage.com`,
+            },
+          ]
+        : []),
     ],
   },
   async headers() {
