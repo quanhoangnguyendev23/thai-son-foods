@@ -118,6 +118,9 @@ export default function DangKyDoiTacPage() {
     if (!fullName.trim()) return setErrorMsg('Vui lòng nhập Họ và tên.');
     if (!phone.trim()) return setErrorMsg('Vui lòng nhập Số điện thoại.');
     if (!otpCode.trim()) return setErrorMsg('Vui lòng nhập mã OTP.');
+    if (password && !/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password)) {
+      return setErrorMsg('Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số.');
+    }
     if (!acceptTerms) return setErrorMsg('Bạn cần đồng ý với điều khoản hợp tác.');
 
     setLoading(true);
@@ -344,7 +347,7 @@ export default function DangKyDoiTacPage() {
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 pointer-events-none" />
                   <input
                     type="password"
-                    placeholder="Mật khẩu tối thiểu 6 ký tự"
+                    placeholder="Tối thiểu 8 ký tự, gồm chữ và số"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"

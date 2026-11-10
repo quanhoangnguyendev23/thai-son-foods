@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { query, pool } from '@/lib/db';
-import { hashPassword, signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS } from '@/lib/auth';
+import { getUserSession, hashPassword, signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS } from '@/lib/auth';
 import { verifyOtp } from '@/lib/partner/otp';
 import { generatePartnerCode } from '@/lib/partner/referral';
 import { writeAuditLog } from '@/lib/audit';
@@ -10,6 +10,9 @@ import { checkRequestRateLimit } from '@/lib/rateLimit';
 import { isCookieSecure, getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 
 export const dynamic = 'force-dynamic';
+
+// Cùng quy tắc mật khẩu với đăng ký tài khoản khách (/api/auth/register)
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>?/gm, '').trim();
@@ -43,6 +46,16 @@ export async function POST(request: Request) {
     const cleanFullName = stripHtml(fullName).slice(0, 100);
     const cleanPhone = phone.replace(/[\s\-\.]/g, '').slice(0, 20);
     const cleanEmail = stripHtml((email || '').trim().toLowerCase()).slice(0, 100) || `${cleanPhone}@partner.thaisonfoods.vn`;
+
+    // Đã đăng nhập: gắn hồ sơ đối tác vào chính tài khoản đang đăng nhập.
+    // Chưa đăng nhập: bắt buộc đặt mật khẩu (không còn mật khẩu mặc định đoán được theo 4 số cuối SĐT).
+    const currentUser = await getUserSession();
+    if (!currentUser && (typeof password !== 'string' || !PASSWORD_REGEX.test(password))) {
+      return NextResponse.json(
+        { success: false, error: 'Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ cái và chữ số.' },
+        { status: 400 }
+      );
+    }
 
     // 1. Xác minh mã OTP
     const otpCheck = verifyOtp(cleanPhone, otpCode || '');
@@ -88,16 +101,33 @@ export async function POST(request: Request) {
     try {
       await client.query('BEGIN;');
 
-      // 3. Tìm hoặc tạo tài khoản trong bảng users
+      // 3. Xác định tài khoản trong bảng users.
+      //    OTP chỉ chứng minh người gửi giữ SĐT, KHÔNG chứng minh họ là chủ email hay chủ tài khoản có sẵn
+      //    (email và SĐT trong users do khách tự khai, chưa xác minh) → không bao giờ tự vào tài khoản có sẵn.
       let userId: string;
-      const userRes = await client.query(
-        `SELECT id, full_name, email, phone FROM users WHERE phone = $1 OR email = $2 LIMIT 1;`,
-        [cleanPhone, cleanEmail]
-      );
+      if (currentUser) {
+        userId = currentUser.id;
+      } else {
+        const userRes = await client.query(
+          `SELECT id FROM users WHERE phone = $1 OR email = $2 LIMIT 1;`,
+          [cleanPhone, cleanEmail]
+        );
+        if (userRes.rows.length > 0) {
+          await client.query('ROLLBACK;');
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                'Số điện thoại hoặc email này đã có tài khoản Thái Sơn Foods. Vui lòng đăng nhập tài khoản đó rồi đăng ký đối tác.',
+              code: 'ACCOUNT_EXISTS',
+            },
+            { status: 409 }
+          );
+        }
+        userId = '';
+      }
 
-      if (userRes.rows.length > 0) {
-        userId = userRes.rows[0].id;
-
+      if (currentUser) {
         // Kiểm tra an toàn: Tài khoản này đã có hồ sơ đối tác hay chưa (ngăn chặn duplicate key partner_profiles_user_id_key)
         const existingProfileByUser = await client.query(
           `SELECT id, partner_code, lifecycle_status FROM partner_profiles WHERE user_id = $1 LIMIT 1;`,
@@ -116,7 +146,7 @@ export async function POST(request: Request) {
         }
       } else {
         userId = `usr_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-        const pwdHash = await hashPassword(password || `P@ss${cleanPhone.slice(-4)}`);
+        const pwdHash = await hashPassword(password);
         await client.query(
           `INSERT INTO users (id, email, password_hash, full_name, phone)
            VALUES ($1, $2, $3, $4, $5);`,
@@ -164,13 +194,15 @@ export async function POST(request: Request) {
         afterJson: { partnerCode, phone: cleanPhone, fullName: fullName.trim() },
       });
 
-      // 6. Ký phiên đăng nhập người dùng (Cookie)
-      const sessionPayload = {
-        id: userId,
-        email: cleanEmail,
-        fullName: fullName.trim(),
-        phone: cleanPhone,
-      };
+      // 6. Ký phiên đăng nhập người dùng (Cookie). Đã đăng nhập thì giữ thông tin phiên hiện tại.
+      const sessionPayload = currentUser
+        ? { ...currentUser, phone: currentUser.phone || cleanPhone }
+        : {
+            id: userId,
+            email: cleanEmail,
+            fullName: fullName.trim(),
+            phone: cleanPhone,
+          };
       const token = await signUserToken(sessionPayload);
 
       const response = NextResponse.json({

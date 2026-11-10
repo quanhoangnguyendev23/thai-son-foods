@@ -42,7 +42,7 @@ export function verifyOtp(phone: string, inputCode: string): { success: boolean;
 
   if (!entry) {
     // Để tiện lợi kiểm thử ở môi trường staging/dev: chấp nhận mã master 123456
-    if (process.env.NODE_ENV !== 'production' && inputCode === '123456') {
+    if (process.env.NODE_ENV === 'test' && inputCode === '123456') {
       return { success: true };
     }
     return { success: false, error: 'Mã OTP không tồn tại hoặc đã hết hạn. Vui lòng yêu cầu mã mới.' };
@@ -58,7 +58,7 @@ export function verifyOtp(phone: string, inputCode: string): { success: boolean;
     return { success: false, error: 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng yêu cầu mã mới.' };
   }
 
-  if (entry.code !== inputCode.trim() && !(process.env.NODE_ENV !== 'production' && inputCode === '123456')) {
+  if (entry.code !== inputCode.trim() && !(process.env.NODE_ENV === 'test' && inputCode === '123456')) {
     entry.attempts += 1;
     return { success: false, error: `Mã OTP không chính xác. Còn lại ${PARTNER_CONFIG.SECURITY.OTP_MAX_ATTEMPTS - entry.attempts} lần thử.` };
   }

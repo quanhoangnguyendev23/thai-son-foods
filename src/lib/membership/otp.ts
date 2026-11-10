@@ -52,7 +52,7 @@ export function verifyCustomerOtp(phone: string, inputCode: string): { success: 
   const entry = customerOtpStore.get(cleanPhone);
 
   if (!entry) {
-    if (process.env.NODE_ENV !== 'production' && inputCode === '123456') {
+    if (process.env.NODE_ENV === 'test' && inputCode === '123456') {
       return { success: true };
     }
     return { success: false, error: 'Mã OTP không tồn tại hoặc đã hết hạn. Vui lòng nhận mã mới.' };
@@ -68,8 +68,8 @@ export function verifyCustomerOtp(phone: string, inputCode: string): { success: 
     return { success: false, error: 'Bạn đã nhập sai quá 5 lần. Vui lòng gửi lại mã mới.' };
   }
 
-  // Mã thử 123456 CHỈ dùng ngoài production (giống OTP đối tác); production luôn so đúng mã đã sinh
-  const isDevMasterCode = process.env.NODE_ENV !== 'production' && inputCode.trim() === '123456';
+  // Mã thử 123456 CHỈ dùng cho bộ test tự động (NODE_ENV=test, giống OTP đối tác); dev/staging/production luôn so đúng mã đã sinh
+  const isDevMasterCode = process.env.NODE_ENV === 'test' && inputCode.trim() === '123456';
   if (entry.code !== inputCode.trim() && !isDevMasterCode) {
     entry.attempts += 1;
     return { success: false, error: `Mã OTP không chính xác (còn ${OTP_MAX_ATTEMPTS - entry.attempts} lần thử).` };
