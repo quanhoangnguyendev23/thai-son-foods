@@ -55,6 +55,26 @@ export async function PUT(request: Request) {
 
     const partnerId = session.partner.id;
 
+    // Đổi tài khoản nhận tiền là thao tác nhạy cảm (kẻ chiếm phiên có thể chuyển hướng tiền rút):
+    // khi đã có tài khoản ngân hàng, chỉ admin đổi được. Gửi lại đúng giá trị cũ vẫn hợp lệ.
+    const isBankChange = (incoming: unknown, current: string | null) =>
+      typeof incoming === 'string' && incoming.trim() !== '' && Boolean(current) &&
+      incoming.trim().toUpperCase() !== String(current).trim().toUpperCase();
+    if (
+      isBankChange(bankName, session.partner.bankName) ||
+      isBankChange(bankAccountNumber, session.partner.bankAccountNumber) ||
+      isBankChange(bankAccountName, session.partner.bankAccountName)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Tài khoản ngân hàng nhận tiền đã được lưu. Vui lòng liên hệ Thái Sơn Foods để thay đổi.',
+          code: 'BANK_INFO_LOCKED',
+        },
+        { status: 403 }
+      );
+    }
+
     // 1. Kiểm tra duplicate CCCD
     if (idCardNumber && idCardNumber.trim()) {
       const cleanIdCard = idCardNumber.trim();

@@ -87,15 +87,16 @@ export async function POST(request: Request) {
     }
 
     // 3. Kiểm tra thông tin tài khoản ngân hàng
-    const bankName = (body.bankName || session.bankName || '').trim();
-    const bankAccountNumber = (body.bankAccountNumber || session.bankAccountNumber || '').trim();
-    const bankAccountName = (body.bankAccountName || session.bankAccountName || session.fullName || '').trim();
+    //    Chỉ chi trả về tài khoản ngân hàng đã lưu trong hồ sơ đối tác (đã qua duyệt), không nhận tài khoản gửi kèm request.
+    const bankName = (session.bankName || '').trim();
+    const bankAccountNumber = (session.bankAccountNumber || '').trim();
+    const bankAccountName = (session.bankAccountName || session.fullName || '').trim();
 
     if (!bankName || !bankAccountNumber || !bankAccountName) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Vui lòng cung cấp đầy đủ thông tin tài khoản ngân hàng nhận tiền (Tên ngân hàng, Số tài khoản, Tên chủ tài khoản).',
+          error: 'Vui lòng cập nhật đầy đủ thông tin tài khoản ngân hàng nhận tiền trong hồ sơ đối tác (Tên ngân hàng, Số tài khoản, Tên chủ tài khoản).',
           code: 'MISSING_BANK_INFO',
         },
         { status: 400 }
@@ -132,6 +133,22 @@ export async function POST(request: Request) {
       );
       const currentBalance = Number(pRes.rows[0]?.current_balance) || 0;
 
+      const pendingLocked = await client.query(
+        `SELECT 1 FROM payout_requests WHERE partner_id = $1 AND status = 'PENDING' LIMIT 1;`,
+        [session.id]
+      );
+      if (pendingLocked.rows.length > 0) {
+        await client.query('ROLLBACK;');
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Bạn đang có một yêu cầu rút tiền đang chờ xử lý. Vui lòng chờ kế toán duyệt xong trước khi tạo yêu cầu mới.',
+            code: 'PENDING_PAYOUT_EXISTS',
+          },
+          { status: 409 }
+        );
+      }
+
       // Xử lý ví âm: nếu số dư âm, chặn tuyệt đối và thông báo số tiền cần bù
       if (currentBalance < 0) {
         await client.query('ROLLBACK;');
@@ -148,7 +165,7 @@ export async function POST(request: Request) {
 
       // Tính số dư khả dụng thực tế từ sổ cái (now >= available_at)
       const ledgerSumRes = await client.query(
-        `SELECT amount, status, available_at FROM partner_ledger WHERE partner_id = $1;`,
+        `SELECT amount, status, available_at, entry_type FROM partner_ledger WHERE partner_id = $1;`,
         [session.id]
       );
 
@@ -157,6 +174,12 @@ export async function POST(request: Request) {
 
       for (const row of ledgerSumRes.rows) {
         const amt = Number(row.amount) || 0;
+        // Tiền đã rút (đang chờ duyệt / đã duyệt: PENDING, đã chi: PAID) phải trừ khỏi số khả dụng (amt là số âm).
+        // Trước đây bỏ sót nên sau lần rút đầu, đối tác rút được cả hoa hồng chưa qua thời gian đối soát.
+        if (row.entry_type === 'PAYOUT_HOLD') {
+          if (row.status === 'PENDING' || row.status === 'PAID') availableSum += amt;
+          continue;
+        }
         let effStatus = row.status;
         if (row.status === 'CONFIRMED' && row.available_at && now >= new Date(row.available_at)) {
           effStatus = 'AVAILABLE';

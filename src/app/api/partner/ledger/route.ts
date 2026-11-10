@@ -62,6 +62,12 @@ export async function GET(request: Request) {
 
     for (const row of allEntriesRes.rows) {
       const amt = Number(row.amount) || 0;
+      // Dòng tạm giữ khi rút tiền (số âm): đang chờ / đã chi đều đã rời khỏi số dư khả dụng; bị từ chối (VOID) thì không tính
+      if (row.entry_type === 'PAYOUT_HOLD') {
+        if (row.status === 'PENDING' || row.status === 'PAID') availableBalance += amt;
+        if (row.status === 'PAID') paidBalance += Math.abs(amt);
+        continue;
+      }
       let effStatus = row.status;
 
       if (row.status === 'CONFIRMED' && row.available_at && now >= new Date(row.available_at)) {
