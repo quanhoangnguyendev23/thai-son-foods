@@ -69,8 +69,10 @@ export function getComboSaving(c: Combo): number {
 
 /** 40000 → "40K", 1250000 → "1,25Tr" — dùng cho huy hiệu nhỏ trên header */
 export function formatShortVND(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}Tr`;
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  // Làm tròn nghìn trước khi chọn đơn vị: 999.500 → 1000K sai, phải là 1Tr
+  const thousands = Math.round(n / 1_000);
+  if (n >= 1_000_000 || thousands >= 1_000) return `${(n / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}Tr`;
+  if (n >= 1_000) return `${thousands}K`;
   return `${n}`;
 }
 
