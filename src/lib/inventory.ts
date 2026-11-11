@@ -1196,8 +1196,11 @@ export async function confirmStock(
   if (resQuery.rows.length > 0) {
     // Có reservation: Trừ stock_quantity và giảm reserved tương ứng
     for (const r of resQuery.rows) {
+      // FOR UPDATE: khóa dòng tồn kho TRƯỚC khi kiểm tra đủ hàng, nếu không hai lần xác nhận đồng thời cùng đọc tồn cũ rồi cùng qua kiểm tra (R15).
+      // Thứ tự khóa không đổi: các reservation đã được khóa ORDER BY product_id nên tồn kho cũng được khóa theo product_id tăng dần,
+      // cùng thứ tự với reserveStock, releaseStock và processOrderReturn.
       const invOld = await client.query(
-        `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2;`,
+        `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2 FOR UPDATE;`,
         [r.store_code, r.product_id]
       );
       const oldStock = Number(invOld.rows[0]?.stock_quantity) || 0;
