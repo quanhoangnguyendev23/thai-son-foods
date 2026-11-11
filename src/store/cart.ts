@@ -137,8 +137,8 @@ function sanitizeCartItems(items: CartItem[]): CartItem[] {
 
     if (isSingleBottle) {
       const sanitized = sanitizeCartProduct(item);
-      const isYoo = sanitized.variantName?.includes('5');
-      const packDivisor = isYoo ? 5 : 7;
+      // Chia theo số chai của lốc nhỏ nhất mà sanitizeCartProduct đã chọn cho CHÍNH sản phẩm này (6, 7, 5...), không đoán cứng 5 hoặc 7
+      const packDivisor = Math.max(1, getItemBottleMultiplier(sanitized));
       const sanitizedMax = getItemMaxQuantity(sanitized);
       const packQty = Math.max(1, Math.min(sanitizedMax, Math.round(safeQty / packDivisor)));
 
