@@ -1384,6 +1384,14 @@ export async function releaseStock(
 
     if (resQuery.rows.length > 0) {
       for (const r of resQuery.rows) {
+        // Đọc tồn cũ (khóa dòng) để ghi nhật ký như lúc xác nhận trừ kho (R21)
+        const invOldBack = await client.query(
+          `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2 FOR UPDATE;`,
+          [r.store_code, r.product_id]
+        );
+        const oldStockBack = Number(invOldBack.rows[0]?.stock_quantity) || 0;
+        const oldReservedBack = Number(invOldBack.rows[0]?.reserved) || 0;
+
         await client.query(
           `UPDATE store_inventory
            SET stock_quantity = CASE WHEN $5::boolean THEN stock_quantity ELSE stock_quantity + $1 END,
@@ -1392,6 +1400,21 @@ export async function releaseStock(
            WHERE store_code = $3 AND product_id = $4;`,
           [r.quantity, adminUsername, r.store_code, r.product_id, sheetMode]
         );
+
+        await logInventoryChange(client, {
+          storeCode: r.store_code,
+          productId: r.product_id,
+          oldStock: oldStockBack,
+          newStock: sheetMode ? oldStockBack : oldStockBack + r.quantity,
+          oldReserved: oldReservedBack,
+          newReserved: oldReservedBack,
+          changeType: 'order_cancelled',
+          orderId,
+          actor: adminUsername,
+          note: sheetMode
+            ? `${reason} - Đơn đã trừ kho, tồn lấy từ Google Sheet nên web không cộng lại ${r.quantity} chai`
+            : `${reason} - Hoàn lại ${r.quantity} chai vào kho (đơn đã trừ kho)`,
+        });
 
         await client.query(
           `UPDATE stock_reservations
