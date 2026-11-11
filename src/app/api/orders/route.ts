@@ -584,6 +584,8 @@ export async function POST(request: Request) {
           );
           customerDistanceKm = road.roadKm;
         } catch {
+          // Lưới an toàn: getRoadDistanceAndDuration đã tự rơi về công thức này khi OSRM lỗi hoặc quá 2,5 giây nên bình thường
+          // không tới đây; giữ lại để lỗi nạp mô-đun hay lỗi bất thường không làm hỏng việc đặt đơn
           customerDistanceKm =
             Math.round(calculateHaversineDistance(feeAt.lat, feeAt.lng, targetStoreLat, targetStoreLng) * 1.35 * 10) / 10;
         }
