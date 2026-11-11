@@ -45,6 +45,17 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Đề xuất sửa:** Đưa V4/V5 vào trong giao dịch, sau một khóa tư vấn theo SĐT; hoặc thêm khóa idempotency do client gửi.
 - **Test:** `tests/orders_api_integration.test.mjs` (R2: 5 vòng × 8 request đồng thời). Trước khi sửa: vòng 1 ra 2 đơn, hoặc vòng 2 ra 8 đơn; chạy 3 lần đều FAIL.
 - **ĐÃ SỬA** ở commit `a2a7dcc`: V4/V5 chạy trong giao dịch sau `pg_advisory_xact_lock` theo SĐT đã chuẩn hóa; khóa SĐT luôn lấy trước khóa chi nhánh. Sau sửa, chạy 3 lần liên tiếp đều PASS.
+- **Kiểm chứng lại test R2 (11/11):** test tạo **6 đơn**: 1 đơn khởi động (SĐT riêng, dùng để nạp sẵn mô-đun và kết nối DB trước khi bắn đồng thời) cộng 5 vòng × 1 đơn.
+  Mã thứ 6 chính là đơn khởi động, không phải đơn lọt. Output thật: `khởi động TSF-14649762, vòng 1 TSF-14835393, vòng 2 TSF-16317348, vòng 3 TSF-17217535, vòng 4 TSF-17902620, vòng 5 TSF-18771321`
+  (mỗi mã một SĐT khác nhau). Test nay đếm **dòng trong bảng `orders` theo SĐT** sau mỗi vòng (không chỉ đếm response 200), đối chiếu mã đơn trả về với dòng đã lưu và kiểm tổng 6 dòng cho 6 SĐT.
+- **Giao diện khi request thứ hai nhận 429 (đã đọc `src/app/thanh-toan/page.tsx`, chưa sửa):**
+  - Nút đặt hàng `disabled={isSubmitting ...}` (dòng 2700) và `setIsSubmitting(true)` ngay trước `fetch` (dòng 1182), nên bấm đúp bình thường bị chặn ở trình duyệt. Tuy nhiên `handleSubmit` **không có chốt chặn trong hàm** (không có `if (isSubmitting) return` hay khóa bằng `useRef`), chỉ dựa vào nút bị vô hiệu.
+  - Khi request thứ hai vẫn tới server và nhận 429, nhánh `!res.ok` (dòng 1304-1324) hiện popup "Lưu ý" với đúng câu của server: "Vui lòng chờ N giây trước khi đặt đơn tiếp theo." Không có mã lỗi riêng nên giao diện không phân biệt được với lỗi khác.
+  - **Khách có thể thấy báo lỗi dù đơn đã tạo** theo 2 kịch bản: (a) request đầu tạo đơn nhưng phản hồi bị mất (mạng chập chờn, hết thời gian chờ): khách thấy "Không thể kết nối đến máy chủ", giỏ hàng còn nguyên, bấm lại thì nhận 429 "chờ N giây" và không được báo là đơn trước có thể đã được ghi nhận; chờ hết 5 phút rồi đặt lại sẽ ra **đơn trùng**.
+    (b) hai request cùng bay: request thành công làm hiện màn hình "Đặt hàng thành công" và xóa giỏ, request 429 về sau mở thêm popup "Vui lòng chờ ..." đè lên màn hình thành công.
+  - **Đề xuất (chưa sửa):** 1) khóa idempotency: trình duyệt sinh một mã cho mỗi lần thanh toán (giữ trong `useRef`/`sessionStorage` đến khi thành công), gửi kèm; máy chủ lưu mã vào đơn (cột `idempotency_key` UNIQUE) trong cùng giao dịch, sau khóa SĐT, và nếu gặp lại mã đó thì trả đúng đơn cũ (200, cùng `orderCode`) thay vì 429. Cách này xử lý cả bấm đúp lẫn gửi lại sau mất mạng.
+    2) thêm `if (isSubmitting) return` hoặc khóa `useRef` đầu `handleSubmit`. 3) trả 429 kèm `code` riêng (ví dụ `ORDER_RATE_LIMITED`) để giao diện hiện câu "Có thể đơn của bạn đã được ghi nhận, vui lòng kiểm tra bằng Tra cứu đơn hàng trước khi đặt lại" thay vì chỉ "chờ N giây" (không trả mã đơn cũ trong 429 để không lộ mã đơn theo SĐT).
+    Cách 1 cần thêm cột trong DB nên chờ anh duyệt.
 
 ### R3. Địa chỉ chi nhánh lưu trong đơn lấy từ trình duyệt
 - **File:dòng:** `src/app/api/orders/route.ts:70`, `:379`, `:409`, `:853`

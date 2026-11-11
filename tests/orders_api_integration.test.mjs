@@ -312,21 +312,31 @@ describe('Hồi quy cho lỗi R1, R2, R3 trong REVIEW.md (đã sửa)', () => {
 
   test('R2: 8 request đồng thời cùng một SĐT chỉ được tạo đúng 1 đơn', async () => {
     // Đặt thử 1 đơn SĐT khác để nạp sẵn mô-đun và kết nối DB, tránh việc request đầu chạy chậm làm các request sau vô tình bị chặn đúng
-    const warm = await postOrder(orderBody());
+    // (Đây là đơn thứ 1 trong 6 đơn mà test tạo ra: 1 đơn khởi động + 5 vòng x 1 đơn.)
+    const warmPhone = uniqueDigits();
+    const warm = await postOrder(orderBody({ phone: warmPhone }));
     assert.equal(warm.status, 200, JSON.stringify(warm.json));
+    const created = [{ label: 'khởi động', phone: warmPhone, code: warm.json.orderCode }];
     // Lỗi đua phụ thuộc thời điểm nên lặp 5 vòng, mỗi vòng một SĐT mới; vòng nào cũng phải ra đúng 1 đơn
     for (let round = 1; round <= 5; round++) {
       const phone = uniqueDigits();
       const results = await Promise.all(Array.from({ length: 8 }, () => postOrder(orderBody({ phone }))));
-      const ok = results.filter((r) => r.status === 200).length;
-      const rows = await pool.query('SELECT count(*)::int c FROM orders WHERE phone = $1', [phone]);
+      const okResults = results.filter((r) => r.status === 200);
+      // Đếm DÒNG trong bảng orders theo SĐT (không chỉ đếm response 200) và đối chiếu mã đơn trả về với dòng đã lưu
+      const rows = await pool.query('SELECT order_code FROM orders WHERE phone = $1 ORDER BY created_at', [phone]);
       assert.equal(
-        rows.rows[0].c,
+        rows.rows.length,
         1,
-        `vòng ${round}: trạng thái trả về ${results.map((r) => r.status).join(',')}; đơn đã lưu ${rows.rows[0].c}`
+        `vòng ${round}: trạng thái trả về ${results.map((r) => r.status).join(',')}; số dòng orders của SĐT ${phone} = ${rows.rows.length}`
       );
-      assert.equal(ok, 1, `vòng ${round}`);
+      assert.equal(okResults.length, 1, `vòng ${round}: số response 200`);
+      assert.equal(rows.rows[0].order_code, okResults[0].json.orderCode, `vòng ${round}: mã đơn trả về phải trùng dòng đã lưu`);
+      created.push({ label: `vòng ${round}`, phone, code: rows.rows[0].order_code });
     }
+    console.log(`R2 mã đơn đã tạo (${created.length}):\n` + created.map((c) => `  ${c.label}: ${c.code} (SĐT ${c.phone})`).join('\n'));
+    assert.equal(created.length, 6);
+    const total = await pool.query('SELECT count(*)::int c FROM orders WHERE phone = ANY($1)', [created.map((c) => c.phone)]);
+    assert.equal(total.rows[0].c, 6, 'tổng số dòng orders của 6 SĐT phải đúng 6');
   });
 
   test('R3: địa chỉ chi nhánh trong đơn phải lấy từ DB, không lấy theo storeAddress do trình duyệt gửi', async () => {
