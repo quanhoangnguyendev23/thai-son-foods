@@ -94,9 +94,9 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **ĐÃ SỬA** ở commit `d6f58bc`: thêm action `undoAdd` vào store (tìm dòng theo khóa gộp) và `ProductCard` gọi nó.
   **Lưu ý trung thực về test R5:** bản đầu của test chép lại các dòng `find`/`setQuantity`/`removeItem` của component, nên sửa component
   không bao giờ làm test đổi kết quả. Em đổi các bước của test sang gọi `undoAdd` của store; assert (`getTotalQuantity() === 1`) giữ nguyên.
-- **Liên quan, chưa sửa (ngoài phạm vi R5):** `ProductCard.tsx:73-75` đếm số lượng trên nút bằng `items.find(i => i.productId === ...)`
-  nên cũng hiện 0 khi dòng nằm dưới mã khác. Cùng nguyên nhân gốc, nên sửa chung nếu anh đồng ý. Không có chỗ tương tự ở trang combo
-  (chỉ `ProductCard` có nút Hoàn tác).
+- **Liên quan (ĐÃ SỬA ở commit `caf26ef`):** `ProductCard.tsx:73-75` đếm số lượng trên nút bằng `items.find(i => i.productId === ...)`
+  nên cũng hiện 0 khi dòng nằm dưới mã khác. Thêm `findCartLine` (so theo khóa gộp) trong store, dùng ở thẻ và ở `undoAdd`. Không có chỗ tương tự ở trang combo
+  (chỉ `ProductCard` có nút Hoàn tác và số lượng trên thẻ; theo quy tắc đồng bộ PDP và combo: trang chi tiết combo không có thẻ này nên không cần sửa).
 
 ### R6. (ĐÃ RÚT LẠI phần đầu) Câu báo lỗi ngoài bán kính hiện "20.0 km vượt quá 20 km"
 - **File:dòng:** `src/config/inventory.ts:86-93`
@@ -106,7 +106,8 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Còn lại (Nhẹ):** câu `reason` dùng `toFixed(1)` nên 20,04 km hiện là `"Khoảng cách (20.0 km) vượt quá bán kính giao tối đa (20 km)"`,
   tự mâu thuẫn. Khách thấy 20.0 km mà bị từ chối.
 - **Đề xuất sửa:** hiện 2 chữ số thập phân hoặc làm tròn lên cùng cách với phụ thu.
-- **Test:** `tests/shipping_fee.test.mjs` (test R6 dòng báo lỗi: FAIL; test "20,04 km ngoài bán kính": PASS, ghi nhận hành vi đúng).
+- **Test:** `tests/shipping_fee.test.mjs` (test R6 dòng báo lỗi; test "20,04 km ngoài bán kính": ghi nhận hành vi đúng).
+- **ĐÃ SỬA** ở commit `b8de342`: làm tròn LÊN 0,1 km (20,04 hiện `20.1 km`). Ô quyết định để trống nên em chọn làm tròn lên vì số hiện ra luôn lớn hơn bán kính tối đa; đổi sang 2 chữ số thập phân nếu anh muốn.
 
 ### R7. `formatShortVND` hiện "1000K" thay vì "1Tr"
 - **File:dòng:** `src/lib/savings.ts:72-76`
@@ -185,7 +186,8 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Tái hiện (đã chạy):** giỏ cũ lưu trong localStorage có 24 chai lẻ `sua-hat-sen-lotus` → sau khi nạp lại còn **3 lốc = 18 chai** (đúng phải 4 lốc = 24 chai).
 - **Mức độ: Nhẹ.** Chỉ xảy ra với giỏ lưu từ bản cũ còn dòng "1 chai"; giá cuối vẫn do máy chủ tính lại lúc đặt đơn, nhưng số lượng khách thấy trong giỏ bị đổi âm thầm.
 - **Đề xuất sửa:** chia cho `quantity` của quy cách nhỏ nhất mà `sanitizeCartProduct` đã chọn.
-- **Test:** `tests/cart_rehydrate.test.mjs` (test R14: FAIL, `quantity = 3 lốc = 18 chai, mong đợi 24 chai`; 2 test nền PASS). **Chưa sửa, chờ anh quyết định.**
+- **Test:** `tests/cart_rehydrate.test.mjs` (test R14: trước sửa FAIL `quantity = 3 lốc = 18 chai, mong đợi 24 chai`; 2 test nền PASS).
+- **ĐÃ SỬA** ở commit `eece46e`: chia theo `getItemBottleMultiplier` của lốc nhỏ nhất đã chọn (6, 7, 5...), không đoán cứng.
 
 ### R15. `confirmStock` đọc tồn kho không khóa dòng
 - **File:dòng:** `src/lib/inventory.ts:1207-1233`; `src/app/api/admin/orders/route.ts:537`
@@ -201,7 +203,12 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
   (`route.ts:291`: không cho giảm tồn xuống dưới số đang giữ chỗ). Nên lỗi đua này chỉ lộ ra khi dữ liệu đã vi phạm điều kiện "tồn >= giữ chỗ" bằng đường khác
   (sửa SQL tay, đồng bộ Google Sheet khi `INVENTORY_SOURCE=sheet`, dữ liệu cũ). **Hạ xuống mức Nhẹ**; test vẫn đúng ở mức hàm.
 - **Đề xuất sửa:** thêm `FOR UPDATE` vào câu `SELECT stock_quantity, reserved FROM store_inventory` ở `inventory.ts:1207`. Các lần xác nhận cùng chi nhánh sẽ xếp hàng
-  và đơn thứ hai thấy tồn đã giảm. **Chưa sửa, chờ anh quyết định.**
+  và đơn thứ hai thấy tồn đã giảm.
+- **ĐÃ SỬA** ở commit `2ab8f58`: thêm `FOR UPDATE`. **Thứ tự khóa đã kiểm tra:** `reserveStock` khóa tồn kho `ORDER BY product_id` sau khóa tư vấn chi nhánh; `confirmStock` khóa đơn, rồi các reservation `ORDER BY product_id`, rồi tồn kho theo đúng thứ tự đó;
+  `releaseStock` và `processOrderReturn` (đã sắp theo `product_id`) cũng tăng dần; `cleanupExpiredReservations` khóa reservation theo `(store_code, product_id, id)`. Tất cả cùng thứ tự tăng dần nên không có chu trình chờ.
+  Bằng chứng: test mới "6 xác nhận + 6 hủy + 6 đặt mới đồng thời trên 2 sản phẩm dùng chung, 5 vòng" (reservation ghi theo thứ tự ngược) không lỗi 40P01 và tồn kho nhất quán.
+  Điều kiện chờ của test R15 đổi từ "đợi ở câu UPDATE" sang "đợi khóa dòng tồn kho" vì sau sửa chúng đợi ngay ở `SELECT ... FOR UPDATE`; assert giữ nguyên.
+  **Chỗ còn có nguy cơ deadlock (ghi sang vòng 3):** `PUT /api/admin/inventory` (batch) khóa dòng theo thứ tự client gửi, không sắp xếp, trong khi `reserveStock` khóa tăng dần.
 
 ### R16. Giỏ hàng không nhận dạng mã quy cách dạng "-loc5" như comment mô tả
 - **File:dòng:** `src/store/cart.ts:27-28`; so với `src/lib/inventory.ts:339-340`
@@ -260,7 +267,8 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
 - **Tái hiện (đã chạy):** đơn trừ 7 chai (tồn 10 thành 3), sau đó quy cách đổi thành 10 chai, hoàn hàng "nhập lại": tồn **13** (đúng phải 10). Quy cách bị xóa: lỗi `INVENTORY_RESOLVE_FAILED`.
   Đối chứng (không đổi cấu hình): 3 thành 10, PASS. Hàng hỏng: không cộng tồn, PASS.
 - **Đề xuất sửa:** dùng các dòng `stock_reservations` `confirmed` của đơn (đúng số chai, đúng chi nhánh) giống `releaseStock`; chỉ bóc lại `order_items` cho đơn cũ không có reservation.
-- **Test:** `tests/orders_lifecycle_integration.test.mjs` (2 test R17, FAIL).
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (2 test R17 + 2 test mới: đường dự phòng đơn cũ, reservation chuyển `released`).
+- **ĐÃ SỬA** ở commit `43829a4`.
 
 ### R18. Đơn của đối tác bị tự hủy vì quá hạn giữ chỗ nhưng hoa hồng ước tính vẫn là ESTIMATED
 - **File:dòng:** `src/lib/inventory.ts:1631-1645` (`cleanupExpiredReservations`)
@@ -269,7 +277,8 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
   vào "thu nhập ước tính" của đối tác, nên số này phình lên bởi đơn đã hủy.
 - **Tái hiện (đã chạy):** `đơn đã hủy nhưng sổ cái hoa hồng đang là ESTIMATED`. Đối chứng: hủy tay cùng đơn thì ra `VOID`, PASS.
 - **Đề xuất sửa:** gọi `processPartnerOrderEvent(orderId, 'ORDER_CANCELLED', { client })` cho mỗi đơn vừa tự hủy, trong cùng giao dịch.
-- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R18, FAIL).
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R18 + test attribution VOID và ví không đổi).
+- **ĐÃ SỬA** ở commit `32fb2b9`.
 
 ## Nhẹ
 
@@ -281,7 +290,8 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
 - **Mức độ:** hiện **chưa thấy đường gọi API** dẫn tới gọi hai lần cho đơn đã xác nhận hoa hồng (`reconcile` chặn bằng `ALREADY_CANCELLED`, `PUT` hủy chặn đơn Hoàn tất), nên chỉ là rủi ro tiềm ẩn.
   Lưu ý `PUT /api/admin/orders` khi hủy gọi sự kiện này hai lần (một lần trong `releaseStock`, một lần ở route); hiện vô hại vì lúc đó hoa hồng mới `ESTIMATED`.
 - **Đề xuất sửa:** bỏ qua khi `order_attributions.status` đã là `VOID` hoặc đã có `CLAWBACK` của đơn.
-- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R19, FAIL).
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R19).
+- **ĐÃ SỬA** ở commit `2e97d7c`: bỏ qua khi `attribution VOID` hoặc đã có `CLAWBACK`; bỏ lần gọi sự kiện thứ hai ở `PUT /api/admin/orders` (chỉ còn lần trong `releaseStock`). Test route `PUT` cần phiên admin: Bước 4.
 
 ### R20. Thành phần combo không nhận dạng được bị bỏ qua im lặng, trong khi sản phẩm lẻ bị từ chối
 - **File:dòng:** `src/lib/inventory.ts:593-610` (combo trong DB) và các nhánh combo tự chọn `409-426`, `439-457`, `468-498`, `510-579`
@@ -297,7 +307,8 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
 - **Mô tả:** Lúc xác nhận có `logInventoryChange` (`order_confirmed`), hoàn hàng có (`return_restocked`), hủy chưa trừ kho có (`order_cancelled`),
   riêng hủy sau khi đã trừ kho cộng lại `stock_quantity` mà không ghi dòng nào trong `inventory_logs`. Lịch sử kho thấy trừ 7 chai và không thấy cộng lại.
 - **Tái hiện (đã chạy):** nhật ký của đơn chỉ có `order_confirmed (10 -> 3)`. Đối chứng: tồn kho hoàn lại đủ 7 chai, đơn thành CANCELLED, PASS.
-- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R21, FAIL).
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R21).
+- **ĐÃ SỬA** ở commit `1ef70ca`: ghi một dòng `order_cancelled` cho mỗi reservation được hoàn (có cả khi tồn lấy từ Google Sheet, ghi chú rõ web không cộng lại).
 
 ### R23. Đại lý: chiết khấu 0% bị đọc thành 15%
 - **File:dòng:** `src/app/api/dealer/orders/route.ts:51`
