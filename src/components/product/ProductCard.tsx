@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
-import { useCartStore } from '@/store/cart';
+import { useCartStore, findCartLine } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -68,8 +68,14 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+  // Tìm theo khóa gộp (sản phẩm + quy cách), vì dòng có thể nằm trong giỏ dưới mã khác (vd. mã từ trang chi tiết)
   const cartQty = useCartStore(
-    (s) => s.items.find((i) => i.productId === `${product.id}-${defaultVariant.id}`)?.quantity ?? 0
+    (s) =>
+      findCartLine(s.items, {
+        productId: `${product.id}-${defaultVariant.id}`,
+        variantId: defaultVariant.id,
+        variantName: defaultVariant.name,
+      })?.quantity ?? 0
   );
   const cartQtyBadge =
     mounted && cartQty > 0 ? (

@@ -70,6 +70,15 @@ export function getCartMergeKey(item: { productId: string; variantId?: string; v
   return `${baseId}::${bottles}`;
 }
 
+/** Dòng trong giỏ cùng sản phẩm + cùng quy cách với `ref` (so theo khóa gộp, không theo mã vì addItem giữ mã của dòng có trước) */
+export function findCartLine<T extends { productId: string; variantId?: string; variantName?: string; unit?: string }>(
+  items: T[],
+  ref: { productId: string; variantId?: string; variantName?: string; unit?: string }
+): T | undefined {
+  const key = getCartMergeKey(ref);
+  return items.find((i) => getCartMergeKey(i) === key);
+}
+
 // Chuẩn hóa sản phẩm: Tuyệt đối không cho phép bán hoặc thêm chai lẻ (1 chai), luôn quy đổi về Lốc nhỏ nhất
 function sanitizeCartProduct(product: Omit<CartItem, 'quantity'>): Omit<CartItem, 'quantity'> {
   const rawUnit = (product.unit || '').trim().toLowerCase();
@@ -299,11 +308,10 @@ export const useCartStore = create<CartState>()(
       },
 
       undoAdd: (item, quantity) => {
-        const key = getCartMergeKey(item);
         const undoQty = Math.max(0, toWholeQuantity(quantity, 0));
         set((state) => {
           // Dòng có thể nằm dưới mã khác với mã của thẻ (addItem giữ mã của dòng có trước), nên tìm theo khóa gộp
-          const line = state.items.find((i) => getCartMergeKey(i) === key);
+          const line = findCartLine(state.items, item);
           if (!line || undoQty === 0) return state;
           const rest = line.quantity - undoQty;
           return {

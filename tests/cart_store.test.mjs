@@ -10,6 +10,7 @@ import {
   getItemBottleMultiplier,
   getItemMaxQuantity,
   getCartMergeKey,
+  findCartLine,
   MAX_BOTTLES_LIMIT,
 } from '@/store/cart';
 
@@ -223,6 +224,16 @@ describe('Hồi quy cho lỗi R4, R5 trong REVIEW.md (đã sửa)', () => {
     );
 
     assert.equal(cart().getTotalQuantity(), 1, 'sau khi hoàn tác phải còn 1 lốc');
+  });
+
+  test('số lượng hiện trên thẻ sản phẩm (ProductCard:73-75): tìm theo khóa gộp, dòng nằm dưới mã trang chi tiết vẫn được đếm', () => {
+    cart().addItem(packFromDetail, 3); // dòng lưu dưới mã var_... của trang chi tiết
+    const ref = { productId: packFromCard.productId, variantId: packFromCard.variantId, variantName: packFromCard.variantName };
+    // Cách tìm cũ của thẻ theo đúng mã (trả 0): đây là lỗi
+    assert.equal(cart().items.find((i) => i.productId === ref.productId)?.quantity ?? 0, 0);
+    // Cách mới
+    assert.equal(findCartLine(cart().items, ref)?.quantity, 3);
+    assert.equal(findCartLine(cart().items, { productId: 'sp-khac-sb-7chai', variantId: 'x', variantName: '10 chai' }), undefined);
   });
 
   test('undoAdd: trừ đúng số lượng, hết thì xóa dòng, không có dòng thì bỏ qua', () => {
