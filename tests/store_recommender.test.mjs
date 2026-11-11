@@ -6,45 +6,28 @@
 
 import assert from 'node:assert';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-function calculateShippingFee(roadKm, orderSubtotal = 0) {
-  if (orderSubtotal >= 300000 && roadKm <= 5.0) return 0;
-  if (roadKm <= 3.0) return 15000;
-  if (roadKm <= 7.0) return 25000;
-  const extraKm = Math.ceil(roadKm - 7.0);
-  return 25000 + extraKm * 4000;
-}
+// Dùng hàm thật (không chép lại): phí ship theo chính sách hiện hành ở src/config/inventory.ts, giờ cao điểm ở storeRecommender.
+// Chạy bằng tsx để nạp được alias "@/": npx tsx tests/store_recommender.test.mjs
+import { calculateShippingFee as calculatePolicyShippingFee } from '@/config/inventory';
+import { getPeakHourMultiplier } from '@/lib/storeRecommender';
 
-function getPeakHourMultiplier(date = new Date()) {
-  const utcHours = date.getUTCHours();
-  const utcMinutes = date.getUTCMinutes();
-  const vnTotalMinutes = ((utcHours + 7) % 24) * 60 + utcMinutes;
-  const morningStart = 7 * 60;
-  const morningEnd = 9 * 60;
-  const afternoonStart = 16 * 60 + 30;
-  const afternoonEnd = 19 * 60;
-
-  if (
-    (vnTotalMinutes >= morningStart && vnTotalMinutes <= morningEnd) ||
-    (vnTotalMinutes >= afternoonStart && vnTotalMinutes <= afternoonEnd)
-  ) {
-    return 1.4;
-  }
-  return 1.0;
-}
+const calculateShippingFee = (roadKm, orderSubtotal = 0) => calculatePolicyShippingFee(orderSubtotal, roadKm).fee;
 
 async function runTests() {
   console.log('🧪 BẮT ĐẦU TEST THUẬT TOÁN ĐỀ XUẤT CHI NHÁNH & BẢNG PHÍ SHIP (MỤC 18)');
 
   // 1. Kiểm tra tính toán phí vận chuyển
   console.log('\n[TEST 1] Kiểm tra biểu phí vận chuyển chuẩn...');
-  assert.strictEqual(calculateShippingFee(2.5, 100000), 15000, '0-3 km phải là 15.000đ');
-  assert.strictEqual(calculateShippingFee(4.2, 100000), 25000, '3-7 km phải là 25.000đ');
-  assert.strictEqual(calculateShippingFee(8.0, 100000), 29000, '8 km phải là 25.000 + 4.000 = 29.000đ');
-  assert.strictEqual(calculateShippingFee(10.0, 100000), 37000, '10 km phải là 25.000 + 3*4.000 = 37.000đ');
-  assert.strictEqual(calculateShippingFee(4.0, 350000), 0, 'Đơn từ 300.000đ trong 5 km phải là Freeship 0đ');
-  assert.strictEqual(calculateShippingFee(6.5, 350000), 25000, 'Đơn từ 300.000đ vượt 5 km vẫn tính phí bình thường');
+  // Chính sách chốt 04/11/2026: 30.000đ (miễn phí từ 200.000đ) trong 10 km; từ 11 km +20.000đ; từ 15 km +35.000đ
+  assert.strictEqual(calculateShippingFee(2.5, 100000), 30000, 'Đơn dưới 200.000đ trong 10 km phải là 30.000đ');
+  assert.strictEqual(calculateShippingFee(8.0, 100000), 30000, '8 km vẫn là 30.000đ (chưa phụ thu)');
+  assert.strictEqual(calculateShippingFee(10.0, 100000), 30000, '10 km vẫn là 30.000đ');
+  assert.strictEqual(calculateShippingFee(12.0, 100000), 50000, 'Từ 11 km phụ thu +20.000đ');
+  assert.strictEqual(calculateShippingFee(16.0, 100000), 65000, 'Từ 15 km phụ thu +35.000đ');
+  assert.strictEqual(calculateShippingFee(4.0, 350000), 0, 'Đơn từ 200.000đ trong 10 km phải là Freeship 0đ');
+  assert.strictEqual(calculateShippingFee(12.0, 350000), 20000, 'Đơn từ 200.000đ vượt 11 km vẫn phụ thu 20.000đ');
   console.log('  ✅ [PASS] Tất cả các mức phí ship & chính sách Freeship tính toán chính xác 100%!');
 
   // 2. Kiểm tra hệ số giờ cao điểm

@@ -141,26 +141,6 @@ export function getPeakHourMultiplier(date: Date = new Date()): number {
 }
 
 /**
- * Tính phí vận chuyển theo quãng đường thực tế & giá trị đơn hàng
- * 0–3 km: 15.000đ; 3–7 km: 25.000đ; trên 7 km: +4.000đ/km; freeship đơn từ 300.000đ trong 5 km
- */
-export function calculateShippingFee(roadKm: number, orderSubtotal: number = 0): number {
-  if (orderSubtotal >= 300000 && roadKm <= 5.0) {
-    return 0; // Freeship theo chính sách
-  }
-
-  if (roadKm <= 3.0) {
-    return 15000;
-  }
-  if (roadKm <= 7.0) {
-    return 25000;
-  }
-
-  const extraKm = Math.ceil(roadKm - 7.0);
-  return 25000 + extraKm * 4000;
-}
-
-/**
  * Phân giải ma trận khoảng cách đường đi thực tế & thời gian (OSRM Matrix API kèm fallback)
  */
 export async function getRoadDistanceAndDuration(
