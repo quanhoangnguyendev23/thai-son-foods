@@ -51,7 +51,7 @@ describe('getItemBottleMultiplier', () => {
   });
 
   // REVIEW.md R16 — comment ở cart.ts:27 nói nhận dạng được "-loc5" nhưng biểu thức chính quy không khớp
-  test('R16 (mong đợi FAIL): mã quy cách dạng "-loc5" phải ra 5 chai như comment mô tả', () => {
+  test('R16: mã quy cách dạng "-loc5" phải ra 5 chai như comment mô tả', () => {
     assert.equal(getItemBottleMultiplier({ variantId: 'x-loc5' }), 5);
   });
 
@@ -195,7 +195,7 @@ describe('useCartStore — thêm, sửa, xóa', () => {
   });
 });
 
-describe('Tái hiện lỗi trong REVIEW.md (mong đợi FAIL cho tới khi sửa code)', () => {
+describe('Hồi quy cho lỗi R4, R5 trong REVIEW.md (đã sửa)', () => {
   test('R4: addItem với số lượng NaN không được làm hỏng số lượng và tạm tính', () => {
     cart().addItem(packFromCard, NaN);
     assert.ok(Number.isFinite(cart().items[0].quantity), `quantity = ${cart().items[0].quantity}`);

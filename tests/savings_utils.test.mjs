@@ -63,7 +63,7 @@ describe('savings', () => {
     assert.equal(formatShortVND(1250000), '1,25Tr');
   });
 
-  test('R7 (mong đợi FAIL): 999.500đ phải hiện "1Tr", không phải "1000K"', () => {
+  test('R7: 999.500đ phải hiện "1Tr", không phải "1000K"', () => {
     assert.equal(formatShortVND(999500), '1Tr');
   });
 });

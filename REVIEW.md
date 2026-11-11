@@ -69,6 +69,7 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Ghi chú:** Các nơi gọi hiện tại (`gio-hang/page.tsx:851`) đã tự lọc nên giao diện chưa dính; đây là lỗ hổng ở tầng store.
 - **Đề xuất sửa:** Chuẩn hóa `quantity` bằng `Number.isFinite` + `Math.floor` ngay trong store.
 - **Test:** `tests/cart_store.test.mjs` (2 test R4).
+- **ĐÃ SỬA** ở commit `6a7091f`: `addItem` dùng 1 khi số lượng là NaN; `setQuantity` bỏ qua NaN và giữ nguyên dòng hàng; số lẻ làm tròn xuống.
 
 ### R5. Nút "Hoàn tác" trên thẻ sản phẩm không hoàn tác khi dòng đã gộp vào mã khác
 - **File:dòng:** `src/components/product/ProductCard.tsx:95-99`, `src/store/cart.ts:196-212`
@@ -78,7 +79,13 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Tái hiện:** Thêm lốc 7 chai từ trang chi tiết, rồi thêm cùng sản phẩm từ thẻ ở trang chủ, bấm Hoàn tác. Số lượng không giảm.
 - **Mức xác minh:** Phần store đã kiểm chứng bằng test. Phần giao diện suy ra từ code, **cần xác minh** trên trình duyệt với dữ liệu thật.
 - **Đề xuất sửa:** Hoàn tác theo `getCartMergeKey` thay vì theo `productId`.
-- **Test:** `tests/cart_store.test.mjs` (test R5).
+- **Test:** `tests/cart_store.test.mjs` (test R5 và test `undoAdd`).
+- **ĐÃ SỬA** ở commit `d6f58bc`: thêm action `undoAdd` vào store (tìm dòng theo khóa gộp) và `ProductCard` gọi nó.
+  **Lưu ý trung thực về test R5:** bản đầu của test chép lại các dòng `find`/`setQuantity`/`removeItem` của component, nên sửa component
+  không bao giờ làm test đổi kết quả. Em đổi các bước của test sang gọi `undoAdd` của store; assert (`getTotalQuantity() === 1`) giữ nguyên.
+- **Liên quan, chưa sửa (ngoài phạm vi R5):** `ProductCard.tsx:73-75` đếm số lượng trên nút bằng `items.find(i => i.productId === ...)`
+  nên cũng hiện 0 khi dòng nằm dưới mã khác. Cùng nguyên nhân gốc, nên sửa chung nếu anh đồng ý. Không có chỗ tương tự ở trang combo
+  (chỉ `ProductCard` có nút Hoàn tác).
 
 ### R6. (ĐÃ RÚT LẠI phần đầu) Câu báo lỗi ngoài bán kính hiện "20.0 km vượt quá 20 km"
 - **File:dòng:** `src/config/inventory.ts:86-93`
@@ -96,6 +103,7 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Tái hiện:** `formatShortVND(999500)` trả `"1000K"`.
 - **Đề xuất sửa:** Làm tròn trước rồi mới chọn đơn vị.
 - **Test:** `tests/savings_utils.test.mjs` (test R7).
+- **ĐÃ SỬA** ở commit `63f0e43`: làm tròn nghìn trước khi chọn đơn vị; từ 1000K trở lên dùng "Tr".
 
 ### R8. Túi tiết kiệm vẫn tính cho combo đã tạm dừng trong DB
 - **File:dòng:** `src/lib/savings.ts:26-28`, `:53-58`, `:60-65`
@@ -158,6 +166,7 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Phát hiện khi chạy test** (giai đoạn 4), đã đọc lại code để xác nhận.
 - **Đề xuất sửa:** Thêm mẫu `[-_](?:loc|thung)(\d+)` ở client, hoặc dùng chung một hàm với server.
 - **Test:** `tests/cart_store.test.mjs` (test R16).
+- **ĐÃ SỬA** ở commit `222f44f`: thêm mẫu chữ rồi số (`loc|thung|pack|lon` + số), cùng mẫu với `extractBottleMultiplier`.
 
 ---
 
