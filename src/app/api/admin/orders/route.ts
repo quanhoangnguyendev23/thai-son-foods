@@ -565,10 +565,8 @@ export async function PUT(request: Request) {
       if (statusChanged && status === 'COMPLETED') {
         const { processPartnerOrderEvent } = await import('@/lib/partner/orderEvent');
         await processPartnerOrderEvent(id, 'ORDER_COMPLETED', { client, actor: session.username });
-      } else if (statusChanged && status === 'CANCELLED') {
-        const { processPartnerOrderEvent } = await import('@/lib/partner/orderEvent');
-        await processPartnerOrderEvent(id, 'ORDER_CANCELLED', { client, actor: session.username, note });
       }
+      // Hủy đơn: sự kiện hoa hồng ORDER_CANCELLED đã được releaseStock gửi ở trên (cùng giao dịch); không gửi lại lần hai
 
       await client.query('COMMIT;');
     } catch (txErr) {

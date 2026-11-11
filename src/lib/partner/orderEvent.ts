@@ -112,6 +112,16 @@ export async function processPartnerOrderEvent(
           return { processed: false };
         }
 
+        // Idempotent: đơn đã được hủy/thu hồi hoa hồng trước đó (attribution VOID hoặc đã có bút toán CLAWBACK) thì không làm lại,
+        // nếu không mỗi lần gọi lại sẽ chèn thêm một CLAWBACK và trừ ví thêm một lần
+        const clawbackRes = await dbClient.query(
+          `SELECT 1 FROM partner_ledger WHERE order_id = $1 AND entry_type = 'CLAWBACK' LIMIT 1;`,
+          [orderId]
+        );
+        if (attr.status === 'VOID' || clawbackRes.rows.length > 0) {
+          return { processed: false, action: 'ledger_already_void_or_handled' };
+        }
+
         const ledgerStatus = currentLedger.status;
 
         // Trường hợp A: Đơn bị hủy khi thu nhập đang ở mức ESTIMATED -> Đổi thành VOID (không sinh tiền, không trừ ví)
