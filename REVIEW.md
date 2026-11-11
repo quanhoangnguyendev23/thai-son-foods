@@ -1,4 +1,4 @@
-# REVIEW.md — Rà soát logic (11/11/2026)
+﻿# REVIEW.md — Rà soát logic (11/11/2026)
 
 Phạm vi đã đọc kỹ: `src/store/cart.ts`, `src/config/inventory.ts`, `src/lib/` (savings, utils, costSnapshot,
 order-status, deliverySlots, rateLimit, password-policy, content-validation, inventorySheetParser,
@@ -121,16 +121,26 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
   trái với chính sách chốt 04/11 ở `src/config/inventory.ts`. Hàm này không còn nơi nào trong `src` gọi (đã grep),
   nhưng vẫn được export cùng tên với hàm đúng. File test cũ chép lại hàm này vào trong test thay vì import, nên đang test bản sao.
 - **Đề xuất sửa:** Xóa hàm cũ hoặc đổi tên rõ là đã bỏ; sửa test cũ để import hàm thật.
+- **ĐÃ SỬA** ở commit `4a1d29d`: xóa hàm cũ (đã grep: không còn nơi nào import). `tests/store_recommender.test.mjs` nay import `calculateShippingFee`
+  (`@/config/inventory`) và `getPeakHourMultiplier` (`@/lib/storeRecommender`); biểu phí trong TEST 1 viết lại theo chính sách chốt 04/11
+  (giá trị cũ 15k/25k thuộc chính sách đã bỏ nên không thể giữ). Chạy bằng `npx tsx`. TEST 1 và 2 PASS (đã chạy, xem báo cáo).
+- **Phát hiện thêm, chưa xử lý:** TEST 3, 4, 5 của file này gọi server đang chạy và đòi chi nhánh Cần Thơ (`CTH`) và Biên Hòa (`AMA`),
+  trái với `SERVICE_AREA.HCM_ONLY = true`, nên nhiều khả năng đã lỗi thời. Em không chạy chúng vì phải gọi server cổng 3000 (anh dặn không đụng).
+  Em chỉ thêm `BASE_URL` qua biến môi trường để chạy được với server khác.
 
-### R10. Nhánh `catch` tính khoảng cách dự phòng không bao giờ chạy
+### R10. Nhánh `catch` tính khoảng cách dự phòng gần như không bao giờ chạy
 - **File:dòng:** `src/app/api/orders/route.ts:609-622`; `src/lib/storeRecommender.ts:185-213`
 - **Mô tả:** `getRoadDistanceAndDuration` tự bắt mọi lỗi OSRM và tự rơi về công thức ×1,35, không ném lỗi ra ngoài.
-  Khối `catch` ở route là mã chết.
+  Khối `catch` ở route gần như không bao giờ chạy tới.
 - **Đề xuất sửa:** Bỏ khối `catch` hoặc giữ nhưng ghi chú rõ.
+- **ĐÃ XỬ LÝ (giữ lại + ghi chú)** ở commit `5da7591`. Bản đầu của mục này gọi là "mã chết", chưa chính xác: `try` còn bao cả lệnh
+  `await import('@/lib/storeRecommender')`, nên `catch` là lưới an toàn cho lỗi nạp mô-đun. Bỏ nó thì lỗi đó làm hỏng đơn (HTTP 500).
+  Không đổi hành vi, chỉ thêm comment.
 
 ### R11. JSDoc đặt nhầm hàm
 - **File:dòng:** `src/lib/utils.ts:1-5`
 - **Mô tả:** Mô tả "Format a number as Vietnamese currency" nằm trên `formatKcal`, còn `formatPrice` không có mô tả.
+- **ĐÃ SỬA** ở commit `24bdf75` (chỉ di chuyển comment, không đổi code).
 
 ### R12. Giá vốn một đơn vị bị làm tròn làm lệch tổng
 - **File:dòng:** `src/lib/costSnapshot.ts:63-64`
