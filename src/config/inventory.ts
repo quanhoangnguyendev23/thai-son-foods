@@ -88,7 +88,8 @@ export function calculateShippingFee(
       fee: baseFee,
       isFree: false,
       isBeyondRadius: true,
-      reason: `Khoảng cách (${(distanceKm as number).toFixed(1)} km) vượt quá bán kính giao tối đa (${distConfig.MAX_DELIVERY_RADIUS_KM} km). Vui lòng chọn cửa hàng gần hơn hoặc tự đến lấy.`,
+      // Làm tròn LÊN 0,1 km (cùng cách với phụ thu): 20,04 km hiện "20.1 km", không hiện "20.0 km vượt quá 20 km"
+      reason: `Khoảng cách (${(Math.ceil((distanceKm as number) * 10) / 10).toFixed(1)} km) vượt quá bán kính giao tối đa (${distConfig.MAX_DELIVERY_RADIUS_KM} km). Vui lòng chọn cửa hàng gần hơn hoặc tự đến lấy.`,
       baseFee,
       surcharge: 0,
     };

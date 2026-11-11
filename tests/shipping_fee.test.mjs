@@ -92,6 +92,13 @@ describe('calculateShippingFee — phụ thu theo km', () => {
     const r = calculateShippingFee(100000, 20.04);
     assert.doesNotMatch(r.reason, /\(20\.0 km\)/);
   });
+
+  test('R6: số km trong câu báo lỗi làm tròn LÊN 0,1 km (cùng cách với phụ thu) và luôn lớn hơn bán kính tối đa', () => {
+    assert.match(calculateShippingFee(100000, 20.04).reason, /\(20\.1 km\)/);
+    assert.match(calculateShippingFee(100000, 20.5).reason, /\(20\.5 km\)/);
+    assert.match(calculateShippingFee(100000, 25.37).reason, /\(25\.4 km\)/);
+    assert.match(calculateShippingFee(100000, 20.01).reason, /\(20\.1 km\)/);
+  });
 });
 
 describe('getDistanceSurcharge', () => {
