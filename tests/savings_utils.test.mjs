@@ -7,7 +7,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { getCartSavings, getComboSaving, findCombo, formatShortVND } from '@/lib/savings';
 import { formatPrice, formatKcal, clamp, cn } from '@/lib/utils';
-import { totalCostOfBottles } from '@/lib/costSnapshot';
+import { totalCostOfBottles, computeLineUnitCosts } from '@/lib/costSnapshot';
 
 const comboA = { id: 'combo-test-a', slug: 'combo-test-a', originalPrice: 180000, salePrice: 160000, isActive: true };
 const lineA = { productId: 'combo-test-a', slug: 'combo-test-a', price: 160000, quantity: 2 };
@@ -140,5 +140,36 @@ describe('costSnapshot.totalCostOfBottles', () => {
   test('danh sách rỗng hoặc tổng bằng 0: null', () => {
     assert.equal(totalCostOfBottles([], costs), null);
     assert.equal(totalCostOfBottles([{ productId: 'p1', bottleQuantity: 0 }], costs), null);
+  });
+});
+
+describe('costSnapshot.computeLineUnitCosts (R12: giá vốn một đơn vị không bị lệch do làm tròn)', () => {
+  // Chỉ thay driver CSDL bằng bản giả trả về giá vốn/chai; toàn bộ phép tính trong computeLineUnitCosts chạy thật
+  const clientWithCosts = (rows) => ({ query: async () => ({ rows }) });
+
+  test('giá vốn chai lẻ (INTEGER trong CSDL): chia cho số lượng dòng luôn chẵn, nhân lại ra đúng tổng', async () => {
+    const client = clientWithCosts([{ id: 'p1', slug: 'p1', cost_price: 8333 }]);
+    // Dòng 0: 3 lốc x 7 chai = 21 chai; dòng 1: 1 lốc x 7 chai
+    const unit = await computeLineUnitCosts(client, [3, 1], [
+      { productId: 'p1', bottleQuantity: 21, originalItemIndex: 0 },
+      { productId: 'p1', bottleQuantity: 7, originalItemIndex: 1 },
+    ]);
+    assert.deepEqual(unit, [7 * 8333, 7 * 8333]);
+    assert.equal(unit[0] * 3, 21 * 8333);
+  });
+
+  test('chưa có giá vốn của một chai: dòng đó là null, dòng khác vẫn tính', async () => {
+    const client = clientWithCosts([{ id: 'p1', slug: 'p1', cost_price: 9000 }]);
+    const unit = await computeLineUnitCosts(client, [1, 1], [
+      { productId: 'p1', bottleQuantity: 7, originalItemIndex: 0 },
+      { productId: 'chua-co', bottleQuantity: 7, originalItemIndex: 1 },
+    ]);
+    assert.deepEqual(unit, [63000, null]);
+  });
+
+  test('giá vốn bằng 0 hoặc thiếu bị coi là chưa nhập', async () => {
+    const client = clientWithCosts([{ id: 'p1', slug: 'p1', cost_price: 0 }]);
+    const unit = await computeLineUnitCosts(client, [1], [{ productId: 'p1', bottleQuantity: 7, originalItemIndex: 0 }]);
+    assert.deepEqual(unit, [null]);
   });
 });

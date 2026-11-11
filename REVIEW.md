@@ -142,29 +142,53 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Mô tả:** Mô tả "Format a number as Vietnamese currency" nằm trên `formatKcal`, còn `formatPrice` không có mô tả.
 - **ĐÃ SỬA** ở commit `24bdf75` (chỉ di chuyển comment, không đổi code).
 
-### R12. Giá vốn một đơn vị bị làm tròn làm lệch tổng
+### R12. (ĐÃ GẠCH BỎ) Giá vốn một đơn vị bị làm tròn làm lệch tổng
 - **File:dòng:** `src/lib/costSnapshot.ts:63-64`
-- **Mô tả:** `Math.round(total / lineQty)` rồi báo cáo nhân lại với số lượng. Tổng 10đ cho 3 đơn vị thành 3đ × 3 = 9đ.
-  Với giá vốn chai là số nguyên và dòng hàng cùng loại thì phép chia luôn chẵn, nên chỉ lệch khi dữ liệu giá vốn có số lẻ.
-- **Mức xác minh:** phép tính đã kiểm chứng; ảnh hưởng thực tế **cần xác minh** theo dữ liệu giá vốn.
+- **Kết luận: không phải lỗi.** Bản đầu nêu ví dụ "10đ chia 3 đơn vị" nhưng ví dụ đó không xảy ra thật. Bằng chứng:
+  1. Cột `cost_price` là `INTEGER` (`src/lib/db.ts:467-474`), nên giá vốn mỗi chai luôn là số nguyên.
+  2. `route.ts:878` truyền `bottleQuantity = số chai mỗi lốc × số lượng dòng`, và `expandComboItems` cũng gộp số lượng dòng vào số chai,
+     nên tổng giá vốn của dòng luôn chia hết cho số lượng dòng.
+  3. Test `computeLineUnitCosts (R12 ...)` trong `tests/savings_utils.test.mjs` (3 test, PASS): 3 lốc × 7 chai × 8.333đ ra đúng 58.331đ/lốc, nhân lại đúng tổng.
+  Chỉ có thể lệch nếu sau này đổi `cost_price` sang kiểu có số lẻ.
 
-### R13. Nhận diện combo bằng `includes('combo')`
+### R13. (HẠ XUỐNG, chưa khai thác được) Nhận diện combo bằng `includes('combo')`
 - **File:dòng:** `src/app/api/orders/route.ts:506`
-- **Mô tả:** Mọi mã chứa chuỗi "combo" đều vào nhánh combo. Một sản phẩm lẻ có slug chứa "combo" sẽ bị từ chối
+- **Mô tả:** Mọi mã chứa chuỗi "combo" đều vào nhánh combo. Một sản phẩm lẻ có mã/slug chứa "combo" sẽ bị từ chối
   ("Combo đang tạm ngưng") hoặc bị tra nhầm bảng `combos`.
-- **Mức xác minh:** logic đã đọc; **cần xác minh** xem DB có sản phẩm lẻ nào mang slug như vậy không.
+- **Đã kiểm chứng bằng đọc dữ liệu (chỉ SELECT, phiên chỉ đọc), ngày 11/11:**
+  | Nguồn | Sản phẩm lẻ | Quy cách | SP có "combo" trong id/slug/sku/tên | Quy cách có "combo" trong id |
+  |---|---|---|---|---|
+  | DB `WebTSF_staging` | 12 | 44 | 0 | 0 |
+  | DB `WebTSF` | 12 | 46 | 0 | 0 |
+  | `src/data/products.ts` | 12 | | 0 | |
+  Chiều ngược lại cũng ổn: mọi combo trong staging có id dạng `combo_<số>`, nên đều chứa "combo".
+- **Kết luận:** hiện không có sản phẩm nào bị ảnh hưởng; chỉ là rủi ro tiềm ẩn nếu admin đặt slug/id có chữ "combo" cho sản phẩm lẻ.
+  Mức Nhẹ. Cách chặn rẻ nhất là kiểm tra khi lưu sản phẩm ở admin, không cần đổi route.
 
-### R14. `sanitizeCartItems` đoán lốc 5 chai bằng `includes('5')`
+### R14. (XÁC NHẬN, đã sửa mô tả) `sanitizeCartItems` chia số chai lẻ cho số cố định 7 hoặc 5
 - **File:dòng:** `src/store/cart.ts:127-130`
-- **Mô tả:** Quy cách tên "15 chai" cũng chứa ký tự "5" nên bị chia cho 5 thay vì theo số chai thật.
-- **Mức xác minh:** **cần xác minh**, chỉ xảy ra với giỏ cũ còn chai lẻ và sản phẩm có quy cách nhỏ nhất chứa số 5 mà không phải 5 chai.
+- **Mô tả đã sửa:** Bản đầu nêu giả thuyết "15 chai chứa ký tự 5". Giả thuyết đó không xảy ra với dữ liệu thật: lốc nhỏ nhất của mọi sản phẩm là **7 hoặc 6 chai**
+  (đã đọc `WebTSF_staging` và `src/data/products.ts`: 10 sản phẩm 7 chai, 2 sản phẩm 6 chai). Lỗi thật là số chia bị đoán cứng:
+  `packDivisor = variantName.includes('5') ? 5 : 7`, không lấy số chai của lốc nhỏ nhất. Sản phẩm lốc 6 chai (Sữa hạt sen Lotus, Sữa gạo lứt Ohsawa
+  và 2 sản phẩm lốc 6 chai trong DB) bị chia cho 7.
+- **Tái hiện (đã chạy):** giỏ cũ lưu trong localStorage có 24 chai lẻ `sua-hat-sen-lotus` → sau khi nạp lại còn **3 lốc = 18 chai** (đúng phải 4 lốc = 24 chai).
+- **Mức độ: Nhẹ.** Chỉ xảy ra với giỏ lưu từ bản cũ còn dòng "1 chai"; giá cuối vẫn do máy chủ tính lại lúc đặt đơn, nhưng số lượng khách thấy trong giỏ bị đổi âm thầm.
+- **Đề xuất sửa:** chia cho `quantity` của quy cách nhỏ nhất mà `sanitizeCartProduct` đã chọn.
+- **Test:** `tests/cart_rehydrate.test.mjs` (test R14: FAIL, `quantity = 3 lốc = 18 chai, mong đợi 24 chai`; 2 test nền PASS). **Chưa sửa, chờ anh quyết định.**
 
 ### R15. `confirmStock` đọc tồn kho không khóa dòng
 - **File:dòng:** `src/lib/inventory.ts:1207-1233`; `src/app/api/admin/orders/route.ts:537`
 - **Mô tả:** Tồn kho được `SELECT` không có `FOR UPDATE` rồi mới `UPDATE ... GREATEST(0, stock - qty)`. Hai admin xác nhận hai đơn
   cùng sản phẩm cùng lúc khi tồn thật thấp hơn tổng giữ chỗ (ví dụ sau khi sửa tay tồn kho) có thể cùng qua bước kiểm tra,
   rồi bị kẹp về 0 mà nhật ký ghi là `order_confirmed` chứ không phải `oversell_clamped`.
-- **Mức xác minh:** **cần xác minh** bằng test đồng thời trên DB; đường đặt đơn có khóa theo chi nhánh nhưng đường xác nhận thì không.
+- **XÁC NHẬN bằng test đồng thời trên DB test riêng (mức Trung bình):** `tests/inventory_confirm_concurrency.test.mjs`.
+  Dựng tồn thực tế 10 chai, giữ chỗ 14 chai (2 đơn × 7). Giữ khóa dòng tồn kho để cả hai lần xác nhận cùng đã đọc tồn (10) trước khi cập nhật, rồi thả khóa.
+  - Tuần tự (đối chứng): đơn thứ hai bị `InsufficientStockConfirmError`, tồn dừng ở 3. PASS.
+  - Đồng thời: **cả hai thành công**, nhật ký ghi `order_confirmed, order_confirmed`, tồn bị kẹp về 0, không có `oversell_clamped` và không có cảnh báo nào.
+    FAIL: `cả 2 đơn xác nhận thành công ..., tồn thực tế còn 0 (lẽ ra không thể xuất 14 chai từ 10 chai) mà không có cảnh báo`.
+  Cách tái hiện ngoài đời: admin sửa tay tồn kho xuống thấp hơn tổng giữ chỗ rồi hai admin bấm xác nhận hai đơn cùng sản phẩm gần như cùng lúc.
+- **Đề xuất sửa:** thêm `FOR UPDATE` vào câu `SELECT stock_quantity, reserved FROM store_inventory` ở `inventory.ts:1207`. Các lần xác nhận cùng chi nhánh sẽ xếp hàng
+  và đơn thứ hai thấy tồn đã giảm. **Chưa sửa, chờ anh quyết định.**
 
 ### R16. Giỏ hàng không nhận dạng mã quy cách dạng "-loc5" như comment mô tả
 - **File:dòng:** `src/store/cart.ts:27-28`; so với `src/lib/inventory.ts:339-340`
