@@ -11,7 +11,7 @@ import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
-import { setupReviewTestEnv, REVIEW_TEST_DB } from './helpers/review_test_db.mjs';
+import { setupReviewTestEnv, lockReviewTestDb, REVIEW_TEST_DB } from './helpers/review_test_db.mjs';
 
 const { dbName } = setupReviewTestEnv();
 assert.equal(dbName, REVIEW_TEST_DB);
@@ -88,7 +88,10 @@ async function orderRow(orderId) {
   return r.rows[0];
 }
 
+let releaseDbLock = async () => {};
+
 before(async () => {
+  releaseDbLock = await lockReviewTestDb(pool);
   await initDatabase();
   // initDatabase() không tạo bảng inventory_logs (chỉ scripts/migrate_inventory_phase4.mjs tạo): chép đúng câu lệnh đó vào DB test
   await pool.query(`
@@ -134,6 +137,7 @@ before(async () => {
 });
 
 after(async () => {
+  await releaseDbLock();
   await pool.end();
 });
 
@@ -180,6 +184,67 @@ describe('POST /api/orders — nền tảng (kiểm tra bộ dựng test chạy 
     assert.equal(first.status, 200, JSON.stringify(first.json));
     const second = await postOrder(orderBody({ phone }));
     assert.equal(second.status, 429, JSON.stringify(second.json));
+  });
+});
+
+describe('chống bán lố tồn kho khi nhiều đơn đặt đồng thời', () => {
+  test('5 đơn đồng thời (mỗi đơn 7 chai, SĐT khác nhau) cho tồn 20 chai: đúng 2 đơn thành công, giữ chỗ 14 chai, 3 đơn bị 409', async () => {
+    const snapshot = (await pool.query('SELECT stock_quantity, reserved FROM store_inventory WHERE store_code=$1 AND product_id=$2', [STORE.code, PRODUCT_ID])).rows[0];
+    try {
+      await pool.query('UPDATE store_inventory SET stock_quantity = 20, reserved = 0 WHERE store_code=$1 AND product_id=$2', [STORE.code, PRODUCT_ID]);
+      // Chờ bộ nhớ đệm tồn kho trên RAM của gatekeeper (10 giây) không còn là điểm chặn: kết quả cuối cùng phải do khóa dòng trong DB quyết định
+      const results = await Promise.all(Array.from({ length: 5 }, () => postOrder(orderBody())));
+      const ok = results.filter((r) => r.status === 200).length;
+      const rejected = results.filter((r) => r.status === 409).length;
+      const row = (await pool.query('SELECT stock_quantity, reserved FROM store_inventory WHERE store_code=$1 AND product_id=$2', [STORE.code, PRODUCT_ID])).rows[0];
+      assert.equal(ok, 2, `trạng thái: ${results.map((r) => r.status).join(',')}`);
+      assert.equal(rejected, 3, `trạng thái: ${results.map((r) => r.status).join(',')}`);
+      assert.equal(Number(row.reserved), 14);
+      assert.equal(Number(row.stock_quantity), 20);
+    } finally {
+      await pool.query('UPDATE store_inventory SET stock_quantity = $3, reserved = $4 WHERE store_code=$1 AND product_id=$2', [
+        STORE.code,
+        PRODUCT_ID,
+        snapshot.stock_quantity,
+        snapshot.reserved,
+      ]);
+    }
+  });
+});
+
+describe('hoa hồng đối tác khi đặt đơn có mã giới thiệu', () => {
+  async function seedPartnerAndPolicy(rate) {
+    await pool.query('TRUNCATE partner_ledger, order_attributions, partner_profiles, users, partner_commission_policies CASCADE;');
+    // Chính sách mặc định đúng như scripts/migrate_partner_module.mjs (rate 10.00, PERCENTAGE) — cũng là dữ liệu đang có trên DB staging
+    await pool.query(
+      `INSERT INTO partner_commission_policies (id, name, partner_type, rate_type, rate, base_type, min_order_value, is_active)
+       VALUES ('pol_default_ctv', 'Chính sách Hoa hồng CTV Tiêu chuẩn', 'CTV', 'PERCENTAGE', $1, 'PRODUCT_SUBTOTAL', 50000, true);`,
+      [rate]
+    );
+    await pool.query(`INSERT INTO users (id, email, password_hash, full_name) VALUES ('u1', 'ctv@example.com', 'x', 'Đối tác');`);
+    await pool.query(
+      `INSERT INTO partner_profiles (id, user_id, partner_code, phone, full_name, email) VALUES ('pp1', 'u1', 'CTV1', '0911111111', 'Đối tác', 'ctv@example.com');`
+    );
+  }
+  const attributionOf = async (orderId) =>
+    (await pool.query('SELECT estimated_commission, eligible_order_amount, is_self_referral, status FROM order_attributions WHERE order_id = $1', [orderId])).rows[0];
+
+  test('đơn có mã giới thiệu hợp lệ: ghi nhận attribution cho đối tác, không phải tự giới thiệu', async () => {
+    await seedPartnerAndPolicy('10.00');
+    const { status, json } = await postOrder(orderBody({ referralCode: 'CTV1' }));
+    assert.equal(status, 200, JSON.stringify(json));
+    const a = await attributionOf(json.orderId);
+    assert.equal(a.eligible_order_amount, PACK_PRICE);
+    assert.equal(a.is_self_referral, false);
+    assert.equal(a.status, 'ESTIMATED');
+  });
+
+  test('R22: chính sách 10,00 (PERCENTAGE) phải ra hoa hồng 10% giá trị đơn, không phải 1.000%', async () => {
+    await seedPartnerAndPolicy('10.00');
+    const { status, json } = await postOrder(orderBody({ referralCode: 'CTV1' }));
+    assert.equal(status, 200, JSON.stringify(json));
+    const a = await attributionOf(json.orderId);
+    assert.equal(a.estimated_commission, PACK_PRICE * 0.1, `đơn ${PACK_PRICE}đ, hoa hồng ước tính ${a.estimated_commission}đ`);
   });
 });
 

@@ -20,6 +20,24 @@ function readEnvFileValue(file, key) {
   return null;
 }
 
+const REVIEW_TEST_LOCK_KEY = 7240111;
+
+/**
+ * Các file test tích hợp dùng chung một DB và đều xóa dữ liệu lúc bắt đầu; node --test chạy các file song song nên phải
+ * xếp hàng: giữ một khóa tư vấn của PostgreSQL suốt thời gian chạy file. Gọi trước initDatabase(); gọi hàm trả về khi xong.
+ */
+export async function lockReviewTestDb(pool) {
+  const client = await pool.connect();
+  await client.query('SELECT pg_advisory_lock($1);', [REVIEW_TEST_LOCK_KEY]);
+  return async () => {
+    try {
+      await client.query('SELECT pg_advisory_unlock($1);', [REVIEW_TEST_LOCK_KEY]);
+    } finally {
+      client.release();
+    }
+  };
+}
+
 export function setupReviewTestEnv() {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
   const base =

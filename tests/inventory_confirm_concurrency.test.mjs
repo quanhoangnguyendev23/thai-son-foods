@@ -5,7 +5,7 @@
  */
 import { test, describe, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { setupReviewTestEnv } from './helpers/review_test_db.mjs';
+import { setupReviewTestEnv, lockReviewTestDb } from './helpers/review_test_db.mjs';
 
 setupReviewTestEnv();
 
@@ -69,7 +69,10 @@ async function confirmInOwnTx(client, orderId) {
   }
 }
 
+let releaseDbLock = async () => {};
+
 before(async () => {
+  releaseDbLock = await lockReviewTestDb(pool);
   await initDatabase();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS inventory_logs (
@@ -92,6 +95,7 @@ before(async () => {
 beforeEach(seed);
 
 after(async () => {
+  await releaseDbLock();
   await pool.end();
 });
 

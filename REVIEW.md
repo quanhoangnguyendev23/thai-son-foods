@@ -1,4 +1,4 @@
-﻿# REVIEW.md — Rà soát logic (11/11/2026)
+# REVIEW.md — Rà soát logic (11/11/2026)
 
 Phạm vi đã đọc kỹ: `src/store/cart.ts`, `src/config/inventory.ts`, `src/lib/` (savings, utils, costSnapshot,
 order-status, deliverySlots, rateLimit, password-policy, content-validation, inventorySheetParser,
@@ -186,7 +186,9 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
   - Tuần tự (đối chứng): đơn thứ hai bị `InsufficientStockConfirmError`, tồn dừng ở 3. PASS.
   - Đồng thời: **cả hai thành công**, nhật ký ghi `order_confirmed, order_confirmed`, tồn bị kẹp về 0, không có `oversell_clamped` và không có cảnh báo nào.
     FAIL: `cả 2 đơn xác nhận thành công ..., tồn thực tế còn 0 (lẽ ra không thể xuất 14 chai từ 10 chai) mà không có cảnh báo`.
-  Cách tái hiện ngoài đời: admin sửa tay tồn kho xuống thấp hơn tổng giữ chỗ rồi hai admin bấm xác nhận hai đơn cùng sản phẩm gần như cùng lúc.
+  **Đính chính (Bước 6):** bản đầu của mục này nói "admin sửa tay tồn kho xuống thấp hơn giữ chỗ", nhưng `PUT /api/admin/inventory` đã chặn đúng việc đó
+  (`route.ts:291`: không cho giảm tồn xuống dưới số đang giữ chỗ). Nên lỗi đua này chỉ lộ ra khi dữ liệu đã vi phạm điều kiện "tồn >= giữ chỗ" bằng đường khác
+  (sửa SQL tay, đồng bộ Google Sheet khi `INVENTORY_SOURCE=sheet`, dữ liệu cũ). **Hạ xuống mức Nhẹ**; test vẫn đúng ở mức hàm.
 - **Đề xuất sửa:** thêm `FOR UPDATE` vào câu `SELECT stock_quantity, reserved FROM store_inventory` ở `inventory.ts:1207`. Các lần xác nhận cùng chi nhánh sẽ xếp hàng
   và đơn thứ hai thấy tồn đã giảm. **Chưa sửa, chờ anh quyết định.**
 
@@ -204,6 +206,103 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 
 ---
 
+# Vòng 2 (ngày 11/11/2026): kho, hoàn hàng, hoa hồng đối tác, route admin
+
+Đã đọc kỹ: `reserveStock`, `confirmStock`, `releaseStock`, `cleanupExpiredReservations`, `expandComboItems`, `processOrderReturn`, `reconcileCodPayment`
+(`src/lib/inventory.ts`); `src/lib/partner/orderEvent.ts`; `src/app/api/admin/orders/route.ts` (PUT, DELETE đọc phần đầu), `admin/orders/reconcile`,
+`admin/orders/transfer`, `admin/inventory` (PUT), `admin/combos` (PUT), `dealer/orders`, `src/lib/rbac.ts`.
+Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` (14 test), `tests/orders_api_integration.test.mjs` (13 test).
+**Chưa sửa mục nào ở vòng này, chờ anh quyết định.**
+
+## Nghiêm trọng
+
+### R22. Hoa hồng đối tác tính sai đơn vị: chính sách 10,00 (%) bị nhân như hệ số 10 lần
+- **File:dòng:** `src/app/api/orders/route.ts:735-745`; dữ liệu mẫu `scripts/migrate_partner_module.mjs:222`
+- **Mô tả:** Bảng `partner_commission_policies` lưu `rate = 10.00` với `rate_type = 'PERCENTAGE'` (nghĩa là 10%). Route đọc `Number(policy.rate) || 0.10`
+  và tính `Math.round(subtotal * commissionRate)` mà không chia 100. Giá trị dự phòng trong code lại là `0.10` (dạng phân số), nên hai nơi dùng hai đơn vị khác nhau.
+  Với chính sách có trong DB, hoa hồng ước tính **gấp 10 lần giá trị đơn** (1.000%), đúng ra là 10%.
+- **Tái hiện (đã chạy):** `tests/orders_api_integration.test.mjs`, test R22. Đơn 126.000đ có mã giới thiệu, chính sách đúng như dữ liệu mẫu:
+  `đơn 126000đ, hoa hồng ước tính 1260000đ`.
+- **Mức ảnh hưởng thật:** DB `WebTSF_staging` đang có chính sách `pol_default_ctv | PERCENTAGE | 10.00 | is_active = true`, nên đơn có mã giới thiệu trên staging sẽ sai.
+  Staging hiện có 0 dòng `order_attributions` (chưa có đơn nào bị ảnh hưởng) và 3 dòng `partner_ledger` tổng 564.000đ chưa rõ nguồn (**cần xác minh**).
+  DB `WebTSF` chưa có bảng đối tác. Hoa hồng ước tính chỉ thành tiền thật khi đơn hoàn tất và thu tiền (`COD_RECONCILED`), nhưng số "thu nhập ước tính" đã hiện sai cho đối tác,
+  và `current_balance` cộng đúng con số sai đó khi xác nhận.
+- **Phụ:** `|| 0.10` coi chính sách có rate bằng 0 là 10%. Chính sách còn có `min_order_value = 50000` (50.000đ) nhưng câu `SELECT` không đọc cột này nên đơn nhỏ hơn 50.000đ vẫn có hoa hồng (**cần anh xác nhận** nghiệp vụ có áp mức tối thiểu không).
+- **Đề xuất sửa:** chia 100 khi `rate_type = 'PERCENTAGE'` và dùng `??` thay `||`; chọn một đơn vị duy nhất cho cột `rate`.
+- **Test:** `tests/orders_api_integration.test.mjs` (R22, hiện FAIL).
+
+## Trung bình
+
+### R17. Hoàn hàng nhập kho theo cấu hình HIỆN TẠI thay vì số chai đã trừ lúc xác nhận
+- **File:dòng:** `src/lib/inventory.ts:1751-1756` (`processOrderReturn`); cùng kiểu ở nhánh đơn cũ `1274-1278` và `1422-1426`
+- **Mô tả:** `releaseStock` hoàn kho theo `stock_reservations` đã `confirmed` (đúng số chai đã trừ). Còn `processOrderReturn` bóc lại `order_items` bằng `expandComboItems`,
+  tức tính theo `product_variants.bottle_multiplier` và `combo_items` **hiện tại**. Admin sửa số chai của quy cách (hoặc thành phần combo) sau khi đơn đã trừ kho thì hoàn hàng nhập sai số chai.
+  Quy cách bị xóa thì hoàn hàng không xử lý được (`INVENTORY_RESOLVE_FAILED`). `admin/products` còn đặt `order_items.product_id = NULL` khi xóa sản phẩm (`route.ts:658`), nên đơn cũ của sản phẩm đó cũng không hoàn được.
+- **Tái hiện (đã chạy):** đơn trừ 7 chai (tồn 10 thành 3), sau đó quy cách đổi thành 10 chai, hoàn hàng "nhập lại": tồn **13** (đúng phải 10). Quy cách bị xóa: lỗi `INVENTORY_RESOLVE_FAILED`.
+  Đối chứng (không đổi cấu hình): 3 thành 10, PASS. Hàng hỏng: không cộng tồn, PASS.
+- **Đề xuất sửa:** dùng các dòng `stock_reservations` `confirmed` của đơn (đúng số chai, đúng chi nhánh) giống `releaseStock`; chỉ bóc lại `order_items` cho đơn cũ không có reservation.
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (2 test R17, FAIL).
+
+### R18. Đơn của đối tác bị tự hủy vì quá hạn giữ chỗ nhưng hoa hồng ước tính vẫn là ESTIMATED
+- **File:dòng:** `src/lib/inventory.ts:1631-1645` (`cleanupExpiredReservations`)
+- **Mô tả:** Hủy tay (`releaseStock`) gọi `processPartnerOrderEvent('ORDER_CANCELLED')` nên hoa hồng chuyển `VOID`. Tự hủy vì quá hạn 24 giờ chỉ đổi `orders.status`, không gọi sự kiện.
+  Dòng `partner_ledger` và `order_attributions` ở lại `ESTIMATED` mãi (đơn đã hủy không bao giờ hoàn tất để xác nhận). `partner/stats/route.ts:78` và `partner/ledger/route.ts:71` cộng mọi dòng `ESTIMATED`
+  vào "thu nhập ước tính" của đối tác, nên số này phình lên bởi đơn đã hủy.
+- **Tái hiện (đã chạy):** `đơn đã hủy nhưng sổ cái hoa hồng đang là ESTIMATED`. Đối chứng: hủy tay cùng đơn thì ra `VOID`, PASS.
+- **Đề xuất sửa:** gọi `processPartnerOrderEvent(orderId, 'ORDER_CANCELLED', { client })` cho mỗi đơn vừa tự hủy, trong cùng giao dịch.
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R18, FAIL).
+
+## Nhẹ
+
+### R19. `processPartnerOrderEvent` không idempotent dù comment ghi "Hoàn toàn... idempotent"
+- **File:dòng:** `src/lib/partner/orderEvent.ts:136-169`
+- **Mô tả:** Với hoa hồng `CONFIRMED`/`AVAILABLE`/`PAID`, mỗi lần nhận `ORDER_CANCELLED` hoặc `ORDER_RETURNED` đều chèn thêm một `CLAWBACK` và trừ ví thêm một lần, vì câu tìm dòng gốc
+  chỉ nhìn dòng `COMMISSION` (trạng thái dòng này không đổi sau khi thu hồi) và không xem `order_attributions.status = 'VOID'`.
+- **Tái hiện (đã chạy):** gọi hai lần liên tiếp: `số bút toán thu hồi = 2`, ví từ 12.600 thành -12.600. Lần đầu: 1 bút toán, ví về 0 (PASS).
+- **Mức độ:** hiện **chưa thấy đường gọi API** dẫn tới gọi hai lần cho đơn đã xác nhận hoa hồng (`reconcile` chặn bằng `ALREADY_CANCELLED`, `PUT` hủy chặn đơn Hoàn tất), nên chỉ là rủi ro tiềm ẩn.
+  Lưu ý `PUT /api/admin/orders` khi hủy gọi sự kiện này hai lần (một lần trong `releaseStock`, một lần ở route); hiện vô hại vì lúc đó hoa hồng mới `ESTIMATED`.
+- **Đề xuất sửa:** bỏ qua khi `order_attributions.status` đã là `VOID` hoặc đã có `CLAWBACK` của đơn.
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R19, FAIL).
+
+### R20. Thành phần combo không nhận dạng được bị bỏ qua im lặng, trong khi sản phẩm lẻ bị từ chối
+- **File:dòng:** `src/lib/inventory.ts:593-610` (combo trong DB) và các nhánh combo tự chọn `409-426`, `439-457`, `468-498`, `510-579`
+- **Mô tả:** Sản phẩm lẻ không nhận dạng được: ném `INVENTORY_RESOLVE_FAILED` ("Đơn hàng bị từ chối để tránh lọt kho"). Combo có thành phần không nhận dạng được: `if (prod)` bỏ qua thành phần đó,
+  đơn vẫn nhận, không giữ chỗ và không trừ kho phần đó, nhưng khách vẫn trả đủ giá combo.
+- **Tái hiện (đã chạy):** combo 2 thành phần, 1 thành phần là sản phẩm đã xóa: `Missing expected rejection` (không lỗi). Đối chứng: combo hợp lệ ra đúng số chai, sản phẩm lẻ lạ bị từ chối, PASS.
+- **Giảm nhẹ:** `admin/products` chặn xóa sản phẩm còn nằm trong combo (`route.ts:608-614`); `combo_items.product_id` không có khóa ngoại nên vẫn có thể lệch qua SQL tay hoặc dữ liệu cũ.
+- **Cần anh xác nhận:** hành vi đúng là từ chối cả đơn (theo comment fail-fast của chính hàm này, em đã viết test theo đó) hay bỏ qua thành phần thiếu.
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R20, FAIL).
+
+### R21. Hủy đơn đã trừ kho hoàn lại tồn kho nhưng không ghi nhật ký tồn kho
+- **File:dòng:** `src/lib/inventory.ts:1380-1449` (`releaseStock`, nhánh `inventory_deducted`)
+- **Mô tả:** Lúc xác nhận có `logInventoryChange` (`order_confirmed`), hoàn hàng có (`return_restocked`), hủy chưa trừ kho có (`order_cancelled`),
+  riêng hủy sau khi đã trừ kho cộng lại `stock_quantity` mà không ghi dòng nào trong `inventory_logs`. Lịch sử kho thấy trừ 7 chai và không thấy cộng lại.
+- **Tái hiện (đã chạy):** nhật ký của đơn chỉ có `order_confirmed (10 -> 3)`. Đối chứng: tồn kho hoàn lại đủ 7 chai, đơn thành CANCELLED, PASS.
+- **Test:** `tests/orders_lifecycle_integration.test.mjs` (R21, FAIL).
+
+### R23. Đại lý: chiết khấu 0% bị đọc thành 15%
+- **File:dòng:** `src/app/api/dealer/orders/route.ts:51`
+- **Mô tả:** `Number(tier.discount_rate) || 15.00` coi `0` là "thiếu" và dùng 15%. Hạng đại lý có chiết khấu 0% sẽ được giảm 15%.
+- **Mức xác minh:** đọc code (hành vi của `||` với 0 là chắc chắn). Không có test tự động vì route cần phiên đối tác. Các hạng mẫu hiện là 15/20/25% nên chưa ai bị ảnh hưởng.
+- **Liên quan đã biết:** `shippingFee` âm ở cùng route là "Lỗi 8" trong báo cáo bảo mật 10/11, không ghi lại ở đây.
+- **Đề xuất sửa:** dùng `??` hoặc kiểm `Number.isFinite`.
+
+### R24. `PUT /api/admin/combos` không chuẩn hóa `cost_price` và `total_items` như `POST`
+- **File:dòng:** `src/app/api/admin/combos/route.ts:398-400`, `422-425` (so với `POST` dòng `195-197` dùng `Math.max(0, parseInt(...) || 0)`)
+- **Mô tả:** `PUT` đẩy thẳng `parseInt(body.cost_price, 10)`. Giá trị không phải số cho `NaN` và lỗi 500; giá vốn âm được lưu (làm báo cáo lợi nhuận sai). Chỉ tài khoản có `cost_price.edit` (SUPER_ADMIN) đi tới được.
+- **Mức xác minh:** đọc code. Không có test tự động vì route cần phiên admin.
+
+## Cần xác minh nghiệp vụ (chưa kết luận là lỗi)
+
+- **R25. `allowOversell` / `forceConfirm`:** `PUT /api/admin/orders` (`route.ts:538`) nhận cờ này từ bất kỳ ai có quyền cập nhật đơn, kể cả `STORE_STAFF` (cho đơn chi nhánh mình), và cờ này bỏ qua kiểm tra đủ tồn kho.
+  Nếu đây là nút "vẫn xuất kho" có chủ đích cho nhân viên thì không sao; nếu chỉ dành cho quản lý thì cần thêm kiểm tra quyền.
+- **R26. Chuyển chi nhánh (`admin/orders/transfer`) không lấy khóa tư vấn theo chi nhánh** như `POST /api/orders` và `cleanupExpiredReservations` (đã thiết kế để tránh deadlock theo thứ tự khóa).
+  Hai thao tác chuyển ngược chiều A sang B và B sang A cùng lúc có thể deadlock. Chưa tái hiện, chỉ SUPER_ADMIN gọi được.
+  Phí giao cũng không tính lại khi đổi chi nhánh (phí đã tính theo khoảng cách tới chi nhánh cũ): cần anh cho biết có chủ đích không.
+- **R27. `confirmStock` nhánh đơn cũ** (không có reservation, `inventory.ts:1282-1285`) tự tạo dòng `store_inventory` với `stock_quantity = 100` nếu chưa có; tồn "ảo" 100 chai có thể che việc thiếu hàng. Chỉ chạm tới với đơn tạo trước khi có cơ chế giữ chỗ.
+
+---
+
 ## Đã đọc và không thấy lỗi
 - `src/lib/order-status.ts`: quy tắc chuyển trạng thái khớp mô tả.
 - `src/lib/deliverySlots.ts`: khung giờ, múi giờ VN, mốc 16:30 khớp mô tả.
@@ -211,9 +310,18 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - `src/lib/content-validation.ts` (`resolveUploadedFile`): chặn thoát thư mục, kể cả dấu `\` trên Windows.
 - `src/lib/rateLimit.ts`: đúng mô tả (lưu ý đã biết: lưu trong bộ nhớ từng tiến trình).
 - `src/lib/inventory.ts` (`extractBottleMultiplier`, `calculateSellable`): không thấy lỗi; mã lạ do client gửi không tạo ra giá thấp hơn.
+- **Chống bán lố khi đặt đơn đồng thời** (`reserveStock` + khóa dòng): test 5 đơn song song × 7 chai cho tồn 20 chai: đúng 2 đơn thành công, giữ chỗ 14, 3 đơn 409; chạy 3 lần đều đạt.
+- `confirmStock` tuần tự (từ chối khi thiếu tồn, idempotent), `releaseStock` phần tồn kho (chưa trừ: nhả giữ chỗ; đã trừ: hoàn đủ), `cleanupExpiredReservations` phần tồn kho (nhả giữ chỗ, hủy đơn PENDING): có test, đạt.
+- `admin/orders` `PUT`: khóa dòng đơn, kiểm tra phạm vi cửa hàng (chống IDOR), máy trạng thái, chặn giao khi cần gọi xác nhận vị trí; không thấy lỗi ngoài R25.
+- `admin/orders/reconcile`: chỉ đơn COD, chặn đơn Chờ/Đã hủy, chặn đối soát lặp, số tiền trong khoảng 1 đến tổng đơn; hoàn hàng chặn đơn Chờ và đơn đã hủy. Chỉ SUPER_ADMIN có quyền `cod.*` nên không cần lọc cửa hàng.
+- `admin/inventory` `PUT`: kiểm tra đầu vào, khóa dòng, chặn giảm tồn dưới số đang giữ chỗ, ghi nhật ký.
+- `admin/combos`: kiểm tra giá bán/giá gốc (`checkComboPrices`), quyền sửa giá và giá vốn (ngoại trừ R24).
+- `rbac.ts`: bảng quyền khớp cách các route dùng.
 
 ## Chưa đọc kỹ (không kết luận)
-- `src/lib/reviews/repository.ts`, `src/lib/membership/repository.ts` và `service.ts`, `src/lib/partner/*`, `src/lib/address/*`
+- `src/lib/reviews/repository.ts`, `src/lib/membership/repository.ts` và `service.ts`, `src/lib/partner/*` (trừ `orderEvent.ts` và `referral.ts`), `src/lib/address/*`
   (nhóm địa chỉ đã có bộ test riêng `npm run test:address`).
-- `src/lib/inventory.ts` các hàm `expandComboItems`, `reserveStock`, `releaseStock`, `cleanupExpiredReservations`, `processOrderReturn`.
-- Khoảng 100 API route ngoài `POST /api/orders`, toàn bộ trang admin và phần lớn component giao diện.
+- Route ghi dữ liệu chưa đọc: `admin/users`, `admin/members`, `admin/stores`, `admin/sync`, `admin/seed`, `admin/upload`, `admin/banners`, `admin/categories`, `admin/products` (chỉ đọc phần xóa),
+  `admin/payouts`, `admin/partners`, `admin/inventory/lots` và `sheet`, `admin/orders/[id]/confirm-payment` và `confirm-location`, `partner/*`, `membership/*`, `subscriptions/*`, `cron/subscriptions/*`, `user/*`, `auth/*`.
+  Một phần đã có trong các báo cáo bảo mật 09/11, 10/11 và `SECURITY_AUDIT.md`.
+- Toàn bộ trang quản trị và phần lớn component giao diện.
