@@ -322,41 +322,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // V4: Kiểm tra số đơn PENDING cùng SĐT (chống spam)
-    const pendingCheck = await query(
-      `SELECT COUNT(*) AS cnt FROM orders WHERE phone = $1 AND status = 'PENDING';`,
-      [cleanPhone]
-    );
-    if (Number(pendingCheck.rows[0]?.cnt) >= codConfig.MAX_PENDING_ORDERS_PER_PHONE) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Bạn đang có ${codConfig.MAX_PENDING_ORDERS_PER_PHONE} đơn hàng đang chờ xử lý. Vui lòng chờ đơn hiện tại được xác nhận trước khi đặt thêm.`,
-        },
-        { status: 429 }
-      );
-    }
-
-    // V5: Kiểm tra khoảng cách thời gian giữa 2 đơn cùng SĐT
-    const recentCheck = await query(
-      `SELECT created_at FROM orders WHERE phone = $1 ORDER BY created_at DESC LIMIT 1;`,
-      [cleanPhone]
-    );
-    if (recentCheck.rows.length > 0) {
-      const lastOrderTime = new Date(recentCheck.rows[0].created_at);
-      const nowMs = Date.now();
-      const diffMinutes = (nowMs - lastOrderTime.getTime()) / 60000;
-      if (diffMinutes < codConfig.MIN_ORDER_INTERVAL_MINUTES) {
-        const waitSec = Math.ceil((codConfig.MIN_ORDER_INTERVAL_MINUTES - diffMinutes) * 60);
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Vui lòng chờ ${waitSec} giây trước khi đặt đơn tiếp theo.`,
-          },
-          { status: 429 }
-        );
-      }
-    }
+    // V4 (tối đa số đơn PENDING cùng SĐT) và V5 (khoảng cách giữa 2 đơn cùng SĐT) kiểm tra TRONG giao dịch ở bước 6,
+    // sau khóa tư vấn theo SĐT: kiểm tra ở đây thì nhiều request đồng thời cùng thấy "chưa có đơn" rồi cùng tạo đơn.
 
     // Đảm bảo bảng và cấu trúc schema tồn tại
     await initDatabase();
@@ -809,6 +776,35 @@ export async function POST(request: Request) {
 
         try {
           await client.query('BEGIN;');
+          // V4/V5 chống spam theo SĐT: khóa tư vấn theo SĐT đã chuẩn hóa rồi mới kiểm tra, nên request đồng thời cùng SĐT
+          // phải xếp hàng và thấy đơn do request trước vừa tạo. Luôn lấy khóa SĐT TRƯỚC khóa chi nhánh để không deadlock.
+          await client.query('SELECT pg_advisory_xact_lock(hashtext($1));', ['tsf-order-phone-' + cleanPhone]);
+          const pendingCheck = await client.query(
+            `SELECT COUNT(*) AS cnt FROM orders WHERE phone = $1 AND status = 'PENDING';`,
+            [cleanPhone]
+          );
+          let spamBlockError: string | null = null;
+          if (Number(pendingCheck.rows[0]?.cnt) >= codConfig.MAX_PENDING_ORDERS_PER_PHONE) {
+            spamBlockError = `Bạn đang có ${codConfig.MAX_PENDING_ORDERS_PER_PHONE} đơn hàng đang chờ xử lý. Vui lòng chờ đơn hiện tại được xác nhận trước khi đặt thêm.`;
+          } else {
+            const recentCheck = await client.query(
+              `SELECT created_at FROM orders WHERE phone = $1 ORDER BY created_at DESC LIMIT 1;`,
+              [cleanPhone]
+            );
+            if (recentCheck.rows.length > 0) {
+              const lastOrderTime = new Date(recentCheck.rows[0].created_at);
+              const diffMinutes = (Date.now() - lastOrderTime.getTime()) / 60000;
+              if (diffMinutes < codConfig.MIN_ORDER_INTERVAL_MINUTES) {
+                const waitSec = Math.ceil((codConfig.MIN_ORDER_INTERVAL_MINUTES - diffMinutes) * 60);
+                spamBlockError = `Vui lòng chờ ${waitSec} giây trước khi đặt đơn tiếp theo.`;
+              }
+            }
+          }
+          if (spamBlockError) {
+            await client.query('ROLLBACK;');
+            gatekeeperRollbackPermit(gatekeeperPermitId);
+            return NextResponse.json({ success: false, error: spamBlockError }, { status: 429 });
+          }
           // Tuần tự hóa các đơn cùng chi nhánh: nhiều đơn đặt đồng thời trước đây gây "deadlock detected" (HTTP 500).
           // Khóa tư vấn mức transaction, tự nhả khi COMMIT/ROLLBACK; giao dịch ngắn nên không ảnh hưởng đáng kể thông lượng.
           await client.query('SELECT pg_advisory_xact_lock(hashtext($1));', ['tsf-order-store-' + targetStoreCode]);
