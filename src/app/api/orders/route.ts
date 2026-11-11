@@ -293,8 +293,9 @@ export async function POST(request: Request) {
     const codConfig = INV_CFG.COD_VALIDATION;
 
     // V1: Kiểm tra định dạng số điện thoại Việt Nam
-    const cleanPhone = phone.replace(/[\s\-\.]/g, '');
-    if (!codConfig.PHONE_REGEX.test(cleanPhone)) {
+    // Một cách chuẩn hóa duy nhất (bỏ dấu cách/chấm/gạch, +84 → 0) cho cả chống spam, lưu orders.phone và so khớp tra cứu
+    const cleanPhone = normalizePhone(phone);
+    if (!codConfig.PHONE_REGEX.test(phone.replace(/[\s\-\.]/g, ''))) {
       return NextResponse.json(
         { success: false, error: 'Số điện thoại không hợp lệ. Vui lòng nhập SĐT Việt Nam 10 số (VD: 0901 234 567)' },
         { status: 400 }
@@ -753,7 +754,7 @@ export async function POST(request: Request) {
             const partner = pRes.rows[0];
             const isSelfReferral = Boolean(
               (userId && partner.user_id && userId === partner.user_id) ||
-              (cleanPhone && (cleanPhone === partner.phone || cleanPhone === partner.user_phone)) ||
+              (cleanPhone && (cleanPhone === normalizePhone(partner.phone || '') || cleanPhone === normalizePhone(partner.user_phone || ''))) ||
               (finalEmail && (
                 finalEmail.toLowerCase() === (partner.email || '').toLowerCase() ||
                 finalEmail.toLowerCase() === (partner.user_email || '').toLowerCase()
@@ -835,7 +836,7 @@ export async function POST(request: Request) {
               orderId,
               orderCode,
               fullName,
-              phone,
+              cleanPhone,
               finalEmail,
               province,
               district,
