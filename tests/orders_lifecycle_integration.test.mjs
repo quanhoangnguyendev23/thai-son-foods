@@ -240,6 +240,17 @@ describe('tự hủy đơn quá hạn giữ chỗ (cleanupExpiredReservations) v
     assert.equal(led, 'VOID', `đơn đã hủy nhưng sổ cái hoa hồng đang là ${led}`);
   });
 
+  test('đơn đối tác tự hủy vì quá hạn: attribution cũng VOID và số dư ví không đổi', async () => {
+    await baseSeed({ stock: 10, reserved: 7 });
+    await addOrder('ordP');
+    await addReservation('ordP', { qty: 7, expired: true });
+    await seedPartner({ ledgerStatus: 'ESTIMATED', balance: 0 });
+    await inventory.cleanupExpiredReservations();
+    assert.equal((await pool.query("SELECT status FROM order_attributions WHERE id='attr1'")).rows[0].status, 'VOID');
+    assert.equal(Number((await pool.query("SELECT current_balance FROM partner_profiles WHERE id='pp1'")).rows[0].current_balance), 0);
+    assert.equal((await pool.query("SELECT count(*)::int c FROM partner_ledger WHERE entry_type='CLAWBACK'")).rows[0].c, 0);
+  });
+
   test('hủy tay đơn đối tác (đối chứng): hoa hồng ước tính chuyển VOID', async () => {
     await baseSeed({ stock: 10, reserved: 7 });
     await addOrder('ordP');

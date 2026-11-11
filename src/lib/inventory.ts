@@ -1633,6 +1633,13 @@ export async function cleanupExpiredReservations(externalClient?: PoolClient): P
       );
       if (cancelRes.rowCount && cancelRes.rowCount > 0) {
         cancelledOrders++;
+        // Đơn của đối tác bị tự hủy: hoa hồng ước tính phải chuyển VOID như khi hủy tay (releaseStock), nếu không sẽ treo ESTIMATED mãi
+        try {
+          const { processPartnerOrderEvent } = await import('@/lib/partner/orderEvent');
+          await processPartnerOrderEvent(orderId, 'ORDER_CANCELLED', { client, note: 'Tự động hủy: quá hạn giữ chỗ', actor: 'system' });
+        } catch (err) {
+          console.error('[Inventory] Error syncing partner order event on auto-cancel:', err);
+        }
       }
     }
 
