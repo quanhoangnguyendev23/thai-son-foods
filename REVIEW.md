@@ -24,7 +24,16 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Tái hiện:** Gửi liên tiếp nhiều `POST /api/orders` với `phone: "0901 234 567"`. Không lần nào bị chặn 429.
 - **Đề xuất sửa:** Lưu `cleanPhone` (và đổi `+84` về `0`) vào cột `orders.phone`, dùng cùng một giá trị cho cả tra cứu lẫn lưu.
 - **Liên quan:** "Lỗi 7 — Spam đơn COD" trong báo cáo bảo mật 10/11 (cùng hậu quả, khác nguyên nhân).
-- **Test:** chưa có test tự động (cần DB, xem mục "Chưa test được").
+- **Test:** `tests/orders_api_integration.test.mjs` (3 test R1).
+- **ĐÃ SỬA** ở commit `6af2d4c`: dùng `normalizePhone` (đã có sẵn trong route) cho kiểm tra, INSERT `orders.phone` và so khớp đối tác.
+- **Nơi đọc `orders.phone` và mức ảnh hưởng** (đã grep trước khi sửa):
+  - `GET /api/orders` (tra cứu công khai): so khớp bằng `normalizePhone` cả hai phía, không đổi, chạy đúng với cả dữ liệu cũ lẫn mới.
+  - `src/lib/reviews/repository.ts:947,950`: so `regexp_replace(o.phone,'\D','','g')` với `[0xxx, 84xxx]`. Dữ liệu mới luôn dạng `0xxx` nên vẫn khớp; không hỏng.
+  - `src/app/api/admin/orders/route.ts:167` và `admin/partners/[id]/route.ts:167` (ô tìm kiếm `o.phone LIKE`): đơn mới lưu liền không dấu, nên gõ "0901 234 567" có dấu cách sẽ không tìm thấy (trước đây cũng không tìm thấy đơn lưu dạng liền). Hiển thị SĐT trong admin, Telegram, Zalo, email thôi dấu cách là khác biệt nhìn thấy được duy nhất.
+  - Kiểm tra tự giới thiệu đối tác trong `POST /api/orders`: trước đây so `cleanPhone` với `partner.phone` thô; nay so qua `normalizePhone` cả hai phía (có sửa để không thụt lùi).
+  - `scripts/golive_purge_test_data.mjs:53-54`: khớp danh sách SĐT cố định, nay khớp được nhiều hơn, vô hại.
+  - `GET /api/user/orders`: lọc theo `user_id`, không dùng SĐT, không ảnh hưởng.
+- **Dữ liệu cũ:** đơn cũ lưu SĐT thô vẫn còn nguyên cho tới khi chạy `scripts/normalize_order_phones.mjs` (mặc định chỉ xem trước, cần `--apply` mới ghi; **em chưa chạy trên DB nào của anh**, chỉ chạy xem trước trên DB test). Trong lúc chưa chạy, đơn cũ có SĐT dạng lạ vẫn không bị đếm vào giới hạn 3 đơn chờ, giống hành vi trước khi sửa.
 
 ### R2. Kiểm tra chống spam nằm ngoài giao dịch nên hai lần bấm đồng thời đều lọt
 - **File:dòng:** `src/app/api/orders/route.ts:325-358` (kiểm tra), `:811-814` (BEGIN và khóa)
@@ -34,7 +43,8 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
 - **Tái hiện:** Gửi song song 2 request giống hệt nhau (bấm đúp nút đặt hàng trên mạng chậm). Kết quả 2 đơn.
   Khớp với 2 lỗi "đơn trùng" trong báo cáo kiểm thử mobile 03/11.
 - **Đề xuất sửa:** Đưa V4/V5 vào trong giao dịch, sau một khóa tư vấn theo SĐT; hoặc thêm khóa idempotency do client gửi.
-- **Test:** chưa có test tự động (cần DB).
+- **Test:** `tests/orders_api_integration.test.mjs` (R2: 5 vòng × 8 request đồng thời). Trước khi sửa: vòng 1 ra 2 đơn, hoặc vòng 2 ra 8 đơn; chạy 3 lần đều FAIL.
+- **ĐÃ SỬA** ở commit `a2a7dcc`: V4/V5 chạy trong giao dịch sau `pg_advisory_xact_lock` theo SĐT đã chuẩn hóa; khóa SĐT luôn lấy trước khóa chi nhánh. Sau sửa, chạy 3 lần liên tiếp đều PASS.
 
 ### R3. Địa chỉ chi nhánh lưu trong đơn lấy từ trình duyệt
 - **File:dòng:** `src/app/api/orders/route.ts:70`, `:379`, `:409`, `:853`
@@ -43,7 +53,8 @@ Cột "Test" chỉ tên test tái hiện trong `tests/` (test đó được mong
   và đi vào email/thông báo. Email có `escapeHtml` nên không chèn được thẻ, nhưng nội dung sai vẫn hiện cho nhân viên và khách.
 - **Tái hiện:** `POST /api/orders` với `storeCode` đúng và `storeAddress: "Địa chỉ giả ..."`. Đơn lưu địa chỉ giả.
 - **Đề xuất sửa:** Luôn dùng `storeRes.rows[0].address`, bỏ qua `storeAddress` của client.
-- **Test:** chưa có test tự động (cần DB).
+- **Test:** `tests/orders_api_integration.test.mjs` (test R3).
+- **ĐÃ SỬA** ở commit `6aa712c`: `targetStoreAddress` luôn lấy từ bảng `stores` (null nếu không có chi nhánh); bỏ biến `storeAddress` không còn dùng.
 
 ---
 

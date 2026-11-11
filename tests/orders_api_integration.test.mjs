@@ -183,7 +183,7 @@ describe('POST /api/orders — nền tảng (kiểm tra bộ dựng test chạy 
   });
 });
 
-describe('Tái hiện lỗi trong REVIEW.md (mong đợi FAIL cho tới khi sửa code)', () => {
+describe('Hồi quy cho lỗi R1, R2, R3 trong REVIEW.md (đã sửa)', () => {
   test('R1: SĐT có dấu cách vẫn phải bị chặn 429 khi đặt đơn thứ hai liền sau đơn đầu', async () => {
     const d = uniqueDigits();
     const spaced = `${d.slice(0, 4)} ${d.slice(4, 7)} ${d.slice(7)}`;
