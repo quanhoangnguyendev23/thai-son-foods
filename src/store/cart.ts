@@ -31,6 +31,13 @@ export function getItemBottleMultiplier(item: { productId?: string; variantId?: 
     if (!isNaN(val) && val > 0) return val;
   }
 
+  // 3b. Số đứng sau chữ: "-loc5", "-thung24" (cùng mẫu với extractBottleMultiplier ở src/lib/inventory.ts để giỏ và máy chủ không lệch nhau)
+  const m4 = combined.match(/[-_](?:loc|thung|pack|lon)(\d+)/);
+  if (m4) {
+    const val = parseInt(m4[1], 10);
+    if (!isNaN(val) && val > 0) return val;
+  }
+
   return 1;
 }
 
