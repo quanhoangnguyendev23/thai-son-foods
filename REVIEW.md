@@ -291,7 +291,8 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
   Lưu ý `PUT /api/admin/orders` khi hủy gọi sự kiện này hai lần (một lần trong `releaseStock`, một lần ở route); hiện vô hại vì lúc đó hoa hồng mới `ESTIMATED`.
 - **Đề xuất sửa:** bỏ qua khi `order_attributions.status` đã là `VOID` hoặc đã có `CLAWBACK` của đơn.
 - **Test:** `tests/orders_lifecycle_integration.test.mjs` (R19).
-- **ĐÃ SỬA** ở commit `2e97d7c`: bỏ qua khi `attribution VOID` hoặc đã có `CLAWBACK`; bỏ lần gọi sự kiện thứ hai ở `PUT /api/admin/orders` (chỉ còn lần trong `releaseStock`). Test route `PUT` cần phiên admin: Bước 4.
+- **ĐÃ SỬA** ở commit `2e97d7c`: bỏ qua khi `attribution VOID` hoặc đã có `CLAWBACK`; bỏ lần gọi sự kiện thứ hai ở `PUT /api/admin/orders` (chỉ còn lần trong `releaseStock`).
+  Test route `PUT` với phiên admin thật (`tests/api_sessions_integration.test.mjs`, commit `91efc9c`): hủy đơn của đối tác qua `PUT` ra ledger `VOID`, attribution `VOID`, giữ chỗ nhả, 0 `CLAWBACK`, đơn `CANCELLED`; hủy đơn đã hoàn tất: 409.
 
 ### R20. Thành phần combo không nhận dạng được bị bỏ qua im lặng, trong khi sản phẩm lẻ bị từ chối
 - **File:dòng:** `src/lib/inventory.ts:593-610` (combo trong DB) và các nhánh combo tự chọn `409-426`, `439-457`, `468-498`, `510-579`
@@ -317,19 +318,23 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
 - **Liên quan đã biết:** `shippingFee` âm ở cùng route là "Lỗi 8" trong báo cáo bảo mật 10/11, không ghi lại ở đây.
 - **Đề xuất sửa:** dùng `??` hoặc kiểm `Number.isFinite`.
 - **ĐÃ SỬA** ở commit `57c6dd2`: thêm `resolveDealerDiscountPercent` (`src/config/partner.ts`, 0% hợp lệ), dùng ở `dealer/orders` và cả `dealer/products:47` (cùng lỗi, bản đầu bỏ sót).
-  Test đơn vị: `tests/partner_config.test.mjs` (4 test). Test route cần phiên đối tác: làm ở Bước 4.
+  Test đơn vị: `tests/partner_config.test.mjs` (4 test). Test route với phiên đại lý thật: `tests/api_sessions_integration.test.mjs` (hạng 0%: 50 chai × 18.000đ ra 900.000đ, hạng 15%: 765.000đ; danh sách sản phẩm sỉ hạng 0%: giá sỉ bằng giá lẻ), commit `91efc9c`.
 
 ### R24. `PUT /api/admin/combos` không chuẩn hóa `cost_price` và `total_items` như `POST`
 - **File:dòng:** `src/app/api/admin/combos/route.ts:398-400`, `422-425` (so với `POST` dòng `195-197` dùng `Math.max(0, parseInt(...) || 0)`)
 - **Mô tả:** `PUT` đẩy thẳng `parseInt(body.cost_price, 10)`. Giá trị không phải số cho `NaN` và lỗi 500; giá vốn âm được lưu (làm báo cáo lợi nhuận sai). Chỉ tài khoản có `cost_price.edit` (SUPER_ADMIN) đi tới được.
 - **Mức xác minh:** đọc code. Không có test tự động vì route cần phiên admin.
 - **ĐÃ SỬA** ở commit `0de4783`: `PUT` combo kiểm `cost_price` (số nguyên 0 đến 100.000.000) và `total_items` (1 đến 1000), sai thì 400. Cùng lỗi ở `PUT /api/admin/products` (`cost_price`, dòng 444),
-  bản đầu bỏ sót, đã sửa cùng commit. Test route cần phiên admin: làm ở Bước 4.
+  bản đầu bỏ sót, đã sửa cùng commit. Test route với phiên admin thật: `tests/api_sessions_integration.test.mjs` (commit `91efc9c`).
+  **Test route lộ ra một lỗ hổng trong chính bản sửa:** `cost_price: null` và `''` vẫn lọt (vì `Number(null)` và `Number('')` đều ra 0, giá vốn bị ghi thành 0 âm thầm). Đã sửa thêm ở commit `48ef30e`; nay 400.
 
 ## Cần xác minh nghiệp vụ (chưa kết luận là lỗi)
 
 - **R25. `allowOversell` / `forceConfirm`:** `PUT /api/admin/orders` (`route.ts:538`) nhận cờ này từ bất kỳ ai có quyền cập nhật đơn, kể cả `STORE_STAFF` (cho đơn chi nhánh mình), và cờ này bỏ qua kiểm tra đủ tồn kho.
   Nếu đây là nút "vẫn xuất kho" có chủ đích cho nhân viên thì không sao; nếu chỉ dành cho quản lý thì cần thêm kiểm tra quyền.
+  **Đã kiểm chứng bằng phiên thật (Bước 4, `tests/api_sessions_integration.test.mjs`):** `STORE_STAFF` đúng chi nhánh gửi `allowOversell: true` xác nhận được đơn thiếu hàng (test R25 đang `todo`, chờ quyết định);
+  `SUPER_ADMIN` gửi cờ: xác nhận được, tồn kẹp về 0, nhật ký `oversell_clamped`. `STORE_STAFF` chi nhánh khác: 403; `MARKETING`: 403 (đúng).
+  **Không có giao diện nào gửi cờ này** (grep `allowOversell|forceConfirm` trong `src/app`, `src/components`: không có), nên chỉ gọi API trực tiếp mới dùng được.
 - **R26. Chuyển chi nhánh (`admin/orders/transfer`) không lấy khóa tư vấn theo chi nhánh** như `POST /api/orders` và `cleanupExpiredReservations` (đã thiết kế để tránh deadlock theo thứ tự khóa).
   Hai thao tác chuyển ngược chiều A sang B và B sang A cùng lúc có thể deadlock. Chưa tái hiện, chỉ SUPER_ADMIN gọi được.
   Phí giao cũng không tính lại khi đổi chi nhánh (phí đã tính theo khoảng cách tới chi nhánh cũ): cần anh cho biết có chủ đích không.
@@ -384,3 +389,23 @@ Grep toàn `src` (`.ts`, `.tsx`): **185 chỗ**. 149 chỗ có mặc định `0`
 | `admin/audit:47,48`, `admin/orders:371` giới hạn/trang | 50 / 1 | Không | Không lỗi |
 
 Ngoài mẫu `||`, hai chỗ cùng họ (chuyển `parseInt` không kiểm tra) đã sửa ở R24.
+
+---
+
+# Phát hiện thêm ở Bước 4 (11/11/2026, chưa sửa, chờ anh quyết định)
+
+### R28. Xác nhận đơn thiếu hàng trả HTTP 500 và câu chung chung ở production, giao diện không có cách ép xuất kho
+- **File:dòng:** `src/app/api/admin/orders/route.ts:537-545` và `:666-669`; `src/lib/apiError.ts:7`; `src/lib/inventory.ts:1219`
+- **Mô tả:** `confirmStock` ném `InsufficientStockConfirmError` khi tồn thực tế không đủ để xuất. `PUT /api/admin/orders` không bắt lỗi này riêng nên rơi xuống `catch` chung và trả **500**.
+  Ở môi trường phát triển câu lỗi còn đọc được; ở production `publicErrorMessage` đổi thành "Lỗi hệ thống, vui lòng thử lại sau.", nên nhân viên không biết lý do là thiếu hàng. Lỗi nghiệp vụ này đáng ra là 409 kèm mã riêng (như `INSUFFICIENT_STOCK`) để giao diện báo đúng.
+  Thêm vào đó không có giao diện nào gửi `allowOversell` (xem R25), nên cơ chế "ép xuất kho" gần như không dùng được qua giao diện.
+- **Tái hiện (đã chạy):** phiên `STORE_STAFF` thật, đơn đã giữ 7 chai nhưng tồn thực tế 3: `HTTP 500 {"success":false,"error":"Không thể xuất kho đơn o1: ... (3 chai) không đủ để xuất (7 chai)."}` (câu này chỉ hiện vì `NODE_ENV` khác production). Đơn vẫn `PENDING`, tồn không đổi (đúng).
+- **Đề xuất sửa:** bắt `InsufficientStockConfirmError` trong `PUT`, trả 409 với `code: 'INSUFFICIENT_STOCK_CONFIRM'`, `insufficientItems`; giao diện hiện lý do và (tùy quyết định R25) nút ép xuất dành cho quản lý.
+- **Test:** `tests/api_sessions_integration.test.mjs` (in ra mã trả về; chưa có assert 409 vì chưa có quyết định).
+
+### R29. `initDatabase()` không dựng đủ lược đồ: DB mới tinh thiếu bảng `inventory_logs` và cột `products.volume`
+- **File:dòng:** `src/lib/db.ts` (hàm `runInitDatabase`); `scripts/migrate_inventory_phase4.mjs:23`; `prisma/schema.prisma:28,72`
+- **Mô tả:** Trên DB trống chỉ chạy `initDatabase()`, `POST /api/orders` lỗi vì thiếu `inventory_logs` (bảng chỉ do `scripts/migrate_inventory_phase4.mjs` tạo) và `PUT /api/admin/products` lỗi 500 `column "volume" does not exist` (cột có trong Prisma nhưng `initDatabase` không tạo).
+  README ghi `npm run db:init`, nhưng nếu dựng máy mới theo luồng chỉ chạy web thì đặt hàng và sửa sản phẩm đều hỏng cho tới khi chạy thêm migration. Production hiện dùng DB đã có đủ bảng nên chưa ảnh hưởng.
+- **Tái hiện (đã chạy):** DB trống `webtsf_review_test` sau `initDatabase()`: `relation "inventory_logs" does not exist` và `column "volume" does not exist`. Test của em tự tạo hai thứ này trong bước dựng.
+- **Đề xuất sửa:** thêm hai thứ này vào `runInitDatabase` (`CREATE TABLE IF NOT EXISTS inventory_logs`, `ALTER TABLE products ADD COLUMN IF NOT EXISTS volume`), hoặc ghi rõ trong DEPLOY.md thứ tự migration bắt buộc.
