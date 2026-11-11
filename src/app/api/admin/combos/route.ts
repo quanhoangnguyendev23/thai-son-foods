@@ -379,13 +379,15 @@ export async function PUT(request: Request) {
     // Giá vốn và tổng số món: chỉ nhận số nguyên hợp lệ (trước đây parseInt('abc') ra NaN gây lỗi 500, giá vốn âm được lưu)
     const canWriteCostPrice = body.cost_price !== undefined && hasPermission(session, 'cost_price.edit');
     if (canWriteCostPrice) {
-      const costNum = Number(body.cost_price);
+      // null và chuỗi rỗng KHÔNG được coi là 0 (Number(null) và Number('') đều ra 0)
+      const rawCost = body.cost_price;
+      const costNum = rawCost === null || (typeof rawCost === 'string' && rawCost.trim() === '') ? NaN : Number(rawCost);
       if (!Number.isInteger(costNum) || costNum < 0 || costNum > 100_000_000) {
         return NextResponse.json({ success: false, error: 'Giá vốn combo phải là số nguyên từ 0 đến 100.000.000 đồng.' }, { status: 400 });
       }
     }
     if (total_items !== undefined) {
-      const totalNum = Number(total_items);
+      const totalNum = total_items === null || (typeof total_items === 'string' && total_items.trim() === '') ? NaN : Number(total_items);
       if (!Number.isInteger(totalNum) || totalNum < 1 || totalNum > 1000) {
         return NextResponse.json({ success: false, error: 'Tổng số món của combo phải là số nguyên từ 1 đến 1000.' }, { status: 400 });
       }

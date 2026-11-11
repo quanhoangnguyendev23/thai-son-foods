@@ -408,7 +408,9 @@ export async function PUT(request: Request) {
     // Giá vốn: chỉ nhận số nguyên không âm (trước đây parseInt('abc') ra NaN gây lỗi 500, giá vốn âm được lưu)
     const canWriteCostPrice = body.cost_price !== undefined && hasPermission(session, 'cost_price.edit');
     if (canWriteCostPrice) {
-      const costNum = Number(body.cost_price);
+      // null và chuỗi rỗng KHÔNG được coi là 0 (Number(null) và Number('') đều ra 0)
+      const rawCost = body.cost_price;
+      const costNum = rawCost === null || (typeof rawCost === 'string' && rawCost.trim() === '') ? NaN : Number(rawCost);
       if (!Number.isInteger(costNum) || costNum < 0 || costNum > MAX_MONEY) {
         return NextResponse.json(
           { success: false, error: `Giá vốn phải là số nguyên từ 0 đến ${MAX_MONEY.toLocaleString('vi-VN')} đồng.` },
