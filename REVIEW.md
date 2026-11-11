@@ -224,12 +224,20 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
 - **Tái hiện (đã chạy):** `tests/orders_api_integration.test.mjs`, test R22. Đơn 126.000đ có mã giới thiệu, chính sách đúng như dữ liệu mẫu:
   `đơn 126000đ, hoa hồng ước tính 1260000đ`.
 - **Mức ảnh hưởng thật:** DB `WebTSF_staging` đang có chính sách `pol_default_ctv | PERCENTAGE | 10.00 | is_active = true`, nên đơn có mã giới thiệu trên staging sẽ sai.
-  Staging hiện có 0 dòng `order_attributions` (chưa có đơn nào bị ảnh hưởng) và 3 dòng `partner_ledger` tổng 564.000đ chưa rõ nguồn (**cần xác minh**).
+  Staging hiện có 0 dòng `order_attributions` (chưa có đơn nào bị ảnh hưởng).
+  **Truy nguồn 3 dòng `partner_ledger` loại COMMISSION tổng 564.000đ (chỉ SELECT, ngày 11/11):** không liên quan R22 và không phải dữ liệu thật. Đó là dữ liệu demo tạo tay ngày 08/10/2026
+  cho tài khoản `ptn_demo_ctv_01`: `led_demo_seed_01` 500.000đ `AVAILABLE` (ghi chú "Số dư hoa hồng khả dụng để test rút tiền demo"), `led_test_1791434966219` 32.000đ `ESTIMATED` (mã tham chiếu `TSF-DEMO-1723`)
+  và `led_test_1791435008959` 32.000đ `CONFIRMED` (`TSF-DEMO-2970`). Cả ba có `order_id` rỗng, không có `order_attributions`, số tiền ghi cứng (32.000đ), không tính theo công thức nào.
+  Staging còn 5 dòng `PAYOUT_HOLD` (tạm giữ rút tiền demo) và 12 hồ sơ đối tác mẫu.
   DB `WebTSF` chưa có bảng đối tác. Hoa hồng ước tính chỉ thành tiền thật khi đơn hoàn tất và thu tiền (`COD_RECONCILED`), nhưng số "thu nhập ước tính" đã hiện sai cho đối tác,
   và `current_balance` cộng đúng con số sai đó khi xác nhận.
 - **Phụ:** `|| 0.10` coi chính sách có rate bằng 0 là 10%. Chính sách còn có `min_order_value = 50000` (50.000đ) nhưng câu `SELECT` không đọc cột này nên đơn nhỏ hơn 50.000đ vẫn có hoa hồng (**cần anh xác nhận** nghiệp vụ có áp mức tối thiểu không).
 - **Đề xuất sửa:** chia 100 khi `rate_type = 'PERCENTAGE'` và dùng `??` thay `||`; chọn một đơn vị duy nhất cho cột `rate`.
-- **Test:** `tests/orders_api_integration.test.mjs` (R22, hiện FAIL).
+- **Test:** `tests/orders_api_integration.test.mjs` (R22, 5 test).
+- **ĐÃ SỬA** ở commit `d17969c`: chốt đơn vị cột `rate` là **phần trăm** khi `rate_type = 'PERCENTAGE'` (ghi trong comment ở route), chia 100 khi tính, `snapshot_commission_rate` cũng lưu theo phần trăm,
+  `??` thay `||` (chính sách 0% là hợp lệ), `rate_type` khác `PERCENTAGE` hoặc `rate` không hợp lệ thì hoa hồng 0 và ghi cảnh báo. `min_order_value` **chưa áp** vì ô quyết định để trống.
+- **Lỗi cùng khối, tìm ra khi viết test "không có chính sách trong DB" (R22b):** khi bảng chính sách trống, chính sách dự phòng trong code (`pol_default_ctv`) vẫn bị ghi vào `order_attributions.policy_id`
+  (có khóa ngoại), nên đơn có mã giới thiệu bị lỗi 500 và không tạo được. Đã sửa cùng commit: `policy_id` là null khi dùng chính sách dự phòng.
 
 ## Trung bình
 
@@ -286,11 +294,15 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
 - **Mức xác minh:** đọc code (hành vi của `||` với 0 là chắc chắn). Không có test tự động vì route cần phiên đối tác. Các hạng mẫu hiện là 15/20/25% nên chưa ai bị ảnh hưởng.
 - **Liên quan đã biết:** `shippingFee` âm ở cùng route là "Lỗi 8" trong báo cáo bảo mật 10/11, không ghi lại ở đây.
 - **Đề xuất sửa:** dùng `??` hoặc kiểm `Number.isFinite`.
+- **ĐÃ SỬA** ở commit `57c6dd2`: thêm `resolveDealerDiscountPercent` (`src/config/partner.ts`, 0% hợp lệ), dùng ở `dealer/orders` và cả `dealer/products:47` (cùng lỗi, bản đầu bỏ sót).
+  Test đơn vị: `tests/partner_config.test.mjs` (4 test). Test route cần phiên đối tác: làm ở Bước 4.
 
 ### R24. `PUT /api/admin/combos` không chuẩn hóa `cost_price` và `total_items` như `POST`
 - **File:dòng:** `src/app/api/admin/combos/route.ts:398-400`, `422-425` (so với `POST` dòng `195-197` dùng `Math.max(0, parseInt(...) || 0)`)
 - **Mô tả:** `PUT` đẩy thẳng `parseInt(body.cost_price, 10)`. Giá trị không phải số cho `NaN` và lỗi 500; giá vốn âm được lưu (làm báo cáo lợi nhuận sai). Chỉ tài khoản có `cost_price.edit` (SUPER_ADMIN) đi tới được.
 - **Mức xác minh:** đọc code. Không có test tự động vì route cần phiên admin.
+- **ĐÃ SỬA** ở commit `0de4783`: `PUT` combo kiểm `cost_price` (số nguyên 0 đến 100.000.000) và `total_items` (1 đến 1000), sai thì 400. Cùng lỗi ở `PUT /api/admin/products` (`cost_price`, dòng 444),
+  bản đầu bỏ sót, đã sửa cùng commit. Test route cần phiên admin: làm ở Bước 4.
 
 ## Cần xác minh nghiệp vụ (chưa kết luận là lỗi)
 
@@ -325,3 +337,28 @@ Test tích hợp trên DB riêng: `tests/orders_lifecycle_integration.test.mjs` 
   `admin/payouts`, `admin/partners`, `admin/inventory/lots` và `sheet`, `admin/orders/[id]/confirm-payment` và `confirm-location`, `partner/*`, `membership/*`, `subscriptions/*`, `cron/subscriptions/*`, `user/*`, `auth/*`.
   Một phần đã có trong các báo cáo bảo mật 09/11, 10/11 và `SECURITY_AUDIT.md`.
 - Toàn bộ trang quản trị và phần lớn component giao diện.
+
+---
+
+# Rà mẫu `Number(...) || số` và `parseInt(...) || số` (11/11/2026)
+
+Grep toàn `src` (`.ts`, `.tsx`): **185 chỗ**. 149 chỗ có mặc định `0` (0 chính là giá trị rỗng tự nhiên, 72 chỗ thuộc tiền/phí/tổng/giá vốn: không phải lỗi). 36 chỗ có mặc định khác 0, phân loại bên dưới.
+
+| Nơi | Mặc định | 0 có hợp lệ không | Kết luận |
+|---|---|---|---|
+| `api/orders/route.ts:744` tỷ lệ hoa hồng | 0.10 | **Có** (chính sách 0%) | Lỗi, đã sửa ở R22 (`d17969c`) |
+| `api/dealer/orders/route.ts:51` chiết khấu hạng | 15 | **Có** (hạng 0%) | Lỗi, đã sửa ở R23 (`57c6dd2`) |
+| `api/dealer/products/route.ts:47` chiết khấu hạng | 15 | **Có** | Lỗi cùng R23, đã sửa (`57c6dd2`) |
+| `app/page.tsx:37`, `:238` `sortOrder` | 1 | **Có** (thứ tự 0) | Nhẹ: thứ tự 0 bị đổi thành 1 nên hai mục có thể trùng thứ tự khi hiển thị. **Chưa sửa** (chỉ ảnh hưởng thứ tự hiển thị trang chủ, ngoài phạm vi), chờ anh quyết định |
+| `api/combos/route.ts:59`, `app/page.tsx:213` `totalItems` | 10 | Không (combo 0 món vô nghĩa) | Không lỗi |
+| `admin/page.tsx:7482` `total_items` | 1 | Không | Không lỗi (và `PUT` nay chặn ngoài 1 đến 1000, R24) |
+| Số lượng dòng hàng `\|\| 1`: `orders:247`, `orders:878`, `dealer/orders:62`, `inventory/check:53,73`, `inventory.ts:395,741`, `costSnapshot.ts:63`, `cart.ts:136`, `subscriptions:131,153`, `cron/subscriptions/generate-orders:118`, `admin/sync:163`, `api/combos:82`, `products:144`, `app/page.tsx:163,246`, `admin/page.tsx:2026,7561` | 1 | Không (số lượng tối thiểu 1) | Không lỗi |
+| `inventory.ts:408` số chai trong mã combo tự chọn | 1 | Không | Không lỗi (số âm là N2 trong báo cáo bảo mật 10/11) |
+| `inventory.ts:504` cỡ combo bậc thang | 20 | Không | Không lỗi |
+| `subscriptions/route.ts:201` `preferredDayOfWeek` | 2 | Không (miền 2 đến 8) | Không lỗi |
+| `membership/pause:18` số tháng | 1 | Không | Không lỗi |
+| `reviews/repository.ts:914` điểm sao | 5 | Không (1 đến 5) | Không lỗi: route `api/reviews` đã kiểm 1 đến 5 trước khi gọi |
+| `notify/telegram.ts:133` `retry_after` | 5 | Không | Không lỗi |
+| `admin/audit:47,48`, `admin/orders:371` giới hạn/trang | 50 / 1 | Không | Không lỗi |
+
+Ngoài mẫu `||`, hai chỗ cùng họ (chuyển `parseInt` không kiểm tra) đã sửa ở R24.
