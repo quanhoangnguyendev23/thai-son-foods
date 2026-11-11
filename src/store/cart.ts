@@ -42,6 +42,12 @@ export function getItemMaxQuantity(item: { productId?: string; variantId?: strin
   return MAX_BOTTLES_LIMIT;
 }
 
+// Số lượng từ giao diện/mã gọi: NaN không hợp lệ (dùng giá trị dự phòng); số lẻ làm tròn xuống thành số nguyên
+function toWholeQuantity(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return Number.isNaN(n) ? fallback : Math.floor(n);
+}
+
 // Khóa gộp dòng trong giỏ: cùng sản phẩm + cùng số chai/lốc thì là MỘT dòng,
 // dù mã quy cách khác nhau (trang chi tiết dùng mã quy cách trong CSDL như "var_...",
 // còn thẻ sản phẩm/kệ gợi ý dùng mã tĩnh như "sb-7chai").
@@ -190,7 +196,7 @@ export const useCartStore = create<CartState>()(
         // Tuyệt đối chặn và chuẩn hóa: không bao giờ thêm chai lẻ vào giỏ
         const sanitized = sanitizeCartProduct(product);
         const maxAllowed = getItemMaxQuantity(sanitized);
-        const validQuantity = Math.max(1, Math.min(maxAllowed, quantity));
+        const validQuantity = Math.max(1, Math.min(maxAllowed, toWholeQuantity(quantity, 1)));
 
         set((state) => {
           const mergeKey = getCartMergeKey(sanitized);
@@ -261,6 +267,8 @@ export const useCartStore = create<CartState>()(
       },
 
       setQuantity: (productId, quantity) => {
+        // NaN: bỏ qua, giữ nguyên dòng hàng thay vì ghi NaN vào giỏ (làm tạm tính và tổng số lượng thành NaN)
+        if (Number.isNaN(Number(quantity))) return;
         if (quantity <= 0) {
           get().removeItem(productId);
           return;
@@ -268,7 +276,7 @@ export const useCartStore = create<CartState>()(
         set((state) => {
           const item = state.items.find((i) => i.productId === productId);
           const maxAllowed = item ? getItemMaxQuantity(item) : MAX_BOTTLES_LIMIT;
-          const boundedQuantity = Math.max(1, Math.min(maxAllowed, quantity));
+          const boundedQuantity = Math.max(1, Math.min(maxAllowed, toWholeQuantity(quantity, 1)));
           return {
             items: state.items.map((item) =>
               item.productId === productId ? { ...item, quantity: boundedQuantity } : item
