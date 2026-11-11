@@ -1,13 +1,13 @@
-/**
- * Format a number as Vietnamese currency
- * Example: 18000 → "18.000"
- */
 /** "31 kcal", "10,8 kcal" (kiểu số Việt Nam) */
 export function formatKcal(kcal: number | null | undefined): string | null {
   if (kcal === null || kcal === undefined || !Number.isFinite(Number(kcal))) return null;
   return `${Number(kcal).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} kcal`;
 }
 
+/**
+ * Format a number as Vietnamese currency
+ * Example: 18000 → "18.000"
+ */
 export function formatPrice(price: number): string {
   if (typeof price !== 'number' || isNaN(price)) return '0';
   return Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
