@@ -246,6 +246,42 @@ describe('hoa hồng đối tác khi đặt đơn có mã giới thiệu', () =>
     const a = await attributionOf(json.orderId);
     assert.equal(a.estimated_commission, PACK_PRICE * 0.1, `đơn ${PACK_PRICE}đ, hoa hồng ước tính ${a.estimated_commission}đ`);
   });
+
+  test('R22: chính sách 0% là hợp lệ, hoa hồng bằng 0 (không bị đổi thành 10%)', async () => {
+    await seedPartnerAndPolicy('0.00');
+    const { status, json } = await postOrder(orderBody({ referralCode: 'CTV1' }));
+    assert.equal(status, 200, JSON.stringify(json));
+    assert.equal((await attributionOf(json.orderId)).estimated_commission, 0);
+  });
+
+  test('R22: chính sách 12,5% ra đúng số tiền và lưu tỷ lệ theo đơn vị phần trăm', async () => {
+    await seedPartnerAndPolicy('12.50');
+    const { json } = await postOrder(orderBody({ referralCode: 'CTV1' }));
+    const a = (await pool.query('SELECT estimated_commission, snapshot_commission_rate FROM order_attributions WHERE order_id = $1', [json.orderId])).rows[0];
+    assert.equal(a.estimated_commission, Math.round(PACK_PRICE * 0.125));
+    assert.equal(Number(a.snapshot_commission_rate), 12.5);
+  });
+
+  test('không có chính sách trong DB: dùng mặc định 10% của PARTNER_CONFIG', async () => {
+    await seedPartnerAndPolicy('10.00');
+    await pool.query('TRUNCATE partner_commission_policies CASCADE;');
+    await pool.query(`INSERT INTO users (id, email, password_hash, full_name) VALUES ('u1', 'ctv@example.com', 'x', 'Đối tác') ON CONFLICT DO NOTHING;`);
+    await pool.query(
+      `INSERT INTO partner_profiles (id, user_id, partner_code, phone, full_name, email) VALUES ('pp1', 'u1', 'CTV1', '0911111111', 'Đối tác', 'ctv@example.com') ON CONFLICT DO NOTHING;`
+    );
+    const { status, json } = await postOrder(orderBody({ referralCode: 'CTV1' }));
+    assert.equal(status, 200, JSON.stringify(json));
+    assert.equal((await attributionOf(json.orderId)).estimated_commission, PACK_PRICE * 0.1);
+  });
+
+  test('tự mua qua mã của chính mình: hoa hồng 0', async () => {
+    await seedPartnerAndPolicy('10.00');
+    const { status, json } = await postOrder(orderBody({ referralCode: 'CTV1', phone: '0911111111' }));
+    assert.equal(status, 200, JSON.stringify(json));
+    const a = await attributionOf(json.orderId);
+    assert.equal(a.is_self_referral, true);
+    assert.equal(a.estimated_commission, 0);
+  });
 });
 
 describe('Hồi quy cho lỗi R1, R2, R3 trong REVIEW.md (đã sửa)', () => {

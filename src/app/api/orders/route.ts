@@ -7,6 +7,7 @@ import { sendOrderEmail } from '@/lib/email/service';
 import { notifyNewOrderZalo } from '@/lib/notify/zalo';
 import { notifyNewOrderTelegram } from '@/lib/notify/telegram';
 import { ENABLE_COMBOS, ENABLE_CUSTOM_COMBOS } from '@/config/features';
+import { PARTNER_CONFIG } from '@/config/partner';
 import { checkRequestRateLimit, isTrackingCodeBlocked, recordFailedTrackingAttempt } from '@/lib/rateLimit';
 import { getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeConfig';
 import { computeLineUnitCosts } from '@/lib/costSnapshot';
@@ -683,7 +684,7 @@ export async function POST(request: Request) {
         partnerCode: string;
         isSelfReferral: boolean;
         fraudFlags: any;
-        policyId: string;
+        policyId: string | null;
         policyName: string;
         rate: number;
         commissionAmount: number;
@@ -731,26 +732,36 @@ export async function POST(request: Request) {
             );
 
             const polRes = await client.query(
-              `SELECT id, name, rate, base_type FROM partner_commission_policies WHERE is_active = true ORDER BY created_at DESC LIMIT 1;`
+              `SELECT id, name, rate, rate_type, base_type FROM partner_commission_policies WHERE is_active = true ORDER BY created_at DESC LIMIT 1;`
             );
+            // ĐƠN VỊ DUY NHẤT của cột partner_commission_policies.rate (và order_attributions.snapshot_commission_rate):
+            // PHẦN TRĂM khi rate_type = 'PERCENTAGE' (10.00 nghĩa là 10%), giống PARTNER_CONFIG.COMMISSION.DEFAULT_RATE_PERCENT.
             const policy = polRes.rows[0] || {
               id: 'pol_default_ctv',
               name: 'Chính sách CTV Mặc định (10%)',
-              rate: 0.10,
+              rate: PARTNER_CONFIG.COMMISSION.DEFAULT_RATE_PERCENT,
+              rate_type: 'PERCENTAGE',
               base_type: 'SUBTOTAL_EXCLUDING_SHIPPING',
             };
 
-            const commissionRate = Number(policy.rate) || 0.10;
-            const commissionAmount = isSelfReferral ? 0 : Math.round(serverCalculatedSubtotal * commissionRate);
+            // Dùng ?? (không dùng ||): chính sách 0% là hợp lệ và không được đổi thành 10%
+            const ratePercent = Number(policy.rate ?? PARTNER_CONFIG.COMMISSION.DEFAULT_RATE_PERCENT);
+            const rateUsable = policy.rate_type === 'PERCENTAGE' && Number.isFinite(ratePercent) && ratePercent >= 0;
+            if (!rateUsable) {
+              console.warn(`[Orders] Chính sách hoa hồng "${policy.id}" có rate_type/rate không dùng được (${policy.rate_type}, ${policy.rate}): không tính hoa hồng`);
+            }
+            const commissionAmount =
+              isSelfReferral || !rateUsable ? 0 : Math.round((serverCalculatedSubtotal * ratePercent) / 100);
 
             partnerAttribution = {
               partnerId: partner.id,
               partnerCode: partner.partner_code,
               isSelfReferral,
               fraudFlags: isSelfReferral ? { reason: 'SELF_PURCHASE_DETECTED', cleanPhone, finalEmail } : null,
-              policyId: policy.id,
+              // Chính sách dự phòng trong code không có dòng trong bảng nên không được dùng làm khóa ngoại policy_id (sẽ làm hỏng cả đơn)
+              policyId: polRes.rows[0] ? policy.id : null,
               policyName: policy.name,
-              rate: commissionRate,
+              rate: ratePercent,
               commissionAmount,
               attributionMethod,
             };
