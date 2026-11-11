@@ -405,6 +405,18 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Giá vốn: chỉ nhận số nguyên không âm (trước đây parseInt('abc') ra NaN gây lỗi 500, giá vốn âm được lưu)
+    const canWriteCostPrice = body.cost_price !== undefined && hasPermission(session, 'cost_price.edit');
+    if (canWriteCostPrice) {
+      const costNum = Number(body.cost_price);
+      if (!Number.isInteger(costNum) || costNum < 0 || costNum > MAX_MONEY) {
+        return NextResponse.json(
+          { success: false, error: `Giá vốn phải là số nguyên từ 0 đến ${MAX_MONEY.toLocaleString('vi-VN')} đồng.` },
+          { status: 400 }
+        );
+      }
+    }
+
     const updateSql = `
       UPDATE products SET
         name = COALESCE($2, name),
@@ -441,7 +453,7 @@ export async function PUT(request: Request) {
       is_new !== undefined ? Boolean(is_new) : null,
       is_best_seller !== undefined ? Boolean(is_best_seller) : null,
       is_active !== undefined ? Boolean(is_active) : null,
-      body.cost_price !== undefined && hasPermission(session, 'cost_price.edit') ? parseInt(body.cost_price, 10) : null,
+      canWriteCostPrice ? Number(body.cost_price) : null,
       body.sold_offset !== undefined && body.sold_offset !== null && body.sold_offset !== ''
         ? Math.max(0, parseInt(body.sold_offset, 10) || 0)
         : null,

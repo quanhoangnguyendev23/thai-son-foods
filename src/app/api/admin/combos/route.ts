@@ -376,6 +376,21 @@ export async function PUT(request: Request) {
       putItems = parsedItems.list;
     }
 
+    // Giá vốn và tổng số món: chỉ nhận số nguyên hợp lệ (trước đây parseInt('abc') ra NaN gây lỗi 500, giá vốn âm được lưu)
+    const canWriteCostPrice = body.cost_price !== undefined && hasPermission(session, 'cost_price.edit');
+    if (canWriteCostPrice) {
+      const costNum = Number(body.cost_price);
+      if (!Number.isInteger(costNum) || costNum < 0 || costNum > 100_000_000) {
+        return NextResponse.json({ success: false, error: 'Giá vốn combo phải là số nguyên từ 0 đến 100.000.000 đồng.' }, { status: 400 });
+      }
+    }
+    if (total_items !== undefined) {
+      const totalNum = Number(total_items);
+      if (!Number.isInteger(totalNum) || totalNum < 1 || totalNum > 1000) {
+        return NextResponse.json({ success: false, error: 'Tổng số món của combo phải là số nguyên từ 1 đến 1000.' }, { status: 400 });
+      }
+    }
+
     const updates: string[] = [];
     const params: any[] = [id];
 
@@ -419,8 +434,8 @@ export async function PUT(request: Request) {
       params.push(Boolean(is_active));
       updates.push(`is_active = $${params.length}`);
     }
-    if (body.cost_price !== undefined && hasPermission(session, 'cost_price.edit')) {
-      params.push(parseInt(body.cost_price, 10));
+    if (canWriteCostPrice) {
+      params.push(Number(body.cost_price));
       updates.push(`cost_price = $${params.length}`);
     }
     if (body.sold_offset !== undefined && body.sold_offset !== null && body.sold_offset !== '') {
