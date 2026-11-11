@@ -1741,18 +1741,43 @@ export async function processOrderReturn(
   const sheetMode = isSheetInventoryMode();
 
   if (order.inventory_deducted) {
-    const itemsRes = await client.query(
-      `SELECT product_id AS "productId", name, quantity, unit, total_bottles FROM order_items WHERE order_id = $1;`,
+    // Số chai và chi nhánh đã trừ lúc xác nhận lấy từ stock_reservations 'confirmed' (giống releaseStock), KHÔNG bóc lại theo
+    // cấu hình quy cách/combo hiện tại: admin có thể đã sửa hoặc xóa chúng sau khi đơn được xác nhận.
+    const confirmedRes = await client.query(
+      `SELECT store_code, product_id, SUM(quantity)::int AS quantity
+       FROM stock_reservations
+       WHERE order_id = $1 AND status = 'confirmed'
+       GROUP BY store_code, product_id
+       ORDER BY product_id ASC;`,
       [orderId]
     );
-    const { expandedBottles } = await expandComboItems(itemsRes.rows, client);
+    let returnLines: Array<{ storeCode: string; productId: string; bottleQuantity: number }>;
+    if (confirmedRes.rows.length > 0) {
+      returnLines = confirmedRes.rows.map((r: any) => ({
+        storeCode: r.store_code,
+        productId: r.product_id,
+        bottleQuantity: Number(r.quantity),
+      }));
+    } else {
+      // Đơn cũ không có reservation: bóc lại từ dòng hàng (cách duy nhất còn lại)
+      const itemsRes = await client.query(
+        `SELECT product_id AS "productId", name, quantity, unit, total_bottles FROM order_items WHERE order_id = $1;`,
+        [orderId]
+      );
+      const { expandedBottles } = await expandComboItems(itemsRes.rows, client);
+      returnLines = expandedBottles.map((b) => ({
+        storeCode: order.store_code,
+        productId: b.productId,
+        bottleQuantity: b.bottleQuantity,
+      }));
+    }
 
-    for (const b of expandedBottles) {
+    for (const b of returnLines) {
       restoredBottles += b.bottleQuantity;
       if (params.disposition === 'restocked') {
         const invOld = await client.query(
           `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2;`,
-          [order.store_code, b.productId]
+          [b.storeCode, b.productId]
         );
         const oldStock = Number(invOld.rows[0]?.stock_quantity) || 0;
         await client.query(
@@ -1761,7 +1786,7 @@ export async function processOrderReturn(
                updated_at = CURRENT_TIMESTAMP,
                updated_by = $2
            WHERE store_code = $3 AND product_id = $4;`,
-          [b.bottleQuantity, params.actor, order.store_code, b.productId, sheetMode]
+          [b.bottleQuantity, params.actor, b.storeCode, b.productId, sheetMode]
         );
         await client.query(
           `UPDATE products
@@ -1770,7 +1795,7 @@ export async function processOrderReturn(
           [b.productId]
         );
         await logInventoryChange(client, {
-          storeCode: order.store_code,
+          storeCode: b.storeCode,
           productId: b.productId,
           oldStock,
           newStock: sheetMode ? oldStock : oldStock + b.bottleQuantity,
@@ -1782,11 +1807,11 @@ export async function processOrderReturn(
       } else {
         const invOld = await client.query(
           `SELECT stock_quantity, reserved FROM store_inventory WHERE store_code = $1 AND product_id = $2;`,
-          [order.store_code, b.productId]
+          [b.storeCode, b.productId]
         );
         const oldStock = Number(invOld.rows[0]?.stock_quantity) || 0;
         await logInventoryChange(client, {
-          storeCode: order.store_code,
+          storeCode: b.storeCode,
           productId: b.productId,
           oldStock,
           newStock: oldStock,
@@ -1797,6 +1822,11 @@ export async function processOrderReturn(
         });
       }
     }
+    // Đơn đã hoàn: các reservation 'confirmed' không còn hiệu lực (giống releaseStock sau khi hoàn lại tồn)
+    await client.query(
+      `UPDATE stock_reservations SET status = 'released', released_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND status = 'confirmed';`,
+      [orderId]
+    );
   } else {
     await releaseStock(orderId, client, params.reason, params.actor, false);
   }

@@ -131,6 +131,21 @@ describe('hoàn hàng (processOrderReturn) nhập lại kho', () => {
     assert.deepEqual(o, { status: 'CANCELLED', inventory_deducted: false, return_disposition: 'restocked' });
   });
 
+  test('đơn cũ không có reservation: vẫn nhập lại được bằng cách bóc dòng hàng (đường dự phòng)', async () => {
+    await baseSeed({ stock: 3, reserved: 0 });
+    await addOrder('ordR', { status: 'COMPLETED', deducted: true });
+    const res = await doReturn();
+    assert.equal(res.restoredBottles, 7);
+    assert.equal(await stockOf(), 10);
+  });
+
+  test('hoàn hàng xong: reservation đã confirmed chuyển sang released, không dùng lại được', async () => {
+    await seedDeductedOrder();
+    await doReturn();
+    const st = (await pool.query("SELECT status FROM stock_reservations WHERE order_id = 'ordR'")).rows.map((r) => r.status);
+    assert.deepEqual(st, ['released']);
+  });
+
   test('hàng hỏng (damaged_spoilage): không cộng tồn kho', async () => {
     await seedDeductedOrder();
     await inTx((c) => inventory.processOrderReturn('ordR', c, { disposition: 'damaged_spoilage', reason: 'Hỏng', actor: 'tester' }));
