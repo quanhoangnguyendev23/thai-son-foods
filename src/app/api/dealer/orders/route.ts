@@ -4,6 +4,7 @@ import { query, pool } from '@/lib/db';
 import { getPartnerSession } from '@/lib/partner/auth';
 import { reserveStock, InsufficientStockError } from '@/lib/inventory';
 import { INVENTORY_CONFIG } from '@/config/inventory';
+import { resolveDealerDiscountPercent } from '@/config/partner';
 import { publicErrorMessage } from '@/lib/apiError';
 import { loadBottleCosts } from '@/lib/costSnapshot';
 
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
       tier_code: 'TIER_1',
       discount_rate: 15.00,
     };
-    const discountRate = Number(tier.discount_rate) || 15.00;
+    const discountRate = resolveDealerDiscountPercent(tier.discount_rate);
 
     // 2. Tính toán số lượng chai và áp dụng giá sỉ chiết khấu
     let totalBottles = 0;

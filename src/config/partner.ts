@@ -72,3 +72,17 @@ export const PARTNER_CONFIG = {
     OTP_MAX_ATTEMPTS: 5, // Tối đa 5 lần nhập sai OTP
   },
 } as const;
+
+/** Chiết khấu mặc định (phần trăm) khi hạng đại lý thiếu hoặc có giá trị không hợp lệ */
+export const DEFAULT_DEALER_DISCOUNT_PERCENT = 15;
+
+/**
+ * Chiết khấu của hạng đại lý, đơn vị phần trăm (dealer_tiers.discount_rate).
+ * 0% là giá trị hợp lệ; chỉ giá trị thiếu, không phải số hoặc ngoài 0 đến 100 mới dùng mặc định
+ * (viết `Number(x) || 15` sẽ đổi hạng 0% thành 15%).
+ */
+export function resolveDealerDiscountPercent(raw: unknown): number {
+  if (raw === null || raw === undefined || raw === '') return DEFAULT_DEALER_DISCOUNT_PERCENT;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : DEFAULT_DEALER_DISCOUNT_PERCENT;
+}

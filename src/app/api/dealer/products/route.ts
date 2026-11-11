@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getPartnerSession } from '@/lib/partner/auth';
 import { publicErrorMessage } from '@/lib/apiError';
+import { resolveDealerDiscountPercent } from '@/config/partner';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
       credit_limit: 0,
     };
 
-    const discountRate = Number(tier.discount_rate) || 15.00;
+    const discountRate = resolveDealerDiscountPercent(tier.discount_rate);
 
     // 2. Lấy danh sách sản phẩm đang bán
     const prodRes = await query(
