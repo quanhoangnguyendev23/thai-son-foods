@@ -90,11 +90,15 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
   const handleUndoAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const id = `${product.id}-${defaultVariant.id}`;
-    const cart = useCartStore.getState();
-    const current = cart.items.find((i) => i.productId === id)?.quantity ?? 0;
-    if (current - recentAdds > 0) cart.setQuantity(id, current - recentAdds);
-    else cart.removeItem(id);
+    // Hoàn tác theo khóa gộp (sản phẩm + quy cách), vì dòng có thể nằm trong giỏ dưới mã khác (vd. mã từ trang chi tiết)
+    useCartStore.getState().undoAdd(
+      {
+        productId: `${product.id}-${defaultVariant.id}`,
+        variantId: defaultVariant.id,
+        variantName: defaultVariant.name,
+      },
+      recentAdds
+    );
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setRecentAdds(0);
   };

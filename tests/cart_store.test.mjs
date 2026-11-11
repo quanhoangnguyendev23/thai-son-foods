@@ -214,13 +214,31 @@ describe('Tái hiện lỗi trong REVIEW.md (mong đợi FAIL cho tới khi sử
     cart().addItem(packFromCard, 1); // rồi bấm thêm trên thẻ sản phẩm
     assert.equal(cart().getTotalQuantity(), 2);
 
-    // Đúng các bước của handleUndoAdd trong src/components/product/ProductCard.tsx:95-99
-    const id = packFromCard.productId;
-    const recentAdds = 1;
-    const current = cart().items.find((i) => i.productId === id)?.quantity ?? 0;
-    if (current - recentAdds > 0) cart().setQuantity(id, current - recentAdds);
-    else cart().removeItem(id);
+    // Thao tác của nút Hoàn tác trong src/components/product/ProductCard.tsx (handleUndoAdd), nay gọi undoAdd của store.
+    // Bản đầu của test này chép lại các dòng find/setQuantity/removeItem cũ của component nên không phát hiện được việc sửa
+    // component; assert bên dưới giữ nguyên.
+    cart().undoAdd(
+      { productId: packFromCard.productId, variantId: packFromCard.variantId, variantName: packFromCard.variantName },
+      1
+    );
 
     assert.equal(cart().getTotalQuantity(), 1, 'sau khi hoàn tác phải còn 1 lốc');
+  });
+
+  test('undoAdd: trừ đúng số lượng, hết thì xóa dòng, không có dòng thì bỏ qua', () => {
+    const ref = { productId: packFromCard.productId, variantId: packFromCard.variantId, variantName: packFromCard.variantName };
+    cart().addItem(packFromCard, 3);
+    cart().undoAdd(ref, 2);
+    assert.equal(cart().items[0].quantity, 1);
+    cart().undoAdd(ref, 1);
+    assert.equal(cart().items.length, 0);
+
+    cart().addItem(packFromCard, 2);
+    cart().undoAdd({ productId: 'sp-khac-sb-7chai', variantId: 'x', variantName: '10 chai' }, 1);
+    cart().undoAdd(ref, 0);
+    cart().undoAdd(ref, NaN);
+    assert.equal(cart().getTotalQuantity(), 2);
+    cart().undoAdd(ref, 99);
+    assert.equal(cart().items.length, 0);
   });
 });

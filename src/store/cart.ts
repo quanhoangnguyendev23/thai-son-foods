@@ -174,6 +174,8 @@ interface CartState {
   decreaseQuantity: (productId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
   updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
+  /** Hoàn tác thêm giỏ: trừ `quantity` khỏi dòng cùng sản phẩm + quy cách (tìm theo khóa gộp, không theo mã), hết thì xóa dòng */
+  undoAdd: (item: { productId: string; variantId?: string; variantName?: string; unit?: string }, quantity: number) => void;
   clearCart: () => void;
   getTotalQuantity: () => number;
   getSubtotal: () => number;
@@ -287,6 +289,23 @@ export const useCartStore = create<CartState>()(
 
       updateQuantity: (productId, quantity, _variantId) => {
         get().setQuantity(productId, quantity);
+      },
+
+      undoAdd: (item, quantity) => {
+        const key = getCartMergeKey(item);
+        const undoQty = Math.max(0, toWholeQuantity(quantity, 0));
+        set((state) => {
+          // Dòng có thể nằm dưới mã khác với mã của thẻ (addItem giữ mã của dòng có trước), nên tìm theo khóa gộp
+          const line = state.items.find((i) => getCartMergeKey(i) === key);
+          if (!line || undoQty === 0) return state;
+          const rest = line.quantity - undoQty;
+          return {
+            items:
+              rest > 0
+                ? state.items.map((i) => (i === line ? { ...i, quantity: rest } : i))
+                : state.items.filter((i) => i !== line),
+          };
+        });
       },
 
       clearCart: () => set({ items: [] }),
