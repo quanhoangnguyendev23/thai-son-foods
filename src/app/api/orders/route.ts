@@ -67,7 +67,6 @@ export async function POST(request: Request) {
     const rawNote = body.note || customerObj.note || (body.shippingAddress ? 'Đơn đặt hàng nhanh COD' : null);
     const note = rawNote ? stripHtml(rawNote.toString()).slice(0, 500) : null;
     const storeCode = body.storeCode || body.store_code || customerObj.storeCode || customerObj.store_code || null;
-    const storeAddress = body.storeAddress || body.store_address || customerObj.storeAddress || customerObj.store_address || null;
     // Backend kiểm tra tọa độ hữu hạn: latitude [-90, 90], longitude [-180, 180], cả hai phải hợp lệ đồng thời
     const rawLatInput = typeof body.latitude === 'number' ? body.latitude : (typeof body.lat === 'number' ? body.lat : null);
     const rawLngInput = typeof body.longitude === 'number' ? body.longitude : (typeof body.lng === 'number' ? body.lng : null);
@@ -344,7 +343,8 @@ export async function POST(request: Request) {
 
       // 2. Xác định chi nhánh phục vụ
       let targetStoreCode = storeCode;
-      let targetStoreAddress = storeAddress;
+      // Địa chỉ chi nhánh luôn lấy từ DB, không nhận storeAddress do trình duyệt gửi (chống ghi địa chỉ giả vào đơn, email, thông báo)
+      let targetStoreAddress: string | null = null;
       let targetStoreLat: number | null = null;
       let targetStoreLng: number | null = null;
 
@@ -374,7 +374,7 @@ export async function POST(request: Request) {
           );
         }
         targetStoreCode = storeRes.rows[0].code;
-        if (!targetStoreAddress) targetStoreAddress = storeRes.rows[0].address;
+        targetStoreAddress = storeRes.rows[0].address;
         targetStoreLat = storeRes.rows[0].latitude ? Number(storeRes.rows[0].latitude) : null;
         targetStoreLng = storeRes.rows[0].longitude ? Number(storeRes.rows[0].longitude) : null;
       } else {
