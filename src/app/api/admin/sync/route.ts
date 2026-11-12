@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { products, categories } from '@/data/products';
 import { combos } from '@/data/combos';
+
+// Combo do admin quản lý thẳng trong CSDL (bảng ma trận / bảng tính). Danh sách combo mẫu trong src/data/combos.ts
+// KHÔNG được chép vào CSDL nữa (12/11/2026: nút Đồng bộ đã chép lại 12 combo cũ đã xoá). Chỉ bật lại khi có lý do rõ ràng.
+const SYNC_DEMO_COMBOS = false;
 import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
@@ -45,7 +49,7 @@ export async function GET() {
         },
         isSynchronized:
           parseInt(prodCountRes.rows[0]?.count || '0', 10) === products.length &&
-          parseInt(comboCountRes.rows[0]?.count || '0', 10) === combos.length,
+          (!SYNC_DEMO_COMBOS || parseInt(comboCountRes.rows[0]?.count || '0', 10) === combos.length),
       },
     });
   } catch (error: any) {
@@ -167,8 +171,8 @@ export async function POST() {
       }
     }
 
-    // 3. Sync Combos
-    for (const c of combos) {
+    // 3. Sync Combos — TẮT (SYNC_DEMO_COMBOS = false): không chép combo mẫu vào CSDL
+    if (SYNC_DEMO_COMBOS) for (const c of combos) {
       await query(
         `INSERT INTO combos (
           id, slug, name, name_en, description, description_en,
@@ -229,7 +233,7 @@ export async function POST() {
       entityType: 'SYSTEM',
       afterJson: {
         products: products.length,
-        combos: combos.length,
+        combos: SYNC_DEMO_COMBOS ? combos.length : 0,
         categories: categories.length,
       },
     });
@@ -239,7 +243,7 @@ export async function POST() {
       message: 'Đồng bộ toàn bộ dữ liệu từ Website sang Cơ sở dữ liệu thành công!',
       counts: {
         products: products.length,
-        combos: combos.length,
+        combos: SYNC_DEMO_COMBOS ? combos.length : 0,
         categories: categories.length,
       },
       timestamp: new Date().toISOString(),
