@@ -67,10 +67,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         return NextResponse.json({ success: false, error: 'Không tìm thấy đơn hàng' }, { status: 404 });
       }
       const o = res.rows[0];
-      if (storeScope && o.store_code && o.store_code !== storeScope) {
+      // AUTHZ-04: đơn chưa gán chi nhánh (store_code rỗng) cũng không thuộc chi nhánh của nhân viên -> chặn,
+      // giống confirm-payment. Đơn chưa gán chi nhánh chỉ SUPER_ADMIN / tài khoản không giới hạn chi nhánh xử lý.
+      if (storeScope && o.store_code !== storeScope) {
         await client.query('ROLLBACK;');
         return NextResponse.json(
-          { success: false, error: `Bạn không có quyền sửa đơn hàng thuộc chi nhánh ${o.store_code}.`, code: 'FORBIDDEN' },
+          { success: false, error: 'Đơn không thuộc chi nhánh của bạn', code: 'FORBIDDEN' },
           { status: 403 }
         );
       }
