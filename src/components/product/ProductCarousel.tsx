@@ -102,7 +102,7 @@ export default function ProductCarousel({
                 mobileGrid ? 'min-w-0' : 'shrink-0 w-[46%]',
                 mobileGrid && !expanded && idx >= mobileInitialCount && 'max-sm:hidden',
                 // Chừa chỗ cho nhãn hạng bằng padding: thẻ (h-full) chỉ cao bằng phần còn lại nên không tràn xuống hàng dưới, không bị cắt chữ
-                ranks?.[idx] && 'relative pt-6'
+                !!ranks?.[idx] && 'relative pt-6'
               )}
             >
               {ranks?.[idx] && (
