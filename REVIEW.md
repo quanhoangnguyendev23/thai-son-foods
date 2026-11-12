@@ -409,3 +409,78 @@ Ngoài mẫu `||`, hai chỗ cùng họ (chuyển `parseInt` không kiểm tra) 
   README ghi `npm run db:init`, nhưng nếu dựng máy mới theo luồng chỉ chạy web thì đặt hàng và sửa sản phẩm đều hỏng cho tới khi chạy thêm migration. Production hiện dùng DB đã có đủ bảng nên chưa ảnh hưởng.
 - **Tái hiện (đã chạy):** DB trống `webtsf_review_test` sau `initDatabase()`: `relation "inventory_logs" does not exist` và `column "volume" does not exist`. Test của em tự tạo hai thứ này trong bước dựng.
 - **Đề xuất sửa:** thêm hai thứ này vào `runInitDatabase` (`CREATE TABLE IF NOT EXISTS inventory_logs`, `ALTER TABLE products ADD COLUMN IF NOT EXISTS volume`), hoặc ghi rõ trong DEPLOY.md thứ tự migration bắt buộc.
+
+---
+
+# Vòng 3 (11/11/2026): rà soát theo tiền. Chưa sửa mục nào, chờ anh quyết định
+
+Đã đọc kỹ: `partner/payouts`, `partner/ledger`, `partner/upgrade-dealer`, `admin/payouts/[id]`, `admin/partners/[id]`, `admin/orders/[id]/confirm-payment`, `cron/subscriptions/generate-orders`,
+`subscriptions` (POST), `admin/users`, `auth/login`, cộng nguồn dữ liệu giao diện `SubscribeSaveSection.tsx`. Test: `tests/money_routes_integration.test.mjs` (10 test, 5 FAIL do lỗi thật, 1 todo).
+Các chương trình đối tác, hội viên và giao định kỳ đang tắt mặc định (middleware chặn API theo cờ), nên mức độ dưới đây là "khi bật".
+**Chưa đọc kỹ:** `partner/register`, `partner/profile`, `partner/orders`, `partner/stats` (chỉ phần cộng dồn), `partner/otp/*`, `membership/*`, `subscriptions/[id]/*`, `cron/subscriptions/reminders`, `admin/members`, `auth/register`, `auth/me`, `auth/callback/*`, `auth/mock-oauth`, `user/*`.
+
+## Cao (khi bật tính năng)
+
+### Lỗi 6 (đã có trong báo cáo 10/11). Xác nhận bằng test route: rút tiền vượt thời gian đối soát
+- **File:dòng:** `src/app/api/partner/payouts/route.ts:149-182`
+- **Tái hiện (đã chạy, nhánh hiện tại):** đối tác có 2 khoản 500.000đ (A qua 7 ngày, B còn 6 ngày), ví 1.000.000đ. Rút 500.000đ (đạt), kế toán chi, rút tiếp 500.000đ: **HTTP 200** (đúng ra 400). Nguyên nhân: `availableSum` không trừ dòng `PAYOUT_HOLD`; biến `lockedAmount` (dòng 177) được tính nhưng **không dùng**.
+- Bản sửa đã có ở nhánh `fix/lo-hong-bao-mat` (theo báo cáo 10/11); nhánh `chore/cleanup` chưa có. Test: `tests/money_routes_integration.test.mjs` ("Lỗi 6").
+
+### R32. Cron sinh đơn định kỳ không `ROLLBACK` khi lỗi, trả kết nối bị hỏng về pool
+- **File:dòng:** `src/app/api/cron/subscriptions/generate-orders/route.ts:59` (BEGIN), `:268-269` (finally), `:278` (catch)
+- **Mô tả:** mỗi kỳ giao mở `BEGIN` trong vòng lặp, nhưng nếu một câu lệnh lỗi thì ngoại lệ lên `catch` ngoài, `finally` chỉ `client.release()` mà không `ROLLBACK`. Kết nối còn nằm trong giao dịch dở trở lại pool;
+  yêu cầu sau dùng phải kết nối đó nhận `current transaction is aborted, commands ignored until end of transaction block`, hoặc tệ hơn ghi vào giao dịch không bao giờ commit.
+- **Tái hiện (đã chạy):** một đăng ký có `province` rỗng làm `INSERT orders` lỗi `NOT NULL`; sau đó 25 truy vấn `SELECT 1` song song vào pool: có kết nối trả `current transaction is aborted, commands ignored until end of transaction block`.
+- **Đề xuất sửa:** `try/catch` riêng cho từng kỳ giao (`ROLLBACK` rồi ghi nhận lỗi và sang kỳ khác), và `ROLLBACK` trong `finally` nếu còn giao dịch. Test: R32 (FAIL).
+
+### R34. Đơn định kỳ tạo từ giao diện không xác nhận được (mã sản phẩm `sub-*` không có trong catalog)
+- **File:dòng:** `src/components/home/SubscribeSaveSection.tsx:38,529` (mã `sub-sb-01`...), `cron/.../generate-orders/route.ts:166-192`, `src/lib/inventory.ts:1278` (nhánh đơn không có reservation)
+- **Mô tả:** giao diện gửi `productId: 'sub-sb-01'`, không phải mã trong `products`. Cron không giữ chỗ (không có dòng `store_inventory`), nên khi admin xác nhận, `confirmStock` rơi nhánh "đơn cũ" và `expandComboItems` ném `INVENTORY_RESOLVE_FAILED`. Mọi đơn định kỳ tạo từ giao diện đều không xác nhận được.
+- **Tái hiện (đã chạy):** cron sinh đơn (giá 107.100đ đúng), sau đó `PUT /api/admin/orders` xác nhận: **HTTP 500** `[INVENTORY_RESOLVE_FAILED] ... product_id="sub-sb-01"`. Test: R34 (FAIL).
+- **Đề xuất sửa:** lưu mã sản phẩm thật (và quy cách) khi tạo đăng ký, hoặc ánh xạ `sub-*` sang mã catalog; kiểm tra mã tồn tại ở `POST /api/subscriptions`.
+
+## Trung bình (khi bật tính năng)
+
+### R30. Số dư "khả dụng" hiển thị cho đối tác không trừ khoản đã rút hoặc đang giữ
+- **File:dòng:** `src/app/api/partner/ledger/route.ts:63-84`, `partner/stats/route.ts:70-90`
+- **Mô tả:** `available` chỉ cộng dòng `AVAILABLE` và `CLAWBACK`; dòng `PAYOUT_HOLD` (âm, trạng thái `PENDING`/`PAID`) bị bỏ qua, nên sau khi rút 500.000đ màn hình vẫn báo khả dụng 500.000đ. Cùng gốc với Lỗi 6.
+- **Tái hiện (đã chạy):** sau khi chi 500.000đ: `balances = {"available":500000,"paid":500000,"profile_balance":500000,"total_earned":1000000}` (đúng ra khả dụng 0). Test: R30 (FAIL).
+
+### R31. Cron định kỳ so giá đã chốt với giá MỘT CHAI của catalog khi mã sản phẩm khớp bảng `products`
+- **File:dòng:** `cron/.../generate-orders/route.ts:94-116`
+- **Mô tả:** khi `product_id` trùng `products.id`, `baseRetail` là giá 1 chai (18.000đ) trong khi giá đã chốt là giá cả lốc (126.000đ), và `appliedFinalPrice = min(107.100, 15.300) = 15.300`: đơn tính giá một chai cho cả lốc (thiếu 7 lần).
+  Hiện chỉ xảy ra khi đăng ký tạo qua API với mã catalog (giao diện dùng mã `sub-*`, xem R34, nên rơi nhánh giá đã chốt). Cùng khối: `Number(it.discount_rate) || MEMBERSHIP_CONFIG.SUBSCRIPTION_DISCOUNT_RATE` đổi chiết khấu 0 thành 15% (cùng họ R23).
+- **Tái hiện (đã chạy):** `subtotal = 15300` (đúng 107.100). Test: R31 (FAIL).
+
+### R35. Đối tác ACTIVE gửi yêu cầu nâng cấp đại lý bị chuyển `UNDER_REVIEW` và mất quyền rút tiền; "từ chối nâng cấp" biến thành "từ chối hồ sơ" (cần xác minh nghiệp vụ)
+- **File:dòng:** `partner/upgrade-dealer/route.ts:54-61`, `admin/partners/[id]/route.ts:130-135,164-171`, `partner/payouts/route.ts:62`
+- **Mô tả:** yêu cầu nâng cấp luôn đổi `lifecycle_status` sang `UNDER_REVIEW` (kể cả chưa đủ điều kiện, `isEligible` chỉ để thông báo). Trong lúc chờ, `POST /api/partner/payouts` yêu cầu `ACTIVE` nên bị chặn. Admin `REJECT` từ `UNDER_REVIEW` đặt `REJECTED` (mất cả tư cách CTV đang hoạt động); muốn giữ CTV phải bấm `APPROVE`. Chưa có test.
+
+## Nhẹ
+
+### R33. Cron giữ chỗ một phần khi tồn kho không đủ nhưng vẫn tạo đơn đủ giá (cần quyết định nghiệp vụ)
+- **File:dòng:** `cron/.../generate-orders/route.ts:206-209` (`reserveAmount = Math.min(available, totalBottles)`), trái comment "Zero-Oversell Guarantee"
+- **Tái hiện (đã chạy):** cần 70 chai, tồn 20: `đơn 1, giữ chỗ 20/70 chai`. Cũng: số chai tính từ `unit` (`5 chai` ra 5, còn lại 7), không theo quy cách thật (lốc 6, 10, 12, 15 chai bị tính sai). Test: R33 (`todo`).
+
+### R36. `partner/payouts` và `partner/ledger`: tham số phân trang không phải số làm hỏng truy vấn; biến `lockedAmount` không dùng
+- **File:dòng:** `partner/payouts/route.ts:22-23`, `partner/ledger/route.ts:19-20`
+- **Mô tả:** `parseInt('abc')` ra `NaN`, `Math.min(100, Math.max(1, NaN))` ra `NaN` và truy vấn `LIMIT NaN` lỗi 500. Mức Nhẹ. Chưa có test.
+
+### R37. `PUT /api/admin/inventory` (batch) khóa dòng tồn kho theo thứ tự client gửi, không sắp xếp
+- **File:dòng:** `src/app/api/admin/inventory/route.ts:276-286`
+- **Mô tả:** mọi nơi khác khóa tồn kho theo `product_id` tăng dần (xem R15). Một batch gửi `[P2, P1]` đồng thời với đặt đơn khóa `[P1, P2]` có thể deadlock. Chưa tái hiện (cần timing chính xác); sửa rẻ: sắp xếp `updates` theo `product_id` trước khi khóa.
+
+### R38. Bảo vệ "Super Admin cuối cùng" không nguyên tử
+- **File:dòng:** `src/app/api/admin/users/route.ts:208-225` (PUT) và `:409-420` (DELETE)
+- **Mô tả:** đếm Super Admin đang hoạt động rồi mới ghi, không trong một giao dịch có khóa; hai yêu cầu đồng thời có thể cùng qua kiểm tra và hạ/khóa/xóa cả hai tài khoản cuối. Chỉ Super Admin gọi được. Chưa có test (cần hai phiên đồng thời).
+
+### R39. `confirm-payment` không kiểm mã giao dịch ngân hàng đã dùng cho đơn khác (cần xác minh nghiệp vụ)
+- **File:dòng:** `src/app/api/admin/orders/[id]/confirm-payment/route.ts:53-65,106-117`
+- **Mô tả:** idempotent theo từng đơn nhưng cùng một mã chuyển khoản có thể xác nhận cho nhiều đơn. Nếu mỗi giao dịch ngân hàng chỉ nên khớp một đơn thì cần ràng buộc duy nhất (hoặc cảnh báo). Chưa có test.
+
+## Đã đọc và không thấy lỗi (vòng 3)
+- `admin/payouts/[id]`: khóa dòng yêu cầu, máy trạng thái (PENDING → APPROVED/REJECTED → PAID), hoàn ví khi từ chối đúng một lần, bắt buộc mã giao dịch ngân hàng khi chi.
+- `admin/partners/[id]` `PUT`: kiểm quyền theo hành động, máy trạng thái, cập nhật có điều kiện chống ghi đè (`WHERE lifecycle_status = ...`), kiểm tra hạng đại lý tồn tại (ngoài R35).
+- `confirm-payment`: chặn đơn COD và đơn đã hủy, phạm vi cửa hàng, trừ kho trong cùng giao dịch, idempotent theo mã giao dịch (ngoài R39).
+- `partner/payouts` `POST`: chặn ví âm, chặn yêu cầu đang chờ, khóa dòng `partner_profiles`, tối thiểu 200.000đ (test: từ chối 800.000đ khi khả dụng 500.000đ; yêu cầu thứ hai khi đang chờ: 409).
+- `admin/users`: kiểm quyền, kiểm vai trò và cửa hàng, chặn tự đổi vai trò/tự khóa, hiệu lực phiên ngay (ngoài R38). `auth/login`: khóa theo cặp email và IP, thông báo chung, kiểm tài khoản bị khóa sau khi đúng mật khẩu.
