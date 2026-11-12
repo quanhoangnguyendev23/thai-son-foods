@@ -42,18 +42,6 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
   const fullName = language === 'en' && product.nameEn ? product.nameEn : product.name;
   const bestSellerText = language === 'en' ? 'Best Seller' : 'Bán chạy';
   const newText = language === 'en' ? 'New' : 'Mới';
-  // Nhãn Bán chạy / Mới nằm dưới tên sản phẩm (kiểu Amazon), không đè lên ảnh
-  const badgeRow =
-    product.isBestSeller || product.isNew ? (
-      <div className="flex flex-wrap gap-1 mb-1">
-        {product.isBestSeller && (
-          <span className="px-1.5 py-0.5 text-2xs bg-brand-emerald text-white rounded">{bestSellerText}</span>
-        )}
-        {product.isNew && (
-          <span className="px-1.5 py-0.5 text-2xs bg-corn text-text-dark rounded">{newText}</span>
-        )}
-      </div>
-    ) : null;
 
   // Lấy quy cách đóng gói tiêu chuẩn nhỏ nhất (Ví dụ: Lốc 7 chai hoặc Lốc 5 chai), không bao giờ bán/thêm 1 chai lẻ
   const defaultVariant = useMemo(() => {
@@ -232,6 +220,24 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               loading="lazy"
             />
             {renderHoverImage("(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 22vw")}
+
+            {/* Huy hiệu Bán chạy / Mới */}
+            <div
+              className={`absolute top-1 sm:top-2 ${
+                'right-1 sm:right-2'
+              } flex flex-col items-end gap-0.5 z-10`}
+            >
+              {product.isBestSeller && (
+                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
+                  {bestSellerText}
+                </span>
+              )}
+              {product.isNew && (
+                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-corn text-text-dark rounded shadow-xs">
+                  {newText}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Thông tin sản phẩm */}
@@ -245,7 +251,6 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               >
                 {fullName}
               </h3>
-              {badgeRow}
             </div>
 
             <div className={`relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2${plain ? '' : ' border-t border-gray-100'}`}>
@@ -307,6 +312,24 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               loading="lazy"
             />
             {renderHoverImage("(max-width: 640px) 50vw, 35vw")}
+
+            {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
+            <div
+              className={`absolute top-1 sm:top-2.5 ${
+                'right-1 sm:right-2.5'
+              } flex flex-col items-end gap-1 z-10`}
+            >
+              {product.isBestSeller && (
+                <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
+                  {bestSellerText}
+                </span>
+              )}
+              {product.isNew && (
+                <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
+                  {newText}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* 1 BÊN LÀ TITLE & THÔNG TIN */}
@@ -320,7 +343,6 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               >
                 {fullName}
               </h3>
-              {badgeRow}
             </div>
 
             <div className="relative flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
@@ -381,6 +403,24 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             loading="lazy"
           />
           {renderHoverImage("(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 25vw")}
+
+          {/* Huy hiệu Bán chạy / Mới — Tự động sang góc phải nếu là poster có con dấu đỏ bên trái */}
+          <div
+            className={`absolute top-1 sm:top-2.5 ${
+              'right-1 sm:right-2.5'
+            } flex flex-col items-end gap-1 z-10`}
+          >
+            {product.isBestSeller && (
+              <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-brand-emerald text-white rounded sm:rounded-md shadow-xs">
+                {bestSellerText}
+              </span>
+            )}
+            {product.isNew && (
+              <span className="px-1.5 sm:px-2 py-0.5 text-2xs md:text-sm bg-corn text-text-dark rounded sm:rounded-md shadow-xs">
+                {newText}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Thông tin sản phẩm — Title ở dưới sản phẩm */}
@@ -394,7 +434,6 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
             >
               {fullName}
             </h3>
-            {badgeRow}
           </div>
 
           <div className="relative flex items-center justify-between gap-1 sm:gap-2 mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-gray-100">
