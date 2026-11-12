@@ -1,6 +1,6 @@
 'use client';
 
-import { discountLabel } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -162,19 +162,14 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           </span>
                         )}
 
-                        {/* Huy hiệu giảm giá (Góc trên phải) */}
-                        <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none flex flex-col items-end gap-0.5">
-                          {combo.isBestSeller && (
+                        {/* Nhãn Bán chạy (Góc trên phải); nhãn giảm giá nằm ở khu giá bên dưới */}
+                        {combo.isBestSeller && (
+                          <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
                             <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
                               {language === 'en' ? 'Best seller' : 'Bán chạy'}
                             </span>
-                          )}
-                          {discountLabel(combo) && (
-                            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
-                              {discountLabel(combo)}
-                            </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
 
                         {/* Huy hiệu số lượng chai (Góc dưới phải) */}
                         <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 z-10 pointer-events-none">
@@ -205,13 +200,19 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
 
                     {/* Hàng giá bán & Nút hành động */}
                     <div className="px-2 pb-2 sm:px-2.5 sm:pb-2.5 md:px-3 md:pb-3 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center justify-between gap-1">
-                      <div className="flex flex-col sm:flex-row sm:items-baseline">
+                      <div className="flex flex-col min-w-0">
                         <span className="text-sm sm:text-base text-green-primary">
                           {formatPrice(combo.salePrice)}đ
                         </span>
-                        <span className="text-2xs lg:text-2xs text-gray-400 line-through sm:ml-1">
-                          {formatPrice(combo.originalPrice)}đ
-                        </span>
+                        {/* Giá gốc + nhãn giảm giá nằm dưới giá bán */}
+                        <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+                          {combo.originalPrice > combo.salePrice && (
+                            <span className="text-2xs lg:text-2xs text-gray-400 line-through">
+                              {formatPrice(combo.originalPrice)}đ
+                            </span>
+                          )}
+                          <DiscountTag source={combo} />
+                        </div>
                       </div>
 
                       {/* Nút thêm vào giỏ hàng đồng bộ tất cả 12 combo */}

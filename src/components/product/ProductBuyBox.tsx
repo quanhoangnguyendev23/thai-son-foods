@@ -7,6 +7,7 @@ import { cn, formatPrice } from '@/lib/utils';
 import { calculateShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
 import { getUnitPrice, getVariantLabel } from '@/lib/product-detail';
 import QuantitySelector from '@/components/product/QuantitySelector';
+import DiscountTag from '@/components/product/DiscountTag';
 import { STORE_SALES_INFO } from '@/data/product-detail-content';
 import { DeliveryAddressInfo, WishlistButton } from '@/components/product/ProductRealBlocks';
 import { PreorderSchedulePlaceholder } from '@/components/product/ProductPlaceholderBlocks';
@@ -98,6 +99,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
           {originalPrice && (
             <span className="text-sm text-gray-500 line-through">{formatPrice(originalPrice)}đ</span>
           )}
+          <DiscountTag source={{ originalPrice, salePrice: price }} size="md" className="self-center" />
         </div>
         {variant && (
           <p className="text-xs text-gray-600 mt-1.5">

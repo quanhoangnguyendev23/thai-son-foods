@@ -1,6 +1,6 @@
 'use client';
 
-import { discountLabel } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -177,13 +177,6 @@ export default function ProductCombosSidebar({
                   {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
                 </span>
               )}
-
-              {/* Badge giảm giá */}
-              {discountLabel(combo) && (
-                <span className="absolute top-1 right-1 px-1.5 py-0.5 text-2xs sm:text-2xs bg-sale text-white rounded shadow-xs">
-                  {discountLabel(combo)}
-                </span>
-              )}
             </div>
 
             {/* Thông tin Text */}
@@ -200,14 +193,15 @@ export default function ProductCombosSidebar({
                   {comboDesc}
                 </p>
 
-                {/* Giá bán */}
-                <div className="flex items-baseline gap-1.5 mt-1">
+                {/* Giá bán + nhãn giảm giá (nằm ở khu giá, không đè lên ảnh) */}
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
                   <span className="text-sm sm:text-base text-green-primary">
                     {formatPrice(combo.salePrice)}đ
                   </span>
                   <span className="text-2xs text-gray-400 line-through">
                     {formatPrice(combo.originalPrice)}đ
                   </span>
+                  <DiscountTag source={combo} />
                 </div>
               </div>
             </div>
@@ -333,11 +327,7 @@ export default function ProductCombosSidebar({
               <span className="text-2xs text-gray-400 line-through">
                 {formatPrice(combo.originalPrice)}đ
               </span>
-              {discountLabel(combo) && (
-                <span className="text-2xs text-sale bg-red-50 px-1 py-0.2 rounded">
-                  {discountLabel(combo)}
-                </span>
-              )}
+              <DiscountTag source={combo} />
             </div>
           </div>
         </Link>

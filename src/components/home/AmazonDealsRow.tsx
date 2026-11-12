@@ -1,6 +1,7 @@
 'use client';
 
-import { discountLabel } from '@/lib/discount-label';
+import { discountPercentSuffix } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -116,11 +117,6 @@ function DealTile({ combo }: { combo: Combo }) {
             className="object-cover object-top motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
             onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
           />
-          {discountLabel(combo) && (
-            <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-brand-crimson text-white text-base font-heading shadow-sm">
-              {discountLabel(combo)}
-            </span>
-          )}
         </div>
         <div className="p-2.5 sm:p-3 md:p-4 flex flex-col flex-1">
           <h3
@@ -135,9 +131,14 @@ function DealTile({ combo }: { combo: Combo }) {
               <span className="text-sm text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
             )}
           </div>
+          {/* Nhãn giảm giá nằm dưới giá (kiểu "Save 7%" của Amazon), không đè lên ảnh */}
           {saving > 0 && (
-            <p className="mt-0.5 text-sm text-brand-crimson">
-              {language === 'en' ? `Save ${formatPrice(saving)}đ` : `Tiết kiệm ${formatPrice(saving)}đ`}
+            <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-brand-crimson">
+              <DiscountTag source={combo} size="md" />
+              {/* Nhãn đang hiện % thì ghi thêm số tiền; nhãn đã là số tiền thì không lặp lại */}
+              {discountPercentSuffix(combo) && (
+                <span>{language === 'en' ? `Save ${formatPrice(saving)}đ` : `Tiết kiệm ${formatPrice(saving)}đ`}</span>
+              )}
             </p>
           )}
           {perUnit > 0 && (
