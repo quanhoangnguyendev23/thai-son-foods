@@ -121,6 +121,14 @@ export default function DangKyDoiTacPage() {
     if (!fullName.trim()) return setErrorMsg('Vui lòng nhập Họ và tên.');
     if (!phone.trim()) return setErrorMsg('Vui lòng nhập Số điện thoại.');
     if (!otpCode.trim()) return setErrorMsg('Vui lòng nhập mã OTP.');
+    // PWD-01: cùng quy tắc với server (/api/partner/register và /api/auth/register PASSWORD_REGEX).
+    // Đã đăng nhập (nâng cấp tài khoản đang dùng) thì không cần mật khẩu mới.
+    if (!user || password) {
+      if (!password) return setErrorMsg('Vui lòng nhập mật khẩu đăng nhập.');
+      if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password)) {
+        return setErrorMsg('Mật khẩu cần ít nhất 8 ký tự, có cả chữ và số (VD: thaison123).');
+      }
+    }
     if (!acceptTerms) return setErrorMsg('Bạn cần đồng ý với điều khoản hợp tác.');
 
     setLoading(true);
@@ -359,13 +367,16 @@ export default function DangKyDoiTacPage() {
 
               <div>
                 <label className="block text-sm text-slate-700 mb-1">
-                  Mật khẩu đăng nhập
+                  Mật khẩu đăng nhập {user ? '(không cần nếu đăng ký cho tài khoản đang đăng nhập)' : <span className="text-rose-500">*</span>}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 pointer-events-none" />
                   <input
                     type="password"
-                    placeholder="Mật khẩu tối thiểu 6 ký tự"
+                    required={!user}
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Từ 8 ký tự, gồm chữ và số, được dùng thêm @"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"

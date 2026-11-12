@@ -11,6 +11,10 @@ import { isCookieSecure, getClientIp, UNKNOWN_CLIENT_IP } from '@/lib/runtimeCon
 
 export const dynamic = 'force-dynamic';
 
+// PWD-01: cùng quy tắc mật khẩu với đăng ký khách (/api/auth/register PASSWORD_REGEX)
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const PASSWORD_RULE_ERROR = 'Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ và số (VD: thaison123)';
+
 function stripHtml(input: string): string {
   return input.replace(/<[^>]*>?/gm, '').trim();
 }
@@ -43,6 +47,17 @@ export async function POST(request: Request) {
     const cleanFullName = stripHtml(fullName).slice(0, 100);
     const cleanPhone = phone.replace(/[\s\-\.]/g, '').slice(0, 20);
     const cleanEmail = stripHtml((email || '').trim().toLowerCase()).slice(0, 100) || `${cleanPhone}@partner.thaisonfoods.vn`;
+
+    // PWD-01: chưa đăng nhập thì luồng này chỉ có thể tạo tài khoản MỚI -> bắt buộc mật khẩu hợp lệ.
+    // Kiểm tra trước khi dùng OTP để khách sửa mật khẩu không phải xin mã mới.
+    const session = await getUserSession();
+    const hasValidPassword = typeof password === 'string' && PASSWORD_REGEX.test(password);
+    if (!session && !hasValidPassword) {
+      return NextResponse.json(
+        { success: false, error: password ? PASSWORD_RULE_ERROR : 'Vui lòng nhập mật khẩu', code: 'PASSWORD_REQUIRED' },
+        { status: 400 }
+      );
+    }
 
     // 1. Xác minh mã OTP
     const otpCheck = verifyOtp(cleanPhone, otpCode || '');
@@ -98,7 +113,6 @@ export async function POST(request: Request) {
       // AUTHZ-01: OTP chỉ chứng minh người gửi giữ SĐT của chính họ, không chứng minh sở hữu tài khoản có sẵn
       // (email có thể là của người khác). Chỉ gắn hồ sơ đối tác vào tài khoản có sẵn khi người đó ĐÃ ĐĂNG NHẬP
       // đúng tài khoản ấy; tuyệt đối không cấp phiên đăng nhập cho tài khoản có sẵn trong luồng đăng ký.
-      const session = await getUserSession();
       const isUpgradingOwnAccount = userRes.rows.length > 0 && !!session && session.id === userRes.rows[0].id;
 
       if (userRes.rows.length > 0 && !isUpgradingOwnAccount) {
@@ -134,7 +148,15 @@ export async function POST(request: Request) {
         }
       } else {
         userId = `usr_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-        const pwdHash = await hashPassword(password || `P@ss${cleanPhone.slice(-4)}`);
+        // PWD-01: không còn mật khẩu mặc định đoán được (P@ss + 4 số cuối SĐT).
+        if (!hasValidPassword) {
+          await client.query('ROLLBACK;');
+          return NextResponse.json(
+            { success: false, error: password ? PASSWORD_RULE_ERROR : 'Vui lòng nhập mật khẩu', code: 'PASSWORD_REQUIRED' },
+            { status: 400 }
+          );
+        }
+        const pwdHash = await hashPassword(password);
         await client.query(
           `INSERT INTO users (id, email, password_hash, full_name, phone)
            VALUES ($1, $2, $3, $4, $5);`,
