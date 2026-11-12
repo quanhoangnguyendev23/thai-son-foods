@@ -22,8 +22,7 @@ export function generateCustomerOtp(phone: string): { success: boolean; code?: s
     return { success: false, error: 'Số điện thoại không đúng định dạng di động Việt Nam (VD: 0901234567).' };
   }
 
-  // Môi trường test / staging hỗ trợ mã cố định 123456
-  const code = process.env.NODE_ENV === 'test' ? '123456' : crypto.randomInt(100000, 999999).toString();
+  const code = getOtpTestCode() ?? crypto.randomInt(100000, 999999).toString();
   const expiresAt = Date.now() + OTP_EXPIRY_MS;
 
   customerOtpStore.set(cleanPhone, {
@@ -44,6 +43,18 @@ export function generateCustomerOtp(phone: string): { success: boolean; code?: s
   return { success: true, code };
 }
 
+// PWD-02: không còn mã OTP cố định trong mã nguồn. Mã thử chỉ dành cho test tự động:
+// CHỈ có hiệu lực khi NODE_ENV=test VÀ có biến OTP_TEST_CODE (không bao giờ đặt trên máy chủ thật).
+function getOtpTestCode(): string | null {
+  const code = process.env.OTP_TEST_CODE?.trim();
+  return process.env.NODE_ENV === 'test' && code ? code : null;
+}
+
+function isOtpTestCode(inputCode: string): boolean {
+  const testCode = getOtpTestCode();
+  return !!testCode && inputCode.trim() === testCode;
+}
+
 /**
  * Xác minh mã OTP số điện thoại của khách hàng
  */
@@ -52,7 +63,7 @@ export function verifyCustomerOtp(phone: string, inputCode: string): { success: 
   const entry = customerOtpStore.get(cleanPhone);
 
   if (!entry) {
-    if (process.env.NODE_ENV !== 'production' && inputCode === '123456') {
+    if (isOtpTestCode(inputCode)) {
       return { success: true };
     }
     return { success: false, error: 'Mã OTP không tồn tại hoặc đã hết hạn. Vui lòng nhận mã mới.' };
@@ -68,9 +79,7 @@ export function verifyCustomerOtp(phone: string, inputCode: string): { success: 
     return { success: false, error: 'Bạn đã nhập sai quá 5 lần. Vui lòng gửi lại mã mới.' };
   }
 
-  // Mã thử 123456 CHỈ dùng ngoài production (giống OTP đối tác); production luôn so đúng mã đã sinh
-  const isDevMasterCode = process.env.NODE_ENV !== 'production' && inputCode.trim() === '123456';
-  if (entry.code !== inputCode.trim() && !isDevMasterCode) {
+  if (entry.code !== inputCode.trim() && !isOtpTestCode(inputCode)) {
     entry.attempts += 1;
     return { success: false, error: `Mã OTP không chính xác (còn ${OTP_MAX_ATTEMPTS - entry.attempts} lần thử).` };
   }

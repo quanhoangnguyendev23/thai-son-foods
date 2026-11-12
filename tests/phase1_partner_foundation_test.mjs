@@ -92,7 +92,7 @@ async function runPhase1Tests() {
       body: JSON.stringify({ phone: regPhone }),
     });
     const otpData = await otpRes.json();
-    const regOtp = otpData.debugOtp || '123456';
+    const regOtp = otpData.debugOtp || process.env.OTP_TEST_CODE; // PWD-02: máy chủ chạy NODE_ENV=test + OTP_TEST_CODE
 
     const regRes = await fetch(`${BASE_URL}/api/partner/register`, {
       method: 'POST',
@@ -128,7 +128,7 @@ async function runPhase1Tests() {
       body: JSON.stringify({ phone: regPhone }),
     });
     const dupOtpData = await dupOtpRes.json();
-    const dupOtp = dupOtpData.debugOtp || '123456';
+    const dupOtp = dupOtpData.debugOtp || process.env.OTP_TEST_CODE; // PWD-02
     const dupRes = await fetch(`${BASE_URL}/api/partner/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

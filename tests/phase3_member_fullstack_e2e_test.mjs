@@ -95,9 +95,33 @@ async function runFullstackSuite() {
       assert.equal(res.success, true);
     });
 
-    it('OTP: Xác thực thành công với mã thử nghiệm 123456', () => {
-      const res = verifyCustomerOtp(testPhone, '123456');
-      assert.equal(res.success, true);
+    // PWD-02: mã thử lấy từ OTP_TEST_CODE và chỉ có hiệu lực khi NODE_ENV=test.
+    // Không đặt OTP_TEST_CODE thì test tự sinh một mã ngẫu nhiên; NODE_ENV chỉ đổi trong phạm vi ca test này.
+    it('OTP: Xác thực thành công với mã thử OTP_TEST_CODE (chỉ khi NODE_ENV=test)', () => {
+      const prevNodeEnv = process.env.NODE_ENV;
+      const prevTestCode = process.env.OTP_TEST_CODE;
+      const testCode = prevTestCode || String(100000 + Math.floor(Math.random() * 900000));
+      try {
+        process.env.NODE_ENV = 'test';
+        process.env.OTP_TEST_CODE = testCode;
+        const res = verifyCustomerOtp(testPhone, testCode);
+        assert.equal(res.success, true);
+      } finally {
+        if (prevNodeEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevNodeEnv;
+        if (prevTestCode === undefined) delete process.env.OTP_TEST_CODE; else process.env.OTP_TEST_CODE = prevTestCode;
+      }
+    });
+
+    it('OTP: Mã thử KHÔNG có hiệu lực khi NODE_ENV khác test', () => {
+      generateCustomerOtp(testPhone);
+      const prevTestCode = process.env.OTP_TEST_CODE;
+      try {
+        process.env.OTP_TEST_CODE = '135790';
+        const res = verifyCustomerOtp(testPhone, '135790');
+        assert.equal(res.success, process.env.NODE_ENV === 'test');
+      } finally {
+        if (prevTestCode === undefined) delete process.env.OTP_TEST_CODE; else process.env.OTP_TEST_CODE = prevTestCode;
+      }
     });
 
     it('OTP: Chặn số điện thoại sai định dạng viễn thông Việt Nam', () => {

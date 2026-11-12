@@ -11,13 +11,25 @@ interface OtpEntry {
 // In-memory OTP cache (có thể mở rộng sang Redis khi cần)
 const otpStore = new Map<string, OtpEntry>();
 
+// PWD-02: không còn mã OTP cố định trong mã nguồn. Mã thử chỉ dành cho test tự động:
+// CHỈ có hiệu lực khi NODE_ENV=test VÀ có biến OTP_TEST_CODE (không bao giờ đặt trên máy chủ thật).
+function getOtpTestCode(): string | null {
+  const code = process.env.OTP_TEST_CODE?.trim();
+  return process.env.NODE_ENV === 'test' && code ? code : null;
+}
+
+function isOtpTestCode(inputCode: string): boolean {
+  const testCode = getOtpTestCode();
+  return !!testCode && inputCode.trim() === testCode;
+}
+
 /**
  * Sinh mã OTP ngẫu nhiên 6 chữ số và lưu vào bộ nhớ tạm
  */
 export function generateOtp(phone: string): string {
   const cleanPhone = phone.replace(/[\s\-\.]/g, '');
   // Sinh mã 6 chữ số ngẫu nhiên
-  const code = process.env.NODE_ENV === 'test' ? '123456' : crypto.randomInt(100000, 999999).toString();
+  const code = getOtpTestCode() ?? crypto.randomInt(100000, 999999).toString();
   const expiresAt = Date.now() + PARTNER_CONFIG.SECURITY.OTP_EXPIRY_SECONDS * 1000;
 
   otpStore.set(cleanPhone, {
@@ -41,8 +53,7 @@ export function verifyOtp(phone: string, inputCode: string): { success: boolean;
   const entry = otpStore.get(cleanPhone);
 
   if (!entry) {
-    // Để tiện lợi kiểm thử ở môi trường staging/dev: chấp nhận mã master 123456
-    if (process.env.NODE_ENV !== 'production' && inputCode === '123456') {
+    if (isOtpTestCode(inputCode)) {
       return { success: true };
     }
     return { success: false, error: 'Mã OTP không tồn tại hoặc đã hết hạn. Vui lòng yêu cầu mã mới.' };
@@ -58,7 +69,7 @@ export function verifyOtp(phone: string, inputCode: string): { success: boolean;
     return { success: false, error: 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng yêu cầu mã mới.' };
   }
 
-  if (entry.code !== inputCode.trim() && !(process.env.NODE_ENV !== 'production' && inputCode === '123456')) {
+  if (entry.code !== inputCode.trim() && !isOtpTestCode(inputCode)) {
     entry.attempts += 1;
     return { success: false, error: `Mã OTP không chính xác. Còn lại ${PARTNER_CONFIG.SECURITY.OTP_MAX_ATTEMPTS - entry.attempts} lần thử.` };
   }
