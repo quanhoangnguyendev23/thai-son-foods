@@ -57,11 +57,6 @@ function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) 
             loading="lazy"
             className="object-cover transition-transform duration-500"
           />
-          {combo.isBestSeller && (
-            <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10 flex flex-col items-end gap-0.5">
-              <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">Bán chạy</span>
-            </div>
-          )}
         </div>
 
         {/* Thông tin: cùng cỡ chữ, cách dòng với thẻ sản phẩm */}
@@ -69,6 +64,12 @@ function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) 
           <h3 title={combo.name} className={`text-base text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 ${plain ? 'group-hover:underline ' : ''}transition-colors`}>
             {combo.name}
           </h3>
+          {/* Nhãn Bán chạy nằm dưới tên (kiểu Amazon), không đè lên ảnh */}
+          {combo.isBestSeller && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              <span className="px-1.5 py-0.5 text-2xs bg-brand-emerald text-white rounded">Bán chạy</span>
+            </div>
+          )}
 
           <div className={`relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2${plain ? '' : ' border-t border-gray-100'}`}>
             <div className="flex flex-col min-w-0">

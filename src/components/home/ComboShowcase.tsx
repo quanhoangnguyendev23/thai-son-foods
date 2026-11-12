@@ -155,22 +155,6 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           loading="lazy"
                         />
 
-                        {/* Nhãn Deal hôm nay (Góc trên trái) */}
-                        {dealIds.has(combo.id) && (
-                          <span className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 pointer-events-none px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
-                            {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
-                          </span>
-                        )}
-
-                        {/* Nhãn Bán chạy (Góc trên phải); nhãn giảm giá nằm ở khu giá bên dưới */}
-                        {combo.isBestSeller && (
-                          <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
-                            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
-                              {language === 'en' ? 'Best seller' : 'Bán chạy'}
-                            </span>
-                          </div>
-                        )}
-
                         {/* Huy hiệu số lượng chai (Góc dưới phải) */}
                         <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 z-10 pointer-events-none">
                           <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
@@ -194,6 +178,21 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           >
                             {comboDesc}
                           </p>
+                          {/* Nhãn Deal hôm nay / Bán chạy nằm dưới chữ (kiểu Amazon), không đè lên ảnh */}
+                          {(dealIds.has(combo.id) || combo.isBestSeller) && (
+                            <div className="flex flex-wrap gap-1 mb-1">
+                              {dealIds.has(combo.id) && (
+                                <span className="px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded">
+                                  {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+                                </span>
+                              )}
+                              {combo.isBestSeller && (
+                                <span className="px-1.5 py-0.5 text-2xs bg-brand-emerald text-white rounded">
+                                  {language === 'en' ? 'Best seller' : 'Bán chạy'}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Link>
