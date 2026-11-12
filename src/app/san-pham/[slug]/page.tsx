@@ -35,6 +35,7 @@ import { PersonalizedSignInPrompt, BackToTopBar } from '@/components/product/Pro
 import { combos as staticCombos } from '@/data/combos';
 import { canonicalProductId } from '@/lib/inventory';
 import { Combo } from '@/types';
+import { splitComboRows } from '@/lib/recommendation-rows';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
 
@@ -305,9 +306,27 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   let stripSold = 0;
   let reviewCombo: StripCombo | undefined;
   let featuredCombos: StripCombo[] = [];
+  // 2 hàng combo xen giữa các hàng sản phẩm, không lặp combo giữa 2 hàng (giống trang combo):
+  // hàng 1 = combo có sản phẩm đang xem (nhiều chai sản phẩm này trước); hàng 2 = các combo còn lại (bán chạy, giảm sâu trước)
+  let combosWithProductRow: StripCombo[] = [];
+  let moreCombosRow: StripCombo[] = [];
   if (ENABLE_COMBOS && useNewLayout) {
     const activeCombos = await getActiveCombos();
     featuredCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug);
+    const currentKey = canonicalProductId(product.id);
+    const qtyOfCurrent = (c: StripCombo) =>
+      c.products.filter((it) => canonicalProductId(it.productId) === currentKey).reduce((sum, it) => sum + it.quantity, 0);
+    const stableSort = (list: StripCombo[], cmp: (a: StripCombo, b: StripCombo) => number) =>
+      list.map((c, i) => ({ c, i })).sort((a, b) => cmp(a.c, b.c) || a.i - b.i).map((x) => x.c);
+    const withCurrent = stableSort(
+      featuredCombos.filter((c) => qtyOfCurrent(c) > 0),
+      (a, b) => qtyOfCurrent(b) - qtyOfCurrent(a) || (b.discount || 0) - (a.discount || 0)
+    );
+    const featuredSorted = stableSort(
+      featuredCombos,
+      (a, b) => Number(Boolean(b.isBestSeller)) - Number(Boolean(a.isBestSeller)) || (b.discount || 0) - (a.discount || 0)
+    );
+    ({ related: combosWithProductRow, others: moreCombosRow } = splitComboRows(withCurrent, featuredSorted));
     stripCombo = pickComboForProduct(activeCombos, product.id);
     // Combo trong mục Đánh giá: ngẫu nhiên trong các combo có sản phẩm này (khác combo ở dải trên); không có thì ngẫu nhiên
     const otherCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug && c.id !== stripCombo?.id);
@@ -461,6 +480,9 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           />
         </div>
 
+        {/* ── CÁC HÀNG GỢI Ý: XEN KẼ HÀNG SẢN PHẨM VÀ HÀNG COMBO (cùng thứ tự với trang combo) ──
+            SP: Mua kèm → Bán chạy → COMBO: có SP này → SP: Có thể thích + So sánh → COMBO: nổi bật → SP: Khách cũng mua */}
+
         {/* ── GỢI Ý MUA KÈM ── */}
         <div className="border-t border-gray-200 bg-white">
           <ProductBundleSuggestions currentProduct={product} />
@@ -481,6 +503,18 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           </div>
         )}
 
+        {/* ── COMBO · CÓ SẢN PHẨM NÀY (mua theo combo tiết kiệm hơn); không có thì hàng combo nổi bật lên vị trí này ── */}
+        {/* Dùng ComboCarousel để cùng kiểu tiêu đề, thẻ và mũi tên với các hàng sản phẩm khác */}
+        {combosWithProductRow.length > 0 ? (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel plain title={`Combo có ${getShortProductName(product)}`} subtitle="Mua theo combo, tiết kiệm hơn mua lẻ" combos={combosWithProductRow} />
+          </div>
+        ) : moreCombosRow.length > 0 ? (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" combos={moreCombosRow} />
+          </div>
+        ) : null}
+
         {/* ── CÁC SẢN PHẨM BẠN CÓ THỂ THÍCH (sản phẩm liên quan) ── */}
         <div className="border-t border-gray-200 bg-white">
           <ProductCarousel
@@ -498,6 +532,13 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <ProductCompareTable current={product} others={similarProducts} />
         </div>
 
+        {/* ── COMBO · NỔI BẬT ĐÁNG CÂN NHẮC: combo chưa có ở hàng combo phía trên ── */}
+        {combosWithProductRow.length > 0 && moreCombosRow.length > 0 && (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" combos={moreCombosRow} />
+          </div>
+        )}
+
         {/* ── KHÁCH MUA SẢN PHẨM NÀY CŨNG MUA (từ các đơn có nhiều món; ẩn khi chưa đủ 3 sản phẩm) ── */}
         {boughtTogetherProducts.length >= 3 && (
           <div className="border-t border-gray-200 bg-white">
@@ -508,14 +549,6 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               mobileGrid
               wide
             />
-          </div>
-        )}
-
-        {/* ── COMBO ── */}
-        {/* Dùng ComboCarousel để cùng kiểu tiêu đề, thẻ và mũi tên với các hàng sản phẩm khác */}
-        {ENABLE_COMBOS && featuredCombos.length > 0 && (
-          <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" combos={featuredCombos} />
           </div>
         )}
 
