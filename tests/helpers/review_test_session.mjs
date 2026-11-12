@@ -66,6 +66,15 @@ export async function userBearer(pool, { email, fullName = 'Khách Test', phone 
   return { id, email: mail, headers: { authorization: `Bearer ${token}` } };
 }
 
+/** Tạo khách và đặt cookie phiên khách (tsf_user_session) cho các route dùng getUserSession() */
+export async function loginUser(pool, opts = {}) {
+  const { signUserToken } = await import('@/lib/auth');
+  const u = await userBearer(pool, opts);
+  jar['tsf_user_session'] = u.headers.authorization.slice('Bearer '.length);
+  void signUserToken;
+  return u;
+}
+
 /**
  * Tạo đối tác (CTV) hoặc đại lý (DEALER) kèm khách và trả về header Bearer.
  * tierId phải là một dòng có sẵn trong dealer_tiers (hoặc null).

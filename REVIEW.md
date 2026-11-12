@@ -484,3 +484,46 @@ Các chương trình đối tác, hội viên và giao định kỳ đang tắt 
 - `confirm-payment`: chặn đơn COD và đơn đã hủy, phạm vi cửa hàng, trừ kho trong cùng giao dịch, idempotent theo mã giao dịch (ngoài R39).
 - `partner/payouts` `POST`: chặn ví âm, chặn yêu cầu đang chờ, khóa dòng `partner_profiles`, tối thiểu 200.000đ (test: từ chối 800.000đ khi khả dụng 500.000đ; yêu cầu thứ hai khi đang chờ: 409).
 - `admin/users`: kiểm quyền, kiểm vai trò và cửa hàng, chặn tự đổi vai trò/tự khóa, hiệu lực phiên ngay (ngoài R38). `auth/login`: khóa theo cặp email và IP, thông báo chung, kiểm tài khoản bị khóa sau khi đúng mật khẩu.
+
+---
+
+# Vòng 3 bổ sung (12/11/2026): OTP, hội viên, đăng ký đối tác. Chưa sửa mục nào
+
+Đã đọc thêm: `membership/auth/otp/send` và `verify`, `partner/otp/send` và `verify`, `lib/membership/otp.ts`, `lib/partner/otp.ts`, `membership/subscribe`, `cancel`, `pause`, `lib/membership/repository.ts` (đăng ký, điểm thưởng), `partner/register`.
+Test: `tests/membership_integration.test.mjs` (9 test: 4 đạt, 5 FAIL do lỗi thật). Phân hệ hội viên đang tắt mặc định (cờ `ENABLE_MEMBERSHIP = false`, middleware chặn API), nên mức độ là "khi bật".
+
+## Cao (khi bật tính năng)
+
+### R40. Gửi OTP không giới hạn tần suất, nên đoán mã OTP không bị chặn thực chất
+- **File:dòng:** `src/app/api/membership/auth/otp/send/route.ts:6-34`, `src/app/api/partner/otp/send/route.ts:7-37`, `src/lib/membership/otp.ts:17-45`, `src/lib/partner/otp.ts:17-34`
+- **Mô tả:** mỗi mã chỉ cho thử sai 5 lần, nhưng gọi lại `send` tạo mã mới và đặt lại số lần thử về 0, và `send` không có giới hạn theo SĐT hay IP. Kẻ tấn công vòng lặp gửi rồi thử 5 mã mỗi vòng, xác suất mỗi lần thử 1/900.000, nên đoán trúng sau trung bình khoảng 180.000 vòng, không bị chặn lúc nào.
+  `membership/auth/otp/verify` **đăng nhập thẳng vào tài khoản có SĐT đó** (hoặc tạo tài khoản mới) chỉ bằng OTP, nên đây là đường chiếm tài khoản theo SĐT. Khi gắn SMS thật, gửi không giới hạn còn là đường đốt chi phí tin nhắn.
+  Liên quan N3, N5 (mã chung `123456` ngoài production) trong báo cáo 10/11, không trùng.
+- **Tái hiện (đã chạy):** 10 lần `send` liên tiếp cho cùng một SĐT: `200,200,200,200,200,200,200,200,200,200`, cả phía khách lẫn phía đối tác. Test: R40 (2 test, FAIL).
+- **Đề xuất sửa:** giới hạn gửi theo SĐT (ví dụ 3 lần mỗi 15 phút, 10 lần mỗi ngày) và theo IP; giới hạn số lần xác minh sai theo SĐT trong cả cửa sổ chứ không chỉ theo từng mã; lưu bộ đếm vào DB hoặc Redis thay vì bộ nhớ từng tiến trình (bộ nhớ hiện tại mất khi khởi động lại và không dùng chung giữa các tiến trình).
+
+### R41. `POST /api/membership/subscribe`: dùng thử gia hạn vô hạn, thưởng điểm không giới hạn, gói trả phí không qua thanh toán
+- **File:dòng:** `src/app/api/membership/subscribe/route.ts:28-46`, `src/lib/membership/repository.ts:274-320`
+- **Mô tả:** mỗi lần gọi `subscribeUserMembership` xóa bản ghi cũ rồi tạo mới, nên `isTrial: true` luôn cho thêm 30 ngày (không kiểm đã dùng thử), và mỗi lần gói khác FREE được thêm 50 điểm chào mừng (không kiểm đã nhận).
+  Gói `PRIME_MONTHLY`/`PRIME_YEARLY` với `isTrial: false` thành `PAID_ACTIVE` ngay (giảm 15%, miễn phí giao) mà không có bước thanh toán nào (có thể do chưa làm xong phần thanh toán: **cần anh xác nhận** đây có phải chủ đích tạm thời).
+- **Tái hiện (đã chạy):** gọi 3 lần liên tiếp: 3 dòng điểm, tổng 150 điểm (đúng ra 50). Dùng thử còn 1 ngày, gọi lại: còn 30 ngày. `PRIME_YEARLY`: `PAID_ACTIVE` ngay. Test: R41 (2 test FAIL, 1 test ghi nhận hành vi).
+- **Đề xuất sửa:** mỗi tài khoản một lần dùng thử và một lần thưởng (ràng buộc duy nhất theo `user_id` + `source_type`); chặn đăng ký gói trả phí khi chưa có thanh toán.
+
+### R43. Hai định nghĩa trái nhau cho bảng `loyalty_point_ledger`: một trong hai làm hỏng toàn bộ điểm thưởng
+- **File:dòng:** `src/lib/membership/repository.ts:153-162` (DDL trong `ensureMembershipSchema`: cột `points_change`, `reason`, `reference_type`) so với `:393-425` và `:353-391` (truy vấn dùng `points`, `source_type`, `description`) và `scripts/migrations/phase7_membership_schema.sql:101-110` (khớp truy vấn)
+- **Mô tả:** `CREATE TABLE IF NOT EXISTS` nên bảng nào được tạo trước thắng. Nếu `ensureMembershipSchema` chạy trước migration, `addLoyaltyPoints` lỗi `column "points" of relation "loyalty_point_ledger" does not exist`; `subscribe` nuốt lỗi này (`try/catch` chỉ `console.warn`), nên khách không nhận điểm mà không ai biết, còn `getUserLoyaltySummary` lỗi 500.
+- **Tái hiện (đã chạy):** DB dựng bằng `ensureMembershipSchema` rồi `addLoyaltyPoints`: lỗi cột như trên (xảy ra ở lần chạy đầu của test). Test R43 so DDL trong mã nguồn với các cột được dùng: FAIL (`DDL thiếu cột "points"`).
+- **Đề xuất sửa:** thống nhất một định nghĩa (theo migration) và bỏ hoặc sửa DDL trong `ensureMembershipSchema`.
+
+## Nhẹ
+
+### R42. `addLoyaltyPoints` có thể mất điểm khi hai yêu cầu đồng thời
+- **File:dòng:** `src/lib/membership/repository.ts:403-415`
+- **Mô tả:** đọc `balance_after` của dòng mới nhất `FOR UPDATE` rồi ghi `prev + points`; với người chưa có dòng nào không có gì để khóa, và với người đã có dòng, hai giao dịch đồng thời cùng đọc một dòng rồi cùng ghi `prev + points` (số dư không cộng dồn). Chưa viết test đồng thời; mức Nhẹ vì điểm chỉ được cộng ở một vài nơi.
+
+### R44. `partner/register` lưu tên chưa lọc HTML vào hồ sơ đối tác
+- **File:dòng:** `src/app/api/partner/register/route.ts:43,152`
+- **Mô tả:** tên được lọc HTML (`cleanFullName`) cho bảng `users` nhưng `partner_profiles.full_name`, audit log và phiên lại dùng `fullName.trim()` nguyên bản. Tên chứa thẻ HTML được lưu vào hồ sơ đối tác và hiện trong trang quản trị. React thoát ký tự khi hiển thị nên chưa thấy khai thác; mức Nhẹ. Chưa có test.
+
+### Ghi nhận (đã có trong báo cáo 10/11, vẫn hiện diện ở nhánh này)
+- `partner/register:93-96` tìm `users` theo `phone OR email` rồi gắn hồ sơ đối tác và cấp phiên của người dùng đó: Lỗi 3 trong báo cáo 10/11 (chiếm tài khoản theo email); chưa sửa ở nhánh này.
