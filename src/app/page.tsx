@@ -230,6 +230,7 @@ async function getLiveCombos(): Promise<Combo[]> {
           totalItems: row.total_items !== null && row.total_items !== undefined ? Number(row.total_items) : base.totalItems,
           discount: row.discount !== null && row.discount !== undefined ? Number(row.discount) : base.discount,
           isBestSeller: Boolean(row.is_best_seller),
+          createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined,
           image: finalImage,
           images: activeImages.map((img: any) => ({
             id: img.id,

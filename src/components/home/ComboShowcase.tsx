@@ -1,11 +1,11 @@
 'use client';
 
 import { discountLabel } from '@/lib/discount-label';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Check } from 'lucide-react';
+import { ShoppingBag, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { combos } from '@/data/combos';
 import { formatPrice, cn, safeFetchJson } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -20,6 +20,35 @@ interface ComboShowcaseProps {
   combos?: Combo[];
 }
 
+type ComboSort = 'newest' | 'best' | 'saving';
+
+/** Số combo hiện khi thu gọn: 12 trên tablet/desktop (2 hàng x 6), 6 trên điện thoại (ẩn bớt bằng CSS) */
+const COLLAPSED_COUNT = 12;
+const COLLAPSED_COUNT_MOBILE = 6;
+/** Combo tạo trong vòng N ngày gần đây → nhãn "Mới" */
+const NEW_COMBO_DAYS = 14;
+
+/** Thứ tự "mới nhất": theo createdAt giảm dần; thiếu createdAt thì coi vị trí sau trong danh sách (API xếp created_at tăng dần) là mới hơn */
+function sortNewest(list: Combo[]): Combo[] {
+  return list
+    .map((c, i) => ({ c, i, t: c.createdAt ? Date.parse(c.createdAt) : NaN }))
+    .sort((a, b) => {
+      if (!Number.isNaN(a.t) && !Number.isNaN(b.t) && a.t !== b.t) return b.t - a.t;
+      return b.i - a.i;
+    })
+    .map(({ c }) => c);
+}
+
+function savingRatio(c: Combo): number {
+  return c.originalPrice > 0 ? (c.originalPrice - c.salePrice) / c.originalPrice : 0;
+}
+
+function isNewCombo(c: Combo, now: number): boolean {
+  if (!c.createdAt || !now) return false;
+  const t = Date.parse(c.createdAt);
+  return !Number.isNaN(t) && now - t <= NEW_COMBO_DAYS * 24 * 60 * 60 * 1000;
+}
+
 export default function ComboShowcase({ combos: initialCombos }: ComboShowcaseProps = {}) {
   const { language } = useLanguage();
   const { flyToCart } = useFlyToCart();
@@ -28,6 +57,12 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
   // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Deal hôm nay" (rỗng trước khi mount)
   const dealIds = useTodayDealIds();
   const [comboList, setComboList] = useState<Combo[]>(initialCombos || combos);
+  // Mặc định "Mới nhất" → combo admin vừa thêm luôn nằm đầu khu, không bị đẩy ra sau
+  const [sortBy, setSortBy] = useState<ComboSort>('newest');
+  const [expanded, setExpanded] = useState(false);
+  // Chỉ tính nhãn "Mới" sau khi mount (tránh lệch giờ server/trình duyệt khi hydrate)
+  const [now, setNow] = useState(0);
+  useEffect(() => setNow(Date.now()), []);
 
   useEffect(() => {
     if (initialCombos) {
@@ -86,34 +121,98 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
     setTimeout(() => setAddedId(null), 2000);
   };
 
-  // Chia các combo đang hoạt động thành 2 hàng x 6 cột (giống hệt bố cục Sản Phẩm Thái Sơn)
-  const activeCombos = comboList.filter((c) => c.isActive);
-  const rows = [
-    { id: 'combo-row-1', items: activeCombos.slice(0, 6) },
-    { id: 'combo-row-2', items: activeCombos.slice(6, 12) },
-  ];
+  const activeCombos = useMemo(() => comboList.filter((c) => c.isActive), [comboList]);
+  const hasBestSeller = activeCombos.some((c) => c.isBestSeller);
+
+  // Sắp xếp theo tab đang chọn; mọi tab đều lấy "mới nhất" làm thứ tự phụ
+  const sortedCombos = useMemo(() => {
+    const newest = sortNewest(activeCombos);
+    if (sortBy === 'best') {
+      return newest
+        .map((c, i) => ({ c, i }))
+        .sort((a, b) => Number(Boolean(b.c.isBestSeller)) - Number(Boolean(a.c.isBestSeller)) || a.i - b.i)
+        .map(({ c }) => c);
+    }
+    if (sortBy === 'saving') {
+      return newest
+        .map((c, i) => ({ c, i }))
+        .sort((a, b) => savingRatio(b.c) - savingRatio(a.c) || a.i - b.i)
+        .map(({ c }) => c);
+    }
+    return newest;
+  }, [activeCombos, sortBy]);
 
   // Không có combo đang bán → ẩn cả khu, không hiện khung trống
   if (activeCombos.length === 0) return null;
 
+  const total = sortedCombos.length;
+  const visibleCombos = expanded ? sortedCombos : sortedCombos.slice(0, COLLAPSED_COUNT);
+  // Còn combo bị ẩn (desktop > 12, hoặc điện thoại > 6) → hiện nút "Xem tất cả"; ≤ 12 thì nút chỉ cần trên điện thoại
+  const canToggle = total > COLLAPSED_COUNT_MOBILE;
+  const toggleOnlyMobile = total <= COLLAPSED_COUNT;
+
+  const tabs: { key: ComboSort; vi: string; en: string }[] = [
+    { key: 'newest', vi: 'Mới nhất', en: 'Newest' },
+    ...(hasBestSeller ? [{ key: 'best' as const, vi: 'Bán chạy', en: 'Best sellers' }] : []),
+    { key: 'saving', vi: 'Tiết kiệm nhất', en: 'Biggest savings' },
+  ];
+
+  const handleToggle = () => {
+    if (expanded) {
+      // Thu gọn → cuộn về đầu khu combo để không bị "lạc" giữa trang
+      document.getElementById('combo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setExpanded((v) => !v);
+  };
+
   return (
     <section id="combo" className="max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8">
-      {/* Tiêu đề cùng kiểu với các hàng sản phẩm trang chủ (ProductCarousel) */}
-      <div className="mb-3">
-        <h2 className="text-xl md:text-2xl text-ink-950">{language === 'en' ? 'Value Combos' : 'Combo tiết kiệm'}</h2>
-        <p className="text-xs md:text-sm text-gray-600 mt-0.5">
-          {language === 'en' ? 'Mix your favourite drinks and save more' : 'Kết hợp nhiều loại thức uống, tiết kiệm hơn mua lẻ'}
-        </p>
+      {/* Tiêu đề + số combo + tab sắp xếp */}
+      <div className="mb-3 md:mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 className="text-xl md:text-2xl text-ink-950">
+            {language === 'en' ? 'Value Combos' : 'Combo tiết kiệm'}
+            <span className="ml-2 align-middle text-xs md:text-sm text-gray-500">
+              ({total} {language === 'en' ? 'combos' : 'combo'})
+            </span>
+          </h2>
+          <p className="text-xs md:text-sm text-gray-600 mt-0.5">
+            {language === 'en' ? 'Mix your favourite drinks and save more' : 'Kết hợp nhiều loại thức uống, tiết kiệm hơn mua lẻ'}
+          </p>
+        </div>
+
+        <div
+          role="tablist"
+          aria-label={language === 'en' ? 'Sort combos' : 'Sắp xếp combo'}
+          className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] -mx-1 px-1"
+        >
+          {tabs.map((t) => {
+            const active = sortBy === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSortBy(t.key)}
+                className={cn(
+                  'shrink-0 h-9 px-3.5 rounded-full text-xs sm:text-sm border transition-colors cursor-pointer',
+                  active
+                    ? 'bg-brand-emerald border-brand-emerald text-white'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-brand-emerald hover:text-brand-emerald'
+                )}
+              >
+                {language === 'en' ? t.en : t.vi}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Lưới 2 hàng x 6 cột chuẩn giao diện trang chủ */}
-      <div className="space-y-3 sm:space-y-4 md:space-y-5 lg:space-y-6 w-full">
-        {rows.map((row) => (
-          <div
-            key={row.id}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-3.5 lg:gap-4 w-full"
-          >
-            {row.items.map((combo, cIdx) => {
+      {/* Một lưới duy nhất: 2 cột (điện thoại) / 3 cột (tablet) / 6 cột (desktop) */}
+      <div className="w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-3.5 lg:gap-4 w-full">
+            {visibleCombos.map((combo, cIdx) => {
               const isJustAdded = addedId === combo.id;
               const comboName = language === 'en' && combo.nameEn ? combo.nameEn : combo.name;
               const shortComboName = comboName.includes(',') ? comboName.split(',')[0].trim() : comboName;
@@ -129,9 +228,10 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                   transition={{
                     duration: 0.4,
                     ease: 'easeOut',
-                    delay: cIdx * 0.04,
+                    delay: (cIdx % 6) * 0.04,
                   }}
-                  className="h-full"
+                  // Điện thoại khi thu gọn: chỉ hiện 6 combo đầu
+                  className={cn('h-full', !expanded && cIdx >= COLLAPSED_COUNT_MOBILE && 'hidden sm:block')}
                 >
                   <article className="group h-full flex flex-col bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 hover:shadow-md">
                     {/* Phần trên: Ảnh + Tiêu đề mô tả (Bọc trong thẻ Link điều hướng vào chi tiết combo) */}
@@ -155,11 +255,20 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           loading="lazy"
                         />
 
-                        {/* Nhãn Deal hôm nay (Góc trên trái) */}
-                        {dealIds.has(combo.id) && (
-                          <span className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 pointer-events-none px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
-                            {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
-                          </span>
+                        {/* Nhãn Deal hôm nay / Mới (Góc trên trái) */}
+                        {(dealIds.has(combo.id) || isNewCombo(combo, now)) && (
+                          <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 pointer-events-none flex flex-col items-start gap-0.5">
+                            {dealIds.has(combo.id) && (
+                              <span className="px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
+                                {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+                              </span>
+                            )}
+                            {isNewCombo(combo, now) && (
+                              <span className="px-1.5 py-0.5 text-2xs bg-amber-500 text-white rounded shadow-xs">
+                                {language === 'en' ? 'New' : 'Mới'}
+                              </span>
+                            )}
+                          </div>
                         )}
 
                         {/* Huy hiệu giảm giá (Góc trên phải) */}
@@ -214,7 +323,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                         </span>
                       </div>
 
-                      {/* Nút thêm vào giỏ hàng đồng bộ tất cả 12 combo */}
+                      {/* Nút thêm vào giỏ hàng */}
                       <button
                         type="button"
                         onClick={(e) => handleAddToCart(combo, e)}
@@ -239,8 +348,31 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
               );
             })}
           </div>
-        ))}
       </div>
+
+      {/* Nút xem tất cả / thu gọn — chỉ khi còn combo bị ẩn */}
+      {canToggle && (
+        <div className={cn('mt-4 md:mt-5 flex justify-center', toggleOnlyMobile && 'sm:hidden')}>
+          <button
+            type="button"
+            onClick={handleToggle}
+            aria-expanded={expanded}
+            className="inline-flex items-center gap-1.5 h-10 px-5 rounded-full border border-brand-emerald text-brand-emerald text-sm hover:bg-brand-emerald hover:text-white transition-colors cursor-pointer"
+          >
+            {expanded ? (
+              <>
+                {language === 'en' ? 'Show less' : 'Thu gọn'}
+                <ChevronUp className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                {language === 'en' ? `View all ${total} combos` : `Xem tất cả ${total} combo`}
+                <ChevronDown className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
