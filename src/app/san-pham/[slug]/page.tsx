@@ -37,6 +37,7 @@ import { canonicalProductId } from '@/lib/inventory';
 import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
+import { safeJsonLd } from '@/lib/jsonLd';
 
 export const dynamic = 'force-dynamic';
 
@@ -429,7 +430,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     <div className="bg-white min-h-screen">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 
       {useNewLayout ? (
