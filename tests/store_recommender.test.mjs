@@ -13,6 +13,11 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 import { calculateShippingFee as calculatePolicyShippingFee } from '@/config/inventory';
 import { getPeakHourMultiplier } from '@/lib/storeRecommender';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const calculateShippingFee = (roadKm, orderSubtotal = 0) => calculatePolicyShippingFee(orderSubtotal, roadKm).fee;
 
 async function runTests() {

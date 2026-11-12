@@ -16,6 +16,11 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const APPLY = process.argv.includes('--apply');
 const ALLOW_REMOTE = process.argv.includes('--allow-remote');
 

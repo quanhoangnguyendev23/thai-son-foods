@@ -5,6 +5,11 @@ import { banners } from '../src/data/banners';
 import { defaultScrollBanners } from '../src/components/product/ScrollBannerShowcase';
 import { brandSlides } from '../src/data/brand-showcase';
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase(process.env.DB_NAME || 'WebTSF');
+
 // SEC-02: mật khẩu DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
 function dbPasswordFromEnv() {
   if (!process.env.DATABASE_URL) {

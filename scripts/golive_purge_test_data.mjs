@@ -23,6 +23,18 @@
  */
 import pg from 'pg';
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ áp dụng khi GHI (--apply): DB trong --db phải là staging/test, hoặc chạy kèm ALLOW_PROD_DB=yes.
+// Chạy thử (dry-run, mặc định) chỉ đọc nên không bị chặn.
+{
+  const argv = process.argv.slice(2);
+  if (argv.includes('--apply')) {
+    const i = argv.indexOf('--db');
+    assertSafeDatabase(i >= 0 ? argv[i + 1] : argv.find((a) => a.startsWith('--db='))?.slice(5));
+  }
+}
+
 function parseArgs(argv) {
   const args = { apply: false, db: null, orders: null, reviews: null, confirmDb: null, backup: false, purgeFeature: false, before: null };
   for (let i = 0; i < argv.length; i++) {

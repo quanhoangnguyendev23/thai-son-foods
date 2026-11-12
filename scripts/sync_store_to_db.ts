@@ -2,6 +2,11 @@ import { Pool } from 'pg';
 import { products, categories } from '../src/data/products';
 import { combos } from '../src/data/combos';
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase('WebTSF');
+
 // SEC-02: mật khẩu DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
 function dbPasswordFromEnv() {
   if (!process.env.DATABASE_URL) {

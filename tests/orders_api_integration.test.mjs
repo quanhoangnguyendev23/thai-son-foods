@@ -13,6 +13,11 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { setupReviewTestEnv, lockReviewTestDb, REVIEW_TEST_DB } from './helpers/review_test_db.mjs';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const { dbName } = setupReviewTestEnv();
 assert.equal(dbName, REVIEW_TEST_DB);
 

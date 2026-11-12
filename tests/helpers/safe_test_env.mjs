@@ -1,4 +1,5 @@
 import url from 'node:url';
+import { assertSafeDatabase } from '../../scripts/db-guard.mjs';
 
 // SEC-02: chuỗi kết nối DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
 function requireDatabaseUrl() {
@@ -23,6 +24,9 @@ export function assertSafeTestEnvironment(customDbUrl) {
   }
 
   const dbUrl = customDbUrl || requireDatabaseUrl();
+
+  // TEST-GUARD: tên DB phải chứa "staging" hoặc "test" (hoặc ALLOW_PROD_DB=yes). Trước đây chỉ chặn tên chứa "production".
+  assertSafeDatabase(dbUrl);
 
   let parsed;
   try {

@@ -3,6 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 // SEC-02: chuỗi kết nối DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
 function requireDatabaseUrl() {
   if (!process.env.DATABASE_URL) {

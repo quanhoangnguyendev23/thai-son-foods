@@ -1,3 +1,8 @@
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 async function test() {
   const res = await fetch('http://localhost:3000/api/orders', {
     method: 'POST',

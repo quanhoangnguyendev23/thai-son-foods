@@ -4,6 +4,11 @@
  */
 import 'dotenv/config';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
 process.env.GOOGLE_CLIENT_SECRET = 'test-google-client-secret';
 process.env.FACEBOOK_CLIENT_ID = 'test-facebook-app-id';

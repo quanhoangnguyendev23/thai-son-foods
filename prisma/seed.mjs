@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const prisma = new PrismaClient();
 
 const categories = [

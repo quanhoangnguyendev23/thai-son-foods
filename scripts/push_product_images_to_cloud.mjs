@@ -19,6 +19,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const apply = process.argv.includes('--apply');
 

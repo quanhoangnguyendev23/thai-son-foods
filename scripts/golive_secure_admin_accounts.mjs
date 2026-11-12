@@ -22,6 +22,17 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ áp dụng khi GHI (--apply): DB trong --db phải là staging/test, hoặc chạy kèm ALLOW_PROD_DB=yes.
+// Chạy thử (dry-run, mặc định) chỉ đọc nên không bị chặn.
+{
+  const argv = process.argv.slice(2);
+  if (argv.includes('--apply')) {
+    const i = argv.indexOf('--db');
+    assertSafeDatabase(i >= 0 ? argv[i + 1] : argv.find((a) => a.startsWith('--db='))?.slice(5));
+  }
+}
 
 // SEC-02: mật khẩu DB không còn viết cứng ở đây. Vẫn coi mật khẩu DB (lấy từ --db hoặc DATABASE_URL) là mật khẩu yếu cho admin.
 const DB_PASSWORD_FROM_ENV = (() => {

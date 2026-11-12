@@ -11,6 +11,11 @@ import {
   InsufficientStockConfirmError,
 } from '../src/lib/inventory.js';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 async function runTestSuite() {
   console.log('================================================================');
   console.log('         PHASE 1 BACKEND AUTOMATED TEST SUITE                   ');

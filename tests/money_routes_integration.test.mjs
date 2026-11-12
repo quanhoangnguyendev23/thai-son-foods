@@ -9,6 +9,11 @@ import { NextRequest } from 'next/server';
 import { setupReviewTestEnv, lockReviewTestDb } from './helpers/review_test_db.mjs';
 import { installFakeNextHeaders, loginAdmin, logoutAdmin, partnerBearer, jsonRequest, readJson } from './helpers/review_test_session.mjs';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 setupReviewTestEnv();
 installFakeNextHeaders();
 process.env.CRON_SECRET = 'test-cron-secret-0123456789abcdef';

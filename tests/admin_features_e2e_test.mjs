@@ -6,6 +6,12 @@
 import 'dotenv/config';
 import pg from 'pg';
 import { SignJWT } from 'jose';
+
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 const db = new pg.Pool({ connectionString: process.env.DATABASE_URL });

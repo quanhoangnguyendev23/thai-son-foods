@@ -11,6 +11,11 @@
 
 import { query } from '../src/lib/db.ts';
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 function determineAreaLabel(province, district, address) {
   const p = (province || '').toLowerCase();
   const d = (district || '').toLowerCase();

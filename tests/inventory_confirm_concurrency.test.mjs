@@ -7,6 +7,11 @@ import { test, describe, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { setupReviewTestEnv, lockReviewTestDb } from './helpers/review_test_db.mjs';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 setupReviewTestEnv();
 
 const { pool, initDatabase } = await import('@/lib/db');

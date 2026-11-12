@@ -8,12 +8,15 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
+import { assertSafeDatabase } from './db-guard.mjs';
 
 const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const targetConnectionString = process.argv[2] || process.env.TARGET_DATABASE_URL;
+// TEST-GUARD: chỉ khôi phục vào DB staging/test, hoặc chạy kèm ALLOW_PROD_DB=yes.
+if (targetConnectionString) assertSafeDatabase(targetConnectionString);
 
 if (!targetConnectionString) {
   console.error('\n❌ LỖI: Vui lòng cung cấp chuỗi kết nối Database Cloud!');

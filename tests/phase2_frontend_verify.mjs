@@ -2,6 +2,11 @@ import 'dotenv/config';
 import { pool } from '../src/lib/db';
 import { getComboStockDetails } from '../src/lib/inventory';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 async function runPhase2Tests() {
   console.log('================================================================');
   console.log('         PHASE 2 FRONTEND & API VERIFICATION SUITE              ');

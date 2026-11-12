@@ -5,6 +5,11 @@
 import fs from 'node:fs';
 import pg from 'pg';
 
+import { assertSafeDatabase } from './db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const env = {};
 for (const f of ['.env', '.env.local']) {
   if (!fs.existsSync(f)) continue;

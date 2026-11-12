@@ -8,6 +8,11 @@ import { readFileSync } from 'node:fs';
 import { setupReviewTestEnv, lockReviewTestDb } from './helpers/review_test_db.mjs';
 import { installFakeNextHeaders, loginUser, logoutUser, jsonRequest, readJson } from './helpers/review_test_session.mjs';
 
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 setupReviewTestEnv();
 installFakeNextHeaders();
 

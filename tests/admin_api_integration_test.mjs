@@ -6,6 +6,12 @@
  * Tuỳ chọn: BASE_URL=http://127.0.0.1:3300  (khi chạy bản production với JWT_SECRET riêng — đặt cùng JWT_SECRET cho script)
  */
 import { createRequire } from 'node:module';
+
+import { assertSafeDatabase } from '../scripts/db-guard.mjs';
+
+// TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
+assertSafeDatabase();
+
 const require = createRequire(import.meta.url);
 require('dotenv').config({ path: '.env', quiet: true });
 const { Client } = require('pg');
