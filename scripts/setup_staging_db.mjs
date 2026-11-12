@@ -1,7 +1,23 @@
 import pg from 'pg';
 import { execSync } from 'child_process';
 
-const DB_URL = 'postgresql://postgres:Tsf%40123@127.0.0.1:5432/postgres?sslmode=disable';
+// SEC-02: mật khẩu DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
+function dbPasswordFromEnv() {
+  if (!process.env.DATABASE_URL) {
+    try { process.loadEnvFile(); } catch { /* không có file .env */ }
+  }
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('Thiếu DATABASE_URL: đặt trong file .env hoặc biến môi trường.');
+  return decodeURIComponent(new URL(url).password);
+}
+
+// Kết nối vào DB hệ thống "postgres" (cùng host/user/mật khẩu với DATABASE_URL) để xóa/tạo lại WebTSF_staging.
+const DB_URL = (() => {
+  dbPasswordFromEnv(); // nạp .env nếu cần, báo lỗi rõ nếu thiếu DATABASE_URL
+  const u = new URL(process.env.DATABASE_URL);
+  u.pathname = '/postgres';
+  return u.toString();
+})();
 const pool = new pg.Pool({ connectionString: DB_URL });
 
 async function setupStaging() {
@@ -24,7 +40,7 @@ async function setupStaging() {
 
     console.log('Restoring data from pre_qa_audit_backup.sql to WebTSF_staging...');
     execSync('psql -U postgres -h 127.0.0.1 -p 5432 -d WebTSF_staging -f scripts/backups/pre_qa_audit_backup.sql', {
-      env: { ...process.env, PGPASSWORD: 'Tsf@123' },
+      env: { ...process.env, PGPASSWORD: dbPasswordFromEnv() },
       stdio: 'inherit'
     });
     console.log('Restore to WebTSF_staging completed successfully!');

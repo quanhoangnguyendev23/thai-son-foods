@@ -7,10 +7,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
+// SEC-02: chuỗi kết nối DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
+function requireDatabaseUrl() {
+  if (!process.env.DATABASE_URL) {
+    try { process.loadEnvFile(); } catch { /* không có file .env */ }
+  }
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('Thiếu DATABASE_URL: đặt trong file .env hoặc biến môi trường.');
+  return url;
+}
+
 const pool = new pg.Pool({
   connectionString:
-    process.env.DATABASE_URL ||
-    'postgresql://postgres:Tsf%40123@127.0.0.1:5432/WebTSF?sslmode=disable',
+    requireDatabaseUrl(),
 });
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';

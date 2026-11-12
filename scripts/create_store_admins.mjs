@@ -1,6 +1,16 @@
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
+// SEC-02: chuỗi kết nối DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
+function requireDatabaseUrl() {
+  if (!process.env.DATABASE_URL) {
+    try { process.loadEnvFile(); } catch { /* không có file .env */ }
+  }
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('Thiếu DATABASE_URL: đặt trong file .env hoặc biến môi trường.');
+  return url;
+}
+
 const ACTIVE_STORE_ADMINS = [
   { code: 'TCH', name: 'Cửa Hàng Tân Chánh Hiệp (Quận 12)' },
   { code: 'TN', name: 'Cửa Hàng Tân Nhơn (Gò Vấp)' },
@@ -31,7 +41,7 @@ const ACTIVE_STORE_ADMINS = [
 
 async function seedAdmins() {
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:Tsf@123@localhost:5432/WebTSF',
+    connectionString: requireDatabaseUrl(),
   });
 
   console.log('--- KHỞI TẠO TÀI KHOẢN ADMIN CHO 25 CỬA HÀNG ĐANG HOẠT ĐỘNG ---');

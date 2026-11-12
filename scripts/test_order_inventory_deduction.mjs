@@ -1,11 +1,21 @@
 import { Pool } from 'pg';
 
+// SEC-02: mật khẩu DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
+function dbPasswordFromEnv() {
+  if (!process.env.DATABASE_URL) {
+    try { process.loadEnvFile(); } catch { /* không có file .env */ }
+  }
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('Thiếu DATABASE_URL: đặt trong file .env hoặc biến môi trường.');
+  return decodeURIComponent(new URL(url).password);
+}
+
 async function testInventoryFlow() {
   const pool = new Pool({
     host: '127.0.0.1',
     port: 5432,
     user: 'postgres',
-    password: 'Tsf@123',
+    password: dbPasswordFromEnv(),
     database: 'WebTSF',
   });
 

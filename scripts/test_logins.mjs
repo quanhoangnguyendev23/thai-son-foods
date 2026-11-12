@@ -1,14 +1,20 @@
 import { Pool } from 'pg';
 
 const users = ['postgres', 'ITPM2', 'itpm2', 'webtsf', 'WebTSF', 'admin'];
+// SEC-02: mật khẩu DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
+function dbPasswordFromEnv() {
+  if (!process.env.DATABASE_URL) {
+    try { process.loadEnvFile(); } catch { /* không có file .env */ }
+  }
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('Thiếu DATABASE_URL: đặt trong file .env hoặc biến môi trường.');
+  return decodeURIComponent(new URL(url).password);
+}
+
+// Thử mật khẩu trong DATABASE_URL, cộng thêm các mật khẩu (nếu có) trong DB_TRY_PASSWORDS, cách nhau dấu phẩy.
 const passwords = [
-  'Tsf@123312',
-  'tsf@123312',
-  'TSF@123312',
-  'Tsf@123123',
-  'Tsf@123',
-  'Tsf@123456',
-  '123312',
+  dbPasswordFromEnv(),
+  ...(process.env.DB_TRY_PASSWORDS || '').split(',').map((p) => p.trim()).filter(Boolean),
 ];
 
 async function tryConnect(user, pw) {

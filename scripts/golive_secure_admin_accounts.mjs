@@ -23,7 +23,15 @@ import crypto from 'node:crypto';
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
 
-const WEAK_PASSWORDS = ['Admin@123', 'Tsf@123', 'QaTest@2026!Password', 'Password123!', 'Password123'];
+// SEC-02: mật khẩu DB không còn viết cứng ở đây. Vẫn coi mật khẩu DB (lấy từ --db hoặc DATABASE_URL) là mật khẩu yếu cho admin.
+const DB_PASSWORD_FROM_ENV = (() => {
+  const argv = process.argv.slice(2);
+  const i = argv.indexOf('--db');
+  const dbArg = i >= 0 ? argv[i + 1] : argv.find((a) => a.startsWith('--db='))?.slice(5);
+  const url = dbArg || process.env.DATABASE_URL;
+  try { return url ? decodeURIComponent(new URL(url).password) : ''; } catch { return ''; }
+})();
+const WEAK_PASSWORDS = ['Admin@123', ...(DB_PASSWORD_FROM_ENV ? [DB_PASSWORD_FROM_ENV] : []), 'QaTest@2026!Password', 'Password123!', 'Password123'];
 const TEST_EXACT = ['marketing_test4', 'test-mar', 'mar1', 'staff_empty_store'];
 const isTestAccount = (username) => {
   const u = String(username || '').toLowerCase();

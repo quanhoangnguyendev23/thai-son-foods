@@ -11,7 +11,17 @@ import { SignJWT } from 'jose';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres:Tsf%40123@127.0.0.1:5432/WebTSF_staging?sslmode=disable';
+// SEC-02: chuỗi kết nối DB không viết cứng trong mã nguồn; lấy từ DATABASE_URL (.env hoặc biến môi trường).
+function requireDatabaseUrl() {
+  if (!process.env.DATABASE_URL) {
+    try { process.loadEnvFile(); } catch { /* không có file .env */ }
+  }
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('Thiếu DATABASE_URL: đặt trong file .env hoặc biến môi trường.');
+  return url;
+}
+
+const DB_URL = requireDatabaseUrl();
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000';
 
 // Middleware CSRF yêu cầu Origin cho mọi yêu cầu ghi: gửi Origin mặc định
