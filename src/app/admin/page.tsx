@@ -63,6 +63,7 @@ import { downloadXlsx } from '@/lib/xlsx';
 import SheetInventoryPanel from './SheetInventoryPanel';
 import WeeklyDeliveryPanel from './WeeklyDeliveryPanel';
 import DailyDealsSwitch from './DailyDealsSwitch';
+import { ImageSizeHint, ImageDimensionBadge, bannerSpecKey, checkImageFilesAgainstSpec } from './ImageSizeGuide';
 import { RevenueCard, TopProductsCard, TopCombosCard, formatRangeLabel, isTrendStale, type RangePreset, type FixedPreset } from './DashboardCharts';
 
 // Bộ lọc của bảng Đơn Chưa Hoàn Thành (OPEN = mọi đơn trừ Hoàn thành và Đã hủy)
@@ -1276,8 +1277,19 @@ export default function AdminPage() {
       formData.append('files', files[i]);
     }
 
+    // So kích thước ảnh vừa chọn với chuẩn của vị trí (chỉ nhắc, không chặn tải lên)
+    const pickedFiles = Array.from(files);
+    const sizeSpecKey =
+      type === 'products'
+        ? 'product'
+        : type === 'combos'
+          ? 'combo'
+          : bannerSpecKey(editingBanner?.placement, type === 'banners_mobile');
+    let sizeNotice = '';
+
     setUploadingImage(true);
     try {
+      sizeNotice = await checkImageFilesAgainstSpec(pickedFiles, sizeSpecKey).catch(() => '');
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
@@ -1329,6 +1341,7 @@ export default function AdminPage() {
           showToast('Đã tải ảnh điện thoại lên thành công!');
         }
       }
+      if (sizeNotice) showToast('Đã tải ảnh lên. ' + sizeNotice, 'info');
     } catch (err: any) {
       showToast('Lỗi khi tải ảnh: ' + err.message, 'error');
     } finally {
@@ -4642,6 +4655,11 @@ export default function AdminPage() {
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-ink-500 text-xs">Chưa có ảnh</div>
                           )}
+                          {ban.image && (
+                            <div className="absolute bottom-2 left-2 right-2">
+                              <ImageDimensionBadge src={ban.image} spec={bannerSpecKey(ban.placement, false)} />
+                            </div>
+                          )}
                           <div className="absolute top-2 left-2 flex items-center gap-1.5">
                             <span className="px-2 py-0.5 rounded-full text-2xs tracking-wider bg-white text-amber-800 border border-ink-300">
                               #{idx + 1}
@@ -7037,6 +7055,9 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  {/* Kích thước ảnh chuẩn (theo khung hiển thị thật trên web) */}
+                  <ImageSizeHint spec="product" />
+
                   {/* Thêm từ URL nhanh */}
                   <div className="flex gap-2">
                     <input
@@ -7099,6 +7120,9 @@ export default function AdminPage() {
                                 #{idx + 1}
                               </span>
                             </div>
+
+                            {/* Kích thước thật của ảnh so với chuẩn */}
+                            <ImageDimensionBadge src={img.url} spec="product" className="self-start" />
 
                             {/* Alt input */}
                             <input
@@ -7748,6 +7772,9 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  {/* Kích thước ảnh chuẩn (theo khung hiển thị thật trên web) */}
+                  <ImageSizeHint spec="combo" />
+
                   {/* Thêm từ URL */}
                   <div className="flex gap-2">
                     <input
@@ -7806,6 +7833,9 @@ export default function AdminPage() {
                                 #{idx + 1}
                               </span>
                             </div>
+
+                            {/* Kích thước thật của ảnh so với chuẩn */}
+                            <ImageDimensionBadge src={img.url} spec="combo" className="self-start" />
 
                             <input
                               type="text"
@@ -8077,11 +8107,7 @@ export default function AdminPage() {
                       />
                     </label>
                   </div>
-                  <p className="text-2xs text-ink-600">
-                    {editingBanner.placement === 'scroll'
-                      ? 'Khuyến nghị 1920×1080 px (16:9), phủ toàn màn hình. JPG/PNG/WebP, tối đa 5MB.'
-                      : 'Khuyến nghị 1920×850 px (tỉ lệ ~2,26:1). JPG/PNG/WebP, tối đa 5MB.'}
-                  </p>
+                  <ImageSizeHint spec={bannerSpecKey(editingBanner.placement, false)} />
                   <input
                     type="text"
                     value={editingBanner.image || ''}
@@ -8090,10 +8116,11 @@ export default function AdminPage() {
                     className="w-full bg-white border border-ink-300 rounded-xl px-3 py-1.5 text-xs text-ink-950 placeholder:text-ink-600 focus:outline-none focus:border-amber-500 font-mono"
                   />
                   {editingBanner.image && (
-                    <div className={`relative w-full rounded-lg bg-white border border-ink-200 overflow-hidden ${editingBanner.placement === 'scroll' ? 'aspect-[16/9]' : 'aspect-[1920/850]'}`}>
+                    <div className={`relative w-full rounded-lg bg-white border border-ink-200 overflow-hidden ${editingBanner.placement === 'scroll' ? 'aspect-[16/9]' : editingBanner.placement === 'promo' ? 'aspect-[1920/850]' : 'aspect-[193/68]'}`}>
                       <Image src={editingBanner.image} alt="Preview" fill className="object-cover" unoptimized />
                     </div>
                   )}
+                  <ImageDimensionBadge src={editingBanner.image} spec={bannerSpecKey(editingBanner.placement, false)} />
                 </div>
 
                 {/* Hình ảnh điện thoại */}
@@ -8113,11 +8140,7 @@ export default function AdminPage() {
                         />
                       </label>
                     </div>
-                    <p className="text-2xs text-ink-600">
-                      {editingBanner.placement === 'scroll'
-                        ? 'Khuyến nghị 1080×1920 px (dọc 9:16). Để trống sẽ dùng ảnh máy tính trên điện thoại.'
-                        : 'Khuyến nghị 1200×675 px (16:9). Để trống sẽ dùng ảnh máy tính trên điện thoại.'}
-                    </p>
+                    <ImageSizeHint spec={bannerSpecKey(editingBanner.placement, true)} />
                     <input
                       type="text"
                       value={editingBanner.mobile_image || ''}
@@ -8126,10 +8149,11 @@ export default function AdminPage() {
                       className="w-full bg-white border border-ink-300 rounded-xl px-3 py-1.5 text-xs text-ink-950 placeholder:text-ink-600 focus:outline-none focus:border-amber-500 font-mono"
                     />
                     {editingBanner.mobile_image && (
-                      <div className={`relative rounded-lg bg-white border border-ink-200 overflow-hidden ${editingBanner.placement === 'scroll' ? 'w-32 aspect-[9/16]' : 'w-full aspect-[16/9]'}`}>
+                      <div className={`relative rounded-lg bg-white border border-ink-200 overflow-hidden ${editingBanner.placement === 'scroll' ? 'w-32 aspect-[9/16]' : 'w-full max-w-xs aspect-[108/63]'}`}>
                         <Image src={editingBanner.mobile_image} alt="Preview điện thoại" fill className="object-cover" unoptimized />
                       </div>
                     )}
+                    <ImageDimensionBadge src={editingBanner.mobile_image} spec={bannerSpecKey(editingBanner.placement, true)} />
                   </div>
                 )}
 
