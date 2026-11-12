@@ -5,7 +5,7 @@ import DiscountTag from '@/components/product/DiscountTag';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Flame, ShoppingBag, Check, ChevronRight } from 'lucide-react';
+import { Flame, ShoppingBag, Check, ChevronRight, Clock } from 'lucide-react';
 import { Combo } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
@@ -22,7 +22,7 @@ function pad(n: number) {
 }
 
 /** Đồng hồ thật: đếm tới 00:00 giờ Việt Nam, lúc bộ deal đổi. Chỉ chạy phía trình duyệt (tránh lệch hydration).
- *  Hiển thị 3 ô số Giờ : Phút : Giây nền crimson đặc, số chữ trắng. */
+ *  Bản gọn: một nhãn crimson "Kết thúc sau 09:28:32" (kiểu "Ends in" của Amazon). */
 function DealCountdown({ onNewDay }: { onNewDay: (day: number) => void }) {
   const { language } = useLanguage();
   const [ms, setMs] = useState<number | null>(null);
@@ -39,7 +39,6 @@ function DealCountdown({ onNewDay }: { onNewDay: (day: number) => void }) {
 
   const total = Math.floor((ms ?? 0) / 1000);
   const parts = [Math.floor(total / 3600), Math.floor((total % 3600) / 60), total % 60];
-  const labels = language === 'en' ? ['Hours', 'Minutes', 'Seconds'] : ['Giờ', 'Phút', 'Giây'];
   const srText =
     ms === null
       ? undefined
@@ -48,27 +47,16 @@ function DealCountdown({ onNewDay }: { onNewDay: (day: number) => void }) {
         : `Thời gian còn lại của deal trong ngày: ${parts[0]} giờ ${parts[1]} phút`;
 
   return (
-    <div className="flex items-start gap-1.5" role="timer" aria-label={srText}>
-      {parts.map((v, i) => (
-        <div key={labels[i]} className="flex items-start gap-1.5">
-          <div className="flex flex-col items-center">
-            <span
-              className="min-w-[3rem] px-1.5 py-1 rounded-lg bg-brand-crimson text-white text-2xl font-heading tabular-nums text-center leading-tight"
-              aria-hidden
-            >
-              {ms === null ? '--' : pad(v)}
-            </span>
-            <span className="mt-1 text-2xs text-white" aria-hidden>
-              {labels[i]}
-            </span>
-          </div>
-          {i < 2 && (
-            <span className="text-2xl font-heading text-white leading-tight py-1" aria-hidden>
-              :
-            </span>
-          )}
-        </div>
-      ))}
+    <div
+      className="inline-flex items-center gap-1.5 rounded-md bg-brand-crimson px-2 py-1 text-sm text-white leading-none"
+      role="timer"
+      aria-label={srText}
+    >
+      <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden />
+      <span aria-hidden>{language === 'en' ? 'Ends in' : 'Kết thúc sau'}</span>
+      <span className="tabular-nums font-heading" aria-hidden>
+        {ms === null ? '--:--:--' : parts.map(pad).join(':')}
+      </span>
     </div>
   );
 }
@@ -105,62 +93,65 @@ function DealTile({ combo }: { combo: Combo }) {
     setAdded(true);
   };
 
+  // Thẻ gọn (cùng cỡ thẻ combo): ảnh 4:3 nhỏ, tên 2 dòng, giá + nhãn giảm giá dưới giá, nút giỏ nhỏ cạnh giá
   return (
-    <article className="group flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg motion-safe:transition motion-safe:duration-300 motion-safe:hover:-translate-y-1">
+    <article className="group flex flex-col h-full bg-white rounded-xl overflow-hidden shadow-xs hover:shadow-md motion-safe:transition-shadow">
       <Link href={href} className="flex flex-col flex-1 min-w-0">
         <div ref={imgWrapRef} className="relative aspect-[4/3] w-full overflow-hidden bg-ivory">
           <Image
             src={src}
             alt={name}
             fill
-            sizes="(max-width: 1024px) 46vw, 340px"
+            sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, 200px"
             className="object-cover object-top motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
             onError={() => setSrc(MISSING_PRODUCT_IMAGE)}
           />
         </div>
-        <div className="p-2.5 sm:p-3 md:p-4 flex flex-col flex-1">
+        <div className="px-2 pt-1.5 sm:px-2.5 sm:pt-2 flex flex-col flex-1">
           <h3
-            className="text-base text-text-dark leading-snug line-clamp-2 min-h-[2.75em] group-hover:text-brand-emerald transition-colors"
+            className="text-sm text-text-dark leading-snug line-clamp-2 min-h-[2.5em] group-hover:text-brand-emerald transition-colors"
             title={name}
           >
             {name}
           </h3>
-          <div className="mt-2 flex flex-wrap items-baseline gap-x-2">
-            <span className="text-xl font-heading text-brand-forest">{formatPrice(combo.salePrice)}đ</span>
-            {combo.originalPrice > combo.salePrice && (
-              <span className="text-sm text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
-            )}
-          </div>
-          {/* Nhãn giảm giá nằm dưới giá (kiểu "Save 7%" của Amazon), không đè lên ảnh */}
+          {/* Nhãn giảm giá nằm dưới tên, ngay trên giá (kiểu Amazon), không đè lên ảnh */}
           {saving > 0 && (
-            <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-brand-crimson">
-              <DiscountTag source={combo} size="md" />
+            <p className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-2xs text-brand-crimson">
+              <DiscountTag source={combo} />
               {/* Nhãn đang hiện % thì ghi thêm số tiền; nhãn đã là số tiền thì không lặp lại */}
               {discountPercentSuffix(combo) && (
                 <span>{language === 'en' ? `Save ${formatPrice(saving)}đ` : `Tiết kiệm ${formatPrice(saving)}đ`}</span>
               )}
             </p>
           )}
+        </div>
+      </Link>
+      <div className="px-2 pb-2 sm:px-2.5 sm:pb-2.5 pt-1 flex items-end justify-between gap-1">
+        <div className="min-w-0 flex flex-col">
+          <span className="flex flex-wrap items-baseline gap-x-1">
+            <span className="text-base font-heading text-brand-forest">{formatPrice(combo.salePrice)}đ</span>
+            {combo.originalPrice > combo.salePrice && (
+              <span className="text-2xs text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
+            )}
+          </span>
           {perUnit > 0 && (
-            <p className="mt-0.5 text-xs text-text-muted">
+            <span className="text-2xs text-text-muted">
               {language === 'en'
                 ? `${formatPrice(perUnit)}đ/bottle · ${combo.totalItems} bottles`
                 : `${formatPrice(perUnit)}đ/chai · ${combo.totalItems} chai`}
-            </p>
+            </span>
           )}
         </div>
-      </Link>
-      <div className="px-2.5 pb-2.5 sm:px-3 sm:pb-3 md:px-4 md:pb-4">
         <button
           type="button"
           onClick={handleAdd}
           aria-label={language === 'en' ? `Add ${name} to cart` : `Thêm ${name} vào giỏ`}
-          className={`w-full inline-flex items-center justify-center gap-1.5 min-h-[44px] px-2 rounded-lg text-sm sm:text-base text-white cursor-pointer transition-colors ${
+          title={added ? (language === 'en' ? 'Added' : 'Đã thêm') : language === 'en' ? 'Add to cart' : 'Thêm vào giỏ'}
+          className={`shrink-0 w-10 h-10 sm:w-9 sm:h-9 inline-flex items-center justify-center rounded-lg text-white cursor-pointer transition-colors active:scale-95 ${
             added ? 'bg-brand-emerald' : 'bg-brand-forest hover:bg-brand-emerald'
           }`}
         >
-          {added ? <Check className="w-4 h-4 shrink-0" aria-hidden /> : <ShoppingBag className="w-4 h-4 shrink-0" aria-hidden />}
-          {added ? (language === 'en' ? 'Added' : 'Đã thêm') : language === 'en' ? 'Add to cart' : 'Thêm vào giỏ'}
+          {added ? <Check className="w-4 h-4" aria-hidden /> : <ShoppingBag className="w-4 h-4" aria-hidden />}
         </button>
       </div>
     </article>
@@ -172,7 +163,8 @@ function DealTile({ combo }: { combo: Combo }) {
  * - Combo, giá bán, giá gốc, % giảm: DỮ LIỆU THẬT (bảng combos).
  * - Bộ deal tự xoay vòng mỗi ngày theo giờ Việt Nam (pickDailyDeals); đồng hồ đếm thật tới lúc đổi deal (0h).
  * - initialDay: số ngày VN do máy chủ tính lúc render → server và trình duyệt chọn cùng bộ deal (không lệch hydration).
- * - Nền forest đặc + chữ trắng; lưới 2 cột (điện thoại/tablet), 4 cột (máy tính); ít hơn 4 deal thì thẻ giữ bề rộng.
+ * - Bản gọn: header 1 dòng (tiêu đề + đồng hồ dạng nhãn), lưới thẻ nhỏ cùng cỡ khu combo
+ *   (2 cột điện thoại, 3 tablet, 4 laptop, 6 màn rộng); ít deal thì thẻ giữ bề rộng, không kéo giãn.
  */
 export default function AmazonDealsRow({ combos, initialDay }: { combos: Combo[]; initialDay?: number }) {
   const { language } = useLanguage();
@@ -190,35 +182,31 @@ export default function AmazonDealsRow({ combos, initialDay }: { combos: Combo[]
   return (
     <section
       id="deal-trong-ngay"
-      className="scroll-mt-[130px] bg-brand-forest rounded-2xl shadow-sm px-3 sm:px-6 lg:px-8 py-5 sm:py-6"
+      className="scroll-mt-[130px] bg-brand-forest rounded-2xl shadow-sm px-3 sm:px-5 py-3 sm:py-4"
       aria-labelledby="deal-trong-ngay-title"
     >
-      <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 mb-4 sm:mb-5">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-brand-amber text-white flex items-center justify-center">
-            <Flame className="w-6 h-6 sm:w-7 sm:h-7" aria-hidden />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-8 h-8 shrink-0 rounded-lg bg-brand-amber text-white flex items-center justify-center">
+            <Flame className="w-5 h-5" aria-hidden />
           </span>
-          <div className="min-w-0">
-            <h2 id="deal-trong-ngay-title" className="font-heading text-2xl md:text-3xl text-white leading-tight">
-              {language === 'en' ? 'Deals of the day' : DEAL_COUNTDOWN_PLACEHOLDER.title}
-            </h2>
-            <p className="text-sm text-white mt-0.5">
-              {language === 'en' ? `Today ${dayLabel}` : `Hôm nay ${dayLabel}`}
-            </p>
-          </div>
+          <h2 id="deal-trong-ngay-title" className="font-heading text-lg sm:text-xl text-white leading-tight">
+            {language === 'en' ? 'Deals of the day' : DEAL_COUNTDOWN_PLACEHOLDER.title}
+          </h2>
+          <span className="hidden sm:inline text-sm text-white/80">
+            {language === 'en' ? `· Today ${dayLabel}` : `· Hôm nay ${dayLabel}`}
+          </span>
         </div>
-        <div className="flex items-end justify-between gap-4 md:ml-auto md:justify-end">
-          <DealCountdown onNewDay={setDay} />
-          <Link
-            href="/#combo"
-            className="shrink-0 inline-flex items-center gap-0.5 min-h-[44px] text-base text-white underline-offset-4 hover:underline"
-          >
-            {language === 'en' ? 'See all combos' : 'Xem tất cả combo'}
-            <ChevronRight className="w-4 h-4" aria-hidden />
-          </Link>
-        </div>
+        <DealCountdown onNewDay={setDay} />
+        <Link
+          href="/#combo"
+          className="ml-auto shrink-0 inline-flex items-center gap-0.5 min-h-[44px] text-sm text-white underline-offset-4 hover:underline"
+        >
+          {language === 'en' ? 'See all combos' : 'Xem tất cả combo'}
+          <ChevronRight className="w-4 h-4" aria-hidden />
+        </Link>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 sm:gap-3">
         {deals.map((c) => (
           <DealTile key={c.id} combo={c} />
         ))}
