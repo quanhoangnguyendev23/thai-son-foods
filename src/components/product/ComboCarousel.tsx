@@ -1,6 +1,6 @@
 'use client';
 
-import { discountLabel } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -57,16 +57,6 @@ function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) 
             loading="lazy"
             className="object-cover transition-transform duration-500"
           />
-          {(combo.isBestSeller || discountLabel(combo)) && (
-            <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10 flex flex-col items-end gap-0.5">
-              {combo.isBestSeller && (
-                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">Bán chạy</span>
-              )}
-              {discountLabel(combo) && (
-                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">{discountLabel(combo)}</span>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Thông tin: cùng cỡ chữ, cách dòng với thẻ sản phẩm */}
@@ -74,6 +64,12 @@ function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) 
           <h3 title={combo.name} className={`text-base text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 ${plain ? 'group-hover:underline ' : ''}transition-colors`}>
             {combo.name}
           </h3>
+          {/* Nhãn Bán chạy nằm dưới tên (kiểu Amazon), không đè lên ảnh */}
+          {combo.isBestSeller && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              <span className="px-1.5 py-0.5 text-2xs bg-brand-emerald text-white rounded">Bán chạy</span>
+            </div>
+          )}
 
           <div className={`relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2${plain ? '' : ' border-t border-gray-100'}`}>
             <div className="flex flex-col min-w-0">
@@ -81,8 +77,12 @@ function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) 
                 <span>{formatPrice(combo.salePrice)}đ</span>
                 <span className="text-2xs lg:text-2xs text-text-muted">/combo {combo.totalItems} chai</span>
               </div>
+              {/* Giá gốc + nhãn giảm giá nằm dưới giá bán (không đè lên ảnh) */}
               {combo.originalPrice > combo.salePrice && (
-                <span className="text-2xs lg:text-2xs text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
+                <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+                  <span className="text-2xs lg:text-2xs text-text-muted line-through">{formatPrice(combo.originalPrice)}đ</span>
+                  <DiscountTag source={combo} />
+                </div>
               )}
             </div>
 

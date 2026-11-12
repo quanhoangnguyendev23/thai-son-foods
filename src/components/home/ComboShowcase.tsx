@@ -1,6 +1,6 @@
 'use client';
 
-import { discountLabel } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -255,36 +255,6 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           loading="lazy"
                         />
 
-                        {/* Nhãn Deal hôm nay / Mới (Góc trên trái) */}
-                        {(dealIds.has(combo.id) || isNewCombo(combo, now)) && (
-                          <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 pointer-events-none flex flex-col items-start gap-0.5">
-                            {dealIds.has(combo.id) && (
-                              <span className="px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
-                                {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
-                              </span>
-                            )}
-                            {isNewCombo(combo, now) && (
-                              <span className="px-1.5 py-0.5 text-2xs bg-amber-500 text-white rounded shadow-xs">
-                                {language === 'en' ? 'New' : 'Mới'}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Huy hiệu giảm giá (Góc trên phải) */}
-                        <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none flex flex-col items-end gap-0.5">
-                          {combo.isBestSeller && (
-                            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
-                              {language === 'en' ? 'Best seller' : 'Bán chạy'}
-                            </span>
-                          )}
-                          {discountLabel(combo) && (
-                            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
-                              {discountLabel(combo)}
-                            </span>
-                          )}
-                        </div>
-
                         {/* Huy hiệu số lượng chai (Góc dưới phải) */}
                         <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 z-10 pointer-events-none">
                           <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
@@ -308,19 +278,45 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           >
                             {comboDesc}
                           </p>
+                          {/* Nhãn Deal hôm nay / Bán chạy nằm dưới chữ (kiểu Amazon), không đè lên ảnh */}
+                          {(dealIds.has(combo.id) || combo.isBestSeller || isNewCombo(combo, now)) && (
+                            <div className="flex flex-wrap gap-1 mb-1">
+                              {dealIds.has(combo.id) && (
+                                <span className="px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded">
+                                  {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+                                </span>
+                              )}
+                              {isNewCombo(combo, now) && (
+                                <span className="px-1.5 py-0.5 text-2xs bg-amber-500 text-white rounded">
+                                  {language === 'en' ? 'New' : 'Mới'}
+                                </span>
+                              )}
+                              {combo.isBestSeller && (
+                                <span className="px-1.5 py-0.5 text-2xs bg-brand-emerald text-white rounded">
+                                  {language === 'en' ? 'Best seller' : 'Bán chạy'}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Link>
 
                     {/* Hàng giá bán & Nút hành động */}
                     <div className="px-2 pb-2 sm:px-2.5 sm:pb-2.5 md:px-3 md:pb-3 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center justify-between gap-1">
-                      <div className="flex flex-col sm:flex-row sm:items-baseline">
+                      <div className="flex flex-col min-w-0">
                         <span className="text-sm sm:text-base text-green-primary">
                           {formatPrice(combo.salePrice)}đ
                         </span>
-                        <span className="text-2xs lg:text-2xs text-gray-400 line-through sm:ml-1">
-                          {formatPrice(combo.originalPrice)}đ
-                        </span>
+                        {/* Giá gốc + nhãn giảm giá nằm dưới giá bán */}
+                        <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+                          {combo.originalPrice > combo.salePrice && (
+                            <span className="text-2xs lg:text-2xs text-gray-400 line-through">
+                              {formatPrice(combo.originalPrice)}đ
+                            </span>
+                          )}
+                          <DiscountTag source={combo} />
+                        </div>
                       </div>
 
                       {/* Nút thêm vào giỏ hàng */}

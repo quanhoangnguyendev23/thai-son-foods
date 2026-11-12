@@ -1,6 +1,7 @@
 'use client';
 
-import { discountLabel, discountPercentSuffix } from '@/lib/discount-label';
+import { discountPercentSuffix } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -443,9 +444,6 @@ export default function ComboDetailView({
               {combo.isBestSeller && (
                 <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">{isEn ? 'Best seller' : 'Bán chạy'}</span>
               )}
-              {discountLabel(combo) && (
-                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">{discountLabel(combo)}</span>
-              )}
               <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                 {isCustomizable
                   ? (isEn ? 'Customizable Combo' : 'Combo tự chọn vị')
@@ -461,6 +459,7 @@ export default function ComboDetailView({
               <DailyDealBadge comboId={combo.id} isEn={isEn} />
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-2xl leading-none text-ink-950">{formatPrice(combo.salePrice)}đ</span>
+                <DiscountTag source={combo} size="md" className="self-center" />
                 <span className="text-sm text-gray-600">
                   ({formatPrice(avgBottlePrice)}đ/{isEn ? 'bottle' : 'chai'})
                 </span>
@@ -565,6 +564,7 @@ export default function ComboDetailView({
                   {combo.originalPrice > combo.salePrice && (
                     <span className="text-sm text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>
                   )}
+                  <DiscountTag source={combo} size="md" className="self-center" />
                 </div>
                 <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/70 text-sm text-emerald-900">
                   <p className="mb-1 text-emph">

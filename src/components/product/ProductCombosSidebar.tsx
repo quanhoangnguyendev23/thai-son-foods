@@ -1,6 +1,6 @@
 'use client';
 
-import { discountLabel } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -170,20 +170,6 @@ export default function ProductCombosSidebar({
               <span className="absolute bottom-1 right-1 bg-ink-950/75 backdrop-blur-xs text-white text-2xs sm:text-2xs px-1.5 py-0.5 rounded">
                 {combo.totalItems} {language === 'en' ? 'chai' : 'chai'}
               </span>
-
-              {/* Nhãn Deal hôm nay */}
-              {dealIds.has(combo.id) && (
-                <span className="absolute top-1 left-1 z-10 pointer-events-none px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
-                  {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
-                </span>
-              )}
-
-              {/* Badge giảm giá */}
-              {discountLabel(combo) && (
-                <span className="absolute top-1 right-1 px-1.5 py-0.5 text-2xs sm:text-2xs bg-sale text-white rounded shadow-xs">
-                  {discountLabel(combo)}
-                </span>
-              )}
             </div>
 
             {/* Thông tin Text */}
@@ -200,14 +186,22 @@ export default function ProductCombosSidebar({
                   {comboDesc}
                 </p>
 
-                {/* Giá bán */}
-                <div className="flex items-baseline gap-1.5 mt-1">
+                {/* Nhãn Deal hôm nay nằm dưới chữ, ngay trên giá (kiểu Amazon) */}
+                {dealIds.has(combo.id) && (
+                  <span className="inline-block mt-1 px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded">
+                    {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+                  </span>
+                )}
+
+                {/* Giá bán + nhãn giảm giá (nằm ở khu giá, không đè lên ảnh) */}
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
                   <span className="text-sm sm:text-base text-green-primary">
                     {formatPrice(combo.salePrice)}đ
                   </span>
                   <span className="text-2xs text-gray-400 line-through">
                     {formatPrice(combo.originalPrice)}đ
                   </span>
+                  <DiscountTag source={combo} />
                 </div>
               </div>
             </div>
@@ -312,11 +306,6 @@ export default function ProductCombosSidebar({
 
           {/* Thông tin Text */}
           <div className="min-w-0 flex-1 w-full">
-            {dealIds.has(combo.id) && (
-              <span className="inline-block mb-0.5 px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded">
-                {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
-              </span>
-            )}
             <h4 className="text-sm text-text-dark leading-snug group-hover/card:text-emerald-800 transition-colors">
               {comboTitle}
             </h4>
@@ -324,6 +313,12 @@ export default function ProductCombosSidebar({
             <p className="text-2xs text-text-muted leading-tight mt-0.5" title={comboDesc}>
               {comboDesc}
             </p>
+
+            {dealIds.has(combo.id) && (
+              <span className="inline-block mt-1 px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded">
+                {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+              </span>
+            )}
 
             {/* Giá bán */}
             <div className="flex items-baseline gap-1.5 mt-1">
@@ -333,11 +328,7 @@ export default function ProductCombosSidebar({
               <span className="text-2xs text-gray-400 line-through">
                 {formatPrice(combo.originalPrice)}đ
               </span>
-              {discountLabel(combo) && (
-                <span className="text-2xs text-sale bg-red-50 px-1 py-0.2 rounded">
-                  {discountLabel(combo)}
-                </span>
-              )}
+              <DiscountTag source={combo} />
             </div>
           </div>
         </Link>

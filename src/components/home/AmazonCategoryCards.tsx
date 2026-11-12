@@ -1,6 +1,6 @@
 'use client';
 
-import { discountLabel } from '@/lib/discount-label';
+import DiscountTag from '@/components/product/DiscountTag';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -303,15 +303,15 @@ function ComboQuadCard({ combos }: { combos: Combo[] }) {
             <Link key={c.id} href={`/combo/${c.slug}`} className="group min-w-0">
               <div className="relative aspect-[4/3] rounded-lg bg-ivory overflow-hidden">
                 <TileImage src={c.image} alt={name} sizes="(max-width: 640px) 40vw, 160px" />
-                {discountLabel(c) && (
-                  <span className="absolute top-1 right-1 px-1.5 py-0.5 text-2xs bg-sale text-white rounded">
-                    {discountLabel(c)}
-                  </span>
-                )}
               </div>
               <p className="mt-1 text-sm leading-tight text-text-body line-clamp-1 group-hover:text-green-primary" title={name}>
                 {name}
               </p>
+              {/* Giá + nhãn giảm giá nằm dưới ảnh (không đè lên ảnh) */}
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                <span className="text-sm text-text-dark">{formatPrice(c.salePrice)}đ</span>
+                <DiscountTag source={c} />
+              </div>
             </Link>
           );
         })}

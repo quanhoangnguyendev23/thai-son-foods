@@ -25,6 +25,7 @@ import {
 } from '@/lib/product-detail';
 import PackSizeSelector from '@/components/product/PackSizeSelector';
 import ProductBuyBox from '@/components/product/ProductBuyBox';
+import DiscountTag from '@/components/product/DiscountTag';
 import MobileBuyBar from '@/components/product/MobileBuyBar';
 import ProductSponsoredMiniCard from '@/components/product/ProductSponsoredMiniCard';
 import ProductSidebarSponsoredCard from '@/components/product/ProductSidebarSponsoredCard';
@@ -438,6 +439,7 @@ export default function ProductMainSection({
           <div className="border-t border-gray-200 pt-3">
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="text-2xl leading-none text-ink-950">{formatPrice(currentPrice)}đ</span>
+              <DiscountTag source={{ originalPrice, salePrice: currentPrice }} size="md" className="self-center" />
               {currentVariant && (
                 <span className="text-sm text-gray-600">
                   ({formatPrice(getUnitPrice(currentVariant))}đ/{isEn ? 'bottle' : 'chai'})
