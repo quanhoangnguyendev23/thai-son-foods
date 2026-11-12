@@ -21,6 +21,7 @@ import { Product } from '@/types';
 
 import { query } from '@/lib/db';
 import { Combo } from '@/types';
+import { splitComboRows } from '@/lib/recommendation-rows';
 
 export const dynamic = 'force-dynamic';
 
@@ -315,17 +316,14 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
   const youMayLike = notInCombo(activeCatalog).sort(
     (a, b) => Number(comboCategoryIds.has(b.categoryId)) - Number(comboCategoryIds.has(a.categoryId))
   );
-  // Combo khác có cùng sản phẩm (đã xếp theo số chai chung) / Combo cùng tầm giá (±20%) / Combo nổi bật; không lặp hàng y hệt
-  const sameIds = (a: Combo[], b: Combo[]) => a.length === b.length && a.every((c, i) => c.id === b[i].id);
-  const priceBandCombos = otherCombos.filter(
-    (c) => c.salePrice >= combo.salePrice * 0.8 && c.salePrice <= combo.salePrice * 1.2
-  );
-  const showRelatedRow = relatedCombos.length >= MIN_ROW;
-  const showPriceBandRow = priceBandCombos.length >= MIN_ROW && !(showRelatedRow && sameIds(priceBandCombos, relatedCombos));
-  const showFeaturedRow =
-    otherCombos.length > 0 &&
-    !(showRelatedRow && sameIds(otherCombos, relatedCombos)) &&
-    !(showPriceBandRow && sameIds(otherCombos, priceBandCombos));
+  // 2 hàng combo xen giữa các hàng sản phẩm, không lặp combo giữa 2 hàng (giống trang sản phẩm):
+  // hàng 1 = combo có cùng sản phẩm (nhiều chai chung trước); hàng 2 = các combo còn lại, gần tầm giá combo này trước
+  const priceGap = (c: Combo) => Math.abs(c.salePrice - combo.salePrice);
+  const otherCombosByPrice = otherCombos
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => priceGap(a.c) - priceGap(b.c) || a.i - b.i)
+    .map((x) => x.c);
+  const { related: relatedComboRow, others: moreComboRow } = splitComboRows(relatedCombos, otherCombosByPrice);
   // Khám phá dòng …: mỗi danh mục một hàng, bỏ sản phẩm đã có trong combo
   const exploreRows = categories
     .map((cat) => ({ category: cat, items: notInCombo(activeCatalog.filter((p) => p.categoryId === cat.id)) }))
@@ -364,52 +362,52 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
           initialStockDetails={initialStockDetails}
         />
 
-        {/* ── MUA LẺ SẢN PHẨM TRONG COMBO (vị trí "Gợi ý mua kèm" của trang SP) ── */}
+        {/* ── CÁC HÀNG GỢI Ý: XEN KẼ HÀNG SẢN PHẨM VÀ HÀNG COMBO (cùng thứ tự với trang sản phẩm) ──
+            SP: Mua lẻ → Bán chạy → COMBO: cùng sản phẩm → SP: Có thể thích → COMBO: khác đáng cân nhắc → SP: Khách cũng mua */}
+
+        {/* SP · MUA LẺ SẢN PHẨM TRONG COMBO (vị trí "Gợi ý mua kèm" của trang SP) */}
         {comboItemProducts.length > 0 && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel plain title="Mua lẻ sản phẩm trong combo" subtitle="Các sản phẩm có trong combo, mua riêng từng loại" products={comboItemProducts} mobileGrid wide />
           </div>
         )}
 
-        {/* ── BÁN CHẠY NHẤT (cùng dữ liệu trang SP) ── */}
+        {/* SP · BÁN CHẠY NHẤT (cùng dữ liệu trang SP) */}
         {bestSellerProducts.length >= MIN_ROW && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel plain title="Bán chạy nhất tại Thái Sơn Foods" subtitle="Xếp hạng theo số lượng đã bán" products={bestSellerProducts} mobileGrid wide ranks={bestSellerRanks} />
           </div>
         )}
 
-        {/* ── CÓ THỂ THÍCH: sản phẩm ngoài combo, cùng danh mục trước ── */}
+        {/* COMBO · CÓ CÙNG SẢN PHẨM (nhiều chai chung trước); không có thì hàng combo khác lên vị trí này */}
+        {relatedComboRow.length > 0 ? (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel plain title="Combo khác có cùng sản phẩm" subtitle="Cùng các món trong combo này, phối thêm vị khác" combos={relatedComboRow} />
+          </div>
+        ) : moreComboRow.length > 0 ? (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" subtitle="Gần tầm giá combo này đứng trước" combos={moreComboRow} />
+          </div>
+        ) : null}
+
+        {/* SP · CÓ THỂ THÍCH: sản phẩm ngoài combo, cùng danh mục trước */}
         {youMayLike.length >= MIN_ROW && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel plain title="Các sản phẩm bạn có thể thích" subtitle="Các dòng thức uống khác của Thái Sơn Foods" products={youMayLike} mobileGrid wide />
           </div>
         )}
 
-        {/* ── KHÁCH MUA COMBO NÀY CŨNG MUA (dữ liệu đơn hàng thật) ── */}
+        {/* COMBO · KHÁC ĐÁNG CÂN NHẮC: combo chưa có ở hàng trên, gần tầm giá trước (gộp "Combo cùng tầm giá" + "Combo nổi bật") */}
+        {relatedComboRow.length > 0 && moreComboRow.length > 0 && (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" subtitle="Gần tầm giá combo này đứng trước" combos={moreComboRow} />
+          </div>
+        )}
+
+        {/* SP · KHÁCH MUA COMBO NÀY CŨNG MUA (dữ liệu đơn hàng thật) */}
         {boughtTogetherProducts.length >= MIN_ROW && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel plain title="Khách mua combo này cũng mua" products={boughtTogetherProducts} mobileGrid wide />
-          </div>
-        )}
-
-        {/* ── COMBO KHÁC CÓ CÙNG SẢN PHẨM ── */}
-        {showRelatedRow && (
-          <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Combo khác có cùng sản phẩm" combos={relatedCombos} />
-          </div>
-        )}
-
-        {/* ── COMBO CÙNG TẦM GIÁ (±20%) ── */}
-        {showPriceBandRow && (
-          <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Combo cùng tầm giá" combos={priceBandCombos} />
-          </div>
-        )}
-
-        {/* ── COMBO NỔI BẬT (bỏ combo đang xem; ẩn nếu trùng hẳn một hàng combo phía trên) ── */}
-        {showFeaturedRow && (
-          <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" combos={otherCombos} />
           </div>
         )}
 
