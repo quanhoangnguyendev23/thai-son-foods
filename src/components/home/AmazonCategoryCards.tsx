@@ -1,9 +1,10 @@
 'use client';
 
+import { discountLabel } from '@/lib/discount-label';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Headphones, Leaf, LogIn, Package, ShoppingBag, Store, Truck, UserRound } from 'lucide-react';
+import { LogIn, Package, ShoppingBag, Truck, UserRound } from 'lucide-react';
 import { Combo, Product } from '@/types';
 import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 import { getProductImage, getShortProductName, MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
@@ -11,7 +12,6 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useUserAuth } from '@/context/UserAuthContext';
 import { INVENTORY_CONFIG } from '@/config/inventory';
 import { ENABLE_COMBOS } from '@/config/features';
-import StorePromotionSidebar from '@/components/home/StorePromotionSidebar';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
 import { BUY_AGAIN_PLACEHOLDER } from '@/data/homepage-placeholders';
 import { SHOW_PLACEHOLDER_BLOCKS } from '@/data/product-detail-placeholders';
@@ -303,9 +303,9 @@ function ComboQuadCard({ combos }: { combos: Combo[] }) {
             <Link key={c.id} href={`/combo/${c.slug}`} className="group min-w-0">
               <div className="relative aspect-[4/3] rounded-lg bg-ivory overflow-hidden">
                 <TileImage src={c.image} alt={name} sizes="(max-width: 640px) 40vw, 160px" />
-                {c.discount > 0 && (
+                {discountLabel(c) && (
                   <span className="absolute top-1 right-1 px-1.5 py-0.5 text-2xs bg-sale text-white rounded">
-                    -{c.discount}%
+                    {discountLabel(c)}
                   </span>
                 )}
               </div>
@@ -370,7 +370,12 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
   const { language } = useLanguage();
   const track =
     'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4';
-  const whySolo = !ENABLE_COMBOS && !SHOW_PLACEHOLDER_BLOCKS;
+  // Không có combo đang bán (DB rỗng/tạm dừng hết) → ẩn 2 thẻ combo, bố cục như khi tắt combo
+  const hasCombos = ENABLE_COMBOS && combos.length > 0;
+  // Số thẻ đứng trước thẻ "Vì sao chọn" ở hàng 2 → thẻ này trải phần cột còn lại (luôn dùng bố cục ảnh + 4 lý do)
+  const cardsBeforeWhy = (hasCombos ? 1 : 0) + (SHOW_PLACEHOLDER_BLOCKS ? 1 : 0);
+  const whySpan =
+    cardsBeforeWhy === 0 ? 'sm:col-span-2 lg:col-span-4' : cardsBeforeWhy === 1 ? 'lg:col-span-3' : 'sm:col-span-2 lg:col-span-2';
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -382,98 +387,28 @@ export default function AmazonCategoryCards({ categories, combos }: AmazonCatego
         <SignInColumn />
       </div>
 
-      {/* HÀNG 2: combo · deal sốc cửa hàng · mua lại · vì sao chọn TSF */}
+      {/* HÀNG 2: combo · mua lại · vì sao chọn TSF (thẻ "Deal sốc cửa hàng" đã gỡ: deal thật nằm ở dải #deal-trong-ngay) */}
       <div className={track}>
-        {ENABLE_COMBOS && <ComboQuadCard combos={combos} />}
-
-        {ENABLE_COMBOS && (
-          <CardShell
-            title={language === 'en' ? 'Store hot deals' : 'Deal sốc cửa hàng'}
-            footer={<MoreLink href="/#combo">{language === 'en' ? 'See more' : 'Xem thêm'}</MoreLink>}
-          >
-            {/* Tái sử dụng nguyên khối 6 huy hiệu combo khuyến mãi của trang chủ cũ */}
-            <StorePromotionSidebar />
-          </CardShell>
-        )}
+        {hasCombos && <ComboQuadCard combos={combos} />}
 
         {SHOW_PLACEHOLDER_BLOCKS && <BuyAgainPlaceholderCard />}
 
-        {/* Tắt combo và không có thẻ "Mua lại" → thẻ "Vì sao chọn" đứng một mình: trải hết hàng, ảnh tỉ lệ ngang */}
+        {/* Thẻ "Vì sao chọn" trải các cột còn lại của hàng: ảnh giữ đúng tỉ lệ gốc 1920x850 (không cắt) */}
         <CardShell
           title={language === 'en' ? 'Why choose Thai Son Foods?' : 'Vì sao chọn Thái Sơn Foods?'}
           footer={<MoreLink href="/#kho-si">{language === 'en' ? 'Learn more' : 'Tìm hiểu thêm'}</MoreLink>}
-          className={whySolo ? 'sm:col-span-2 lg:col-span-4' : undefined}
+          className={whySpan}
         >
-          {whySolo ? (
-            // Thẻ đứng một mình (trải hết hàng): ảnh giữ đúng tỉ lệ gốc 1920x850 (không cắt) + 4 lý do bên cạnh
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-center">
-              <Link href="/#kho-si" className="group block relative rounded-lg overflow-hidden bg-ivory aspect-[1920/850]">
-                <Image
-                  src="/images/warehouse/1920x850-3.png"
-                  alt={language === 'en' ? 'Thai Son Foods drinks on a supermarket chiller' : 'Sản phẩm Thái Sơn Foods trên quầy mát siêu thị'}
-                  fill
-                  sizes="(max-width: 1024px) 92vw, 760px"
-                  className="object-contain transition-transform duration-500"
-                />
-              </Link>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
-                {[
-                  {
-                    icon: Leaf,
-                    title: language === 'en' ? 'Natural ingredients' : 'Nguyên liệu tự nhiên',
-                    text:
-                      language === 'en'
-                        ? 'Corn, lotus seed, brown rice, tea — selected and plant-based.'
-                        : 'Bắp, hạt sen, gạo lứt, trà… chọn lọc, thuần chay.',
-                  },
-                  {
-                    icon: Store,
-                    title: language === 'en' ? 'Fast delivery from the nearest store' : 'Giao nhanh từ chi nhánh gần nhất',
-                    text:
-                      language === 'en'
-                        ? 'Your order is prepared by the branch closest to you.'
-                        : 'Đơn được chuẩn bị tại cửa hàng gần bạn nhất.',
-                  },
-                  {
-                    icon: Truck,
-                    title: language === 'en' ? 'Free delivery in HCMC' : 'Miễn phí giao nội thành TP.HCM',
-                    text:
-                      language === 'en'
-                        ? `On orders from ${formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ.`
-                        : `Cho đơn hàng từ ${formatPrice(INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD)}đ.`,
-                  },
-                  {
-                    icon: Headphones,
-                    title: language === 'en' ? 'Support 7:00–21:30' : 'Hỗ trợ 07:00–21:30',
-                    text: language === 'en' ? 'Hotline 028 6291 5024, every day.' : 'Hotline 028 6291 5024, tất cả các ngày.',
-                  },
-                ].map(({ icon: Icon, title, text }) => (
-                  <li key={title} className="flex items-start gap-3 rounded-xl bg-ivory/70 border border-border/70 p-3">
-                    <span className="w-9 h-9 shrink-0 rounded-lg bg-green-primary/10 text-green-primary flex items-center justify-center">
-                      <Icon className="w-[18px] h-[18px]" aria-hidden />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-base text-text-dark leading-snug">{title}</span>
-                      <span className="block text-sm text-text-muted leading-snug mt-0.5">{text}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <Link
-              href="/#kho-si"
-              className="group block relative rounded-lg overflow-hidden bg-ivory aspect-[4/3] sm:aspect-auto sm:h-full min-h-[180px]"
-            >
+            {/* 4 ô lý do đã gỡ theo yêu cầu (11/11/2026) → ảnh trải hết bề ngang thẻ */}
+            <Link href="/#kho-si" className="group block relative rounded-lg overflow-hidden bg-ivory aspect-[1920/850]">
               <Image
                 src="/images/warehouse/1920x850-3.png"
-                alt={language === 'en' ? 'Thai Son Foods customer care' : 'Thái Sơn Foods chăm sóc khách hàng'}
+                alt={language === 'en' ? 'Thai Son Foods drinks on a supermarket chiller' : 'Sản phẩm Thái Sơn Foods trên quầy mát siêu thị'}
                 fill
-                sizes="(max-width: 640px) 82vw, 700px"
-                className="object-cover transition-transform duration-500"
+                sizes="(max-width: 1024px) 92vw, 1100px"
+                className="object-contain transition-transform duration-500"
               />
             </Link>
-          )}
         </CardShell>
       </div>
     </div>

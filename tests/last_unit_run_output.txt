@@ -1,0 +1,821 @@
+﻿Database tables verified/created successfully!
+▶ bộ dựng phiên: kiểm tra hoạt động đúng trước khi dùng cho test khác
+  ✔ không đăng nhập: PUT /api/admin/orders trả 401 (372.4253ms)
+  ✔ SUPER_ADMIN ghi chú đơn: 200; STORE_STAFF cửa hàng khác: 403; STORE_STAFF đúng cửa hàng: 200; MARKETING: 403 (287.5872ms)
+  ✔ tài khoản admin bị khóa (is_active = false): mất phiên ngay (401) (260.4657ms)
+  ✔ đại lý: không phiên 401, CTV 403, đại lý ACTIVE 200, đại lý SUSPENDED 403 (238.1953ms)
+✔ bộ dựng phiên: kiểm tra hoạt động đúng trước khi dùng cho test khác (5244.8774ms)
+▶ R23: chiết khấu hạng đại lý (route thật, phiên đại lý thật)
+  ✔ hạng 15% (đối chứng): 50 chai x 18.000đ giảm 15% còn 765.000đ (200.5365ms)
+  ✔ R23: hạng 0%: 50 chai x 18.000đ giữ nguyên giá 900.000đ (không bị giảm 15%) (181.8002ms)
+  ✔ R23: danh sách sản phẩm sỉ của hạng 0%: giá sỉ bằng giá lẻ (170.9165ms)
+✔ R23: chiết khấu hạng đại lý (route thật, phiên đại lý thật) (553.766ms)
+▶ R24: PUT combo và sản phẩm kiểm tra giá vốn (route thật, phiên admin thật)
+  ✔ combo: giá vốn hợp lệ 200 và được lưu (187.7474ms)
+  ✔ R24: combo: giá vốn không phải số, âm, số lẻ, quá lớn: 400 và giá vốn trong DB không đổi (174.7234ms)
+  ✔ R24: combo: tổng số món ngoài 1 đến 1000 hoặc không phải số nguyên: 400 (173.9711ms)
+  ✔ combo: tài khoản không có quyền sửa giá vốn (MARKETING) gửi giá vốn khác: 403 (170.1242ms)
+Product not found in src/data/products.ts for: [ 'TS', 'prod-test-01', 'sua-test' ]
+  ✔ sản phẩm: giá vốn hợp lệ 200 và được lưu (248.3652ms)
+  ✔ R24: sản phẩm: giá vốn không phải số, âm, số lẻ, quá lớn: 400 và giá vốn trong DB không đổi (279.1858ms)
+✔ R24: PUT combo và sản phẩm kiểm tra giá vốn (route thật, phiên admin thật) (1234.7871ms)
+▶ R25 và R19: hủy đơn, xác nhận đơn thiếu hàng qua PUT /api/admin/orders
+  ✔ xác nhận đơn đủ hàng: 200, trừ kho và nhả giữ chỗ (206.8208ms)
+Error updating order: InsufficientStockConfirmError: Không thể xuất kho đơn o1: Sản phẩm prod-test-01 tại kho TST1 tồn kho thực tế (3 chai) không đủ để xuất (7 chai).
+    at confirmStock (D:\WebTSF\thai-son-foods\src\lib\inventory.ts:1220:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async PUT (D:\WebTSF\thai-son-foods\src\app\api\admin\orders\route.ts:537:30)
+    at async call (D:\WebTSF\thai-son-foods\tests\api_sessions_integration.test.mjs:26:15)
+    at async TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\api_sessions_integration.test.mjs:258:15)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+  insufficientItems: [ { productId: 'prod-test-01', requested: 7, available: 3 } ]
+}
+[R25 thông tin] xác nhận đơn thiếu hàng không cờ: HTTP 500 {"success":false,"error":"Không thể xuất kho đơn o1: Sản phẩm prod-test-01 tại kho TST1 tồn kho thực tế (3 chai) không đủ để xuất (7 chai)."}
+  ✔ xác nhận đơn khi tồn thực tế thấp hơn số cần xuất, không có cờ ép: bị từ chối, tồn kho không đổi (188.1912ms)
+  ⚠ R25: STORE_STAFF gửi allowOversell để xác nhận đơn thiếu hàng phải bị từ chối (chỉ quản lý được ép) (189.6412ms) # Chờ quyết định nghiệp vụ R25: nhân viên cửa hàng có được dùng nút ép xuất kho thiếu hàng không
+  ✔ SUPER_ADMIN gửi allowOversell: xác nhận được, ghi nhật ký oversell_clamped, tồn kẹp về 0 (190.1887ms)
+  ✔ R19: hủy đơn của đối tác qua PUT: hoa hồng ước tính chuyển VOID một lần, giữ chỗ được nhả, đơn CANCELLED (210.227ms)
+  ✔ hủy đơn đã hoàn tất: bị chặn 409 (trạng thái cuối) (177.7826ms)
+✔ R25 và R19: hủy đơn, xác nhận đơn thiếu hàng qua PUT /api/admin/orders (1163.7421ms)
+▶ giỏ cũ có chai lẻ được đổi sang lốc nhỏ nhất khi nạp lại
+  ✔ sản phẩm lốc nhỏ nhất 7 chai: 14 chai lẻ thành 2 lốc, đơn vị đổi sang lốc (137.2679ms)
+  ✔ dòng đã là lốc thì giữ nguyên (1.4129ms)
+✔ giỏ cũ có chai lẻ được đổi sang lốc nhỏ nhất khi nạp lại (141.3332ms)
+▶ R14 — số chai lẻ phải chia theo số chai của lốc nhỏ nhất của chính sản phẩm đó
+  ✔ R14: sản phẩm lốc nhỏ nhất 6 chai: 24 chai lẻ phải thành 4 lốc (24 chai) (1.2823ms)
+✔ R14 — số chai lẻ phải chia theo số chai của lốc nhỏ nhất của chính sản phẩm đó (1.5434ms)
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+[zustand persist middleware] Unable to update item 'cart-storage', the given storage is currently unavailable.
+▶ getItemBottleMultiplier
+  ✔ đọc số chai từ đơn vị, tên, mã quy cách (2.9929ms)
+  ✔ R16: mã quy cách dạng "-loc5" phải ra 5 chai như comment mô tả (0.7133ms)
+  ✔ không có chỉ báo: 1 chai (0.5782ms)
+✔ getItemBottleMultiplier (7.5805ms)
+▶ getItemMaxQuantity
+  ✔ giới hạn 1.000 chai quy ra số lốc (0.7089ms)
+  ✔ quy cách lớn hơn 1.000 chai vẫn cho tối thiểu 1 (0.4788ms)
+✔ getItemMaxQuantity (1.5817ms)
+▶ getCartMergeKey
+  ✔ cùng sản phẩm + cùng số chai ra cùng khóa dù mã quy cách khác nhau (1.3044ms)
+  ✔ khác số chai ra khóa khác (0.5094ms)
+  ✔ không có quy cách: khóa là productId (0.3076ms)
+✔ getCartMergeKey (2.521ms)
+▶ useCartStore — thêm, sửa, xóa
+  ✔ thêm sản phẩm mới: 1 dòng, số lượng mặc định 1 (3.2952ms)
+  ✔ thêm lại cùng sản phẩm: cộng dồn số lượng (0.894ms)
+  ✔ thêm từ trang chi tiết rồi từ thẻ: gộp 1 dòng, giữ mã của dòng có trước (0.548ms)
+  ✔ chai lẻ tự quy đổi về lốc nhỏ nhất của sản phẩm (0.6717ms)
+  ✔ số lượng 0 hoặc âm khi thêm: tối thiểu 1 (0.8862ms)
+  ✔ vượt 1.000 chai: kẹp về tối đa 142 lốc 7 chai, kể cả khi cộng dồn (0.539ms)
+  ✔ increaseQuantity dừng ở mức tối đa; decreaseQuantity về 0 thì xóa dòng (1.6429ms)
+  ✔ setQuantity: 0 hoặc âm xóa dòng, quá lớn kẹp về tối đa (0.9731ms)
+  ✔ thao tác trên mã không tồn tại: giỏ giữ nguyên (0.7862ms)
+  ✔ tổng số lượng và tạm tính (1.0468ms)
+  ✔ giỏ rỗng: tổng bằng 0 (0.5121ms)
+✔ useCartStore — thêm, sửa, xóa (13.0042ms)
+▶ Hồi quy cho lỗi R4, R5 trong REVIEW.md (đã sửa)
+  ✔ R4: addItem với số lượng NaN không được làm hỏng số lượng và tạm tính (1.1644ms)
+  ✔ R4: setQuantity với NaN không được ghi NaN vào dòng hàng (0.6383ms)
+  ✔ R5: hoàn tác "vừa thêm" từ thẻ sản phẩm khi dòng đã gộp vào mã của trang chi tiết (1.5003ms)
+  ✔ số lượng hiện trên thẻ sản phẩm (ProductCard:73-75): tìm theo khóa gộp, dòng nằm dưới mã trang chi tiết vẫn được đếm (0.7102ms)
+  ✔ undoAdd: trừ đúng số lượng, hết thì xóa dòng, không có dòng thì bỏ qua (1.2401ms)
+✔ Hồi quy cho lỗi R4, R5 trong REVIEW.md (đã sửa) (5.9575ms)
+Database tables verified/created successfully!
+▶ không deadlock khi xác nhận, giữ chỗ và hủy đồng thời trên nhiều sản phẩm dùng chung
+  ✔ 6 xác nhận + 6 hủy + 6 đặt mới đồng thời (5 vòng): không lỗi deadlock, tồn kho nhất quán (3566.2209ms)
+✔ không deadlock khi xác nhận, giữ chỗ và hủy đồng thời trên nhiều sản phẩm dùng chung (3887.0938ms)
+▶ confirmStock — tồn thực tế (10) thấp hơn tổng cần xuất (2 đơn x 7 chai)
+  ✔ tuần tự: đơn thứ hai bị từ chối vì không đủ tồn (kiểm tra hoạt động đúng) (196.5409ms)
+  ✔ R15: hai admin xác nhận đồng thời: đơn thứ hai cũng phải bị từ chối hoặc bị ghi nhận oversell_clamped (195.3796ms)
+✔ confirmStock — tồn thực tế (10) thấp hơn tổng cần xuất (2 đơn x 7 chai) (392.3019ms)
+▶ extractBottleMultiplier
+  ✔ hậu tố mã quy cách "-7chai" là nguồn ưu tiên (2.6798ms)
+  ✔ đọc từ đơn vị khi mã không có hậu tố (4.2999ms)
+  ✔ chai lẻ đã xác định rõ: 1 (1.4252ms)
+  ✔ mã chuẩn "prod-xx-01" không bị hiểu nhầm số 01 là số chai (0.5376ms)
+  ✔ hậu tố vượt 1.000 chai hoặc bằng 0 bị bỏ qua (0.4687ms)
+  ✔ không xác định được: ném lỗi, không tự rơi về 1 (1.9765ms)
+✔ extractBottleMultiplier (15.0217ms)
+▶ calculateSellable / getSellableQuantity (dạng số)
+  ✔ tồn bán được = tồn - giữ chỗ - tồn an toàn (1.0421ms)
+  ✔ không bao giờ âm (0.3336ms)
+  ✔ nhận chuỗi số từ CSDL, null và undefined coi là 0 (0.2667ms)
+  ✔ giá trị âm trong dữ liệu bị coi là 0 (0.248ms)
+✔ calculateSellable / getSellableQuantity (dạng số) (2.3988ms)
+▶ canonicalProductId
+  ✔ quy bí danh về mã chuẩn, bỏ khoảng trắng và hoa thường (0.4671ms)
+  ✔ mã lạ giữ nguyên (đã chuẩn hóa), rỗng trả chuỗi rỗng (0.3411ms)
+✔ canonicalProductId (1.098ms)
+▶ inventorySheetParser — parseCsv
+  ✔ dòng thường, CRLF, không sinh dòng rỗng ở cuối (3.4684ms)
+  ✔ ô có dấu phẩy, dấu nháy kép và xuống dòng bên trong (0.379ms)
+  ✔ bỏ BOM ở đầu file (0.2757ms)
+  ✔ chuỗi rỗng trả mảng rỗng; ô rỗng được giữ (0.3092ms)
+✔ inventorySheetParser — parseCsv (4.8544ms)
+▶ inventorySheetParser — ngày giờ
+  ✔ parseSheetDate nhận năm 2 hoặc 4 chữ số (0.7221ms)
+  ✔ parseSheetDate: ngày không tồn tại hoặc sai định dạng trả null (0.2308ms)
+  ✔ parseSheetDate: 29/02 chỉ hợp lệ ở năm nhuận (0.162ms)
+  ✔ parseSheetDateTime gắn múi giờ +07:00 (0.6205ms)
+  ✔ parseSheetDateTime: giờ phút giây ngoài khoảng hoặc thiếu giờ trả null (0.2359ms)
+  ✔ daysBetweenIso và todayInVietnam (63.2417ms)
+✔ inventorySheetParser — ngày giờ (65.7901ms)
+Database tables verified/created successfully!
+▶ R43: định nghĩa bảng điểm thưởng trong ensureMembershipSchema khớp câu truy vấn của repository
+  ✔ addLoyaltyPoints cộng điểm được trên lược đồ migration (đối chứng) (303.49ms)
+  ✖ R43: DDL loyalty_point_ledger trong ensureMembershipSchema phải có đủ cột mà INSERT/SELECT dùng (points, source_type, description) (115.0544ms)
+✖ R43: định nghĩa bảng điểm thưởng trong ensureMembershipSchema khớp câu truy vấn của repository (7381.0656ms)
+▶ POST /api/membership/subscribe
+  ✔ chưa đăng nhập: 401 (154.584ms)
+  ✔ mã gói sai: 400 (141.2133ms)
+  ✖ R41: thưởng chào mừng 50 điểm chỉ được cộng một lần dù gọi đăng ký nhiều lần (194.1534ms)
+  ✖ R41: dùng thử 30 ngày chỉ được kích hoạt một lần (gọi lại không được gia hạn thêm) (182.7813ms)
+[R41 thông tin] PRIME_YEARLY thành PAID_ACTIVE ngay, không có bước thanh toán.
+  ✔ gói trả phí PRIME_YEARLY đăng ký được mà không qua bước thanh toán nào (ghi nhận hành vi hiện tại) (152.6715ms)
+✖ POST /api/membership/subscribe (826.5364ms)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+[CustomerOtp] Đã gửi mã xác thực tới 090****567: [123456] (Hết hạn sau 5 phút)
+▶ R40: gửi OTP không bị giới hạn tần suất
+  ✖ gửi OTP khách hàng 10 lần liên tiếp cho cùng một SĐT: phải bị giới hạn (429) trước lần thứ 10 (96.9758ms)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+[OtpService] Mã xác thực OTP gửi tới 090****567: [123456] (Hết hạn sau 5 phút)
+  ✖ gửi OTP đối tác 10 lần liên tiếp cho cùng một SĐT: phải bị giới hạn (429) trước lần thứ 10 (99.2438ms)
+✖ R40: gửi OTP không bị giới hạn tần suất (196.8706ms)
+Database tables verified/created successfully!
+▶ rút tiền đối tác (partner/payouts) và số dư hiển thị
+  ✔ rút số tiền lớn hơn khả dụng (khoản chưa qua 7 ngày): bị từ chối (578.7333ms)
+  ✔ rút đúng số khả dụng 500.000đ: tạo yêu cầu PENDING, trừ ví, ghi dòng giữ tiền (206.3599ms)
+  ✔ có yêu cầu đang chờ thì không tạo thêm yêu cầu thứ hai (409) (182.6188ms)
+  ✖ Lỗi 6 (đã báo 10/11): sau khi đã chi 500.000đ, yêu cầu rút thêm 500.000đ từ khoản chưa qua 7 ngày phải bị từ chối (183.879ms)
+  ✖ R30: số dư "khả dụng" hiển thị cho đối tác phải trừ khoản đã rút (500.000đ đã chi thì khả dụng còn 0) (193.112ms)
+✖ rút tiền đối tác (partner/payouts) và số dư hiển thị (6179.1099ms)
+▶ cron sinh đơn định kỳ (cron/subscriptions/generate-orders)
+  ✔ không có/ sai CRON_SECRET: 401 (162.4393ms)
+  ✖ R31: đơn định kỳ sinh ra phải tính đúng giá lốc đã chốt (107.100đ), không phải giá một chai (15.300đ) (177.9904ms)
+Error updating order: Error: [INVENTORY_RESOLVE_FAILED] Không thể nhận dạng sản phẩm: product_id="sub-sb-01", name="Sữa Test (Lốc 7 chai)". Không tìm thấy trong products, product_variants, hay PRODUCT_ALIAS_MAP. Đơn hàng bị từ chối để tránh lọt kho.
+    at expandComboItems (D:\WebTSF\thai-son-foods\src\lib\inventory.ts:654:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async confirmStock (D:\WebTSF\thai-son-foods\src\lib\inventory.ts:1281:33)
+    at async PUT (D:\WebTSF\thai-son-foods\src\app\api\admin\orders\route.ts:537:30)
+    at async call (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:28:15)
+    at async TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:201:15)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ✖ R34: đơn định kỳ tạo từ mã sản phẩm do giao diện gửi ("sub-sb-01", như SubscribeSaveSection) phải xác nhận được bằng PUT admin (226.2794ms)
+Error in cron generate-orders: error: null value in column "province" of relation "orders" violates not-null constraint
+    at D:\WebTSF\thai-son-foods\node_modules\pg\lib\client.js:694:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Object.POST (D:\WebTSF\thai-son-foods\src\app\api\cron\subscriptions\generate-orders\route.ts:147:9)
+    at async cronWith (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:155:17)
+    at async TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:207:15)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+  length: 662,
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (ord_sub_1794442381243_575778, TSF-SUB-1243458, Khách, 0901234567, null, null, Quận 1, P1, 1 Đường Test, Đơn giao tự động định kỳ theo hợp đồng #SUB-1 (..., cod, 0, 15300, 15300, PENDING, 2026-11-12 07:13:01.223563+07, usr_mwcsnusvg, TST1, null, f, 0, 0, f, 0, null, null, null, null, null, SUBSCRIBE_AND_SAVE, UNPAID, null, null, null, null, null, null, f, null, null, null, null, f, null, null, null, null, null, null, null, null).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'orders',
+  column: 'province',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'execMain.c',
+  line: '2219',
+  routine: 'ReportNotNullViolationError'
+}
+  ✖ R32: một kỳ giao lỗi giữa chừng không được để lại kết nối trong giao dịch dang dở (507.8195ms)
+  ⚠ R33: tồn kho không đủ giữ chỗ trọn đơn định kỳ thì không được tạo đơn với giữ chỗ một phần (theo comment "Zero-Oversell") (487.1273ms) # Chờ quyết định nghiệp vụ: thiếu hàng thì bỏ qua kỳ và thử lại, hay tạo đơn chờ bổ sung hàng
+✖ cron sinh đơn định kỳ (cron/subscriptions/generate-orders) (1562.8296ms)
+▶ order-status
+  ✔ isOrderStatus chỉ nhận 6 trạng thái viết hoa (1.6245ms)
+  ✔ đi tới và nhảy cóc về phía trước được phép (0.2992ms)
+  ✔ không được đi lùi (0.2292ms)
+  ✔ hủy được từ mọi trạng thái chưa kết thúc (0.2096ms)
+  ✔ COMPLETED và CANCELLED là trạng thái cuối: không mở lại, không hủy (1.3419ms)
+  ✔ giữ nguyên trạng thái (chỉ sửa ghi chú) luôn được phép (0.1997ms)
+  ✔ trạng thái lạ: không có bước tiếp theo (0.1811ms)
+  ✔ danh sách bước tiếp theo từ PENDING (0.5435ms)
+  ✔ chỉ xóa được đơn PENDING hoặc CANCELLED (0.3061ms)
+✔ order-status (7.7627ms)
+▶ deliverySlots — clampEtaMinutes, vnParts
+  ✔ giá trị không hợp lệ dùng mặc định 30 phút (0.3252ms)
+  ✔ kẹp trong khoảng 15 đến 120 phút và làm tròn (0.2429ms)
+  ✔ vnParts đổi ngày đúng khi UTC còn hôm trước (0.2796ms)
+✔ deliverySlots — clampEtaMinutes, vnParts (1.1545ms)
+▶ deliverySlots — getDeliveryOptions
+  ✔ 10:00 giờ VN, giao 30 phút: giao ngay được, khung sớm nhất là 10:00 (1.0486ms)
+  ✔ mỗi ngày có 10 khung, khung cuối 16:00–16:30 (0.6142ms)
+  ✔ đúng mốc: 16:00 + 30 phút = 16:30 vẫn giao ngay được (0.5287ms)
+  ✔ 16:01 + 30 phút quá 16:30: không giao ngay, khung sớm nhất là 07:00 ngày mai (0.4009ms)
+  ✔ 06:00 sáng (trước giờ mở): không giao ngay, khung sớm nhất 07:00 hôm nay (0.2436ms)
+  ✔ qua tháng: 30/11 thì ngày thứ ba là 02/12 (0.4596ms)
+  ✔ thời gian giao do client gửi bị kẹp tối đa 120 phút (0.4115ms)
+✔ deliverySlots — getDeliveryOptions (4.3991ms)
+▶ deliverySlots — findSlot, nhãn hiển thị
+  ✔ tìm đúng khung theo ISO giờ bắt đầu (0.6321ms)
+  ✔ khung hôm nay đã quá giờ vẫn tìm thấy nhưng mang lý do TOO_LATE (0.2787ms)
+  ✔ mã khung sai, lệch phút, ngoài 3 ngày, sai kiểu: null (0.3349ms)
+  ✔ formatDeliveryWindow (0.4525ms)
+  ✔ describeOrderDelivery (0.3871ms)
+✔ deliverySlots — findSlot, nhãn hiển thị (2.5928ms)
+Database tables verified/created successfully!
+[Orders] Đơn TSF-25612276: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+▶ POST /api/orders — nền tảng (kiểm tra bộ dựng test chạy đúng)
+  ✔ đơn COD hợp lệ: 200, server tự tính giá, giữ chỗ tồn kho 7 chai (184.4838ms)
+  ✔ SĐT sai định dạng: 400 (2.2706ms)
+  ✔ giỏ rỗng: 400 (1.0844ms)
+  ✔ mã sản phẩm không tồn tại: 400, không tạo đơn (11.4763ms)
+[Orders] Đơn TSF-27509724: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ 2 đơn liên tiếp cùng SĐT viết liền: đơn thứ hai bị chặn 429 (khoảng cách 5 phút) (42.4934ms)
+✔ POST /api/orders — nền tảng (kiểm tra bộ dựng test chạy đúng) (3582.6228ms)
+[Orders] Đơn TSF-27984865: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-28009569: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-27988538: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-27996646: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-27999042: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+▶ chống bán lố tồn kho khi nhiều đơn đặt đồng thời
+  ✔ 5 đơn đồng thời (mỗi đơn 7 chai, SĐT khác nhau) cho tồn 20 chai: đúng 2 đơn thành công, giữ chỗ 14 chai, 3 đơn bị 409 (306.7306ms)
+✔ chống bán lố tồn kho khi nhiều đơn đặt đồng thời (307.294ms)
+[Orders] Đơn TSF-33645314: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+▶ hoa hồng đối tác khi đặt đơn có mã giới thiệu
+  ✔ đơn có mã giới thiệu hợp lệ: ghi nhận attribution cho đối tác, không phải tự giới thiệu (306.8863ms)
+[Orders] Đơn TSF-35503754: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ R22: chính sách 10,00 (PERCENTAGE) phải ra hoa hồng 10% giá trị đơn, không phải 1.000% (179.9759ms)
+[Orders] Đơn TSF-37184532: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ R22: chính sách 0% là hợp lệ, hoa hồng bằng 0 (không bị đổi thành 10%) (165.3643ms)
+[Orders] Đơn TSF-38771321: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ R22: chính sách 12,5% ra đúng số tiền và lưu tỷ lệ theo đơn vị phần trăm (152.5023ms)
+[Orders] Đơn TSF-40337296: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ không có chính sách trong DB: dùng mặc định 10% của PARTNER_CONFIG (154.9233ms)
+[Orders] Đơn TSF-41546263: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ tự mua qua mã của chính mình: hoa hồng 0 (117.9561ms)
+✔ hoa hồng đối tác khi đặt đơn có mã giới thiệu (1078.6473ms)
+[Orders] Đơn TSF-41809932: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+▶ Hồi quy cho lỗi R1, R2, R3 trong REVIEW.md (đã sửa)
+  ✔ R1: SĐT có dấu cách vẫn phải bị chặn 429 khi đặt đơn thứ hai liền sau đơn đầu (33.8724ms)
+[Orders] Đơn TSF-42149123: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ R1: "+84" và "0" là cùng một số, không được lách giới hạn 5 phút (36.1215ms)
+[Orders] Đơn TSF-42505616: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ R1: cột orders.phone phải lưu SĐT đã chuẩn hóa (không dấu cách, đầu 0) (25.6559ms)
+[Orders] Đơn TSF-42762826: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-42981487: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-44378357: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-45355164: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-46269799: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+[Orders] Đơn TSF-47275278: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+R2 mã đơn đã tạo (6):
+  khởi động: TSF-42762826 (SĐT 0903351633)
+  vòng 1: TSF-42981487 (SĐT 0997920536)
+  vòng 2: TSF-44378357 (SĐT 0932539601)
+  vòng 3: TSF-45355164 (SĐT 0964610481)
+  vòng 4: TSF-46269799 (SĐT 0986291172)
+  vòng 5: TSF-47275278 (SĐT 0988431691)
+  ✔ R2: 8 request đồng thời cùng một SĐT chỉ được tạo đúng 1 đơn (534.0711ms)
+[Orders] Đơn TSF-48109502: dòng "Sữa Test (Lốc 7 chai)" (prod-test-01-var_t7) chưa có giá vốn — nhập giá vốn sản phẩm để báo cáo lợi nhuận tính được.
+  ✔ R3: địa chỉ chi nhánh trong đơn phải lấy từ DB, không lấy theo storeAddress do trình duyệt gửi (30.4394ms)
+✔ Hồi quy cho lỗi R1, R2, R3 trong REVIEW.md (đã sửa) (660.9506ms)
+Database tables verified/created successfully!
+▶ hoàn hàng (processOrderReturn) nhập lại kho
+  ✔ cấu hình quy cách không đổi: nhập lại đúng 7 chai (tồn 3 thành 10) (417.0973ms)
+  ✔ đơn cũ không có reservation: vẫn nhập lại được bằng cách bóc dòng hàng (đường dự phòng) (205.3347ms)
+  ✔ hoàn hàng xong: reservation đã confirmed chuyển sang released, không dùng lại được (211.0729ms)
+  ✔ hàng hỏng (damaged_spoilage): không cộng tồn kho (195.3384ms)
+  ✔ R17: admin đổi số chai của quy cách sau khi đơn đã trừ kho: hoàn hàng vẫn chỉ nhập lại đúng số chai đã trừ (7) (268.8805ms)
+  ✔ R17: quy cách đã bị xóa sau khi đơn đã trừ kho: vẫn xử lý hoàn hàng được theo số chai đã trừ (201.2486ms)
+✔ hoàn hàng (processOrderReturn) nhập lại kho (6895.4447ms)
+▶ hủy đơn đã trừ kho (releaseStock)
+  ✔ xác nhận trừ 7 chai, hủy thì hoàn lại đủ 7 chai và đơn thành CANCELLED (203.5279ms)
+  ✔ R21: hoàn lại tồn kho khi hủy đơn đã trừ kho phải có dòng nhật ký tồn kho (như lúc trừ kho) (208.1637ms)
+✔ hủy đơn đã trừ kho (releaseStock) (412.1641ms)
+▶ tự hủy đơn quá hạn giữ chỗ (cleanupExpiredReservations) và hoa hồng đối tác
+  ✔ đơn PENDING quá hạn: nhả giữ chỗ và chuyển đơn sang CANCELLED (194.5082ms)
+  ✔ R18: đơn của đối tác bị tự hủy vì quá hạn thì hoa hồng ước tính phải chuyển sang VOID (không còn tính vào thu nhập ước tính) (212.533ms)
+  ✔ đơn đối tác tự hủy vì quá hạn: attribution cũng VOID và số dư ví không đổi (217.5867ms)
+  ✔ hủy tay đơn đối tác (đối chứng): hoa hồng ước tính chuyển VOID (207.1946ms)
+  ✔ sự kiện hoàn đơn đầu tiên với hoa hồng đã xác nhận: tạo 1 bút toán thu hồi và trừ ví 1 lần (201.3396ms)
+  ✔ R19: gọi lại sự kiện hoàn đơn lần hai không được thu hồi hoa hồng lần nữa (idempotent như comment mô tả) (303.103ms)
+✔ tự hủy đơn quá hạn giữ chỗ (cleanupExpiredReservations) và hoa hồng đối tác (1337.2828ms)
+▶ bóc combo cố định từ DB (expandComboItems)
+  ✔ combo hợp lệ: bóc ra đúng số chai theo số lượng dòng (257.9758ms)
+  ✔ sản phẩm lẻ không nhận dạng được: bị từ chối (đối chứng cho chính sách "không lọt kho") (274.9378ms)
+  ✖ R20: thành phần của combo không nhận dạng được phải bị từ chối như sản phẩm lẻ, không được bỏ qua im lặng (270.0823ms)
+✖ bóc combo cố định từ DB (expandComboItems) (805.4454ms)
+▶ resolveDealerDiscountPercent
+  ✔ R23: hạng chiết khấu 0% giữ nguyên 0 (không bị đổi thành 15%) (1.245ms)
+  ✔ giá trị hợp lệ giữ nguyên, kể cả chuỗi số từ NUMERIC của PostgreSQL (0.2172ms)
+  ✔ thiếu hoặc không hợp lệ: dùng mặc định 15% (0.2644ms)
+  ✔ mặc định khớp hạng đầu tiên trong cấu hình (0.1463ms)
+✔ resolveDealerDiscountPercent (4.1965ms)
+▶ savings
+  ✔ getComboSaving = giá gốc trừ giá bán, không âm (1.8888ms)
+  ✔ getCartSavings nhân theo số lượng (0.5651ms)
+  ✔ getCartSavings: dòng không phải combo, giỏ rỗng trả 0 (0.5892ms)
+  ✔ getCartSavings: giá trong giỏ cao hơn giá gốc thì không tính âm (0.3679ms)
+  ✔ getCartSavings dùng giá đang nằm trong giỏ, không dùng salePrice của combo (0.3414ms)
+  ✔ findCombo khớp theo id hoặc slug (0.3301ms)
+  ⚠ R8: combo đã tạm dừng trong CSDL (danh sách rỗng) không còn được tính tiết kiệm từ dữ liệu tĩnh (3.1462ms) # Chờ quyết định nghiệp vụ: combo tạm dừng còn trong giỏ có hiện tiết kiệm không
+  ✔ formatShortVND (45.4443ms)
+  ✔ R7: 999.500đ phải hiện "1Tr", không phải "1000K" (1.217ms)
+✔ savings (59.2701ms)
+▶ utils
+  ✔ formatPrice chèn dấu chấm ngăn nghìn (0.5586ms)
+  ✔ formatPrice làm tròn số lẻ và giữ dấu âm (0.3432ms)
+  ✔ formatPrice: NaN hoặc không phải số trả "0" (0.6267ms)
+  ✔ formatKcal kiểu số Việt Nam, null khi thiếu (1.0668ms)
+  ✔ clamp và cn (2.0345ms)
+✔ utils (5.7576ms)
+▶ costSnapshot.totalCostOfBottles
+  ✔ cộng giá vốn theo số chai (0.5999ms)
+  ✔ thiếu giá vốn của một chai bất kỳ: null (không ghi giá vốn thiếu) (0.4018ms)
+  ✔ danh sách rỗng hoặc tổng bằng 0: null (3.7756ms)
+✔ costSnapshot.totalCostOfBottles (5.2615ms)
+▶ costSnapshot.computeLineUnitCosts (R12: giá vốn một đơn vị không bị lệch do làm tròn)
+  ✔ giá vốn chai lẻ (INTEGER trong CSDL): chia cho số lượng dòng luôn chẵn, nhân lại ra đúng tổng (2.6108ms)
+  ✔ chưa có giá vốn của một chai: dòng đó là null, dòng khác vẫn tính (0.5748ms)
+  ✔ giá vốn bằng 0 hoặc thiếu bị coi là chưa nhập (0.8071ms)
+✔ costSnapshot.computeLineUnitCosts (R12: giá vốn một đơn vị không bị lệch do làm tròn) (4.4658ms)
+▶ calculateShippingFee — phí cơ bản (không có km)
+  ✔ đơn dưới 200.000đ: phí 30.000đ (2.3514ms)
+  ✔ đơn đúng 200.000đ: miễn phí (0.3592ms)
+  ✔ đơn 199.999đ: vẫn tính phí (0.5932ms)
+  ✔ đơn 0đ: tính phí cơ bản (0.4103ms)
+  ✔ km null / NaN / âm: coi như chưa có vị trí, chỉ tính phí cơ bản (0.5621ms)
+✔ calculateShippingFee — phí cơ bản (không có km) (8.5918ms)
+▶ calculateShippingFee — phụ thu theo km
+  ✔ trong 10 km: không phụ thu (0.9146ms)
+  ✔ vùng đệm 10 đến dưới 11 km: chưa phụ thu (0.4039ms)
+  ✔ 10,95 km làm tròn lên 11,0 km: phụ thu 20.000đ (theo comment trong code) (0.3772ms)
+  ✔ từ 11 km: +20.000đ cho mọi đơn, kể cả đơn đủ miễn phí (0.3393ms)
+  ✔ từ 15 km: +35.000đ (0.2926ms)
+  ✔ đúng 20 km: vẫn giao (0.2796ms)
+  ✔ trên 20 km: ngoài bán kính, có lý do kèm số km (0.658ms)
+  ✔ 20,04 km: ngoài bán kính (giới hạn so với số km thô), phí không phụ thu (0.3182ms)
+  ✔ R6: câu báo lỗi ngoài bán kính không được hiện số km bằng đúng bán kính tối đa (0.3518ms)
+  ✔ R6: số km trong câu báo lỗi làm tròn LÊN 0,1 km (cùng cách với phụ thu) và luôn lớn hơn bán kính tối đa (0.357ms)
+✔ calculateShippingFee — phụ thu theo km (5.9385ms)
+▶ getDistanceSurcharge
+  ✔ giá trị không hợp lệ trả 0 (0.3657ms)
+  ✔ các mốc 11 và 15 km (0.2605ms)
+✔ getDistanceSurcharge (0.9069ms)
+▶ rateLimit — đăng nhập sai
+  ✔ khóa chưa có bản ghi: không bị chặn, còn 5 lượt (3.0145ms)
+  ✔ 4 lần sai chưa khóa, lần thứ 5 khóa 15 phút (0.6638ms)
+  ✔ đăng nhập đúng thì xóa bộ đếm (0.4648ms)
+  ✔ các khóa độc lập với nhau (0.3014ms)
+✔ rateLimit — đăng nhập sai (7.1026ms)
+▶ rateLimit — checkRequestRateLimit
+  ✔ cho đúng số request tối đa rồi mới chặn (0.775ms)
+  ✔ số lượt còn lại giảm dần (0.385ms)
+  ✔ hết cửa sổ thời gian thì đếm lại (49.1595ms)
+✔ rateLimit — checkRequestRateLimit (52.6803ms)
+▶ validateAdminPassword
+  ✔ hợp lệ: đủ dài, có chữ và số (0.5916ms)
+  ✔ quá ngắn hoặc không phải chuỗi (0.5052ms)
+  ✔ thiếu chữ hoặc thiếu số (0.3828ms)
+  ✔ dài quá 128 ký tự (0.3151ms)
+✔ validateAdminPassword (2.2592ms)
+▶ content-validation — isSafeUrl
+  ✔ cho phép đường dẫn nội bộ và http(s) (0.805ms)
+  ✔ chặn giao thức nguy hiểm và "//host" (0.3739ms)
+  ✔ chặn "../" (kể cả dạng mã hóa) và dấu "\" (0.3182ms)
+  ✔ chặn khoảng trắng, quá dài, sai kiểu (0.3001ms)
+  ✔ isOptionalSafeUrl: bỏ trống là hợp lệ (0.3315ms)
+✔ content-validation — isSafeUrl (2.6958ms)
+▶ content-validation — resolveUploadedFile
+  ✔ đường dẫn hợp lệ trả về file nằm trong thư mục uploads (2.4795ms)
+  ✔ mọi đường thoát ra ngoài đều trả null (0.5558ms)
+✔ content-validation — resolveUploadedFile (3.3483ms)
+▶ membership stateMachine — transitionMemberState
+  ✔ các bước hợp lệ chính (0.6991ms)
+  ✔ hủy gói trả phí: giữ quyền lợi tới hết kỳ (CANCELLED_GRACE) (0.2321ms)
+  ✔ tạm dừng mất quyền lợi, tiếp tục thì có lại (0.1637ms)
+  ✔ sự kiện không hợp lệ: giữ nguyên trạng thái, có lý do, quyền lợi theo trạng thái hiện tại (0.3813ms)
+  ✔ không dùng thử lại được sau khi đã rời gói (0.2312ms)
+✔ membership stateMachine — transitionMemberState (2.1262ms)
+ℹ tests 212
+ℹ suites 49
+ℹ pass 198
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 3
+ℹ duration_ms 21801.751
+ℹ start of coverage report
+ℹ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ file                           | line % | branch % | funcs % | uncovered lines
+ℹ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ src                            |        |          |         | 
+ℹ  app                           |        |          |         | 
+ℹ   api                          |        |          |         | 
+ℹ    admin                       |        |          |         | 
+ℹ     combos                     |        |          |         | 
+ℹ      route.ts                  |  25.81 |    64.94 |   46.15 | 14-39 42-50 52-63 66-151 154-295 302-306 324-325 329-330 336-340 352-356 362-369 372-377 400-402 404-406 408-410 412-414 420-422 424-426 428-430 432-434 436-438 444-446 459-468 471-486 490-491 497-507 535-537 541-620
+ℹ     orders                     |        |          |         | 
+ℹ      route.ts                  |  31.50 |    75.90 |   50.00 | 44-49 52-54 57-61 64-408 422-426 446-447 450-454 456-457 474-476 506-515 566-568 604-648 675-762
+ℹ     products                   |        |          |         | 
+ℹ      route.ts                  |  27.86 |    54.95 |   58.33 | 18-27 31-42 45-148 151-325 332-336 357-358 363-364 369-376 379-380 385-389 394-398 402-406 460 468 477-504 508-523 527-537 585-587 591-700
+ℹ    cron                        |        |          |         | 
+ℹ     subscriptions              |        |          |         | 
+ℹ      generate-orders           |        |          |         | 
+ℹ       route.ts                 |  95.39 |    62.16 |   83.33 | 15-16 68-71 82-84 106-107 230-231
+ℹ    dealer                      |        |          |         | 
+ℹ     orders                     |        |          |         | 
+ℹ      route.ts                  |  78.32 |    21.74 |   80.00 | 17-21 24-28 31-35 40-41 47-50 67-68 95-105 207-218 223-225
+ℹ     products                   |        |          |         | 
+ℹ      route.ts                  |  91.49 |    72.22 |   80.00 | 41-45 91-93
+ℹ    membership                  |        |          |         | 
+ℹ     auth                       |        |          |         | 
+ℹ      otp                       |        |          |         | 
+ℹ       send                     |        |          |         | 
+ℹ        route.ts                |  61.76 |    50.00 |   75.00 | 12-16 20-24 31-33
+ℹ     subscribe                  |        |          |         | 
+ℹ      route.ts                  |  91.53 |    80.00 |   75.00 | 44-45 56-58
+ℹ    orders                      |        |          |         | 
+ℹ     route.ts                   |  60.91 |    42.98 |   62.86 | 40-41 43-44 64-65 114-119 128-136 141-142 150-166 168-176 184-196 200-213 225-229 239-243 269 285-289 307-311 315-323 357-358 368-376 382-404 415-430 436-444 476-499 522-523 527-535 542-554 589-593 597-604 613-624 633-640 644-652 659-667 672-680 703-710 730-731 752-753 772-773 802 890 918-922 1009-1019 1042-1047 1054-1074 1137-1148 1153-1165 1175-1180 1182-1188 1190-1194 1197-1348
+ℹ    partner                     |        |          |         | 
+ℹ     ledger                     |        |          |         | 
+ℹ      route.ts                  |  88.29 |    60.87 |   80.00 | 12-16 72 80-83 108-110
+ℹ     otp                        |        |          |         | 
+ℹ      send                      |        |          |         | 
+ℹ       route.ts                 |  72.97 |    44.44 |   75.00 | 13-14 19-23 34-36
+ℹ     payouts                    |        |          |         | 
+ℹ      route.ts                  |  64.80 |    54.55 |   66.67 | 11-48 55-59 63-71 79-87 95-103 137-147 168-169 241-242 247-249
+ℹ     stats                      |        |          |         | 
+ℹ      route.ts                  |   5.03 |    75.00 |   50.00 | 9-159
+ℹ  config                        |        |          |         | 
+ℹ   features.ts                  |  97.73 |    50.00 |    0.00 | 44
+ℹ   inventory.ts                 | 100.00 |    95.65 |   83.33 | 
+ℹ   inventorySheet.ts            | 100.00 |    44.44 |   42.86 | 
+ℹ   membership.ts                |  98.81 |    66.67 |   50.00 | 84
+ℹ   partner.ts                   |  98.86 |    92.86 |   80.00 | 84
+ℹ   service-area.ts              | 100.00 |    54.55 |   71.43 | 
+ℹ  data                          |        |          |         | 
+ℹ   combos.ts                    |  97.97 |    66.67 |   16.67 | 239-240 242-244
+ℹ   hcm-admin-units-2025.ts      |  99.97 |    50.00 |    0.00 | 3647
+ℹ   products.ts                  |  97.44 |    66.67 |   11.11 | 530-531 534-535 537-546
+ℹ   vietnam-addresses.ts         |  99.41 |    50.00 |    0.00 | 12027-12028 12034-12041 12047-12055 12060-12111
+ℹ   vietnam-streets.ts           |  92.84 |    50.00 |    0.00 | 24-33 3562-3582 3588-3591 3596-3711 3730-3854
+ℹ  lib                           |        |          |         | 
+ℹ   address                      |        |          |         | 
+ℹ    addressEventStore.ts        |  27.66 |    50.00 |    0.00 | 11-14 16-40 43-47
+ℹ    admin.ts                    |  32.97 |    50.00 |    0.00 | 25-26 30-37 76-84 88-90 92-99 103-174 184-228 246-275 282-326 352-364 373-428 432-449 453-467 487-501 511-521 525-529 533-534 537-543
+ℹ    anonymousLog.ts             |  57.89 |    50.00 |    0.00 | 50-52 59-69 72-74 77-96 103-104 106-114
+ℹ    httpIdentity.ts             |  40.74 |    50.00 |    0.00 | 11-20 22-27
+ℹ    locationFallback.ts         |  54.55 |    50.00 |    0.00 | 15-16 20-29 31-33
+ℹ    normalize.ts                |  55.56 |    37.50 |    6.45 | 10-15 22-26 48-65 69-70 74-78 82-90 94-96 119-134 149-152 156-159 166-173 177-178 182-188 205-207
+ℹ    orderLocationCheck.ts       |  54.63 |    50.00 |    0.00 | 24-32 51-65 74 85-108
+ℹ    osmQueue.ts                 |  35.23 |    66.67 |   11.11 | 26-28 33-78 81-88
+ℹ    savedAddressPin.ts          |  46.34 |    50.00 |    0.00 | 32-36 38-42 44-55 61-82
+ℹ   apiError.ts                  |  92.31 |    60.00 |   66.67 | 7
+ℹ   audit.ts                     |  92.86 |    53.33 |   55.56 | 38-39 47-49 53 123-125
+ℹ   auth.ts                      |  75.73 |    75.00 |   80.65 | 14-38 61-64 69-71 103-104 119 178 181-182 186-188 228-229 236-238 255-257 282-307
+ℹ   content-validation.ts        | 100.00 |    96.30 |   85.71 | 
+ℹ   costSnapshot.ts              | 100.00 |    89.66 |   90.00 | 
+ℹ   db.ts                        |  92.03 |    42.86 |   63.16 | 9 25-46 50 754-755 760-761 767-768 804-827 843-854 869-870 873-874
+ℹ   deliverySlots.ts             | 100.00 |    96.36 |   95.24 | 
+ℹ   email                        |        |          |         | 
+ℹ    service.ts                  |  15.32 |    50.00 |    0.00 | 24-45 48-53 58-79 82-86 90-129 134-248
+ℹ    templates.ts                |  14.69 |    50.00 |    0.00 | 4-11 60-151 154-188 194-196 199-307 313-316 319-411 416-419 422-497
+ℹ   geo.ts                       |  34.70 |    90.91 |   50.00 | 107-116 122-153 159-188 194-201 204-207 213-215 223-230 236-241 245-414
+ℹ   inventory.ts                 |  70.15 |    65.33 |   83.33 | 224-228 280-284 291-295 353-354 390-394 402-427 430-458 461-499 502-581 633-634 639-644 721-815 822-899 908-929 939-1059 1076 1180-1181 1185-1187 1375-1376 1559-1560 1568-1575 1675-1676 1696-1697 1754-1755 1777-1778 1872-1873 1892-1895 1900-1921
+ℹ   inventoryGatekeeper.ts       |  83.74 |    70.00 |   81.25 | 57-64 128-137 154-155 168-173 177-181 203-208 280-289
+ℹ   inventorySheetParser.ts      |  50.53 |    98.08 |   72.22 | 139-149 151-156 159-272 275-283
+ℹ   jwtSecret.ts                 |  83.33 |    66.67 |   50.00 | 14-18
+ℹ   membership                   |        |          |         | 
+ℹ    otp.ts                      |  58.02 |    42.86 |   40.00 | 22-23 50-81
+ℹ    repository.ts               |  38.55 |    80.00 |   60.00 | 176-204 219-220 226-272 290-293 315-316 322-334 336-349 353 357-391 420-421 454-565 567-598 600-635 637-717 719-761 763-775 777-780 789-825
+ℹ    service.ts                  |  43.02 |    55.56 |   14.81 | 29-37 75-80 86-94 102-105 109-125 153-179 202-204 207-232 239-244 248-263 269-271 275-288 307-362 376 381-397 403-407 411-444
+ℹ    stateMachine.ts             |  65.32 |    60.00 |   57.14 | 60-61 66-67 72-73 78-79 91-92 97-98 106-107 112-113 121-122 124-125 130-131 157-181 193-222
+ℹ   notify                       |        |          |         | 
+ℹ    telegram.ts                 |  26.82 |    50.00 |    0.00 | 29-31 42-51 54-107 114-137 140-179
+ℹ    zalo.ts                     |  59.00 |    57.14 |   27.27 | 43-51 56-71 83-98
+ℹ   order-status.ts              |  97.37 |    95.45 |   91.67 | 36
+ℹ   orderStatusHistory.ts        |  84.43 |    57.89 |   77.78 | 174-177 181-182 207-208 212-228 232-244
+ℹ   partner                      |        |          |         | 
+ℹ    auth.ts                     |  98.10 |    85.71 |   60.00 | 95-96
+ℹ    orderEvent.ts               |  75.77 |    60.00 |   75.00 | 49-50 66-107 112-113 182
+ℹ    otp.ts                      |  55.07 |    50.00 |   40.00 | 39-69
+ℹ   password-policy.ts           | 100.00 |    91.67 |   75.00 | 
+ℹ   products-file-sync.ts        |  50.38 |    20.00 |   50.00 | 32-34 47-49 59-60 64-70 72-73 75-76 78-79 81-82 84-85 87-88 90-106 110-112 115-133
+ℹ   rateLimit.ts                 |  76.64 |    92.31 |   71.43 | 25-33 72-83 181-189 194-213
+ℹ   rbac.ts                      |  75.42 |    61.54 |   80.00 | 146-147 150-151 155-156 168-219
+ℹ   runtimeConfig.ts             |  47.83 |    50.00 |    0.00 | 19-30 33-35 47-55 64-68 74-92
+ℹ   savings.ts                   |  50.00 |    90.32 |   73.91 | 22-40 44-55 58-69 99-104 106-112
+ℹ   sortDistricts.ts             |  41.18 |    50.00 |    0.00 | 11-14 16-18 21-30 32-34
+ℹ   storeRecommender.ts          |  28.94 |    73.33 |   54.55 | 77-116 124-141 173-183 200-254 259-463
+ℹ   uploadStorage.ts             |  73.33 |    60.00 |   40.00 | 23-30
+ℹ   utils.ts                     |  65.57 |    94.44 |   76.92 | 34-42 49-60
+ℹ   xlsx.ts                      |  31.15 |    83.33 |    6.25 | 36-41 43-52 55-66 71-77 79-83 88-100 102-134 177-181 183-255 263-307 310-321
+ℹ  store                         |        |          |         | 
+ℹ   cart.ts                      |  98.02 |    82.81 |   86.21 | 30-32 156 166 263 354
+ℹ tests                          |        |          |         | 
+ℹ  helpers                       |        |          |         | 
+ℹ   review_test_db.mjs           |  97.22 |    69.23 |  100.00 | 52-53
+ℹ   review_test_session.mjs      |  98.15 |    91.30 |   84.21 | 106-107
+ℹ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ all files                      |  80.09 |    67.04 |   51.15 | 
+ℹ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ℹ end of coverage report
+
+✖ failing tests:
+
+test at tests\api_sessions_integration.test.mjs:266:3
+⚠ R25: STORE_STAFF gửi allowOversell để xác nhận đơn thiếu hàng phải bị từ chối (chỉ quản lý được ép) (189.6412ms) # Chờ quyết định nghiệp vụ R25: nhân viên cửa hàng có được dùng nút ép xuất kho thiếu hàng không
+  AssertionError [ERR_ASSERTION]: STORE_STAFF đang ép được xuất kho thiếu hàng
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\api_sessions_integration.test.mjs:273:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 200,
+    expected: 200,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\membership_integration.test.mjs:59:3
+✖ R43: DDL loyalty_point_ledger trong ensureMembershipSchema phải có đủ cột mà INSERT/SELECT dùng (points, source_type, description) (115.0544ms)
+  AssertionError [ERR_ASSERTION]: DDL thiếu cột "points"; DDL hiện có:  id VARCHAR(64) PRIMARY KEY, user_id VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE, points_change INT NOT NULL, balance_after INT NOT NULL, reason VARCHAR(100) NOT NULL, reference_type V
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\membership_integration.test.mjs:63:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '\r\n      id VARCHAR(64) PRIMARY KEY,\r\n      user_id VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,\r\n      points_change INT NOT NULL,\r\n      balance_after INT NOT NULL,\r\n      reason VARCHAR(100) NOT NULL,\r\n      reference_type VARCHAR(50),\r\n      reference_id VARCHAR(64),\r\n      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP\r\n    ',
+    expected: /\bpoints\b/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\membership_integration.test.mjs:80:3
+✖ R41: thưởng chào mừng 50 điểm chỉ được cộng một lần dù gọi đăng ký nhiều lần (194.1534ms)
+  AssertionError [ERR_ASSERTION]: số dòng điểm thưởng sau 3 lần đăng ký = 3 (tổng 150 điểm)
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\membership_integration.test.mjs:84:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\membership_integration.test.mjs:87:3
+✖ R41: dùng thử 30 ngày chỉ được kích hoạt một lần (gọi lại không được gia hạn thêm) (182.7813ms)
+  AssertionError [ERR_ASSERTION]: sau 29 ngày dùng thử, gọi lại thì còn 30.0 ngày (đã được gia hạn thêm 30 ngày)
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\membership_integration.test.mjs:95:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\membership_integration.test.mjs:109:3
+✖ gửi OTP khách hàng 10 lần liên tiếp cho cùng một SĐT: phải bị giới hạn (429) trước lần thứ 10 (96.9758ms)
+  AssertionError [ERR_ASSERTION]: mã trả về: 200,200,200,200,200,200,200,200,200,200
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\membership_integration.test.mjs:112:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\membership_integration.test.mjs:115:3
+✖ gửi OTP đối tác 10 lần liên tiếp cho cùng một SĐT: phải bị giới hạn (429) trước lần thứ 10 (99.2438ms)
+  AssertionError [ERR_ASSERTION]: mã trả về: 200,200,200,200,200,200,200,200,200,200
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\membership_integration.test.mjs:118:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\money_routes_integration.test.mjs:126:3
+✖ Lỗi 6 (đã báo 10/11): sau khi đã chi 500.000đ, yêu cầu rút thêm 500.000đ từ khoản chưa qua 7 ngày phải bị từ chối (183.879ms)
+  AssertionError [ERR_ASSERTION]: yêu cầu thứ hai trả 200: {"success":true,"payoutId":"pay_1794442380312_9b1d4544","amount":500000,"bankName":"VCB","bankAccountNumber":"0123456789","bankAccountName":"Doi Tac Test","message":"Đã tạo yêu cầu rút tiền 500.000 ₫ thành công. Kế toán sẽ xét duyệt và chuyển khoản trong vòng 24-48h."}
+  
+  200 !== 400
+  
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:134:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 200,
+    expected: 400,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\money_routes_integration.test.mjs:137:3
+✖ R30: số dư "khả dụng" hiển thị cho đối tác phải trừ khoản đã rút (500.000đ đã chi thì khả dụng còn 0) (193.112ms)
+  AssertionError [ERR_ASSERTION]: balances = {"estimated":0,"confirmed_waiting":500000,"available":500000,"raw_available":500000,"paid":500000,"clawback":0,"profile_balance":500000,"total_earned":1000000}
+  
+  500000 !== 0
+  
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:144:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 500000,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\money_routes_integration.test.mjs:183:3
+✖ R31: đơn định kỳ sinh ra phải tính đúng giá lốc đã chốt (107.100đ), không phải giá một chai (15.300đ) (177.9904ms)
+  AssertionError [ERR_ASSERTION]: subtotal = 15300
+  
+  15300 !== 107100
+  
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:189:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 15300,
+    expected: 107100,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\money_routes_integration.test.mjs:192:3
+✖ R34: đơn định kỳ tạo từ mã sản phẩm do giao diện gửi ("sub-sb-01", như SubscribeSaveSection) phải xác nhận được bằng PUT admin (226.2794ms)
+  AssertionError [ERR_ASSERTION]: xác nhận đơn định kỳ trả 500: {"success":false,"error":"[INVENTORY_RESOLVE_FAILED] Không thể nhận dạng sản phẩm: product_id=\"sub-sb-01\", name=\"Sữa Test (Lốc 7 chai)\". Không tìm thấy trong products, product_variants, hay PRODUCT_ALIAS_MAP. Đơn hàng bị từ chối để tránh lọt kho."}
+  
+  500 !== 200
+  
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:202:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 500,
+    expected: 200,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\money_routes_integration.test.mjs:205:3
+✖ R32: một kỳ giao lỗi giữa chừng không được để lại kết nối trong giao dịch dang dở (507.8195ms)
+  AssertionError [ERR_ASSERTION]: có kết nối bị hỏng sau lỗi: current transaction is aborted, commands ignored until end of transaction block
+  + actual - expected
+  
+  + [
+  +   'current transaction is aborted, commands ignored until end of transaction block'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:212:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'current transaction is aborted, commands ignored until end of transaction block' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\money_routes_integration.test.mjs:215:3
+⚠ R33: tồn kho không đủ giữ chỗ trọn đơn định kỳ thì không được tạo đơn với giữ chỗ một phần (theo comment "Zero-Oversell") (487.1273ms) # Chờ quyết định nghiệp vụ: thiếu hàng thì bỏ qua kỳ và thử lại, hay tạo đơn chờ bổ sung hàng
+  AssertionError [ERR_ASSERTION]: đơn 1, giữ chỗ 20/70 chai
+      at TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\money_routes_integration.test.mjs:224:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\orders_lifecycle_integration.test.mjs:317:3
+✖ R20: thành phần của combo không nhận dạng được phải bị từ chối như sản phẩm lẻ, không được bỏ qua im lặng (270.0823ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (D:\WebTSF\thai-son-foods\tests\orders_lifecycle_integration.test.mjs:322:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /INVENTORY_RESOLVE_FAILED/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests\savings_utils.test.mjs:48:3
+⚠ R8: combo đã tạm dừng trong CSDL (danh sách rỗng) không còn được tính tiết kiệm từ dữ liệu tĩnh (3.1462ms) # Chờ quyết định nghiệp vụ: combo tạm dừng còn trong giỏ có hiện tiết kiệm không
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  20000 !== 0
+  
+      at TestContext.<anonymous> (file:///D:/WebTSF/thai-son-foods/tests/savings_utils.test.mjs:53:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 20000,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

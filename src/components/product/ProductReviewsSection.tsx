@@ -668,7 +668,7 @@ export default function ProductReviewsSection({
               </div>
             );
           })()}
-          {/* Desktop: dải gợi ý luôn nằm sát đáy cột phải, ngang với đáy cột trái */}
+          {/* Desktop: box combo cố định ở đáy cột phải, ngang đáy box sản phẩm cột trái; điện thoại: ngay dưới danh sách */}
           {bottomSlot && <div className="mt-6 lg:mt-auto lg:pt-6">{bottomSlot}</div>}
           </div>
         </div>

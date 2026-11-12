@@ -481,7 +481,8 @@ export async function POST(request: Request) {
             );
           }
           const comboRes = await client.query(
-            `SELECT name, sale_price, original_price, image FROM combos WHERE id = $1 OR slug = $1 LIMIT 1;`,
+            // Combo đã tạm dừng (is_active=false) không bán nữa → rơi xuống nhánh từ chối bên dưới
+            `SELECT name, sale_price, original_price, image FROM combos WHERE (id = $1 OR slug = $1) AND is_active = true LIMIT 1;`,
             [pId]
           );
           if (comboRes.rows.length > 0) {

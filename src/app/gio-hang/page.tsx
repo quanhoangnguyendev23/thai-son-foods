@@ -1,5 +1,6 @@
 'use client';
 
+import { discountLabel } from '@/lib/discount-label';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -135,7 +136,8 @@ export default function CartPage() {
   };
 
   const [shelfProducts, setShelfProducts] = useState(products.filter((p) => p.isActive !== false).slice(0, 12));
-  const [promoCombos, setPromoCombos] = useState(combos.filter((c) => c.isActive !== false).slice(0, 12));
+  // Combo đang bán lấy từ API (API tự rơi về dữ liệu mẫu khi CSDL trống); rỗng = tạm dừng hết → ẩn khu combo
+  const [promoCombos, setPromoCombos] = useState<typeof combos>([]);
 
   useEffect(() => {
     safeFetchJson<{ success: boolean; data: any[] }>('/api/products')
@@ -148,7 +150,7 @@ export default function CartPage() {
 
     safeFetchJson<{ success: boolean; data: any[] }>('/api/combos')
       .then((json) => {
-        if (json?.success && Array.isArray(json.data) && json.data.length > 0) {
+        if (json?.success && Array.isArray(json.data)) {
           setPromoCombos(json.data.filter((c: any) => c.isActive !== false).slice(0, 12));
         }
       })
@@ -377,7 +379,7 @@ export default function CartPage() {
 
       {/* ═════════ SECTION B: Ụ HÀNG COMBO SIÊU HỜI RINH VỀ CHO CẢ NHÀ (12 COMBO - 1 HÀNG) ═════════ */}
       {/* Ẩn khi tắt combo (ENABLE_COMBOS = false — doanh nghiệp chưa chốt combo) */}
-      {ENABLE_COMBOS && (
+      {ENABLE_COMBOS && promoCombos.length > 0 && (
       <section aria-labelledby="checkout-combos-heading" className="space-y-3">
         {/* Header combo với phong cách ụ khuyến mãi siêu thị */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -450,9 +452,11 @@ export default function CartPage() {
 
                     {/* Badges góc trên */}
                     <div className="absolute top-1 right-1 flex items-center gap-1 z-10">
-                      <span className="px-1.5 py-0.5 text-2xs rounded bg-rose-600 text-white shadow-xs">
-                        -{combo.discount}%
-                      </span>
+                      {discountLabel(combo) && (
+                        <span className="px-1.5 py-0.5 text-2xs rounded bg-rose-600 text-white shadow-xs">
+                          {discountLabel(combo)}
+                        </span>
+                      )}
                       <span className="px-1.5 py-0.5 text-2xs rounded bg-gray-900/85 text-white backdrop-blur-xs">
                         {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                       </span>
@@ -1151,7 +1155,7 @@ export default function CartPage() {
                 </p>
 
                 {/* Tab Switcher 2 ngăn: Chai nước (12) vs Combo (12) — ẩn khi tắt combo, chỉ còn danh sách chai */}
-                {ENABLE_COMBOS && (
+                {ENABLE_COMBOS && promoCombos.length > 0 && (
                 <div className="grid grid-cols-2 gap-1.5 p-1 bg-emerald-100/60 rounded-xl mt-2.5 border border-emerald-200/70">
                   <button
                     type="button"
@@ -1340,9 +1344,11 @@ export default function CartPage() {
                               {comboTitle}
                             </Link>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="px-1 py-px text-2xs rounded bg-rose-600 text-white leading-tight">
-                                -{combo.discount}%
-                              </span>
+                              {discountLabel(combo) && (
+                                <span className="px-1 py-px text-2xs rounded bg-rose-600 text-white leading-tight">
+                                  {discountLabel(combo)}
+                                </span>
+                              )}
                               <span className="text-2xs text-gray-500 font-medium">
                                 {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
                               </span>

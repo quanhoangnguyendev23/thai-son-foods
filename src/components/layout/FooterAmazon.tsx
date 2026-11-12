@@ -9,6 +9,7 @@ import { INVENTORY_CONFIG } from '@/config/inventory';
 import { ENABLE_COMBOS } from '@/config/features';
 import { categories as catalogCategories } from '@/data/products';
 import { formatPrice } from '@/lib/utils';
+import { useComboCatalog } from '@/lib/savings';
 import { HAS_LEGAL_LINKS, LegalCompanyBlock, LegalPolicyLinks } from '@/components/layout/FooterLegal';
 
 /**
@@ -57,6 +58,8 @@ export default function FooterAmazon() {
   const { language, setLanguage } = useLanguage();
   const { user, openAuthModal } = useUserAuth();
   const isEn = language === 'en';
+  // Chỉ hiện link "Combo tiết kiệm" khi có combo đang bán (cùng bộ nhớ đệm /api/combos)
+  const hasLiveCombos = useComboCatalog().length > 0;
   const categoryLinks = [...catalogCategories].sort((a, b) => CATEGORY_ORDER.indexOf(a.id) - CATEGORY_ORDER.indexOf(b.id));
 
   const scrollToTop = () => {
@@ -109,7 +112,7 @@ export default function FooterAmazon() {
                   </Link>
                 </li>
               ))}
-              {ENABLE_COMBOS && (
+              {ENABLE_COMBOS && hasLiveCombos && (
                 <li>
                   <Link href="/#combo" className={linkCls}>{isEn ? 'Value combos' : 'Combo tiết kiệm'}</Link>
                 </li>

@@ -61,6 +61,8 @@ import { canDeleteOrder, canTransitionOrderStatus } from '@/lib/order-status';
 import { safeFetchJson } from '@/lib/utils';
 import { downloadXlsx } from '@/lib/xlsx';
 import SheetInventoryPanel from './SheetInventoryPanel';
+import WeeklyDeliveryPanel from './WeeklyDeliveryPanel';
+import DailyDealsSwitch from './DailyDealsSwitch';
 import { RevenueCard, TopProductsCard, TopCombosCard, formatRangeLabel, isTrendStale, type RangePreset, type FixedPreset } from './DashboardCharts';
 
 // Bộ lọc của bảng Đơn Chưa Hoàn Thành (OPEN = mọi đơn trừ Hoàn thành và Đã hủy)
@@ -382,6 +384,9 @@ export type AdminTab =
   | 'banners'
   | 'audit';
 
+// Thứ tự mã sản phẩm theo sheet "Bảng tính combo": Sữa hạt → Giải khát → Trend (dùng cho ma trận và droplist trong form combo)
+const COMBO_SHEET_ORDER = ['SB', 'SHS', 'SGL', 'SS', 'SL', 'MD', 'LH', 'TD', 'TSG', 'TXG', 'TSA', 'MAC'];
+
 export default function AdminPage() {
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
@@ -622,6 +627,12 @@ export default function AdminPage() {
 
   const [isComboModalOpen, setIsComboModalOpen] = useState(false);
   const [editingCombo, setEditingCombo] = useState<Partial<Combo> | null>(null);
+  // Số tiền NTD (giảm cho người tiêu dùng) của combo đang sửa: Giá bán = Giá gốc − NTD
+  const [comboNtd, setComboNtd] = useState<number>(0);
+  // Bảng ma trận combo (giống sheet "Bảng tính combo"): bản nháp số chai + NTD theo từng combo
+  const [comboView, setComboView] = useState<'matrix' | 'list'>('matrix');
+  const [matrixDrafts, setMatrixDrafts] = useState<Record<string, { qty: Record<string, number>; ntd: number }>>({});
+  const [matrixSavingId, setMatrixSavingId] = useState<string | null>(null);
 
   const [isOrderDetailModalOpen, setIsOrderDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -2407,7 +2418,9 @@ export default function AdminPage() {
       is_featured: true,
       is_best_seller: false,
       is_active: true,
+      items: [],
     });
+    setComboNtd(20000);
     setComboImages([]);
     setNewImageUrl('');
     setIsComboModalOpen(true);
@@ -2415,6 +2428,7 @@ export default function AdminPage() {
 
   const handleOpenEditCombo = (c: Combo) => {
     setEditingCombo({ ...c });
+    setComboNtd(Math.max(0, (c.original_price || 0) - (c.sale_price || 0)));
     const initialImages =
       Array.isArray((c as any).images) && (c as any).images.length > 0
         ? [...(c as any).images]
@@ -2424,6 +2438,147 @@ export default function AdminPage() {
     setComboImages(initialImages);
     setNewImageUrl('');
     setIsComboModalOpen(true);
+  };
+
+  // Tính giá combo theo bảng tính: Giá gốc = Σ (số chai × giá web); Giá bán = Giá gốc − số tiền NTD
+  const findComboProduct = (pid: string) => products.find((p) => p.id === pid || p.slug === pid);
+  const recalcComboPrices = (base: Partial<Combo>, items: ComboItem[], ntd: number): Partial<Combo> => {
+    if (items.length === 0) return { ...base, items };
+    const original = items.reduce(
+      (sum, it) => sum + (Number(findComboProduct(it.product_id)?.price) || 0) * (it.quantity || 0),
+      0
+    );
+    const sale = Math.max(0, original - ntd);
+    const discount = original > 0 ? Math.round(((original - sale) / original) * 100) : 0;
+    const totalItems = items.reduce((sum, it) => sum + (it.quantity || 0), 0);
+    return { ...base, items, original_price: original, sale_price: sale, discount, total_items: totalItems || base.total_items };
+  };
+  const updateComboItems = (items: ComboItem[]) => {
+    if (!editingCombo) return;
+    setEditingCombo(recalcComboPrices(editingCombo, items, comboNtd));
+  };
+  const updateComboNtd = (ntd: number) => {
+    setComboNtd(ntd);
+    if (editingCombo) setEditingCombo(recalcComboPrices(editingCombo, editingCombo.items || [], ntd));
+  };
+
+  // ==================== MA TRẬN COMBO ====================
+  // Mã hiển thị trên ma trận: bỏ hậu tố "-01" của SKU (SB-01 → SB) cho giống bảng tính
+  const matrixCode = (p: Product) => (p.sku || '').trim().replace(/-\d+$/, '').toUpperCase();
+  // Cột = sản phẩm (nhóm theo danh mục), dòng = combo. Ô = số chai; NTD nhập thẳng số tiền.
+  const matrixProducts = useMemo(() => {
+    const usedIds = new Set<string>();
+    combos.forEach((c) => (c.items || []).forEach((it) => {
+      const p = products.find((x) => x.id === it.product_id || x.slug === it.product_id);
+      if (p) usedIds.add(p.id);
+    }));
+    // Thứ tự cột theo sheet "Bảng tính combo": Sữa hạt → Giải khát → Trend; mã khác xếp sau
+    const rank = (p: Product) => {
+      const i = COMBO_SHEET_ORDER.indexOf(matrixCode(p));
+      return i === -1 ? COMBO_SHEET_ORDER.length : i;
+    };
+    return products
+      .filter((p) => p.is_active || usedIds.has(p.id))
+      .sort((a, b) =>
+        rank(a) - rank(b) ||
+        (a.category_name || '').localeCompare(b.category_name || '', 'vi') ||
+        a.name.localeCompare(b.name, 'vi')
+      );
+  }, [products, combos]);
+
+  const getMatrixRow = (c: Combo) => {
+    const draft = matrixDrafts[c.id];
+    if (draft) return draft;
+    const qty: Record<string, number> = {};
+    (c.items || []).forEach((it) => {
+      const p = findComboProduct(it.product_id);
+      if (p) qty[p.id] = (qty[p.id] || 0) + (it.quantity || 0);
+    });
+    return { qty, ntd: Math.max(0, (c.original_price || 0) - (c.sale_price || 0)) };
+  };
+
+  const calcMatrixRow = (row: { qty: Record<string, number>; ntd: number }) => {
+    let original = 0;
+    let bottles = 0;
+    Object.entries(row.qty).forEach(([pid, q]) => {
+      const p = products.find((x) => x.id === pid);
+      original += (Number(p?.price) || 0) * (q || 0);
+      bottles += q || 0;
+    });
+    const sale = original - row.ntd;
+    const discount = original > 0 ? Math.round((row.ntd / original) * 100) : 0;
+    return { original, bottles, sale, discount };
+  };
+
+  const setMatrixCell = (c: Combo, patch: { pid?: string; qty?: number; ntd?: number }) => {
+    const base = getMatrixRow(c);
+    const next = { qty: { ...base.qty }, ntd: base.ntd };
+    if (patch.pid !== undefined) {
+      if (patch.qty && patch.qty > 0) next.qty[patch.pid] = patch.qty;
+      else delete next.qty[patch.pid];
+    }
+    if (patch.ntd !== undefined) next.ntd = patch.ntd;
+    setMatrixDrafts((prev) => ({ ...prev, [c.id]: next }));
+  };
+
+  const discardMatrixRow = (id: string) =>
+    setMatrixDrafts((prev) => {
+      const { [id]: _drop, ...rest } = prev;
+      return rest;
+    });
+
+  const saveMatrixRow = async (c: Combo, silent = false): Promise<boolean> => {
+    const row = matrixDrafts[c.id];
+    if (!row) return true;
+    const { original, bottles, sale } = calcMatrixRow(row);
+    if (bottles === 0) {
+      showToast(`Combo "${c.name.slice(0, 30)}" cần ít nhất 1 chai`, 'error');
+      return false;
+    }
+    if (sale < 1) {
+      showToast(`Combo "${c.name.slice(0, 30)}": số tiền NTD phải nhỏ hơn giá gốc`, 'error');
+      return false;
+    }
+    // Giữ lại món không khớp sản phẩm nào trong bảng (nếu có) để không làm mất dữ liệu
+    const unmatched = (c.items || []).filter((it) => !findComboProduct(it.product_id));
+    const items = [
+      ...Object.entries(row.qty).map(([pid, q]) => ({ product_id: pid, quantity: q, unit: 'chai' })),
+      ...unmatched.map((it) => ({ product_id: it.product_id, quantity: it.quantity, unit: it.unit || 'chai' })),
+    ];
+    setMatrixSavingId(c.id);
+    try {
+      const res = await fetch('/api/admin/combos', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: c.id, items, original_price: original, sale_price: sale, total_items: bottles }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.error || 'Không thể lưu combo', 'error');
+        return false;
+      }
+      discardMatrixRow(c.id);
+      if (!silent) {
+        showToast(`Đã lưu giá combo "${c.name.slice(0, 30)}"`);
+        fetchData();
+      }
+      return true;
+    } catch (err: any) {
+      showToast('Lỗi: ' + err.message, 'error');
+      return false;
+    } finally {
+      setMatrixSavingId(null);
+    }
+  };
+
+  const saveAllMatrixRows = async () => {
+    const dirty = combos.filter((c) => matrixDrafts[c.id]);
+    let ok = 0;
+    for (const c of dirty) {
+      if (await saveMatrixRow(c, true)) ok++;
+    }
+    if (ok > 0) showToast(`Đã lưu ${ok}/${dirty.length} combo`);
+    fetchData();
   };
 
   const handleSaveCombo = async (e: React.FormEvent) => {
@@ -3456,6 +3611,14 @@ export default function AdminPage() {
                 )}
               </div>
 
+              {/* Số chai giao mỗi tuần, nhập riêng cho từng sản phẩm */}
+              <WeeklyDeliveryPanel
+                itemType="product"
+                items={products.map((p) => ({ id: p.id, name: p.name }))}
+                canManage={hasPermission(currentUser, 'products.manage')}
+                canManageDefault={hasPermission(currentUser, 'combos.manage')}
+              />
+
               {/* Filters toolbar */}
               <div className="p-4 rounded-2xl bg-white border border-ink-200 flex flex-wrap items-center gap-3">
                 {/* Search */}
@@ -3668,6 +3831,17 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Công tắc Deal trong ngày (bảng site_settings) */}
+              <DailyDealsSwitch canManage={hasPermission(currentUser, 'combos.manage')} />
+
+              {/* Số chai giao mỗi tuần, nhập riêng cho từng combo */}
+              <WeeklyDeliveryPanel
+                itemType="combo"
+                items={combos.map((c) => ({ id: c.id, name: c.name }))}
+                canManage={hasPermission(currentUser, 'combos.manage')}
+                canManageDefault={hasPermission(currentUser, 'combos.manage')}
+              />
+
               {/* Filters & Search */}
               <div className="p-4 rounded-2xl bg-white border border-ink-200 flex flex-col sm:flex-row gap-3 items-center justify-between">
                 <div className="relative w-full sm:w-80">
@@ -3682,6 +3856,22 @@ export default function AdminPage() {
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex rounded-xl border border-ink-200 overflow-hidden text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setComboView('matrix')}
+                      className={`px-3 py-2 cursor-pointer ${comboView === 'matrix' ? 'bg-amber-600 text-white' : 'bg-ink-50 text-ink-800 hover:bg-ink-100'}`}
+                    >
+                      Bảng tính ma trận
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComboView('list')}
+                      className={`px-3 py-2 cursor-pointer ${comboView === 'list' ? 'bg-amber-600 text-white' : 'bg-ink-50 text-ink-800 hover:bg-ink-100'}`}
+                    >
+                      Danh sách
+                    </button>
+                  </div>
                   <select
                     value={comboFilter}
                     onChange={(e) => setComboFilter(e.target.value)}
@@ -3696,7 +3886,166 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Ma trận combo: dòng = combo, cột = sản phẩm (số chai), NTD nhập thẳng số tiền */}
+              {comboView === 'matrix' && (() => {
+                const canEdit = hasPermission(currentUser, 'products.manage_price') && hasPermission(currentUser, 'combos.manage');
+                const groups: { name: string; count: number }[] = [];
+                matrixProducts.forEach((p) => {
+                  const name = p.category_name || 'Khác';
+                  const last = groups[groups.length - 1];
+                  if (last && last.name === name) last.count++;
+                  else groups.push({ name, count: 1 });
+                });
+                const shortLabel = (p: Product) => matrixCode(p) || (p.name.length > 18 ? `${p.name.slice(0, 18)}…` : p.name);
+                const dirtyCount = combos.filter((c) => matrixDrafts[c.id]).length;
+                const stickyCell = 'sticky left-0 z-10 bg-white border-r border-ink-200';
+                return (
+                  <div className="rounded-2xl bg-white border border-ink-200 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-ink-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <p className="text-xs text-ink-700">
+                        Nhập số chai từng sản phẩm và số tiền NTD. Giá gốc = tổng (số chai × giá web). Giá bán = Giá gốc − NTD.
+                        {!canEdit && ' Tài khoản này chỉ được xem.'}
+                      </p>
+                      {dirtyCount > 0 && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setMatrixDrafts({})}
+                            className="px-3 py-1.5 rounded-xl text-sm bg-ink-100 hover:bg-ink-200 text-ink-800 cursor-pointer"
+                          >
+                            Hủy thay đổi
+                          </button>
+                          <button
+                            type="button"
+                            disabled={matrixSavingId !== null}
+                            onClick={saveAllMatrixRows}
+                            className="px-3 py-1.5 rounded-xl text-sm bg-amber-600 hover:bg-amber-700 text-white cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Lưu tất cả ({dirtyCount})</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="text-xs text-ink-800 border-collapse">
+                        <thead className="bg-ink-50 text-ink-700">
+                          <tr className="border-b border-ink-200">
+                            <th rowSpan={3} className={`${stickyCell} bg-ink-50 py-2 px-3 text-left min-w-56`}>Combo</th>
+                            {groups.map((g) => (
+                              <th key={g.name} colSpan={g.count} className="py-2 px-2 text-center text-amber-700 border-l border-ink-200">
+                                {g.name}
+                              </th>
+                            ))}
+                            <th rowSpan={3} className="py-2 px-2 text-center border-l border-ink-200">Tổng chai</th>
+                            <th rowSpan={3} className="py-2 px-2 text-right border-l border-ink-200 min-w-24">Giá gốc</th>
+                            <th rowSpan={3} className="py-2 px-2 text-right border-l border-ink-200 min-w-28">NTD (đ)</th>
+                            <th rowSpan={3} className="py-2 px-2 text-right border-l border-ink-200 min-w-24">Giá bán</th>
+                            <th rowSpan={3} className="py-2 px-2 text-center border-l border-ink-200">% giảm</th>
+                            <th rowSpan={3} className="py-2 px-2 border-l border-ink-200"></th>
+                          </tr>
+                          <tr className="border-b border-ink-200">
+                            {matrixProducts.map((p) => (
+                              <th key={p.id} title={p.name} className="py-2 px-1 text-center border-l border-ink-200 min-w-16 font-normal">
+                                {shortLabel(p)}
+                              </th>
+                            ))}
+                          </tr>
+                          <tr className="border-b border-ink-200">
+                            {matrixProducts.map((p) => (
+                              <th key={p.id} className="py-1 px-1 text-center border-l border-ink-200 font-normal text-2xs">
+                                {formatVND(p.price)}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredCombos.map((c) => {
+                            const row = getMatrixRow(c);
+                            const { original, bottles, sale, discount } = calcMatrixRow(row);
+                            const dirty = Boolean(matrixDrafts[c.id]);
+                            const unmatched = (c.items || []).filter((it) => !findComboProduct(it.product_id)).length;
+                            return (
+                              <tr key={c.id} className={`border-b border-ink-100 ${dirty ? 'bg-amber-50' : ''}`}>
+                                <td className={`${stickyCell} ${dirty ? 'bg-amber-50' : ''} py-1.5 px-3`}>
+                                  <div className="text-sm text-ink-950 line-clamp-2" title={c.name}>{c.name}</div>
+                                  {!c.is_active && <span className="text-2xs text-ink-600">Tạm dừng</span>}
+                                  {unmatched > 0 && (
+                                    <span className="text-2xs text-rose-600"> · {unmatched} món không khớp sản phẩm</span>
+                                  )}
+                                </td>
+                                {matrixProducts.map((p) => (
+                                  <td key={p.id} className="py-1 px-1 text-center border-l border-ink-100">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      disabled={!canEdit}
+                                      value={row.qty[p.id] || ''}
+                                      onChange={(e) => setMatrixCell(c, { pid: p.id, qty: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                                      className="w-14 bg-white border border-ink-200 rounded-lg px-1 py-1 text-sm text-center text-ink-950 focus:outline-none focus:border-amber-500"
+                                      aria-label={`Số chai ${p.name}`}
+                                    />
+                                  </td>
+                                ))}
+                                <td className="py-1 px-2 text-center border-l border-ink-100">{bottles}</td>
+                                <td className="py-1 px-2 text-right border-l border-ink-100">{formatVND(original)}</td>
+                                <td className="py-1 px-2 text-right border-l border-ink-100">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={500}
+                                    disabled={!canEdit}
+                                    value={row.ntd}
+                                    onChange={(e) => setMatrixCell(c, { ntd: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                                    className="w-24 bg-white border border-ink-200 rounded-lg px-2 py-1 text-sm text-right text-ink-950 focus:outline-none focus:border-amber-500"
+                                    aria-label="Số tiền NTD"
+                                  />
+                                </td>
+                                <td className={`py-1 px-2 text-right border-l border-ink-100 text-sm ${sale < 1 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                                  {formatVND(sale)}
+                                </td>
+                                <td className="py-1 px-2 text-center border-l border-ink-100">{discount}%</td>
+                                <td className="py-1 px-2 border-l border-ink-100 whitespace-nowrap">
+                                  {dirty && (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={matrixSavingId !== null}
+                                        onClick={() => saveMatrixRow(c)}
+                                        className="px-2 py-1 rounded-lg text-xs bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
+                                      >
+                                        {matrixSavingId === c.id ? 'Đang lưu…' : 'Lưu'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => discardMatrixRow(c.id)}
+                                        className="p-1 rounded-lg hover:bg-ink-100 text-ink-700 cursor-pointer"
+                                        aria-label="Hủy thay đổi dòng này"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {filteredCombos.length === 0 && (
+                            <tr>
+                              <td colSpan={matrixProducts.length + 7} className="py-8 text-center text-ink-600">
+                                Không tìm thấy gói combo nào
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Table */}
+              {comboView === 'list' && (
               <div className="rounded-2xl bg-white border border-ink-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-ink-800">
@@ -3850,6 +4199,7 @@ export default function AdminPage() {
                   </table>
                 </div>
               </div>
+              )}
             </div>
           )}
 
@@ -7135,6 +7485,136 @@ export default function AdminPage() {
                   />
                 </div>
 
+                {/* Tính giá theo bảng tính: chọn món + số chai, nhập thẳng số tiền NTD */}
+                {(() => {
+                  const canEditPrice = hasPermission(currentUser, 'products.manage_price');
+                  const comboItems = editingCombo.items || [];
+                  const original = editingCombo.original_price || 0;
+                  const ntdTooHigh = comboItems.length > 0 && comboNtd >= original;
+                  const setItem = (idx: number, patch: Partial<ComboItem>) =>
+                    updateComboItems(comboItems.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+                  const addItem = () => {
+                    const used = new Set(comboItems.map((it) => findComboProduct(it.product_id)?.id || it.product_id));
+                    const next = products.find((p) => p.is_active && !used.has(p.id));
+                    if (!next) return;
+                    updateComboItems([...comboItems, { product_id: next.id, quantity: 1, unit: 'chai' }]);
+                  };
+                  // Droplist hiện mã SP (SB, SHS…) + giá web, xếp theo thứ tự bảng tính; SP chưa có mã xếp cuối, hiện tên ngắn
+                  const codeRank = (p: Product) => {
+                    const i = COMBO_SHEET_ORDER.indexOf(matrixCode(p));
+                    return i === -1 ? COMBO_SHEET_ORDER.length : i;
+                  };
+                  const optionLabel = (p: Product) =>
+                    `${matrixCode(p) || (p.name.length > 24 ? `${p.name.slice(0, 24)}…` : p.name)} · ${formatVND(p.price)}`;
+                  return (
+                    <div className="sm:col-span-2 p-4 rounded-2xl bg-ink-50 border border-ink-200 space-y-3">
+                      <div>
+                        <h4 className="text-sm text-ink-950 flex items-center gap-2">
+                          <Boxes className="w-4 h-4 text-amber-700" />
+                          <span>Tính giá theo bảng tính</span>
+                        </h4>
+                        <p className="text-2xs text-ink-700 mt-0.5">
+                          Chọn sản phẩm và số chai, rồi nhập số tiền NTD. Giá gốc = tổng (số chai × giá web). Giá bán = Giá gốc − NTD.
+                        </p>
+                      </div>
+
+                      {comboItems.length === 0 && (
+                        <p className="text-xs text-ink-700">Combo chưa có sản phẩm. Bấm “Thêm sản phẩm” để bắt đầu tính giá.</p>
+                      )}
+
+                      {comboItems.map((it, idx) => {
+                        const prod = findComboProduct(it.product_id);
+                        const unitPrice = Number(prod?.price) || 0;
+                        return (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                              <select
+                                value={prod?.id || it.product_id}
+                                disabled={!canEditPrice}
+                                onChange={(e) => setItem(idx, { product_id: e.target.value })}
+                                title={prod?.name}
+                                aria-label="Sản phẩm"
+                                className="w-36 shrink-0 bg-white border border-ink-300 rounded-xl px-3 py-2 text-sm text-ink-950 focus:outline-none focus:border-amber-500"
+                              >
+                                {!prod && <option value={it.product_id}>{it.product_id} (không tìm thấy)</option>}
+                                {products
+                                  .filter((p) => p.is_active || p.id === prod?.id)
+                                  .sort((a, b) => codeRank(a) - codeRank(b) || a.name.localeCompare(b.name, 'vi'))
+                                  .map((p) => (
+                                    <option key={p.id} value={p.id} title={p.name}>
+                                      {optionLabel(p)}
+                                    </option>
+                                  ))}
+                              </select>
+                              {/* Tên đầy đủ của SP đang chọn (ẩn trên điện thoại cho gọn) */}
+                              {prod && (
+                                <span className="hidden sm:block min-w-0 truncate text-xs text-ink-700" title={prod.name}>
+                                  {prod.name}
+                                </span>
+                              )}
+                            </div>
+                            <input
+                              type="number"
+                              min={1}
+                              disabled={!canEditPrice}
+                              value={it.quantity || 1}
+                              onChange={(e) => setItem(idx, { quantity: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                              className="w-20 bg-white border border-ink-300 rounded-xl px-3 py-2 text-sm text-ink-950 focus:outline-none focus:border-amber-500"
+                              aria-label="Số chai"
+                            />
+                            <span className="w-24 shrink-0 text-right text-sm text-ink-800">{formatVND(unitPrice * (it.quantity || 0))}</span>
+                            <button
+                              type="button"
+                              disabled={!canEditPrice}
+                              onClick={() => updateComboItems(comboItems.filter((_, i) => i !== idx))}
+                              className="p-1.5 rounded-lg hover:bg-ink-100 text-ink-700 hover:text-rose-600 cursor-pointer"
+                              aria-label="Bỏ sản phẩm"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                      {canEditPrice && (
+                        <button
+                          type="button"
+                          onClick={addItem}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm bg-white border border-ink-300 hover:border-amber-500 text-ink-800 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Thêm sản phẩm</span>
+                        </button>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-ink-200">
+                        <div>
+                          <label className="block text-sm text-ink-800 mb-1">Số tiền NTD (VNĐ)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            step={500}
+                            disabled={!canEditPrice}
+                            value={comboNtd}
+                            onChange={(e) => updateComboNtd(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                            className="w-full bg-white border border-ink-300 rounded-xl px-3.5 py-2 text-sm text-ink-950 focus:outline-none focus:border-amber-500"
+                          />
+                          {ntdTooHigh && (
+                            <p className="text-xs text-rose-600 mt-1">Số tiền NTD phải nhỏ hơn giá gốc.</p>
+                          )}
+                        </div>
+                        <div className="text-sm text-ink-800 space-y-1">
+                          <div className="flex justify-between"><span>Tổng số chai</span><span>{comboItems.reduce((s, it) => s + (it.quantity || 0), 0)}</span></div>
+                          <div className="flex justify-between"><span>Giá gốc (giá web)</span><span>{formatVND(original)}</span></div>
+                          <div className="flex justify-between"><span>Trừ NTD</span><span>−{formatVND(comboNtd)}</span></div>
+                          <div className="flex justify-between text-base text-emerald-700"><span>Giá bán</span><span>{formatVND(editingCombo.sale_price || 0)}</span></div>
+                          <div className="flex justify-between"><span>% giảm hiển thị</span><span>{editingCombo.discount || 0}%</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Giá gốc */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -7149,7 +7629,7 @@ export default function AdminPage() {
                     type="number"
                     required
                     step={1000}
-                    disabled={!hasPermission(currentUser, 'products.manage_price')}
+                    disabled={!hasPermission(currentUser, 'products.manage_price') || (editingCombo.items?.length ?? 0) > 0}
                     value={editingCombo.original_price || 0}
                     onChange={(e) => {
                       const orig = parseInt(e.target.value, 10) || 0;
@@ -7177,7 +7657,7 @@ export default function AdminPage() {
                     type="number"
                     required
                     step={1000}
-                    disabled={!hasPermission(currentUser, 'products.manage_price')}
+                    disabled={!hasPermission(currentUser, 'products.manage_price') || (editingCombo.items?.length ?? 0) > 0}
                     value={editingCombo.sale_price || 0}
                     onChange={(e) => {
                       const sale = parseInt(e.target.value, 10) || 0;
@@ -7456,7 +7936,7 @@ export default function AdminPage() {
                   step={1}
                   value={editingCombo.sold_offset ?? 0}
                   onChange={(e) =>
-                    setEditingProduct({ ...editingCombo, sold_offset: Math.max(0, parseInt(e.target.value, 10) || 0) })
+                    setEditingCombo({ ...editingCombo, sold_offset: Math.max(0, parseInt(e.target.value, 10) || 0) })
                   }
                   className="w-full sm:w-64 bg-ink-50 border border-ink-300 text-sm text-ink-950 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500"
                 />

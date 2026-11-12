@@ -34,10 +34,12 @@ import { useUserAuth } from '@/context/UserAuthContext';
 import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 import { products, categories as catalogCategories } from '@/data/products';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
-import { ENABLE_COMBOS } from '@/config/features';
+import { ENABLE_COMBOS, ENABLE_DAILY_DEALS } from '@/config/features';
+import { useDailyDealsEnabled } from '@/lib/savings';
 import { DELIVER_TO_PLACEHOLDER } from '@/data/homepage-placeholders';
 import CategorySidebar from '@/components/home/CategorySidebar';
 import SavingsBagButton from '@/components/layout/SavingsBagButton';
+import { useComboCatalog } from '@/lib/savings';
 
 /**
  * HEADER BIẾN THỂ AMAZON — chỉ dùng cho trang chủ mới (AppLayout chọn khi ở "/" và cờ bật).
@@ -189,9 +191,13 @@ export default function HeaderAmazon() {
     };
   }, [isDrawerOpen]);
 
+  // Combo đang bán (dùng chung bộ nhớ đệm /api/combos với Túi tiết kiệm, không gọi thêm): không có → ẩn "Deal Sốc"
+  const hasLiveCombos = useComboCatalog().length > 0;
+  // Công tắc admin "Deal trong ngày" (tắt → ẩn "Deal Sốc" vì dải #deal-trong-ngay không còn)
+  const dailyDealsOn = useDailyDealsEnabled();
   const taskbagItems = useMemo(
     () => [
-      ...(ENABLE_COMBOS ? [{ id: 'deal-soc', label: t('dealHot'), href: '/#combo', icon: Flame, color: 'text-corn', badge: 'HOT' }] : []),
+      ...(ENABLE_COMBOS && ENABLE_DAILY_DEALS && dailyDealsOn && hasLiveCombos ? [{ id: 'deal-soc', label: t('dealHot'), href: '/#deal-trong-ngay', icon: Flame, color: 'text-corn', badge: 'HOT' }] : []),
       { id: 'ban-chay', label: t('bestSellers'), href: '/#san-pham', icon: Sparkles, color: 'text-corn' },
       ...(MEMBERSHIP_CONFIG.ENABLE_MEMBERSHIP
         ? [{ id: 'member-prime', label: 'Thái Sơn Prime', href: '/member', icon: Crown, color: 'text-corn', badge: 'HOT' }]
@@ -199,7 +205,7 @@ export default function HeaderAmazon() {
       { id: 'dich-vu', label: t('wholesaleService'), href: '/#kho-si', icon: Truck, color: 'text-leaf-300' },
       { id: 'ho-tro', label: t('shoppingSupport'), href: '#ho-tro', action: 'open-support', icon: Headphones, color: 'text-leaf-300' },
     ],
-    [t]
+    [t, hasLiveCombos, dailyDealsOn]
   );
 
   const categoryLinks = SEARCH_CATEGORIES.map((c) => ({

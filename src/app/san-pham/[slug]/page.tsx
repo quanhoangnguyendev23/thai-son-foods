@@ -5,7 +5,6 @@ import { query } from '@/lib/db';
 import { Product } from '@/types';
 import ProductGallery from '@/components/product/ProductGallery';
 import ProductInfo, { ProductBreadcrumb } from '@/components/product/ProductInfo';
-import ProductDescription from '@/components/product/ProductDescription';
 import ProductFeatureShowcase from '@/components/product/ProductFeatureShowcase';
 import ProductCombosSidebar from '@/components/product/ProductCombosSidebar';
 import ProductSection from '@/components/home/ProductSection';
@@ -25,8 +24,7 @@ import ProductDetailTabs from '@/components/product/ProductDetailTabs';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import RecentlyViewedProducts from '@/components/product/RecentlyViewedProducts';
 import ProductCompareTable from '@/components/product/ProductCompareTable';
-import { getSiblingProducts, getSimilarProducts } from '@/lib/product-detail';
-import { getProductDetailContent } from '@/data/product-detail-content';
+import { getSiblingProducts, getSimilarProducts, getShortProductName } from '@/lib/product-detail';
 import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold } from '@/lib/product-stats';
 import ProductComboStrip from '@/components/product/ProductComboStrip';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
@@ -35,6 +33,7 @@ import { ReviewProductAd, ReviewComboAd } from '@/components/product/ProductRevi
 import ComboCarousel from '@/components/product/ComboCarousel';
 import { PersonalizedSignInPrompt, BackToTopBar } from '@/components/product/ProductPageEndBlocks';
 import { combos as staticCombos } from '@/data/combos';
+import { canonicalProductId } from '@/lib/inventory';
 import { Combo } from '@/types';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
@@ -82,6 +81,7 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
        WHERE p.slug = $1 OR p.id = $1 OR p.sku = $1 OR p.slug LIKE $1 || '%' OR $1 LIKE p.slug || '%'
+          OR ($1 ~* '^[a-z]{1,5}-[0-9]{1,3}$' AND UPPER(p.sku) = regexp_replace(UPPER($1), '-[0-9]+$', ''))
        LIMIT 1;`,
       [slug]
     );
@@ -190,6 +190,9 @@ async function getActiveCombos(): Promise<StripCombo[]> {
         } as StripCombo;
       });
     }
+    // CSDL đã có combo nhưng đều tạm dừng → không gợi ý combo nào (không rơi về dữ liệu mẫu)
+    const countRes = await query(`SELECT COUNT(*) AS total FROM combos;`);
+    if (Number(countRes.rows[0]?.total || 0) > 0) return [];
   } catch (err) {
     console.error('Không thể lấy combo cho dải gợi ý:', err);
   }
@@ -198,7 +201,9 @@ async function getActiveCombos(): Promise<StripCombo[]> {
 
 /** Ưu tiên combo có sản phẩm đang xem, rồi combo giảm nhiều nhất, rồi combo nhiều sản phẩm đang xem hơn */
 function pickComboForProduct(list: StripCombo[], productId: string): StripCombo | undefined {
-  const qtyOf = (c: StripCombo) => c.products.find((it) => it.productId === productId)?.quantity || 0;
+  // Combo trong CSDL lưu mã kho (prod-sb-01), trang dùng mã danh mục (sua-bap-nep) → so theo mã chuẩn
+  const key = canonicalProductId(productId);
+  const qtyOf = (c: StripCombo) => c.products.find((it) => canonicalProductId(it.productId) === key)?.quantity || 0;
   return [...list]
     .filter((c) => c.salePrice > 0 && c.slug)
     .sort(
@@ -306,7 +311,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     stripCombo = pickComboForProduct(activeCombos, product.id);
     // Combo trong mục Đánh giá: ngẫu nhiên trong các combo có sản phẩm này (khác combo ở dải trên); không có thì ngẫu nhiên
     const otherCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug && c.id !== stripCombo?.id);
-    const withProduct = otherCombos.filter((c) => c.products.some((it) => it.productId === product.id));
+    const productKey = canonicalProductId(product.id);
+    const withProduct = otherCombos.filter((c) => c.products.some((it) => canonicalProductId(it.productId) === productKey));
     const comboPool = withProduct.length > 0 ? withProduct : otherCombos;
     reviewCombo = comboPool[Math.floor(Math.random() * comboPool.length)];
     if (stripCombo) {
@@ -329,13 +335,22 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const reviewAdRating = reviewAdProduct
     ? await getProductReviewSummary(reviewAdProduct.slug || reviewAdProduct.id).catch(() => null)
     : null;
-  // Logo cho dải combo: thương hiệu chiếm nhiều chai nhất trong combo
-  const reviewComboBrand = reviewCombo
-    ? [...brands].sort(
-        (a, b) =>
-          reviewCombo!.products.filter((it) => b.productIds.includes(it.productId)).reduce((s, it) => s + it.quantity, 0) -
-          reviewCombo!.products.filter((it) => a.productIds.includes(it.productId)).reduce((s, it) => s + it.quantity, 0)
-      )[0]
+  // Logo cho dải combo: CHỈ khi mọi chai trong combo cùng một thương hiệu (so theo mã chuẩn); combo trộn hãng → không logo
+  const brandOfItem = (pid: string) => {
+    const key = canonicalProductId(pid);
+    return brands.find((b) => b.productIds.some((id) => canonicalProductId(id) === key));
+  };
+  const reviewComboBrand = (() => {
+    if (!reviewCombo || reviewCombo.products.length === 0) return undefined;
+    const itemBrands = reviewCombo.products.map((it) => brandOfItem(it.productId));
+    const first = itemBrands[0];
+    return first && itemBrands.every((b) => b?.slug === first.slug) ? first : undefined;
+  })();
+  // Dòng tiêu đề nhỏ trên thẻ combo: nêu sản phẩm đang xem nếu combo có sản phẩm này
+  const reviewComboHeadline = reviewCombo
+    ? reviewCombo.products.some((it) => canonicalProductId(it.productId) === canonicalProductId(product.id))
+      ? `Combo tiết kiệm có ${getShortProductName(product)}`
+      : 'Combo tiết kiệm từ Thái Sơn Foods'
     : undefined;
 
   // "Khám phá dòng khác": mỗi danh mục còn lại một hàng
@@ -398,6 +413,18 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     }
   }
 
+  // Ô "Mua kèm thường gặp" trong khu Thông tin sản phẩm: ưu tiên món khách thật sự mua cùng,
+  // thiếu thì bù bằng sản phẩm tương tự; bỏ 2 món đã nằm trong khối "Gợi ý mua kèm" phía trên để không trùng
+  const bundleIds = new Set(getSimilarProducts(product, products, 2).map((p) => p.id));
+  const detailCompanions: { product: Product; boughtTogether?: boolean }[] = [];
+  for (const [list, together] of [[boughtTogetherProducts, true], [similarProducts, false]] as const) {
+    for (const p of list) {
+      if (detailCompanions.length >= 4) break;
+      if (p.id === product.id || bundleIds.has(p.id) || detailCompanions.some((c) => c.product.id === p.id)) continue;
+      detailCompanions.push({ product: p, boughtTogether: together });
+    }
+  }
+
   return (
     <div className="bg-white min-h-screen">
       <script
@@ -407,7 +434,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
       {useNewLayout ? (
       /* ═══ GIAO DIỆN MỚI (bố cục Amazon) — bật bằng PRODUCT_DETAIL_CONFIG.ENABLE_NEW_LAYOUT ═══ */
-      <div className="w-full">
+      /* Lề 2 bên 80px từ lg: 56px ở đây + 24px (sm:px-6) sẵn có trong từng khối */
+      <div className="w-full lg:px-14">
         {/* Dải combo gợi ý (kiểu dải Sponsored của Amazon) */}
         {stripCombo && (
           <ProductComboStrip combo={stripCombo} catalog={products} rating={stripRating} sold={stripSold} />
@@ -442,6 +470,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {bestSellerProducts.length >= 3 && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel
+            plain
               title="Bán chạy nhất tại Thái Sơn Foods"
               subtitle="Xếp hạng theo số lượng đã bán"
               products={bestSellerProducts}
@@ -455,6 +484,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {/* ── CÁC SẢN PHẨM BẠN CÓ THỂ THÍCH (sản phẩm liên quan) ── */}
         <div className="border-t border-gray-200 bg-white">
           <ProductCarousel
+            plain
             title="Các sản phẩm bạn có thể thích"
             subtitle={category ? `Cùng danh mục ${category.name} và các dòng thức uống khác của Thái Sơn Foods` : undefined}
             products={similarProducts}
@@ -472,6 +502,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {boughtTogetherProducts.length >= 3 && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel
+            plain
               title="Khách mua sản phẩm này cũng mua"
               products={boughtTogetherProducts}
               mobileGrid
@@ -484,13 +515,13 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {/* Dùng ComboCarousel để cùng kiểu tiêu đề, thẻ và mũi tên với các hàng sản phẩm khác */}
         {ENABLE_COMBOS && featuredCombos.length > 0 && (
           <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel title="Các combo nổi bật đáng cân nhắc" combos={featuredCombos} />
+            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" combos={featuredCombos} />
           </div>
         )}
 
         {/* ── THÔNG TIN SẢN PHẨM (TAB) ── */}
         <div className="border-t border-gray-200 bg-white scroll-mt-[168px]" id="thong-tin-san-pham">
-          <ProductDetailTabs product={product} categoryName={category?.name} />
+          <ProductDetailTabs product={product} categoryName={category?.name} companions={detailCompanions} />
         </div>
 
         {/* ── NỘI DUNG THƯƠNG HIỆU (A+): 2 BANNER ĐẶC TÍNH SẢN PHẨM ── */}
@@ -520,17 +551,9 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {/* ── KHÁM PHÁ DÒNG KHÁC: mỗi danh mục còn lại một hàng ── */}
         {otherCategoryRows.map(({ category: other, items }) => (
           <div key={other.id} className="border-t border-gray-200 bg-white">
-            <ProductCarousel title={`Khám phá dòng ${other.name}`} products={items} mobileGrid wide />
+            <ProductCarousel plain title={`Khám phá dòng ${other.name}`} products={items} mobileGrid wide />
           </div>
         ))}
-
-        {/* ── MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG ── */}
-        <ProductDescription
-          productName={product.name}
-          description={product.description || product.shortDescription}
-          hideEstimatedNutrition={Boolean(getProductDetailContent(product).nutrition)}
-          energyKcal={product.energyKcal}
-        />
 
         {/* ĐÁNH GIÁ TỪ KHÁCH HÀNG (ảnh khách hàng = placeholder, gộp trong mục; đánh giá = dữ liệu thật) */}
         <div className="border-t border-gray-200 bg-white" id="danh-gia-khach-hang">
@@ -547,7 +570,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
                 />
               ) : undefined
             }
-            bottomSlot={reviewCombo ? <ReviewComboAd combo={reviewCombo} brand={reviewComboBrand} /> : undefined}
+            bottomSlot={reviewCombo ? <ReviewComboAd combo={reviewCombo} brand={reviewComboBrand} headline={reviewComboHeadline} /> : undefined}
           />
         </div>
 
@@ -556,6 +579,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {alsoViewedProducts.length >= 3 && (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel
+            plain
               title="Khách hàng đã xem sản phẩm này cũng xem"
               products={alsoViewedProducts}
               mobileGrid
@@ -579,7 +603,10 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
         {/* ── CUỐI TRANG (giống Amazon): mời đăng nhập để xem gợi ý riêng (chỉ khách chưa đăng nhập) + thanh Lên đầu trang ── */}
         <PersonalizedSignInPrompt />
-        <BackToTopBar />
+        {/* Dải "Lên đầu trang" tràn hết bề ngang (bù lại lề lg:px-14 của khung) */}
+        <div className="lg:-mx-14">
+          <BackToTopBar />
+        </div>
       </div>
       ) : (
       /* ═══ GIAO DIỆN CŨ (đang hiển thị mặc định) ═══ */
@@ -647,12 +674,6 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             </div>
           </div>
         )}
-
-        {/* ── 2. MÔ TẢ & CÂU CHUYỆN CHẤT LƯỢNG (Thứ tự 2) ── */}
-        <ProductDescription
-          productName={product.name}
-          description={product.description || product.shortDescription}
-        />
 
         {/* ── 3. VISUAL A+ CONTENT: 2 BANNER XẾP CHỒNG (Thứ tự 3) ── */}
         <ProductFeatureShowcase

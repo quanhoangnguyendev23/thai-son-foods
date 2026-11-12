@@ -24,7 +24,16 @@ export const FEATURES = {
  * không bị ảnh hưởng. Bật lại sau khi chốt combo và làm bước B1 (docs: PROMPT-SUA-LOI-GOLIVE.md).
  */
 // Nhánh tiếp tục làm combo. KHÔNG deploy nhánh này trước khi làm B1 (máy chủ tính giá combo tự chọn)
-export const ENABLE_CUSTOM_COMBOS = true;
+// 10/11/2026: trang combo tự chọn (/combo) đã gỡ theo yêu cầu → tắt để API đơn hàng không nhận giá combo do trình duyệt gửi
+export const ENABLE_CUSTOM_COMBOS = false;
+
+/**
+ * "Deal trong ngày": dải deal ở trang chủ (#deal-trong-ngay), menu "Deal Sốc", ô "Deal trong ngày" cạnh hero,
+ * nhãn đếm ngược ở trang chi tiết combo và nhãn "Deal hôm nay" trên thẻ combo.
+ * 11/11/2026: bật/tắt bằng công tắc trong admin (tab Combo → "Deal trong ngày (trang chủ)"), lưu ở bảng site_settings,
+ * khoá daily_deals_enabled; chưa có dòng = TẮT. Cờ này là KHOÁ TỔNG: true = admin được bật; false = luôn tắt dù admin bật.
+ */
+export const ENABLE_DAILY_DEALS = true;
 
 /**
  * TOÀN BỘ combo (cả combo cố định trong bảng combos) — doanh nghiệp CHƯA chốt combo nào, giá hiện tại chỉ là mẫu.

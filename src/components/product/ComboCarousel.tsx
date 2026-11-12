@@ -1,5 +1,6 @@
 'use client';
 
+import { discountLabel } from '@/lib/discount-label';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,7 +13,7 @@ import { useFlyToCart } from '@/context/FlyToCartContext';
 /** Combo phải chọn vị trên trang combo trước khi mua (giống ProductCombosSidebar) */
 const CUSTOMIZABLE_COMBO_IDS = new Set(['combo-4-chai', 'combo-van-phong', 'combo-uu-dai', 'combo-5-old', 'combo-sieu-hoi', 'combo-6-old']);
 
-function ComboCard({ combo }: { combo: Combo }) {
+function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) {
   const cardRef = useRef<HTMLElement>(null);
   const { flyToCart } = useFlyToCart();
   const [added, setAdded] = useState(false);
@@ -40,10 +41,14 @@ function ComboCard({ combo }: { combo: Combo }) {
     <article ref={cardRef} className="group h-full flex flex-col">
       <Link
         href={href}
-        className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none"
+        className={
+          plain
+            ? 'flex flex-col h-full'
+            : 'flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none'
+        }
       >
         {/* Ảnh: cùng khung 4:3 với thẻ sản phẩm */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-ivory">
+        <div className={`relative aspect-[4/3] w-full overflow-hidden bg-ivory${plain ? ' rounded-lg' : ''}`}>
           <Image
             src={combo.image}
             alt={combo.name}
@@ -52,20 +57,25 @@ function ComboCard({ combo }: { combo: Combo }) {
             loading="lazy"
             className="object-cover transition-transform duration-500"
           />
-          {combo.discount > 0 && (
-            <span className="absolute top-1 right-1 sm:top-2 sm:right-2 px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
-              -{combo.discount}%
-            </span>
+          {(combo.isBestSeller || discountLabel(combo)) && (
+            <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10 flex flex-col items-end gap-0.5">
+              {combo.isBestSeller && (
+                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">Bán chạy</span>
+              )}
+              {discountLabel(combo) && (
+                <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">{discountLabel(combo)}</span>
+              )}
+            </div>
           )}
         </div>
 
         {/* Thông tin: cùng cỡ chữ, cách dòng với thẻ sản phẩm */}
-        <div className="p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col justify-between">
-          <h3 title={combo.name} className="text-base text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 transition-colors">
+        <div className={`${plain ? 'pt-2' : 'p-2 sm:p-2.5 md:p-3'} flex-1 flex flex-col justify-between`}>
+          <h3 title={combo.name} className={`text-base text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 ${plain ? 'group-hover:underline ' : ''}transition-colors`}>
             {combo.name}
           </h3>
 
-          <div className="relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
+          <div className={`relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2${plain ? '' : ' border-t border-gray-100'}`}>
             <div className="flex flex-col min-w-0">
               <div className="text-base sm:text-base text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
                 <span>{formatPrice(combo.salePrice)}đ</span>
@@ -107,13 +117,15 @@ interface ComboCarouselProps {
   combos: Combo[];
   subtitle?: string;
   className?: string;
+  /** Thẻ không khung kiểu Amazon (trang chi tiết sản phẩm & combo), giống ProductCarousel plain */
+  plain?: boolean;
 }
 
 /**
  * Hàng combo cuộn ngang — cùng khung, tiêu đề, kích thước thẻ và nút mũi tên với ProductCarousel (bản wide),
  * để khu combo đồng bộ với các hàng sản phẩm khác trên trang chi tiết.
  */
-export default function ComboCarousel({ title, combos, subtitle, className }: ComboCarouselProps) {
+export default function ComboCarousel({ title, combos, subtitle, className, plain = false }: ComboCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -166,7 +178,7 @@ export default function ComboCarousel({ title, combos, subtitle, className }: Co
                 !expanded && idx >= mobileInitialCount && 'max-sm:hidden'
               )}
             >
-              <ComboCard combo={combo} />
+              <ComboCard combo={combo} plain={plain} />
             </div>
           ))}
         </div>

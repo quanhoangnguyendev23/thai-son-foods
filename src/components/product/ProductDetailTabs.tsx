@@ -2,16 +2,20 @@
 
 import { useId, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ZoomIn, X } from 'lucide-react';
+import Link from 'next/link';
+import { Check, ShoppingBag, ZoomIn, X } from 'lucide-react';
 import { Product } from '@/types';
 import { cn, formatKcal, formatPrice } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCartStore } from '@/store/cart';
 import { DEFAULT_PRODUCT_DETAIL, getProductDetailContent } from '@/data/product-detail-content';
-import { getBottleVolume, getUnitPrice, getVariantLabel, sortVariants } from '@/lib/product-detail';
+import { getBottleVolume, getProductImage, getShortProductName, getUnitPrice, getVariantLabel, sortVariants } from '@/lib/product-detail';
 
 interface ProductDetailTabsProps {
   product: Product;
   categoryName?: string;
+  /** Ô "Mua kèm thường gặp" dưới phần tab (tối đa 4 món). boughtTogether = có trong đơn hàng thật cùng sản phẩm này */
+  companions?: { product: Product; boughtTogether?: boolean }[];
 }
 
 type TabKey = 'description' | 'ingredients' | 'usage' | 'nutrition' | 'specs' | 'packaging';
@@ -20,7 +24,7 @@ type TabKey = 'description' | 'ingredients' | 'usage' | 'nutrition' | 'specs' | 
  * Thông tin chi tiết sản phẩm, tổ chức thống nhất bằng tab (cuộn ngang trên mobile).
  * Tab chỉ hiển thị nội dung có trong dữ liệu; thiếu dữ liệu thì báo "đang cập nhật".
  */
-export default function ProductDetailTabs({ product, categoryName }: ProductDetailTabsProps) {
+export default function ProductDetailTabs({ product, categoryName, companions = [] }: ProductDetailTabsProps) {
   const { language } = useLanguage();
   const isEn = language === 'en';
   const baseId = useId();
@@ -71,7 +75,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        <div className="lg:col-span-8 min-w-0">
+        <div className="lg:col-span-8 lg:col-start-1 lg:row-start-1 min-w-0">
           {/* Tab list */}
           <div
             role="tablist"
@@ -243,7 +247,7 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
 
         {/* Ảnh nhãn sản phẩm (nếu có) — nguồn gốc của số liệu dinh dưỡng / thành phần */}
         {content.labelImage && (
-          <aside className="lg:col-span-4">
+          <aside className="lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:row-span-2">
             <button
               type="button"
               onClick={() => setLabelOpen(true)}
@@ -264,6 +268,13 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
               </span>
             </button>
           </aside>
+        )}
+
+        {/* Mua kèm thường gặp: lấp khoảng trống dưới phần mô tả, đáy ô thẳng hàng với ảnh nhãn */}
+        {companions.length > 0 && (
+          <div className="lg:col-span-8 lg:col-start-1 lg:row-start-2 lg:self-end min-w-0">
+            <CompanionList companions={companions.slice(0, 4)} />
+          </div>
         )}
       </div>
 
@@ -289,5 +300,86 @@ export default function ProductDetailTabs({ product, categoryName }: ProductDeta
         </div>
       )}
     </section>
+  );
+}
+
+function CompanionList({
+  companions,
+}: {
+  companions: { product: Product; boughtTogether?: boolean }[];
+}) {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+  const addItem = useCartStore((s) => s.addItem);
+  const [addedId, setAddedId] = useState<string | null>(null);
+
+  const handleAdd = (p: Product) => {
+    const variant = sortVariants(p.variants)[0];
+    addItem({
+      productId: variant ? `${p.id}-${variant.id}` : p.id,
+      name: variant ? `${p.name} (${variant.name})` : p.name,
+      slug: p.slug,
+      price: variant ? variant.price : p.price,
+      unit: variant ? variant.name : p.unit,
+      thumbnail: p.thumbnail,
+      variantId: variant?.id,
+      variantName: variant?.name,
+    });
+    setAddedId(p.id);
+    setTimeout(() => setAddedId((cur) => (cur === p.id ? null : cur)), 2000);
+  };
+
+  return (
+    <div className="border-t border-gray-200 pt-5">
+      <h3 className="text-lg text-ink-950 mb-4">
+        {isEn ? 'Frequently bought with this item' : 'Thường được mua kèm'}
+      </h3>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+        {companions.map(({ product: p, boughtTogether }) => {
+          const variant = sortVariants(p.variants)[0];
+          const price = variant ? variant.price : p.price;
+          const pack = variant ? getVariantLabel(variant, language) : p.unit;
+          const name = getShortProductName(p, language);
+          const added = addedId === p.id;
+          return (
+            <li key={p.id} className="group flex items-center gap-3.5">
+              <Link
+                href={`/san-pham/${p.slug}`}
+                className="relative w-[96px] aspect-[4/3] shrink-0 rounded-lg overflow-hidden bg-ivory"
+              >
+                <Image src={getProductImage(p)} alt={name} fill sizes="96px" className="object-cover" />
+              </Link>
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/san-pham/${p.slug}`}
+                  className="block text-base text-text-dark leading-snug line-clamp-2 hover:text-leaf-900 hover:underline"
+                >
+                  {name}
+                </Link>
+                <div className="mt-0.5 text-base text-leaf-900">
+                  {formatPrice(price)}đ
+                  {pack && <span className="text-2xs text-text-muted"> /{pack}</span>}
+                </div>
+                {boughtTogether && (
+                  <div className="text-2xs text-text-muted">{isEn ? 'Often bought together' : 'Khách hay mua cùng'}</div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => handleAdd(p)}
+                aria-label={isEn ? `Add ${name} to cart` : `Thêm ${name} vào giỏ`}
+                title={added ? (isEn ? 'Added' : 'Đã thêm vào giỏ') : isEn ? 'Add to cart' : 'Thêm vào giỏ'}
+                className={cn(
+                  'shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-white transition-colors active:scale-95 cursor-pointer shadow-xs',
+                  added ? 'bg-emerald-600' : 'bg-brand-emerald hover:bg-brand-forest'
+                )}
+              >
+                {added ? <Check className="w-4 h-4" aria-hidden /> : <ShoppingBag className="w-3.5 h-3.5" aria-hidden />}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

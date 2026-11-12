@@ -1,6 +1,6 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
@@ -75,3 +75,10 @@ Trước và sau mỗi lần chỉnh sửa:
 - **Không** viết `text-[13px]`, `text-[0.8rem]`, `text-[clamp(...)]`, `text-5xl` trở lên, `style={{ fontSize: ... }}` hay `font-size` ngoài thang. Cần to hơn ở màn hình rộng thì dùng tiền tố (`text-2xl md:text-3xl`), không dùng `clamp`.
 - Ô nhập trên điện thoại luôn >= 16px (đã ép trong `src/app/globals.css`); không gỡ quy tắc đó.
 - Chi tiết: `.agents/rules/font-sizes.md`. Trước khi bàn giao thay đổi giao diện: chạy `npm run lint:font-sizes` (phải báo "Cỡ chữ NGOÀI thang: 0").
+
+---
+
+## 8. TRANG CHI TIẾT SẢN PHẨM ↔ TRANG CHI TIẾT COMBO — LUÔN SỬA ĐỒNG BỘ
+- Mọi thay đổi ở trang chi tiết sản phẩm (`src/app/san-pham/[slug]/page.tsx` và các component nó dùng: bố cục, lề, thẻ, hàng cuộn, box gợi ý, hộp mua, đánh giá…) **phải rà soát và áp dụng y như vậy** cho trang chi tiết combo (`src/app/combo/[slug]/page.tsx`, `ComboDetailView` và các component của nó), trong phạm vi hợp lý với combo — và ngược lại.
+- Nếu component dùng chung với trang khác (trang chủ…), bật thay đổi bằng tuỳ chọn (prop) chỉ cho 2 trang này, không làm đổi các trang còn lại.
+- Báo cáo thay đổi phải ghi rõ: đã áp dụng cho cả 2 trang, hoặc phần nào không áp dụng cho trang kia và lý do.

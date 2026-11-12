@@ -322,3 +322,13 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+/// Cài đặt chung của website (khoá → giá trị), vd daily_deals_enabled. Xem src/lib/site-settings.ts
+model SiteSetting {
+  key       String    @id @db.VarChar(100)
+  value     Json
+  updatedBy String?   @map("updated_by") @db.VarChar(100)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("site_settings")
+}
+

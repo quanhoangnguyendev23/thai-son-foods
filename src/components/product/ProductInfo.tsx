@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranchStore } from '@/store/branch';
+import { MonthlySalesInfo } from '@/components/product/ProductRealBlocks';
 
 const VEGAN_PRODUCT_IDS = new Set([
   'sua-bap-nep',
@@ -397,7 +398,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           Ghé thăm cửa hàng Thái Sơn Foods
         </Link>
         <span className="text-xs text-gray-500 font-mono">
-          SKU: {product.sku || 'SS-01'}
+          SKU: {product.sku || 'SS'}
         </span>
       </div>
 
@@ -449,10 +450,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             <span className="text-emerald-700 font-medium text-xs">(Viết nhận xét đầu tiên)</span>
           </a>
         )}
-        <span className="text-gray-300">|</span>
-        <span className="text-xs sm:text-sm text-ink-700">
-          Hơn 200 sản phẩm đã được mua trong tháng trước.
-        </span>
+        {/* Số chai giao mỗi tuần: admin nhập riêng cho từng sản phẩm (giống trang combo) */}
+        <MonthlySalesInfo itemId={product.id} itemType="product" className="text-xs sm:text-sm text-ink-700" />
       </div>
 
       {/* 4. Khối Giá & Ưu đãi */}

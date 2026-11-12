@@ -19,6 +19,8 @@ interface ProductCarouselProps {
   mobileInitialCount?: number;
   /** Trang chi tiết sản phẩm: khung rộng hơn (lề hai bên hẹp), thêm 1 thẻ mỗi hàng trên màn hình rất lớn, tên hiện tối đa 4 dòng */
   wide?: boolean;
+  /** Thẻ không khung kiểu Amazon (chỉ trang chi tiết sản phẩm & combo) */
+  plain?: boolean;
   /** Thứ hạng thật của từng thẻ (#1, #2...) hiện phía trên thẻ — dùng cho khối Bán chạy */
   ranks?: number[];
 }
@@ -36,6 +38,7 @@ export default function ProductCarousel({
   mobileGrid = false,
   mobileInitialCount = 4,
   wide = false,
+  plain = false,
   ranks,
 }: ProductCarouselProps) {
   const { language } = useLanguage();
@@ -106,7 +109,7 @@ export default function ProductCarousel({
                 <p className="absolute top-0 left-0 text-xs leading-4 font-semibold text-brand-copper">#{ranks[idx]}</p>
               )}
               {/* Bố cục compact + tên giới hạn 2 dòng để các thẻ đồng bộ chiều cao */}
-              <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} />
+              <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} plain={plain} />
             </div>
           ))}
         </div>

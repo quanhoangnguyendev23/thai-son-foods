@@ -1,14 +1,15 @@
 'use client';
 
+import { discountLabel } from '@/lib/discount-label';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { combos } from '@/data/combos';
 import { Combo } from '@/types';
 import { formatPrice, cn, safeFetchJson } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTodayDealIds } from '@/lib/daily-deals';
 import { ArrowRight, ShoppingBag, Check, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import SectionTitle from '@/components/ui/SectionTitle';
@@ -26,9 +27,12 @@ export default function ProductCombosSidebar({
 }: ProductCombosSidebarProps) {
   const { language } = useLanguage();
   const { flyToCart } = useFlyToCart();
-  const [comboList, setComboList] = useState<Combo[]>(combos);
+  // Chờ API (combo đang bán trong CSDL) thay vì hiện trước dữ liệu mẫu rồi mới đổi
+  const [comboList, setComboList] = useState<Combo[]>([]);
   const [showAllMobile, setShowAllMobile] = useState(false);
   const [addedId, setAddedId] = useState<string | null>(null);
+  // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Deal hôm nay" (rỗng trước khi mount)
+  const dealIds = useTodayDealIds();
   const maxDiscount = Math.max(...comboList.map((c) => c.discount || 0), 0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -38,7 +42,8 @@ export default function ProductCombosSidebar({
     let active = true;
     safeFetchJson<{ success: boolean; data: Combo[] }>('/api/combos').then((json) => {
       if (!active || !json?.success) return;
-      if (Array.isArray(json.data) && json.data.length > 0) {
+      // API đã tự rơi về dữ liệu mẫu khi CSDL trống; danh sách rỗng = mọi combo đang tạm dừng → ẩn khối
+      if (Array.isArray(json.data)) {
         setComboList(json.data.filter((c: Combo) => c.isActive !== false));
       }
     });
@@ -166,10 +171,17 @@ export default function ProductCombosSidebar({
                 {combo.totalItems} {language === 'en' ? 'chai' : 'chai'}
               </span>
 
+              {/* Nhãn Deal hôm nay */}
+              {dealIds.has(combo.id) && (
+                <span className="absolute top-1 left-1 z-10 pointer-events-none px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
+                  {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+                </span>
+              )}
+
               {/* Badge giảm giá */}
-              {combo.discount > 0 && (
+              {discountLabel(combo) && (
                 <span className="absolute top-1 right-1 px-1.5 py-0.5 text-2xs sm:text-2xs bg-sale text-white rounded shadow-xs">
-                  -{combo.discount}%
+                  {discountLabel(combo)}
                 </span>
               )}
             </div>
@@ -300,6 +312,11 @@ export default function ProductCombosSidebar({
 
           {/* Thông tin Text */}
           <div className="min-w-0 flex-1 w-full">
+            {dealIds.has(combo.id) && (
+              <span className="inline-block mb-0.5 px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded">
+                {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+              </span>
+            )}
             <h4 className="text-sm text-text-dark leading-snug group-hover/card:text-emerald-800 transition-colors">
               {comboTitle}
             </h4>
@@ -316,9 +333,11 @@ export default function ProductCombosSidebar({
               <span className="text-2xs text-gray-400 line-through">
                 {formatPrice(combo.originalPrice)}đ
               </span>
-              <span className="text-2xs text-sale bg-red-50 px-1 py-0.2 rounded">
-                -{combo.discount}%
-              </span>
+              {discountLabel(combo) && (
+                <span className="text-2xs text-sale bg-red-50 px-1 py-0.2 rounded">
+                  {discountLabel(combo)}
+                </span>
+              )}
             </div>
           </div>
         </Link>
@@ -365,13 +384,16 @@ export default function ProductCombosSidebar({
   // ──────────────────────────────────────────────────────
   // LAYOUT NGANG (horizontal) — chuẩn 7 combo 1 hàng, đồng bộ SectionTitle
   // ──────────────────────────────────────────────────────
+  // Không có combo đang bán → ẩn cả khối
+  if (comboList.length === 0) return null;
+
   if (layout === 'horizontal') {
     return (
       <section className="w-full">
         {/* Tiêu đề đồng bộ chuẩn SectionTitle giống Sản phẩm gợi ý */}
         <SectionTitle
           title={sectionTitle}
-          viewAllLink={showViewAll ? '/combo' : undefined}
+          viewAllLink={showViewAll ? '/#combo' : undefined}
           viewAllText={language === 'en' ? 'View all' : 'Xem tất cả'}
           className="mb-4 sm:mb-6 md:mb-8"
         />
@@ -466,7 +488,7 @@ export default function ProductCombosSidebar({
       {/* Ghi chú chân sidebar */}
       <div className="mt-3 pt-2.5 border-t border-amber-200/70 text-center">
         <Link
-          href="/combo"
+          href="/#combo"
           className="text-xs text-emerald-800 hover:text-emerald-950 inline-flex items-center gap-1 hover:underline"
         >
           <span>{language === 'en' ? 'View all combo offers' : 'Xem tất cả ưu đãi Combo'}</span>

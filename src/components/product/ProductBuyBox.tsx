@@ -45,6 +45,8 @@ interface ProductBuyBoxProps {
   /** Mã sản phẩm / combo dùng cho nút Yêu thích */
   itemId?: string;
   itemType?: 'product' | 'combo';
+  /** Dòng phụ dưới giá khi không có quy cách (vd. combo: "Combo 13 chai · 15.281đ/chai") */
+  priceNote?: string;
 }
 
 /**
@@ -73,6 +75,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
     showPlaceholders = true,
     itemId,
     itemType = 'product',
+    priceNote,
   },
   actionsRef
 ) {
@@ -102,6 +105,7 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
             {bottleVolume ? ` × ${bottleVolume}` : ''} · {formatPrice(getUnitPrice(variant))}đ/{isEn ? 'bottle' : 'chai'}
           </p>
         )}
+        {!variant && priceNote && <p className="text-xs text-gray-600 mt-1.5">{priceNote}</p>}
       </div>
 
       {/* Giao hàng */}

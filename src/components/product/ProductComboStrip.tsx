@@ -1,9 +1,11 @@
 import Image from 'next/image';
+import { discountLabel, discountPercentSuffix } from '@/lib/discount-label';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { Combo, Product } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
 import { getShortProductName } from '@/lib/product-detail';
+import { canonicalProductId } from '@/lib/inventory';
 
 interface ProductComboStripProps {
   combo: Combo & { isBestSeller?: boolean };
@@ -23,7 +25,8 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
   const saving = Math.max(0, (combo.originalPrice || 0) - (combo.salePrice || 0));
   const contents = (combo.products || [])
     .map((item) => {
-      const product = catalog.find((p) => p.id === item.productId);
+      // Combo lưu mã kho (prod-sb-01), danh mục dùng mã sua-bap-nep → so theo mã chuẩn
+      const product = catalog.find((p) => canonicalProductId(p.id) === canonicalProductId(item.productId));
       return product ? `${item.quantity} ${getShortProductName(product)}` : null;
     })
     .filter(Boolean)
@@ -75,7 +78,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
             <div className="mt-1 flex items-baseline gap-1.5 sm:hidden">
               <span className="text-sm font-semibold text-ink-950">{formatPrice(combo.salePrice)}đ</span>
               {saving > 0 && <span className="text-2xs text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>}
-              {combo.discount > 0 && <span className="text-2xs text-copper-600">-{combo.discount}%</span>}
+              {discountLabel(combo) && <span className="text-2xs text-copper-600">{discountLabel(combo)}</span>}
             </div>
           </div>
 
@@ -86,7 +89,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
             </div>
             {saving > 0 && (
               <p className="text-xs text-copper-600">
-                Tiết kiệm {formatPrice(saving)}đ{combo.discount > 0 ? ` (-${combo.discount}%)` : ''}
+                Tiết kiệm {formatPrice(saving)}đ{discountPercentSuffix(combo)}
               </p>
             )}
           </div>

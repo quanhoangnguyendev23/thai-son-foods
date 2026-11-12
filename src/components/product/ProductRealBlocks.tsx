@@ -17,23 +17,72 @@ import { useLanguage } from '@/context/LanguageContext';
 
 type ItemType = 'product' | 'combo';
 
+interface WeeklyDeliveryLine {
+  count: number;
+  textVi: string;
+  textEn: string;
+}
+
+// Dùng khi không tải được cài đặt (giống câu cũ)
+const DEFAULT_WEEKLY_DELIVERY: WeeklyDeliveryLine = {
+  count: 10000,
+  textVi: 'Hơn {so} chai được Thái Sơn Foods giao mỗi tuần',
+  textEn: 'Thái Sơn Foods delivers {so}+ bottles every week',
+};
+
+// Tải một lần cho mỗi sản phẩm / combo (dùng chung giữa các lần render)
+const weeklyDeliveryCache = new Map<string, Promise<WeeklyDeliveryLine | null>>();
+function loadWeeklyDelivery(itemType: ItemType, itemId: string): Promise<WeeklyDeliveryLine | null> {
+  const key = `${itemType}:${itemId}`;
+  let p = weeklyDeliveryCache.get(key);
+  if (!p) {
+    p = fetch(`/api/site-settings?itemType=${itemType}&itemId=${encodeURIComponent(itemId)}`)
+      .then((r) => r.json())
+      .then((data) => (data?.success && data.data?.weeklyDelivery ? (data.data.weeklyDelivery as WeeklyDeliveryLine) : null))
+      .catch(() => {
+        weeklyDeliveryCache.delete(key);
+        return null;
+      });
+    weeklyDeliveryCache.set(key, p);
+  }
+  return p;
+}
+
 /**
- * Dòng năng lực giao hàng của công ty (thay cho số đã bán từng sản phẩm).
+ * Dòng "Hơn ... chai được Thái Sơn Foods giao mỗi tuần" ở trang chi tiết sản phẩm và combo.
+ * Số chai admin nhập tay cho từng món (tab Sản phẩm / tab Combo → "Số chai giao mỗi tuần");
+ * chưa nhập thì dùng số mặc định, nhập 0 thì ẩn dòng. Không tính từ đơn trên website.
  * Giữ nguyên tên và props để các trang đang dùng không phải đổi.
  */
-export function MonthlySalesInfo(_props: {
+export function MonthlySalesInfo({
+  itemId,
+  itemType = 'product',
+  className,
+}: {
   itemId: string;
   itemType?: ItemType;
   slug?: string;
+  className?: string;
 }) {
   const { language } = useLanguage();
-  return (
-    <p className="text-sm text-gray-600">
-      {language === 'en'
-        ? 'Thái Sơn Foods delivers 10,000+ bottles every week'
-        : 'Hơn 10.000 chai được Thái Sơn Foods giao mỗi tuần'}
-    </p>
-  );
+  // null = đang tải: chưa hiện gì để không nhá số mặc định rồi đổi sang số riêng
+  const [line, setLine] = useState<WeeklyDeliveryLine | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    loadWeeklyDelivery(itemType, itemId).then((v) => {
+      if (active) setLine(v ?? DEFAULT_WEEKLY_DELIVERY);
+    });
+    return () => {
+      active = false;
+    };
+  }, [itemType, itemId]);
+
+  if (!line || line.count <= 0) return null;
+  const isEn = language === 'en';
+  const number = line.count.toLocaleString(isEn ? 'en-US' : 'vi-VN');
+  const text = (isEn ? line.textEn : line.textVi).split('{so}').join(number);
+  return <p className={className ?? 'text-sm text-gray-600'}>{text}</p>;
 }
 
 export function DeliveryAddressInfo() {

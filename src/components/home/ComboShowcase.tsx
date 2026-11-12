@@ -1,5 +1,6 @@
 'use client';
 
+import { discountLabel } from '@/lib/discount-label';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,6 +12,7 @@ import { motion } from 'framer-motion';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTodayDealIds } from '@/lib/daily-deals';
 
 import { Combo } from '@/types';
 
@@ -23,6 +25,8 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
   const { flyToCart } = useFlyToCart();
   const router = useRouter();
   const [addedId, setAddedId] = useState<string | null>(null);
+  // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Deal hôm nay" (rỗng trước khi mount)
+  const dealIds = useTodayDealIds();
   const [comboList, setComboList] = useState<Combo[]>(initialCombos || combos);
 
   useEffect(() => {
@@ -89,6 +93,9 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
     { id: 'combo-row-2', items: activeCombos.slice(6, 12) },
   ];
 
+  // Không có combo đang bán → ẩn cả khu, không hiện khung trống
+  if (activeCombos.length === 0) return null;
+
   return (
     <section id="combo" className="max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8">
       {/* Tiêu đề cùng kiểu với các hàng sản phẩm trang chủ (ProductCarousel) */}
@@ -148,11 +155,25 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           loading="lazy"
                         />
 
-                        {/* Huy hiệu giảm giá (Góc trên phải) */}
-                        <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
-                          <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
-                            -{combo.discount}%
+                        {/* Nhãn Deal hôm nay (Góc trên trái) */}
+                        {dealIds.has(combo.id) && (
+                          <span className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 pointer-events-none px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
+                            {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
                           </span>
+                        )}
+
+                        {/* Huy hiệu giảm giá (Góc trên phải) */}
+                        <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none flex flex-col items-end gap-0.5">
+                          {combo.isBestSeller && (
+                            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
+                              {language === 'en' ? 'Best seller' : 'Bán chạy'}
+                            </span>
+                          )}
+                          {discountLabel(combo) && (
+                            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-sale text-white rounded shadow-xs">
+                              {discountLabel(combo)}
+                            </span>
+                          )}
                         </div>
 
                         {/* Huy hiệu số lượng chai (Góc dưới phải) */}

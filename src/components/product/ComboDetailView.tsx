@@ -1,5 +1,6 @@
 'use client';
 
+import { discountLabel, discountPercentSuffix } from '@/lib/discount-label';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,7 +9,8 @@ import { Combo, Product, ProductImage } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
-import { ChevronRight, Star } from 'lucide-react';
+import { ChevronRight, Clock, Star } from 'lucide-react';
+import { msUntilNextVnMidnight, useTodayDealIds } from '@/lib/daily-deals';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranchStore } from '@/store/branch';
 import { DEFAULT_PRODUCT_DETAIL, STORE_SALES_INFO } from '@/data/product-detail-content';
@@ -32,6 +34,44 @@ interface ComboDetailViewProps {
   productsDetail: ComboProductDetailItem[];
   initialStock?: number | null;
   initialStockDetails?: any[];
+}
+
+/**
+ * Nhãn "Deal trong ngày" + đồng hồ HH:MM:SS ngay trên giá (không ghi chữ giải thích cơ chế) — chỉ hiện khi combo thuộc bộ deal hôm nay
+ * (cùng thuật toán/nguồn với dải Deal trong ngày ở trang chủ). Đồng hồ thật tới 0h giờ VN, chỉ chạy sau mount.
+ * Qua 0h: combo không còn trong bộ deal mới → nhãn tự ẩn; vẫn còn → đếm lại. Giá combo không đổi nên không ghi "Kết thúc".
+ */
+function DailyDealBadge({ comboId, isEn }: { comboId: string; isEn: boolean }) {
+  const dealIds = useTodayDealIds();
+  const isDeal = dealIds.has(comboId);
+  const [ms, setMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isDeal) return;
+    const tick = () => setMs(msUntilNextVnMidnight());
+    const first = window.setTimeout(tick, 0);
+    const timer = window.setInterval(tick, 1000);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(timer);
+    };
+  }, [isDeal]);
+
+  if (!isDeal || ms === null) return null;
+  const total = Math.floor(ms / 1000);
+  const hhmmss = [Math.floor(total / 3600), Math.floor((total % 3600) / 60), total % 60]
+    .map((n) => String(n).padStart(2, '0'))
+    .join(':');
+
+  return (
+    <p className="inline-flex items-center gap-1.5 mb-2 px-2.5 py-1 rounded-md bg-brand-crimson text-white text-sm">
+      <span>{isEn ? "Today's deal" : 'Deal trong ngày'}</span>
+      <Clock className="w-4 h-4 shrink-0" aria-hidden />
+      <span className="tabular-nums" aria-label={isEn ? "Time left for today's deal" : 'Thời gian còn lại của deal trong ngày'}>
+        {hhmmss}
+      </span>
+    </p>
+  );
 }
 
 export default function ComboDetailView({
@@ -108,21 +148,9 @@ export default function ComboDetailView({
   const savingsAmount = combo.originalPrice - combo.salePrice;
   const avgBottlePrice = Math.round(combo.salePrice / combo.totalItems);
 
-  const isCombo01 = combo.id === 'combo-4-chai';
-  const isCombo02 = combo.id === 'combo-van-phong';
-  const isComboUuDai = combo.id === 'combo-uu-dai' || combo.id === 'combo-5-old';
-  const isComboSieuHoi = combo.id === 'combo-sieu-hoi' || combo.id === 'combo-6-old';
-  const isCustomizable = isCombo01 || isCombo02 || isComboUuDai || isComboSieuHoi;
-
-  const customizeLink = isCombo01
-    ? '/combo?type=combo-4-chai'
-    : isCombo02
-    ? '/combo?type=combo-van-phong'
-    : isComboUuDai
-    ? '/combo?type=combo-uu-dai'
-    : isComboSieuHoi
-    ? '/combo?type=combo-sieu-hoi'
-    : '/combo';
+  // Trang combo tự chọn (/combo) đã gỡ: mọi combo bán theo giá cố định trong bảng combos, mua trực tiếp tại đây
+  const isCustomizable = false as boolean;
+  const customizeLink = '/#combo';
 
   const comboTitle = (language === 'en' && combo.nameEn) ? combo.nameEn : combo.name;
   const comboDesc = (language === 'en' && combo.descriptionEn) ? combo.descriptionEn : combo.description;
@@ -324,7 +352,7 @@ export default function ComboDetailView({
   return (
     <div className="w-full">
       {/* ─── Breadcrumb (đồng bộ chi tiết sản phẩm) ─── */}
-      <div className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-3 pb-1 text-xs">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-1 text-xs">
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-1 text-gray-600 min-w-0">
             <li className="shrink-0">
@@ -347,7 +375,7 @@ export default function ComboDetailView({
       </div>
 
       {/* ─── Khu vực chính: Gallery | Thông tin | Buy Box (cùng lưới với chi tiết sản phẩm) ─── */}
-      <div className="max-w-[1456px] mx-auto px-4 sm:px-6 pt-3 pb-8 lg:pb-10">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-8 lg:pb-10">
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 md:grid-rows-[auto_auto_1fr] xl:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,3fr)] xl:grid-rows-[auto_1fr] xl:gap-x-8">
           {/* ── VÙNG 1: GALLERY ── */}
           <div className="min-w-0 md:col-start-1 md:row-start-1 md:row-span-3 xl:row-span-2 md:sticky md:top-[168px] md:self-start">
@@ -406,17 +434,17 @@ export default function ComboDetailView({
                   {isEn ? 'No reviews yet — be the first' : 'Chưa có đánh giá — hãy là người đầu tiên'}
                 </a>
               )}
-              <span className="text-xs text-gray-500 font-mono">
-                {isEn ? 'Combo code: ' : 'Mã combo: '}#{combo.id.toUpperCase()}
-              </span>
             </div>
 
             <MonthlySalesInfo itemId={combo.id} itemType="combo" slug={combo.slug} />
 
             {/* Nhãn thuộc tính */}
             <div className="flex flex-wrap gap-1.5">
-              {combo.discount > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">-{combo.discount}%</span>
+              {combo.isBestSeller && (
+                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">{isEn ? 'Best seller' : 'Bán chạy'}</span>
+              )}
+              {discountLabel(combo) && (
+                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">{discountLabel(combo)}</span>
               )}
               <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                 {isCustomizable
@@ -430,6 +458,7 @@ export default function ComboDetailView({
 
             {/* Giá */}
             <div className="border-t border-gray-200 pt-3">
+              <DailyDealBadge comboId={combo.id} isEn={isEn} />
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-2xl leading-none text-ink-950">{formatPrice(combo.salePrice)}đ</span>
                 <span className="text-sm text-gray-600">
@@ -442,8 +471,8 @@ export default function ComboDetailView({
                   <span className="line-through">{formatPrice(combo.originalPrice)}đ</span>
                   <span className="ml-2 text-sale">
                     {isEn
-                      ? `Save ${formatPrice(savingsAmount)}đ (-${combo.discount}%)`
-                      : `Tiết kiệm ${formatPrice(savingsAmount)}đ (-${combo.discount}%)`}
+                      ? `Save ${formatPrice(savingsAmount)}đ${discountPercentSuffix(combo)}`
+                      : `Tiết kiệm ${formatPrice(savingsAmount)}đ${discountPercentSuffix(combo)}`}
                   </span>
                 </p>
               )}
@@ -453,6 +482,64 @@ export default function ComboDetailView({
             </div>
 
             <CouponPlaceholder />
+
+            {/* Combo gồm: lưới thẻ ảnh cùng kiểu ô "Hương vị" của trang sản phẩm (chỉ để xem, bấm sang trang sản phẩm) */}
+            {productsDetail.length > 0 && (
+              <div className="pt-1">
+                <p className="text-sm text-ink-950 mb-2">
+                  {isEn ? 'Items in this combo ' : 'Combo gồm '}
+                  <strong className="text-emph">
+                    ({combo.totalItems} {isEn ? 'bottles' : 'chai'})
+                  </strong>
+                </p>
+                <ul className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-3 xl:grid-cols-4 gap-2 pb-1">
+                  {productsDetail.map((item, idx) => {
+                    const pFullName = (isEn && item.product?.nameEn)
+                      ? item.product.nameEn
+                      : (item.product?.name || item.productId);
+                    const pShortName = item.product
+                      ? getShortProductName(item.product, language)
+                      : getShortBottleName(pFullName);
+                    const cardBody = (
+                      <>
+                        <span className="relative block w-full aspect-[4/3] rounded overflow-hidden bg-white">
+                          <Image
+                            src={item.product?.thumbnail || combo.image}
+                            alt=""
+                            fill
+                            sizes="96px"
+                            className="object-contain"
+                          />
+                        </span>
+                        <span className="block text-2xs leading-tight text-ink-950 mt-1 line-clamp-2 min-h-[2.4em]">
+                          {pShortName}
+                        </span>
+                        <span className="block text-2xs leading-tight text-gray-600 mt-0.5">
+                          × {item.quantity} {isEn ? 'bottles' : 'chai'}
+                        </span>
+                      </>
+                    );
+                    return (
+                      <li key={`${item.productId}-${idx}`} className="min-w-0">
+                        {item.product ? (
+                          <Link
+                            href={`/san-pham/${item.product.slug}`}
+                            title={isEn ? `View ${pFullName}` : `Xem chi tiết ${item.product.name}`}
+                            className="group block h-full rounded-lg p-1 text-center border border-gray-300 transition-all duration-200 motion-reduce:transition-none hover:border-green-primary/70 hover:bg-green-primary/[0.04]"
+                          >
+                            {cardBody}
+                          </Link>
+                        ) : (
+                          <div title={pFullName} className="block h-full rounded-lg p-1 text-center border border-gray-300">
+                            {cardBody}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
 
             {/* Bảng tóm tắt thuộc tính chính */}
             <table className="w-full text-sm">
@@ -536,6 +623,7 @@ export default function ComboDetailView({
                 language={language}
                 itemId={combo.id}
                 itemType="combo"
+                priceNote={`Combo ${combo.totalItems} ${isEn ? 'bottles' : 'chai'} · ${formatPrice(combo.salePrice / Math.max(1, combo.totalItems))}đ/${isEn ? 'bottle' : 'chai'}`}
               />
             )}
             <div className="hidden xl:block mt-4">
@@ -543,54 +631,9 @@ export default function ComboDetailView({
             </div>
           </div>
 
-          {/* ── VÙNG 4: COMBO GỒM + ĐẶC ĐIỂM NỔI BẬT ── */}
+          {/* ── VÙNG 4: ĐẶC ĐIỂM NỔI BẬT (Combo gồm đã chuyển lên ngay dưới giá, như trang sản phẩm) ── */}
           <div className="min-w-0 md:col-start-2 md:row-start-3 xl:col-start-2 xl:row-start-2 self-start">
             <div className="border-t border-gray-200 pt-4">
-              <h2 className="text-lg text-ink-950 mb-2">
-                {isEn ? `Items in this Combo (${combo.totalItems} bottles)` : `Combo gồm (${combo.totalItems} chai)`}
-              </h2>
-              <ul className="divide-y divide-gray-100">
-                {productsDetail.map((item, idx) => {
-                  const pFullName = (isEn && item.product?.nameEn)
-                    ? item.product.nameEn
-                    : (item.product?.name || item.productId);
-                  const pShortName = item.product
-                    ? getShortProductName(item.product, language)
-                    : getShortBottleName(pFullName);
-                  return (
-                    <li key={`${item.productId}-${idx}`} className="flex items-center gap-3 py-2" title={pFullName}>
-                      <div className="relative w-16 h-12 rounded-lg bg-white overflow-hidden shrink-0 border border-gray-200/80">
-                        <Image
-                          src={item.product?.thumbnail || combo.image}
-                          alt={pFullName}
-                          fill
-                          className="object-contain p-0.5"
-                          sizes="48px"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-ink-950 leading-snug">
-                          {pShortName}{' '}
-                          <span className="text-gray-600">× {item.quantity} {isEn ? 'bottles' : 'chai'}</span>
-                        </p>
-                      </div>
-                      {item.product && (
-                        <Link
-                          href={`/san-pham/${item.product.slug}`}
-                          className="shrink-0 inline-flex items-center gap-0.5 text-sm text-forest-700 hover:text-copper-600 hover:underline"
-                          title={isEn ? `View ${pFullName}` : `Xem chi tiết ${item.product.name}`}
-                        >
-                          <span className="hidden sm:inline">{isEn ? 'View' : 'Xem vị'}</span>
-                          <ChevronRight className="w-3.5 h-3.5" aria-hidden />
-                        </Link>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-
-            <div className="border-t border-gray-200 pt-4 mt-4">
               <h2 className="text-lg text-ink-950 mb-2">
                 {isEn ? 'Key highlights' : 'Đặc điểm nổi bật'}
               </h2>

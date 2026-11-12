@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { combos as defaultCombos } from '@/data/combos';
 import { Combo } from '@/types';
+import { isDailyDealsEnabled } from '@/lib/site-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,8 @@ export async function GET(request: Request) {
 
     sql += ` ORDER BY c.created_at ASC;`;
 
-    const res = await query(sql, params);
+    // Công tắc admin "Deal trong ngày" đi kèm danh sách combo (trình duyệt đã gọi API này sẵn, không cần gọi thêm)
+    const [res, dailyDealsEnabled] = await Promise.all([query(sql, params), isDailyDealsEnabled()]);
 
     // Fallback nếu DB hoàn toàn chưa có combo
     if (res.rows.length === 0) {
@@ -38,9 +40,9 @@ export async function GET(request: Request) {
       const totalInDb = Number(countRes.rows[0]?.total || 0);
       if (totalInDb === 0) {
         const filtered = defaultCombos.filter((c) => c.isActive);
-        return NextResponse.json({ success: true, data: filtered, fallback: true });
+        return NextResponse.json({ success: true, data: filtered, fallback: true, dailyDealsEnabled });
       }
-      return NextResponse.json({ success: true, data: [] });
+      return NextResponse.json({ success: true, data: [], dailyDealsEnabled });
     }
 
     const mappedCombos: Combo[] = res.rows.map((row: any) => {
@@ -73,6 +75,7 @@ export async function GET(request: Request) {
         totalItems: row.total_items !== null ? Number(row.total_items) : base.totalItems,
         discount: row.discount !== null ? Number(row.discount) : base.discount,
         isActive: Boolean(row.is_active),
+        isBestSeller: Boolean(row.is_best_seller),
         products: (Array.isArray(row.items) && row.items.length > 0)
           ? row.items.map((it: any) => ({
               productId: it.product_id,
@@ -82,7 +85,7 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ success: true, data: mappedCombos });
+    return NextResponse.json({ success: true, data: mappedCombos, dailyDealsEnabled });
   } catch (error: any) {
     console.error('Error fetching public combos:', error);
     return NextResponse.json({ success: true, data: defaultCombos.filter((c) => c.isActive), fallback: true });

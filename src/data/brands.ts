@@ -33,12 +33,12 @@ export const brands: Brand[] = [
     productIds: ['tra-sua-ciao', 'matcha-tra-sua-ciao'],
   },
   {
-    slug: 'thai-son',
-    name: 'Thái Sơn',
-    logo: '/images/logo-clean-1000.png',
-    coverImage: '/images/products/gallery/sb-2.jpg',
-    tagline: 'Sữa bắp nếp và nước giải khát thảo mộc',
-    productIds: ['sua-bap-nep', 'nha-dam-mu-trom', 'tao-do-hat-chia', 'sam-la-han-hoa-cuc'],
+    slug: 'go',
+    name: 'Go',
+    logo: '/images/brands/go.png',
+    coverImage: '/images/banners/banner-feature-tra-sua-go-01.jpg',
+    tagline: 'Trà sữa và Trà xanh Go uống liền, chai 330ml',
+    productIds: ['tra-sua-go', 'tra-xanh-go'],
   },
 ];
 

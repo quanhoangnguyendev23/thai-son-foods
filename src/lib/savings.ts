@@ -16,6 +16,8 @@ export const SAVINGS_INTRO_KEY = 'tsf-savings-bag-intro-seen';
 // Danh sách combo lấy từ DB (giá do admin chỉnh), tải một lần cho cả trang; trước khi tải xong dùng dữ liệu tĩnh
 let comboCache: Combo[] | null = null;
 let comboPromise: Promise<Combo[]> | null = null;
+// Công tắc "Deal trong ngày" (admin) đi kèm phản hồi /api/combos → không gọi thêm API
+let dailyDealsEnabled = false;
 
 function loadCombos(): Promise<Combo[]> {
   if (comboCache) return Promise.resolve(comboCache);
@@ -23,7 +25,9 @@ function loadCombos(): Promise<Combo[]> {
     comboPromise = fetch('/api/combos')
       .then((r) => r.json())
       .then((json) => {
-        const list = json?.success && Array.isArray(json.data) && json.data.length > 0 ? json.data : staticCombos;
+        // API đã tự rơi về dữ liệu mẫu khi CSDL trống; mảng rỗng = mọi combo tạm dừng → không gợi ý combo cũ
+        const list = json?.success && Array.isArray(json.data) ? json.data : staticCombos;
+        dailyDealsEnabled = json?.dailyDealsEnabled === true;
         comboCache = list.filter((c: Combo) => c.isActive !== false);
         return comboCache as Combo[];
       })
@@ -35,8 +39,23 @@ function loadCombos(): Promise<Combo[]> {
   return comboPromise;
 }
 
+/** Admin có bật "Deal trong ngày" không (false trước khi tải xong → server và lần render đầu luôn giống nhau) */
+export function useDailyDealsEnabled(): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadCombos().then(() => {
+      if (alive) setOn(dailyDealsEnabled);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return on;
+}
+
 export function useComboCatalog(): Combo[] {
-  const [list, setList] = useState<Combo[]>(() => comboCache || staticCombos.filter((c) => c.isActive !== false));
+  const [list, setList] = useState<Combo[]>(() => comboCache || []);
   useEffect(() => {
     let alive = true;
     loadCombos().then((l) => {

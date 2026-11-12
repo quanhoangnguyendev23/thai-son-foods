@@ -23,7 +23,14 @@ function readSlugs(): string[] {
  * "Sản phẩm bạn đã xem gần đây" — lưu cục bộ trên trình duyệt của khách (localStorage),
  * không gửi về máy chủ. Ẩn hoàn toàn khi chưa có lịch sử xem.
  */
-export default function RecentlyViewedProducts({ currentSlug }: { currentSlug: string }) {
+export default function RecentlyViewedProducts({
+  currentSlug,
+  readOnly = false,
+}: {
+  currentSlug: string;
+  /** Chỉ hiển thị lịch sử, không ghi trang hiện tại vào (vd. trang combo) */
+  readOnly?: boolean;
+}) {
   const { language } = useLanguage();
   const [items, setItems] = useState<Product[]>([]);
 
@@ -33,19 +40,21 @@ export default function RecentlyViewedProducts({ currentSlug }: { currentSlug: s
       .map((slug) => catalog.find((p) => p.slug === slug && p.isActive))
       .filter((p): p is Product => Boolean(p));
     setItems(viewed);
+    if (readOnly) return;
 
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify([currentSlug, ...previous].slice(0, MAX_ITEMS)));
     } catch {
       // Trình duyệt chặn lưu trữ — bỏ qua, tính năng chỉ mang tính tiện ích
     }
-  }, [currentSlug]);
+  }, [currentSlug, readOnly]);
 
   if (items.length === 0) return null;
 
   return (
     <div className="border-t border-gray-200">
       <ProductCarousel
+            plain
         title={language === 'en' ? 'Your recently viewed items' : 'Sản phẩm bạn đã xem gần đây'}
         products={items}
         mobileGrid

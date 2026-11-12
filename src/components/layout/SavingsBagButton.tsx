@@ -352,7 +352,7 @@ export default function SavingsBagButton({ isEn, navBtn }: { isEn: boolean; navB
               </Link>
             ) : (
               <Link
-                href="/combo"
+                href="/#combo"
                 onClick={() => setOpen(false)}
                 className="h-10 px-4 rounded-full border border-border text-sm flex items-center hover:bg-ivory"
               >

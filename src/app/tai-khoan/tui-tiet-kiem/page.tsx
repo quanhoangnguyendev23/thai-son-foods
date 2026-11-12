@@ -190,7 +190,7 @@ export default function SavingsBagPage() {
           <section id="combo-tiet-kiem" className="mt-10 scroll-mt-28">
             <div className="flex items-end justify-between gap-4">
               <h2 className="text-xl text-text-dark font-heading">{en ? 'Combos that save you money' : 'Combo giúp bạn tiết kiệm'}</h2>
-              <Link href="/combo" className="text-sm text-green-primary hover:underline shrink-0">
+              <Link href="/#combo" className="text-sm text-green-primary hover:underline shrink-0">
                 {en ? 'All combos' : 'Tất cả combo'}
               </Link>
             </div>

@@ -192,6 +192,12 @@ const PRODUCT_ALIAS_MAP: Record<string, string> = {
   'sl-01': 'prod-sl-01',
 };
 
+/** Quy đổi mã danh mục/slug/mã kho về mã chuẩn (vd. "sua-bap-nep" và "prod-sb-01" → "prod-sb-01"); không tra CSDL. */
+export function canonicalProductId(rawId: string | null | undefined): string {
+  const clean = (rawId || '').toLowerCase().trim();
+  return PRODUCT_ALIAS_MAP[clean] || clean;
+}
+
 /**
  * Tra cứu thông tin sản phẩm chuẩn từ DB dựa vào id/slug/sku/alias/variant id.
  * CHỈ khớp theo mã (không khớp mờ theo tên): tên do trình duyệt gửi không được quyết định sản phẩm/giá/tồn kho.
@@ -258,6 +264,8 @@ export async function resolveProductCanonical(
   const sqlDirect = `
     SELECT id, name, price, unit FROM products
     WHERE id = $1 OR slug = $1 OR LOWER(sku) = $1
+       -- Mã cũ có hậu tố "-01" (vd sb-01) vẫn ra SP mã mới "SB"
+       OR ($1 ~ '^[a-z]{1,5}-[0-9]{1,3}$' AND LOWER(sku) = regexp_replace($1, '-[0-9]+$', ''))
     LIMIT 1;
   `;
   const resDirect = client

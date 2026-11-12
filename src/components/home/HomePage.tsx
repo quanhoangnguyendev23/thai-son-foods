@@ -8,7 +8,7 @@ import {
   HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO,
   RECOMMENDED_FOR_YOU_IDS,
 } from '@/data/homepage-placeholders';
-import { ENABLE_COMBOS } from '@/config/features';
+import { ENABLE_COMBOS, ENABLE_DAILY_DEALS } from '@/config/features';
 import AmazonHeroCarousel from '@/components/home/AmazonHeroCarousel';
 import HeroPromoTiles from '@/components/home/HeroPromoTiles';
 import AmazonCategoryCards, { HomeCategoryGroup } from '@/components/home/AmazonCategoryCards';
@@ -30,6 +30,8 @@ interface HomePageProps {
   liveCategories?: Array<{ id: string; name: string; nameEn?: string }>;
   /** Banner admin placement = 'promo' cho 2 ô cạnh hero (rỗng → ô mẫu) */
   promoBanners?: Banner[];
+  /** Công tắc admin "Deal trong ngày" (đọc ở server, bảng site_settings); mặc định tắt */
+  dailyDealsEnabled?: boolean;
 }
 
 // Thứ tự danh mục giống CategorySidebar của trang chủ cũ
@@ -86,9 +88,9 @@ function sortBestSellersFirst(products: Product[]): Product[] {
  * Hiển thị khi HOMEPAGE_CONFIG.USE_AMAZON_HOMEPAGE = true (xem ROLLBACK.md).
  *
  *  1. Hero bento: carousel (2/3) + 2 ô khuyến mãi (1/3) trên desktop; dưới 1024px carousel full + hàng ô vuốt ngang
- *  2. Lưới thẻ danh mục ngay dưới hero (8 thẻ, 2 hàng)
- *  3. Carousel "Sản phẩm Thái Sơn" (#san-pham) — toàn bộ sản phẩm, bán chạy trước
- *  4. Deal trong ngày (combo thật + đồng hồ placeholder)
+ *  2. Deal trong ngày (#deal-trong-ngay) — dải nổi bật ngay dưới hero: combo thật xoay vòng mỗi ngày + đồng hồ thật tới 0h
+ *  3. Lưới thẻ danh mục (2 hàng)
+ *  4. Carousel "Sản phẩm Thái Sơn" (#san-pham) — toàn bộ sản phẩm, bán chạy trước
  *  5. Gợi ý cho bạn (placeholder danh sách)
  *  6. Carousel theo danh mục (#danh-muc-*)
  *  7. Combo tiết kiệm (#combo) — tái dùng ComboShowcase (thêm giỏ, combo tuỳ chọn)
@@ -97,7 +99,8 @@ function sortBestSellersFirst(products: Product[]): Product[] {
  * 10. Giao định kỳ (theo cờ MEMBERSHIP_CONFIG, như trang cũ)
  * "Về đầu trang" + footer nhiều cột nằm trong FooterAmazon.
  */
-export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCategories = [], promoBanners = [] }: HomePageProps) {
+export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCategories = [], promoBanners = [], dailyDealsEnabled = false }: HomePageProps) {
+  const showDailyDeals = ENABLE_DAILY_DEALS && dailyDealsEnabled;
   const products = liveProducts.filter((p) => p.isActive !== false);
   // Combo thiếu ảnh → ảnh dự phòng (tránh src rỗng trong ComboShowcase / hiệu ứng bay vào giỏ)
   const combos = liveCombos
@@ -105,7 +108,14 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
     .map((c) => ((c.image || '').trim() ? c : { ...c, image: MISSING_PRODUCT_IMAGE }));
   const heroSlides = buildHeroSlides(heroBanners);
   const promoTiles =
-    promoBanners.length > 0 ? promoBanners : ENABLE_COMBOS ? HERO_PROMO_PLACEHOLDER_TILES : HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO;
+    promoBanners.length > 0
+      ? promoBanners
+      : ENABLE_COMBOS && combos.length > 0
+        ? showDailyDeals
+          ? HERO_PROMO_PLACEHOLDER_TILES
+          // Tắt Deal trong ngày → thay ô "Deal trong ngày" bằng ô "Sản phẩm bán chạy", giữ ô combo
+          : [HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO[0], ...HERO_PROMO_PLACEHOLDER_TILES.filter((t) => t.link !== '/#deal-trong-ngay')]
+        : HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO;
   const categoryGroups = buildCategoryGroups(products, liveCategories);
   const recommended = RECOMMENDED_FOR_YOU_IDS
     .map((id) => products.find((p) => p.id === id))
@@ -122,10 +132,17 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
           <HeroPromoTiles tiles={promoTiles} />
         </div>
 
-        {/* 2. LƯỚI THẺ DANH MỤC — nằm ngay dưới hero, không che banner */}
+        {/* 2. DEAL TRONG NGÀY — dải nổi bật ngay dưới hero; section tự gắn id="deal-trong-ngay" (menu "Deal Sốc"),
+               không có deal thì không render gì (không để lại khoảng trống trong space-y) */}
+        {ENABLE_COMBOS && showDailyDeals && (
+          // Số ngày theo giờ Việt Nam (UTC+7) → bộ deal xoay vòng tính giống nhau ở server và trình duyệt
+          <AmazonDealsRow combos={combos} initialDay={Math.floor((Date.now() + 7 * 60 * 60 * 1000) / (24 * 60 * 60 * 1000))} />
+        )}
+
+        {/* 3. LƯỚI THẺ DANH MỤC */}
         <AmazonCategoryCards categories={categoryGroups} combos={combos} />
 
-        {/* 3. SẢN PHẨM THÁI SƠN (giữ anchor #san-pham cho Header/Footer/tìm kiếm/breadcrumb) */}
+        {/* 4. SẢN PHẨM THÁI SƠN (giữ anchor #san-pham cho Header/Footer/tìm kiếm/breadcrumb) */}
         <AmazonProductRow
           id="san-pham"
           titleVi="Sản phẩm Thái Sơn"
@@ -134,13 +151,6 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
           subtitleEn="Best sellers and new arrivals first"
           products={sortBestSellersFirst(products)}
         />
-
-        {/* 4. DEAL TRONG NGÀY (anchor #deal-trong-ngay cho ô "Deal Sốc" cạnh hero) */}
-        {ENABLE_COMBOS && (
-          <div id="deal-trong-ngay" className="scroll-mt-[130px]">
-            <AmazonDealsRow combos={combos} />
-          </div>
-        )}
 
         {/* 5. GỢI Ý CHO BẠN (PLACEHOLDER — chờ thuật toán gợi ý) */}
         {SHOW_PLACEHOLDER_BLOCKS && (
@@ -164,7 +174,7 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
         ))}
 
         {/* 7. COMBO TIẾT KIỆM (#combo) */}
-        {ENABLE_COMBOS && (
+        {ENABLE_COMBOS && combos.length > 0 && (
           <div className="bg-white rounded-2xl border border-border shadow-xs [&_#combo]:py-7 [&_#combo]:scroll-mt-[130px]">
             <ComboShowcase combos={combos} />
           </div>

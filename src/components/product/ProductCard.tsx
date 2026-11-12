@@ -16,9 +16,11 @@ interface ProductCardProps {
   isHomepage?: boolean;
   /** Số dòng tối đa của tên ở bố cục compact (mặc định 2; trang chi tiết dùng 4 giống Amazon) */
   titleLines?: 2 | 4;
+  /** Bố cục compact không khung (không viền/bo/bóng, kiểu Amazon) — dùng ở trang chi tiết sản phẩm & combo */
+  plain?: boolean;
 }
 
-export default function ProductCard({ product, layout = 'vertical', isHomepage = false, titleLines = 2 }: ProductCardProps) {
+export default function ProductCard({ product, layout = 'vertical', isHomepage = false, titleLines = 2, plain = false }: ProductCardProps) {
   const { language } = useLanguage();
   const addItem = useCartStore((s) => s.addItem);
   const { flyToCart } = useFlyToCart();
@@ -191,13 +193,17 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
       <article ref={cardRef} className="group h-full flex flex-col">
         <Link
           href={`/san-pham/${product.slug}`}
-          className="flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none"
+          className={
+            plain
+              ? 'flex flex-col h-full'
+              : 'flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200/80 shadow-xs transition-all duration-300 ease-out hover:border-forest-700/30 hover:shadow-[0_14px_28px_-14px_rgba(34,84,76,0.35)] motion-reduce:transition-none'
+          }
         >
           {/* Khung thẻ ảnh */}
           <div
             className={`relative aspect-[4/3] w-full overflow-hidden flex items-center justify-center ${
               isBottle ? 'bg-ivory' : 'bg-gray-100'
-            }`}
+            }${plain ? ' rounded-lg' : ''}`}
           >
             <Image
               src={safeImgSrc}
@@ -235,11 +241,11 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
           </div>
 
           {/* Thông tin sản phẩm */}
-          <div className="p-2 sm:p-2.5 md:p-3 flex-1 flex flex-col justify-between">
+          <div className={`${plain ? 'pt-2' : 'p-2 sm:p-2.5 md:p-3'} flex-1 flex flex-col justify-between`}>
             <div>
               <h3
                 title={fullName}
-                className={`text-base sm:text-base text-text-dark mb-1 leading-snug group-hover:text-leaf-900 transition-colors ${
+                className={`text-base sm:text-base text-text-dark mb-1 leading-snug group-hover:text-leaf-900 ${plain ? 'group-hover:underline ' : ''}transition-colors ${
                   isHomepage ? (titleLines === 4 ? 'line-clamp-4' : 'line-clamp-2') : ''
                 }`}
               >
@@ -247,7 +253,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               </h3>
             </div>
 
-            <div className="relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100">
+            <div className={`relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2${plain ? '' : ' border-t border-gray-100'}`}>
               <div className="flex flex-col">
                 <div className="text-base sm:text-base text-leaf-900 flex flex-wrap items-baseline gap-x-0.5">
                   <span suppressHydrationWarning>{formatPrice(defaultVariant.price)}đ</span>

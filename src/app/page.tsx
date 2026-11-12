@@ -7,6 +7,7 @@ import { Banner, Product, Combo } from '@/types';
 import { banners as defaultBanners } from '@/data/banners';
 import { products as defaultProducts } from '@/data/products';
 import { combos as defaultCombos } from '@/data/combos';
+import { isDailyDealsEnabled } from '@/lib/site-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -228,6 +229,7 @@ async function getLiveCombos(): Promise<Combo[]> {
           salePrice: row.sale_price !== null && row.sale_price !== undefined ? Number(row.sale_price) : base.salePrice,
           totalItems: row.total_items !== null && row.total_items !== undefined ? Number(row.total_items) : base.totalItems,
           discount: row.discount !== null && row.discount !== undefined ? Number(row.discount) : base.discount,
+          isBestSeller: Boolean(row.is_best_seller),
           image: finalImage,
           images: activeImages.map((img: any) => ({
             id: img.id,
@@ -259,12 +261,13 @@ async function getLiveCombos(): Promise<Combo[]> {
 }
 
 export default async function HomeRoute() {
-  const [heroBanners, liveProducts, liveCombos, liveCategories, promoBanners] = await Promise.all([
+  const [heroBanners, liveProducts, liveCombos, liveCategories, promoBanners, dailyDealsEnabled] = await Promise.all([
     getHeroBanners(),
     getLiveProducts(),
     getLiveCombos(),
     getLiveCategories(),
     getPromoBanners(),
+    isDailyDealsEnabled(),
   ]);
 
   // Cờ rollback: false = trang chủ cũ (HomePageLegacy), true = bố cục Amazon (HomePage). Xem ROLLBACK.md
@@ -272,5 +275,5 @@ export default async function HomeRoute() {
     return <HomePageLegacy heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} />;
   }
 
-  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} liveCategories={liveCategories} promoBanners={promoBanners} />;
+  return <HomePage heroBanners={heroBanners} liveProducts={liveProducts} liveCombos={liveCombos} liveCategories={liveCategories} promoBanners={promoBanners} dailyDealsEnabled={dailyDealsEnabled} />;
 }

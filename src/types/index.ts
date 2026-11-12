@@ -89,6 +89,8 @@ export interface Combo {
   totalItems: number;
   discount: number;
   isActive: boolean;
+  /** Nhãn "Bán chạy" do admin bật (combos.is_best_seller) */
+  isBestSeller?: boolean;
 }
 
 export interface ComboItem {
