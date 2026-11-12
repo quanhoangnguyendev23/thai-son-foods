@@ -91,6 +91,8 @@ export interface Combo {
   isActive: boolean;
   /** Nhãn "Bán chạy" do admin bật (combos.is_best_seller) */
   isBestSeller?: boolean;
+  /** Thời điểm tạo combo (combos.created_at, ISO) — để xếp "Mới nhất" và gắn nhãn "Mới" trên trang chủ */
+  createdAt?: string;
 }
 
 export interface ComboItem {

@@ -76,6 +76,7 @@ export async function GET(request: Request) {
         discount: row.discount !== null ? Number(row.discount) : base.discount,
         isActive: Boolean(row.is_active),
         isBestSeller: Boolean(row.is_best_seller),
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined,
         products: (Array.isArray(row.items) && row.items.length > 0)
           ? row.items.map((it: any) => ({
               productId: it.product_id,
