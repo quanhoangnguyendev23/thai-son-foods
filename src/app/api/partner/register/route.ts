@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { query, pool } from '@/lib/db';
-import { hashPassword, signUserToken, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS } from '@/lib/auth';
+import { hashPassword, signUserToken, getUserSession, USER_COOKIE_NAME, TOKEN_EXPIRY_DAYS } from '@/lib/auth';
 import { verifyOtp } from '@/lib/partner/otp';
 import { generatePartnerCode } from '@/lib/partner/referral';
 import { writeAuditLog } from '@/lib/audit';
@@ -95,7 +95,25 @@ export async function POST(request: Request) {
         [cleanPhone, cleanEmail]
       );
 
-      if (userRes.rows.length > 0) {
+      // AUTHZ-01: OTP chỉ chứng minh người gửi giữ SĐT của chính họ, không chứng minh sở hữu tài khoản có sẵn
+      // (email có thể là của người khác). Chỉ gắn hồ sơ đối tác vào tài khoản có sẵn khi người đó ĐÃ ĐĂNG NHẬP
+      // đúng tài khoản ấy; tuyệt đối không cấp phiên đăng nhập cho tài khoản có sẵn trong luồng đăng ký.
+      const session = await getUserSession();
+      const isUpgradingOwnAccount = userRes.rows.length > 0 && !!session && session.id === userRes.rows[0].id;
+
+      if (userRes.rows.length > 0 && !isUpgradingOwnAccount) {
+        await client.query('ROLLBACK;');
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'LOGIN_REQUIRED',
+            error: 'Email/SĐT đã có tài khoản. Vui lòng đăng nhập rồi đăng ký đối tác.',
+          },
+          { status: 409 }
+        );
+      }
+
+      if (isUpgradingOwnAccount) {
         userId = userRes.rows[0].id;
 
         // Kiểm tra an toàn: Tài khoản này đã có hồ sơ đối tác hay chưa (ngăn chặn duplicate key partner_profiles_user_id_key)
@@ -185,6 +203,11 @@ export async function POST(request: Request) {
           phone: cleanPhone,
         },
       });
+
+      // AUTHZ-01: chỉ ký phiên cho tài khoản VỪA TẠO. Người nâng cấp tài khoản của mình đã có phiên sẵn.
+      if (isUpgradingOwnAccount) {
+        return response;
+      }
 
       const maxAgeSeconds = TOKEN_EXPIRY_DAYS * 24 * 60 * 60;
       response.cookies.set({

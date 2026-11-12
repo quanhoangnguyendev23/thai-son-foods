@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useUserAuth } from '@/context/UserAuthContext';
 import {
   Users,
   CheckCircle2,
@@ -19,6 +20,7 @@ import {
 
 export default function DangKyDoiTacPage() {
   const router = useRouter();
+  const { user, openAuthModal } = useUserAuth();
 
   // State bước hiện tại: 1 (Cơ bản/OTP) hoặc 2 (KYC & Ngân hàng) hoặc 3 (Thành công)
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -58,6 +60,8 @@ export default function DangKyDoiTacPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  // AUTHZ-01: SĐT/email đã có tài khoản -> phải đăng nhập rồi mới đăng ký đối tác
+  const [loginRequired, setLoginRequired] = useState(false);
 
   // 1. Gửi OTP
   const handleSendOtp = async () => {
@@ -112,6 +116,7 @@ export default function DangKyDoiTacPage() {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
+    setLoginRequired(false);
 
     if (!fullName.trim()) return setErrorMsg('Vui lòng nhập Họ và tên.');
     if (!phone.trim()) return setErrorMsg('Vui lòng nhập Số điện thoại.');
@@ -133,6 +138,7 @@ export default function DangKyDoiTacPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
+        if (data.code === 'LOGIN_REQUIRED') setLoginRequired(true);
         throw new Error(data.error || 'Đăng ký không thành công.');
       }
 
@@ -233,7 +239,24 @@ export default function DangKyDoiTacPage() {
         {errorMsg && (
           <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-start gap-2.5">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <span>{errorMsg}</span>
+            <div>
+              <span>{errorMsg}</span>
+              {/* AUTHZ-01: mở hộp đăng nhập ngay trên trang này; đăng nhập xong vẫn ở lại trang đăng ký đối tác */}
+              {loginRequired && !user && (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('login')}
+                  className="mt-2 block underline text-emph"
+                >
+                  Đăng nhập tài khoản của bạn
+                </button>
+              )}
+              {loginRequired && user && (
+                <span className="mt-2 block">
+                  Bạn đang đăng nhập bằng một tài khoản khác với SĐT/email vừa nhập. Hãy dùng SĐT/email của tài khoản đang đăng nhập.
+                </span>
+              )}
+            </div>
           </div>
         )}
         {successMsg && (
