@@ -29,6 +29,10 @@ export function compareDistrictNames(a: string, b: string): number {
   );
 }
 
+export function sortDistrictNames(names: string[]): string[] {
+  return [...names].sort(compareDistrictNames);
+}
+
 export function sortDistrictsByName<T extends { name: string }>(items: T[]): T[] {
   return [...items].sort((x, y) => compareDistrictNames(x.name, y.name));
 }

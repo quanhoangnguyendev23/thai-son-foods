@@ -19,9 +19,9 @@ async function parseComboItems(items: unknown): Promise<{ error: string } | { li
     const pid = it && it.product_id ? String(it.product_id) : '';
     const qty = Number(it?.quantity || 1);
     if (!pid || !Number.isInteger(qty) || qty < 1 || qty > 1000) {
-      return { error: 'Mỗi món trong combo cần mã sản phẩm và số lượng nguyên từ 1 đến 1.000.' };
+      return { error: 'Mỗi món trong gói cần mã sản phẩm và số lượng nguyên từ 1 đến 1.000.' };
     }
-    if (seen.has(pid)) return { error: `Sản phẩm ${pid} bị lặp trong combo.` };
+    if (seen.has(pid)) return { error: `Sản phẩm ${pid} bị lặp trong gói.` };
     seen.add(pid);
     list.push({ product_id: pid, quantity: qty, unit: it.unit ? String(it.unit) : 'chai' });
   }
@@ -32,7 +32,7 @@ async function parseComboItems(items: unknown): Promise<{ error: string } | { li
     const canonical = await resolveProductCanonical(x.product_id);
     if (!canonical) return { error: `Sản phẩm không tồn tại: ${x.product_id}` };
     const dupOf = canonicalSeen.get(canonical.id);
-    if (dupOf) return { error: `Sản phẩm ${x.product_id} bị lặp trong combo (trùng với ${dupOf}).` };
+    if (dupOf) return { error: `Sản phẩm ${x.product_id} bị lặp trong gói (trùng với ${dupOf}).` };
     canonicalSeen.set(canonical.id, x.product_id);
   }
   return { list };
@@ -41,7 +41,7 @@ async function parseComboItems(items: unknown): Promise<{ error: string } | { li
 /** Giá bán/giá gốc: số nguyên hợp lệ, giá gốc không thấp hơn giá bán; % giảm do máy chủ tự tính. */
 function checkComboPrices(sale: number, original: number): { error: string } | { discountPct: number } {
   if (!Number.isInteger(sale) || sale < 1 || sale > 100_000_000) {
-    return { error: 'Giá bán combo phải là số nguyên từ 1 đến 100.000.000 đồng.' };
+    return { error: 'Giá bán gói phải là số nguyên từ 1 đến 100.000.000 đồng.' };
   }
   if (!Number.isInteger(original) || original < sale) {
     return { error: 'Giá gốc phải là số nguyên và không thấp hơn giá bán.' };
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
 
     if (!hasPermission(session, 'combos.view')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền xem danh sách combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền xem danh sách gói.', code: 'FORBIDDEN' },
         { status: 403 }
       );
     }
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
 
     if (!hasPermission(session, 'combos.manage')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền tạo combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền tạo gói.', code: 'FORBIDDEN' },
         { status: 403 }
       );
     }
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
 
     if (!name || sale_price === undefined) {
       return NextResponse.json(
-        { success: false, error: 'Tên combo và giá bán là bắt buộc' },
+        { success: false, error: 'Tên gói và giá bán là bắt buộc' },
         { status: 400 }
       );
     }
@@ -321,12 +321,12 @@ export async function PUT(request: Request) {
     } = body;
 
     if (!id || typeof id !== 'string') {
-      return NextResponse.json({ success: false, error: 'Thiếu ID combo' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Thiếu ID gói' }, { status: 400 });
     }
 
     const currRes = await query(`SELECT * FROM combos WHERE id = $1;`, [id]);
     if (currRes.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Không tìm thấy combo' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Không tìm thấy gói' }, { status: 404 });
     }
     const currentCombo = currRes.rows[0];
 
@@ -334,7 +334,7 @@ export async function PUT(request: Request) {
     const isPriceChanging = sale_price !== undefined && parseInt(sale_price, 10) !== currentCombo.sale_price;
     if (isPriceChanging && !hasPermission(session, 'products.manage_price')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền chỉnh sửa giá combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền chỉnh sửa giá gói.', code: 'FORBIDDEN' },
         { status: 403 }
       );
     }
@@ -343,14 +343,14 @@ export async function PUT(request: Request) {
     const isCostPriceChanging = body.cost_price !== undefined && parseInt(body.cost_price, 10) !== currentCombo.cost_price;
     if (isCostPriceChanging && !hasPermission(session, 'cost_price.edit')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền chỉnh sửa giá vốn combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền chỉnh sửa giá vốn gói.', code: 'FORBIDDEN' },
         { status: 403 }
       );
     }
 
     if (!hasPermission(session, 'combos.manage')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền chỉnh sửa combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền chỉnh sửa gói.', code: 'FORBIDDEN' },
         { status: 403 }
       );
     }
@@ -383,13 +383,13 @@ export async function PUT(request: Request) {
       const rawCost = body.cost_price;
       const costNum = rawCost === null || (typeof rawCost === 'string' && rawCost.trim() === '') ? NaN : Number(rawCost);
       if (!Number.isInteger(costNum) || costNum < 0 || costNum > 100_000_000) {
-        return NextResponse.json({ success: false, error: 'Giá vốn combo phải là số nguyên từ 0 đến 100.000.000 đồng.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Giá vốn gói phải là số nguyên từ 0 đến 100.000.000 đồng.' }, { status: 400 });
       }
     }
     if (total_items !== undefined) {
       const totalNum = total_items === null || (typeof total_items === 'string' && total_items.trim() === '') ? NaN : Number(total_items);
       if (!Number.isInteger(totalNum) || totalNum < 1 || totalNum > 1000) {
-        return NextResponse.json({ success: false, error: 'Tổng số món của combo phải là số nguyên từ 1 đến 1000.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Tổng số món của gói phải là số nguyên từ 1 đến 1000.' }, { status: 400 });
       }
     }
 
@@ -473,7 +473,7 @@ export async function PUT(request: Request) {
         const img = body.images[i];
         if (img && (img.url || typeof img === 'string')) {
           const imgUrl = typeof img === 'string' ? img : img.url;
-          const imgAlt = typeof img === 'object' && img.alt ? img.alt : (name || 'Combo');
+          const imgAlt = typeof img === 'object' && img.alt ? img.alt : (name || 'Gói');
           const sortOrder = typeof img === 'object' && img.sortOrder !== undefined ? img.sortOrder : i + 1;
           const imgId = `cimg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
           await client.query(
@@ -530,7 +530,7 @@ export async function PUT(request: Request) {
       afterJson: body,
     });
 
-    return NextResponse.json({ success: true, message: 'Cập nhật combo thành công' });
+    return NextResponse.json({ success: true, message: 'Cập nhật gói thành công' });
   } catch (error: any) {
     console.error('Error updating admin combo:', error);
     return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
@@ -550,7 +550,7 @@ export async function DELETE(request: Request) {
 
     if (!hasPermission(session, 'combos.manage')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền xóa combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền xóa gói.', code: 'FORBIDDEN' },
         { status: 403 }
       );
     }
@@ -559,12 +559,12 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ success: false, error: 'Thiếu ID combo' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Thiếu ID gói' }, { status: 400 });
     }
 
     const currRes = await query(`SELECT * FROM combos WHERE id = $1;`, [id]);
     if (currRes.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Không tìm thấy combo' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Không tìm thấy gói' }, { status: 404 });
     }
     const comboToDelete = currRes.rows[0];
 
@@ -579,7 +579,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: `Còn ${openOrders.rows[0].n} đơn hàng chưa hoàn tất có combo này. Hãy xử lý xong các đơn đó hoặc chọn "Tạm ẩn" thay vì xóa.`,
+          error: `Còn ${openOrders.rows[0].n} đơn hàng chưa hoàn tất có gói này. Hãy xử lý xong các đơn đó hoặc chọn "Tạm ẩn" thay vì xóa.`,
           code: 'COMBO_IN_USE',
         },
         { status: 409 }
@@ -612,7 +612,7 @@ export async function DELETE(request: Request) {
       afterJson: null,
     });
 
-    return NextResponse.json({ success: true, message: 'Đã xóa combo thành công' });
+    return NextResponse.json({ success: true, message: 'Đã xóa gói thành công' });
   } catch (error: any) {
     console.error('Error deleting admin combo:', error);
     return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });

@@ -101,7 +101,7 @@ function DealTile({ combo, index = 0 }: { combo: Combo; index?: number }) {
   // Thẻ ngang (phương án A, bản 2): ảnh 4:3 tràn mép trái thẻ; bên phải: nhãn "-x% · Ưu đãi có hạn" (kiểu Amazon),
   // tên 2 dòng, hàng giá + nút giỏ amber nằm cùng hàng (không đè chữ)
   return (
-    <article className="group flex h-full overflow-hidden rounded-xl border border-gray-200 bg-white motion-safe:transition-[box-shadow,transform] hover:shadow-md motion-safe:hover:-translate-y-0.5">
+    <article className="group flex h-full overflow-hidden rounded-xl border border-gray-200 bg-white motion-safe:transition-shadow hover:shadow-md">
       {/* Khung ảnh đúng tỉ lệ ảnh gói (4:3, xem ImageSizeGuide) + object-contain: hiện trọn ảnh, không cắt, không phóng khi rê chuột */}
       <Link href={href} ref={imgWrapRef} className="relative my-2 ml-2 aspect-[4/3] w-[42%] max-w-48 shrink-0 self-center overflow-hidden rounded-lg bg-ivory" tabIndex={-1} aria-hidden>
         <Image
