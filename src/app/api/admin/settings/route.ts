@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: 'Chưa đăng nhập quản trị.', code: 'UNAUTHORIZED' }, { status: 401 });
   }
   if (!hasPermission(session, 'combos.view')) {
-    return NextResponse.json({ success: false, error: 'Bạn không có quyền xem cài đặt combo.', code: 'FORBIDDEN' }, { status: 403 });
+    return NextResponse.json({ success: false, error: 'Bạn không có quyền xem cài đặt gói.', code: 'FORBIDDEN' }, { status: 403 });
   }
   // ?key=weekly_delivery_line → dòng số chai giao mỗi tuần; không có key → công tắc Deal trong ngày (như cũ)
   const key = new URL(request.url).searchParams.get('key');
@@ -54,7 +54,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: false, error: 'Chưa đăng nhập quản trị.', code: 'UNAUTHORIZED' }, { status: 401 });
   }
   if (!hasPermission(session, 'combos.manage')) {
-    return NextResponse.json({ success: false, error: 'Bạn không có quyền đổi cài đặt combo.', code: 'FORBIDDEN' }, { status: 403 });
+    return NextResponse.json({ success: false, error: 'Bạn không có quyền đổi cài đặt gói.', code: 'FORBIDDEN' }, { status: 403 });
   }
 
   let body: { key?: unknown; enabled?: unknown; value?: unknown };

@@ -1259,7 +1259,7 @@ export default function CheckoutPage() {
       if (res.status === 409) {
         let friendlyMsg = language === 'en'
           ? 'An item was just ordered by another customer. Your cart has been updated.'
-          : 'Combo vừa có người đặt, hiện không còn đủ số lượng.';
+          : 'Gói vừa có người đặt, hiện không còn đủ số lượng.';
 
         // Tự động kiểm tra lại tồn khả dụng cho từng món trong giỏ hàng và tự chỉnh số lượng
         for (const item of items) {
@@ -1278,14 +1278,14 @@ export default function CheckoutPage() {
                 if (remaining > 0) {
                   useCartStore.getState().updateQuantity(item.productId, remaining);
                   friendlyMsg = language === 'en'
-                    ? `Combo "${item.name}" was just purchased by another customer. Only ${remaining} left. Cart quantity adjusted.`
-                    : `Combo "${item.name}" vừa có người đặt, hiện còn ${remaining}. Số lượng trong giỏ đã được tự động điều chỉnh.`;
+                    ? `Gói "${item.name}" was just purchased by another customer. Only ${remaining} left. Cart quantity adjusted.`
+                    : `Gói "${item.name}" vừa có người đặt, hiện còn ${remaining}. Số lượng trong giỏ đã được tự động điều chỉnh.`;
                 } else {
                   useCartStore.getState().updateQuantity(item.productId, 0);
                   useCartStore.getState().removeItem(item.productId);
                   friendlyMsg = language === 'en'
-                    ? `Combo "${item.name}" was just purchased by another customer and is now out of stock at this store.`
-                    : `Combo "${item.name}" vừa có người đặt và hiện đã hết hàng tại chi nhánh này.`;
+                    ? `Gói "${item.name}" was just purchased by another customer and is now out of stock at this store.`
+                    : `Gói "${item.name}" vừa có người đặt và hiện đã hết hàng tại chi nhánh này.`;
                 }
               }
             }

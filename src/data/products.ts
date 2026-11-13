@@ -209,7 +209,7 @@ export const products: Product[] = [
     ],
     isFeatured: true,
     isNew: false,
-    isBestSeller: false,
+    isBestSeller: true,
     isActive: true,
     isVegan: true,
     variants: [

@@ -1,6 +1,7 @@
 'use client';
 
 import DiscountTag from '@/components/product/DiscountTag';
+import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -54,7 +55,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
   const { flyToCart } = useFlyToCart();
   const router = useRouter();
   const [addedId, setAddedId] = useState<string | null>(null);
-  // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Deal hôm nay" (rỗng trước khi mount)
+  // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Ưu đãi có hạn" (rỗng trước khi mount)
   const dealIds = useTodayDealIds();
   const [comboList, setComboList] = useState<Combo[]>(initialCombos || combos);
   // Mặc định "Mới nhất" → combo admin vừa thêm luôn nằm đầu khu, không bị đẩy ra sau
@@ -167,13 +168,14 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
 
   return (
     <section id="combo" className="max-w-[1456px] mx-auto px-4 sm:px-6 py-6 md:py-8">
+      <AttentionStyles />
       {/* Tiêu đề + số combo + tab sắp xếp */}
       <div className="mb-3 md:mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 className="text-xl md:text-2xl text-ink-950">
-            {language === 'en' ? 'Value Combos' : 'Combo tiết kiệm'}
+            {language === 'en' ? 'Value Bundles' : 'Gói tiết kiệm'}
             <span className="ml-2 align-middle text-xs md:text-sm text-gray-500">
-              ({total} {language === 'en' ? 'combos' : 'combo'})
+              ({total} {language === 'en' ? 'bundles' : 'gói'})
             </span>
           </h2>
           <p className="text-xs md:text-sm text-gray-600 mt-0.5">
@@ -183,7 +185,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
 
         <div
           role="tablist"
-          aria-label={language === 'en' ? 'Sort combos' : 'Sắp xếp combo'}
+          aria-label={language === 'en' ? 'Sort bundles' : 'Sắp xếp gói'}
           className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] -mx-1 px-1"
         >
           {tabs.map((t) => {
@@ -255,12 +257,20 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                           loading="lazy"
                         />
 
-                        {/* Nhãn Deal hôm nay / Mới (Góc trên trái) */}
-                        {(dealIds.has(combo.id) || isNewCombo(combo, now)) && (
-                          <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 pointer-events-none flex flex-col items-start gap-0.5">
+                        {/* Nhãn Bán chạy / Ưu đãi có hạn / Mới (cùng ở góc trên phải, xếp dọc); nhãn giảm giá nằm ở khu giá bên dưới */}
+                        {(combo.isBestSeller || dealIds.has(combo.id) || isNewCombo(combo, now)) && (
+                          <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none flex flex-col items-end gap-0.5">
+                            {combo.isBestSeller && (
+                              <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
+                                {language === 'en' ? 'Best seller' : 'Bán chạy'}
+                              </span>
+                            )}
                             {dealIds.has(combo.id) && (
-                              <span className="px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
-                                {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+                              <span
+                                className={`relative px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs ${attentionShine(`deal|${combo.id}`).className}`}
+                                style={attentionShine(`deal|${combo.id}`).style}
+                              >
+                                {language === 'en' ? 'Limited-time deal' : 'Ưu đãi có hạn'}
                               </span>
                             )}
                             {isNewCombo(combo, now) && (
@@ -268,15 +278,6 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                                 {language === 'en' ? 'New' : 'Mới'}
                               </span>
                             )}
-                          </div>
-                        )}
-
-                        {/* Nhãn Bán chạy (Góc trên phải); nhãn giảm giá nằm ở khu giá bên dưới */}
-                        {combo.isBestSeller && (
-                          <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10 pointer-events-none">
-                            <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-brand-emerald text-white rounded shadow-xs">
-                              {language === 'en' ? 'Best seller' : 'Bán chạy'}
-                            </span>
                           </div>
                         )}
 
@@ -334,7 +335,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
                             ? 'bg-brand-forest text-white'
                             : 'bg-brand-emerald hover:bg-brand-forest text-white'
                         )}
-                        title={language === 'en' ? 'Add combo to cart' : 'Thêm combo vào giỏ hàng'}
+                        title={language === 'en' ? 'Add bundle to cart' : 'Thêm gói vào giỏ hàng'}
                         aria-label={language === 'en' ? `Add ${comboName} to cart` : `Thêm ${comboName} vào giỏ hàng`}
                       >
                         {isJustAdded ? (
@@ -367,7 +368,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
               </>
             ) : (
               <>
-                {language === 'en' ? `View all ${total} combos` : `Xem tất cả ${total} combo`}
+                {language === 'en' ? `View all ${total} bundles` : `Xem tất cả ${total} gói`}
                 <ChevronDown className="w-4 h-4" />
               </>
             )}

@@ -18,7 +18,7 @@ export async function GET(request: Request, context: RouteContext) {
     const session = await getAdminSession();
     if (!session || !hasPermission(session, 'combos.view')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền xem hình ảnh combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền xem hình ảnh gói.', code: 'FORBIDDEN' },
         { status: !session ? 401 : 403 }
       );
     }
@@ -31,7 +31,7 @@ export async function GET(request: Request, context: RouteContext) {
     );
 
     if (comboRes.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Không tìm thấy combo' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Không tìm thấy gói' }, { status: 404 });
     }
 
     const combo = comboRes.rows[0];
@@ -62,7 +62,7 @@ export async function POST(request: Request, context: RouteContext) {
     const session = await getAdminSession();
     if (!session || !hasPermission(session, 'combos.manage')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền quản lý hình ảnh combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền quản lý hình ảnh gói.', code: 'FORBIDDEN' },
         { status: !session ? 401 : 403 }
       );
     }
@@ -75,7 +75,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
 
     if (comboRes.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Không tìm thấy combo' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Không tìm thấy gói' }, { status: 404 });
     }
 
     const combo = comboRes.rows[0];
@@ -128,7 +128,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     return NextResponse.json({
       success: true,
-      message: `Đã thêm ${insertedRows.length} hình ảnh vào combo`,
+      message: `Đã thêm ${insertedRows.length} hình ảnh vào gói`,
       data: insertedRows,
     });
   } catch (error: any) {
@@ -143,7 +143,7 @@ export async function PUT(request: Request, context: RouteContext) {
     const session = await getAdminSession();
     if (!session || !hasPermission(session, 'combos.manage')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền quản lý hình ảnh combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền quản lý hình ảnh gói.', code: 'FORBIDDEN' },
         { status: !session ? 401 : 403 }
       );
     }
@@ -156,7 +156,7 @@ export async function PUT(request: Request, context: RouteContext) {
     );
 
     if (comboRes.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Không tìm thấy combo' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Không tìm thấy gói' }, { status: 404 });
     }
 
     const combo = comboRes.rows[0];
@@ -172,7 +172,7 @@ export async function PUT(request: Request, context: RouteContext) {
           );
         }
       }
-      return NextResponse.json({ success: true, message: 'Đã cập nhật thứ tự ảnh combo' });
+      return NextResponse.json({ success: true, message: 'Đã cập nhật thứ tự ảnh gói' });
     }
 
     // 2. Trường hợp cập nhật 1 ảnh: { imageId, alt, sortOrder, isActive, imageType, setAsPrimary }
@@ -223,7 +223,7 @@ export async function PUT(request: Request, context: RouteContext) {
       await query(`UPDATE combos SET image = $1 WHERE id = $2;`, [currentImg.url, combo.id]);
     }
 
-    return NextResponse.json({ success: true, message: 'Đã cập nhật ảnh combo thành công' });
+    return NextResponse.json({ success: true, message: 'Đã cập nhật ảnh gói thành công' });
   } catch (error: any) {
     console.error('Error updating combo image:', error);
     return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });
@@ -236,7 +236,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     const session = await getAdminSession();
     if (!session || !hasPermission(session, 'combos.manage')) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền quản lý hình ảnh combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền quản lý hình ảnh gói.', code: 'FORBIDDEN' },
         { status: !session ? 401 : 403 }
       );
     }
@@ -260,7 +260,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     );
 
     if (comboRes.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Không tìm thấy combo' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Không tìm thấy gói' }, { status: 404 });
     }
 
     const combo = comboRes.rows[0];
@@ -299,7 +299,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       await query(`UPDATE combos SET image = $1 WHERE id = $2;`, [newImg, combo.id]);
     }
 
-    return NextResponse.json({ success: true, message: 'Đã xóa ảnh combo thành công' });
+    return NextResponse.json({ success: true, message: 'Đã xóa ảnh gói thành công' });
   } catch (error: any) {
     console.error('Error deleting combo image:', error);
     return NextResponse.json({ success: false, error: publicErrorMessage(error) }, { status: 500 });

@@ -5,11 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
 import { Star, Info, ShoppingBag } from 'lucide-react';
-import { products } from '@/data/products';
+import { useLiveCatalog } from '@/hooks/useLiveCatalog';
 import { Product } from '@/types';
 import { getPackLabel, useRandomSponsoredProduct } from '@/lib/sponsored-products';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
+import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
 
 interface ProductSidebarSponsoredCardProps {
   currentProductId?: string;
@@ -48,8 +49,10 @@ export default function ProductSidebarSponsoredCard({
   const { flyToCart } = useFlyToCart();
   const randomProduct = useRandomSponsoredProduct(currentProductId, 1, randomize);
 
+  // Danh mục sống (CSDL): nhãn Bán chạy, sản phẩm mới, tạm ẩn theo admin
+  const catalog = useLiveCatalog();
   // Chọn sản phẩm Best Seller hoặc Đang Sale khác với sản phẩm hiện tại
-  const candidateProducts = products.filter((p) => p.id !== currentProductId && p.isActive);
+  const candidateProducts = catalog.filter((p) => p.id !== currentProductId && p.isActive);
 
   // Ưu tiên sản phẩm Bestseller hoặc có ưu đãi tốt
   const fixedProduct: Product =
@@ -57,7 +60,7 @@ export default function ProductSidebarSponsoredCard({
     candidateProducts.find((p) => p.id === 'sua-hat-sen-mekong' || p.slug === 'sua-hat-sen-mekong-xanh') ||
     candidateProducts.find((p) => p.isBestSeller) ||
     candidateProducts[0] ||
-    products[0];
+    catalog[0];
   const recommendedProduct: Product = randomProduct || fixedProduct;
   const waitingRandom = randomize && !randomProduct;
 
@@ -157,7 +160,12 @@ export default function ProductSidebarSponsoredCard({
             <div className="pt-2">
               {/* Tag định danh Bán chạy nhất */}
               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                <span className="bg-amber-100 text-amber-900 border border-amber-300 text-2xs px-1.5 py-0.5 rounded tracking-tight uppercase">
+                {/* 13/11: vệt sáng màu amber lướt qua nhãn nền sáng (hiệu ứng chung) */}
+                <AttentionStyles />
+                <span
+                  className={`relative bg-amber-100 text-amber-900 border border-amber-300 text-2xs px-1.5 py-0.5 rounded tracking-tight uppercase tsf-shine-gold ${attentionShine(`top|${recommendedProduct.id}`).className}`}
+                  style={attentionShine(`top|${recommendedProduct.id}`).style}
+                >
                   Bán chạy nhất
                 </span>
                 <span className="text-2xs text-gray-500 font-medium">

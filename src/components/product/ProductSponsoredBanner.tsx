@@ -3,8 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Info } from 'lucide-react';
-import { Product } from '@/types';
+import { useEffect, useState } from 'react';
+import { Combo, Product } from '@/types';
 import { getPackLabel, useRandomSponsoredProduct } from '@/lib/sponsored-products';
+import { loadCombos } from '@/lib/savings';
+import { ENABLE_COMBOS } from '@/config/features';
+import DiscountTag from '@/components/product/DiscountTag';
+import { LimitedDealTag } from '@/components/product/ComboCarousel';
+import { AttentionPrice } from '@/components/ui/AttentionEffects';
 
 interface ProductSponsoredBannerProps {
   product?: Product;
@@ -13,6 +19,8 @@ interface ProductSponsoredBannerProps {
   hideUnverifiedStats?: boolean;
   /** Chọn ngẫu nhiên một sản phẩm KHÁC sản phẩm đang xem mỗi lần mở trang (giao diện mới). Mặc định giữ hành vi cũ. */
   randomize?: boolean;
+  /** Trang chi tiết combo: mã combo đang xem để ô "Được tài trợ" không gợi ý lại chính combo này */
+  currentComboId?: string;
 }
 
 export default function ProductSponsoredBanner({
@@ -20,10 +28,33 @@ export default function ProductSponsoredBanner({
   className = '',
   hideUnverifiedStats = false,
   randomize = false,
+  currentComboId,
 }: ProductSponsoredBannerProps) {
   const randomProduct = useRandomSponsoredProduct(currentProduct?.id, 2, randomize);
+  // Chế độ ngẫu nhiên: ô bên phải ưu tiên một combo ĐANG GIẢM GIÁ (ngẫu nhiên, khác combo đang xem);
+  // undefined = đang tải danh sách combo, null = không có combo giảm giá → hiện sản phẩm như cũ
+  const [combo, setCombo] = useState<Combo | null | undefined>(randomize ? undefined : null);
+  useEffect(() => {
+    if (!randomize) return;
+    if (!ENABLE_COMBOS) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- tắt combo: dùng sản phẩm như cũ
+      setCombo(null);
+      return;
+    }
+    let alive = true;
+    loadCombos().then((list) => {
+      if (!alive) return;
+      const pool = list.filter(
+        (c) => c.slug && c.salePrice > 0 && c.originalPrice > c.salePrice && c.id !== currentComboId && c.slug !== currentComboId
+      );
+      setCombo(pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [randomize, currentComboId]);
   const product = randomize ? randomProduct || undefined : currentProduct;
-  const waitingRandom = randomize && !randomProduct;
+  const waitingRandom = randomize && (combo === undefined || (!combo && !randomProduct));
   // Lấy giá lốc hoặc mặc định tương ứng với sản phẩm
   const defaultPackVariant = product?.variants?.find((v) => v.quantity === 7) || product?.variants?.[0];
   const price = defaultPackVariant ? defaultPackVariant.price : (product?.price ? product.price * 7 : 126000);
@@ -36,7 +67,11 @@ export default function ProductSponsoredBanner({
     : 'Sữa Bắp Nếp Tươi Thái Sơn (Lốc 7 chai 330ml)';
 
   const productImg = product?.thumbnail || '/images/products/1200x900-sb1.jpg';
-  const productLink = product?.slug ? `/san-pham/${product.slug}` : '/san-pham/sua-bap-nep-thai-son';
+  const productLink = combo
+    ? `/combo/${combo.slug}`
+    : product?.slug
+      ? `/san-pham/${product.slug}`
+      : '/san-pham/sua-bap-nep-thai-son';
 
   return (
     <section className={`w-full py-4 sm:py-6 ${waitingRandom ? 'invisible' : ''} ${className}`}>
@@ -95,7 +130,33 @@ export default function ProductSponsoredBanner({
             </div>
           </Link>
 
-          {/* CỘT 3 (Phải): Mini Buy-Box / Thông tin sản phẩm & Ưu đãi Subscribe & Save */}
+          {/* CỘT 3 (Phải): combo đang giảm giá (kiểu Amazon: giá, % giảm, giá gốc gạch ngang) */}
+          {combo ? (
+          <Link
+            href={productLink}
+            className="w-full md:w-[30%] lg:w-[30%] p-4 sm:p-5 flex flex-col justify-center bg-white border-t md:border-t-0 md:border-l border-gray-100 group transition-colors hover:bg-gray-50/50"
+          >
+            <div className="relative w-full h-20 sm:h-22 mb-1.5 flex items-center justify-center">
+              <Image src={combo.image || '/images/logo-clean-1000.png'} alt={combo.name} fill sizes="160px" className="object-contain transition-transform duration-300" />
+            </div>
+            <div
+              className="text-sm sm:text-base text-gray-900 line-clamp-1 group-hover:text-forest-700 transition-colors leading-tight mb-1"
+              title={combo.name}
+            >
+              {combo.name} ({combo.totalItems} chai)
+            </div>
+            <div className="flex items-baseline gap-2 flex-wrap mb-1">
+              <AttentionPrice className="text-lg sm:text-xl text-gray-900 leading-none">
+                {combo.salePrice.toLocaleString('vi-VN')}₫
+              </AttentionPrice>
+              <span className="text-xs text-gray-400 line-through">{combo.originalPrice.toLocaleString('vi-VN')}₫</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <DiscountTag source={combo} />
+              <LimitedDealTag comboId={combo.id} />
+            </div>
+          </Link>
+          ) : (
           <Link
             href={productLink}
             className="w-full md:w-[30%] lg:w-[30%] p-4 sm:p-5 flex flex-col justify-center bg-white border-t md:border-t-0 md:border-l border-gray-100 group transition-colors hover:bg-gray-50/50"
@@ -165,6 +226,7 @@ export default function ProductSponsoredBanner({
             </div>
             )}
           </Link>
+          )}
         </div>
       </div>
 

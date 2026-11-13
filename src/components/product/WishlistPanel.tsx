@@ -109,7 +109,7 @@ export default function WishlistPanel() {
         <h2 className="text-xl md:text-2xl text-gray-900 font-heading">{isEn ? 'My wishlist' : 'Danh sách yêu thích'}</h2>
       </div>
       <p className="text-xs text-gray-500 mb-5">
-        {isEn ? 'Products and combos you saved.' : 'Các sản phẩm và combo bạn đã lưu.'}
+        {isEn ? 'Products and bundles you saved.' : 'Các sản phẩm và gói bạn đã lưu.'}
       </p>
 
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}

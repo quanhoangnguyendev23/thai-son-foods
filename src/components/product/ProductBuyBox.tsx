@@ -5,9 +5,7 @@ import { Truck, MapPin, Check, CalendarClock, ShoppingCart, Store } from 'lucide
 import { ProductVariant } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
 import { calculateShippingFee, INVENTORY_CONFIG } from '@/config/inventory';
-import { getUnitPrice, getVariantLabel } from '@/lib/product-detail';
 import QuantitySelector from '@/components/product/QuantitySelector';
-import DiscountTag from '@/components/product/DiscountTag';
 import { STORE_SALES_INFO } from '@/data/product-detail-content';
 import { DeliveryAddressInfo, WishlistButton } from '@/components/product/ProductRealBlocks';
 import { PreorderSchedulePlaceholder } from '@/components/product/ProductPlaceholderBlocks';
@@ -46,7 +44,8 @@ interface ProductBuyBoxProps {
   /** Mã sản phẩm / combo dùng cho nút Yêu thích */
   itemId?: string;
   itemType?: 'product' | 'combo';
-  /** Dòng phụ dưới giá khi không có quy cách (vd. combo: "Combo 13 chai · 15.281đ/chai") */
+  /** Dòng phụ dưới giá (vd. gói: "Gói 13 chai · 15.281đ/chai"). 13/11: buy box không hiện nữa vì trùng khối giá cột giữa;
+   *  giữ prop (cùng originalPrice, bottleVolume) để không đổi giao thức component. */
   priceNote?: string;
 }
 
@@ -58,8 +57,6 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
   {
     variant,
     price,
-    originalPrice,
-    bottleVolume,
     quantity,
     onQuantityChange,
     onQuantityStep,
@@ -76,7 +73,6 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
     showPlaceholders = true,
     itemId,
     itemType = 'product',
-    priceNote,
   },
   actionsRef
 ) {
@@ -87,27 +83,14 @@ const ProductBuyBox = forwardRef<HTMLDivElement, ProductBuyBoxProps>(function Pr
   const shipping = calculateShippingFee(subtotal);
   const freeThreshold = INVENTORY_CONFIG.SHIPPING.FREE_SHIPPING_THRESHOLD;
   const remainingForFree = Math.max(0, freeThreshold - subtotal);
-  const packLabel = variant ? getVariantLabel(variant, language) : '';
   const packUnitWord = (variant?.unit || (isEn ? 'pack' : 'gói')).toLowerCase();
 
   return (
     <div className="rounded-xl border border-gray-300 bg-white p-4 space-y-3.5">
-      {/* Giá */}
+      {/* Giá: chỉ giá bán (kiểu buy box Amazon). Giá gốc, nhãn "Tiết kiệm", quy cách và giá mỗi chai
+          đã có ở khối giá cột giữa cùng màn hình → không lặp lại ở đây (13/11) */}
       <div>
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-3xl leading-none text-ink-950">{formatPrice(price)}đ</span>
-          {originalPrice && (
-            <span className="text-sm text-gray-500 line-through">{formatPrice(originalPrice)}đ</span>
-          )}
-          <DiscountTag source={{ originalPrice, salePrice: price }} size="md" className="self-center" />
-        </div>
-        {variant && (
-          <p className="text-xs text-gray-600 mt-1.5">
-            {packLabel}
-            {bottleVolume ? ` × ${bottleVolume}` : ''} · {formatPrice(getUnitPrice(variant))}đ/{isEn ? 'bottle' : 'chai'}
-          </p>
-        )}
-        {!variant && priceNote && <p className="text-xs text-gray-600 mt-1.5">{priceNote}</p>}
+        <span className="text-3xl leading-none text-ink-950">{formatPrice(price)}đ</span>
       </div>
 
       {/* Giao hàng */}

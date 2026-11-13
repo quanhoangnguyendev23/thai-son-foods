@@ -1,6 +1,7 @@
 'use client';
 
 import DiscountTag from '@/components/product/DiscountTag';
+import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -31,7 +32,7 @@ export default function ProductCombosSidebar({
   const [comboList, setComboList] = useState<Combo[]>([]);
   const [showAllMobile, setShowAllMobile] = useState(false);
   const [addedId, setAddedId] = useState<string | null>(null);
-  // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Deal hôm nay" (rỗng trước khi mount)
+  // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Ưu đãi có hạn" (rỗng trước khi mount)
   const dealIds = useTodayDealIds();
   const maxDiscount = Math.max(...comboList.map((c) => c.discount || 0), 0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,9 +54,9 @@ export default function ProductCombosSidebar({
   }, []);
 
   const sectionTitle = title === 'Combo tiết kiệm'
-    ? (language === 'en' ? 'Value Combos' : 'Combo tiết kiệm')
+    ? (language === 'en' ? 'Value Bundles' : 'Gói tiết kiệm')
     : title === 'Combo gợi ý' || title === 'Các combo nổi bật đáng cân nhắc' || !title
-    ? (language === 'en' ? 'Featured Combos to Consider' : 'Các combo nổi bật đáng cân nhắc')
+    ? (language === 'en' ? 'Featured Bundles to Consider' : 'Các gói nổi bật đáng cân nhắc')
     : title;
 
   const checkScroll = useCallback(() => {
@@ -171,10 +172,13 @@ export default function ProductCombosSidebar({
                 {combo.totalItems} {language === 'en' ? 'chai' : 'chai'}
               </span>
 
-              {/* Nhãn Deal hôm nay */}
+              {/* Nhãn Ưu đãi có hạn (góc trên phải, cùng phía các nhãn khác) */}
               {dealIds.has(combo.id) && (
-                <span className="absolute top-1 left-1 z-10 pointer-events-none px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs">
-                  {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
+                <span
+                  className={`absolute top-1 right-1 z-10 pointer-events-none px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded shadow-xs ${attentionShine(`deal|${combo.id}`).className}`}
+                  style={attentionShine(`deal|${combo.id}`).style}
+                >
+                  {language === 'en' ? 'Limited-time deal' : 'Ưu đãi có hạn'}
                 </span>
               )}
             </div>
@@ -237,7 +241,7 @@ export default function ProductCombosSidebar({
                   ) : (
                     <>
                       <ShoppingBag className="w-3 h-3 text-green-primary group-hover:text-white shrink-0" />
-                      <span>{language === 'en' ? 'Add combo' : 'Thêm combo'}</span>
+                      <span>{language === 'en' ? 'Add bundle' : 'Thêm gói'}</span>
                     </>
                   )}
                 </button>
@@ -306,14 +310,18 @@ export default function ProductCombosSidebar({
 
           {/* Thông tin Text */}
           <div className="min-w-0 flex-1 w-full">
-            {dealIds.has(combo.id) && (
-              <span className="inline-block mb-0.5 px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded">
-                {language === 'en' ? "Today's deal" : 'Deal hôm nay'}
-              </span>
-            )}
             <h4 className="text-sm text-text-dark leading-snug group-hover/card:text-emerald-800 transition-colors">
               {comboTitle}
             </h4>
+            {/* Ưu đãi có hạn: ngay dưới tên combo */}
+            {dealIds.has(combo.id) && (
+              <span
+                className={`relative inline-block mt-0.5 px-1.5 py-0.5 text-2xs bg-brand-crimson text-white rounded ${attentionShine(`deal|${combo.id}`).className}`}
+                style={attentionShine(`deal|${combo.id}`).style}
+              >
+                {language === 'en' ? 'Limited-time deal' : 'Ưu đãi có hạn'}
+              </span>
+            )}
 
             <p className="text-2xs text-text-muted leading-tight mt-0.5" title={comboDesc}>
               {comboDesc}
@@ -361,7 +369,7 @@ export default function ProductCombosSidebar({
               ) : (
                 <>
                   <ShoppingBag className="w-3 h-3 text-emerald-700 group-hover:text-white" />
-                  <span>{language === 'en' ? 'Add combo to cart' : 'Thêm combo vào giỏ'}</span>
+                  <span>{language === 'en' ? 'Add bundle to cart' : 'Thêm gói vào giỏ'}</span>
                 </>
               )}
             </button>
@@ -380,6 +388,7 @@ export default function ProductCombosSidebar({
   if (layout === 'horizontal') {
     return (
       <section className="w-full">
+        <AttentionStyles />
         {/* Tiêu đề đồng bộ chuẩn SectionTitle giống Sản phẩm gợi ý */}
         <SectionTitle
           title={sectionTitle}
@@ -396,8 +405,8 @@ export default function ProductCombosSidebar({
               type="button"
               onClick={() => handleScroll('left')}
               className="absolute -left-2 sm:-left-3.5 md:-left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white shadow-md border border-gray-200/90 flex items-center justify-center text-gray-700 hover:text-white hover:bg-green-primary transition-all duration-200 cursor-pointer active:scale-90"
-              aria-label={language === 'en' ? 'Previous combos' : 'Lướt sang trái xem combo trước'}
-              title={language === 'en' ? 'Previous combos' : 'Xem combo trước'}
+              aria-label={language === 'en' ? 'Previous bundles' : 'Lướt sang trái xem gói trước'}
+              title={language === 'en' ? 'Previous bundles' : 'Xem gói trước'}
             >
               <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </button>
@@ -423,7 +432,7 @@ export default function ProductCombosSidebar({
               >
                 {showAllMobile
                   ? (language === 'en' ? 'Show less' : 'Thu gọn')
-                  : (language === 'en' ? `Show ${comboList.length - 4} more combos` : `Xem thêm ${comboList.length - 4} combo`)}
+                  : (language === 'en' ? `Show ${comboList.length - 4} more bundles` : `Xem thêm ${comboList.length - 4} gói`)}
               </button>
             </div>
           )}
@@ -434,8 +443,8 @@ export default function ProductCombosSidebar({
               type="button"
               onClick={() => handleScroll('right')}
               className="absolute -right-2 sm:-right-3.5 md:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white shadow-md border border-gray-200/90 flex items-center justify-center text-gray-700 hover:text-white hover:bg-green-primary transition-all duration-200 cursor-pointer active:scale-90"
-              aria-label={language === 'en' ? 'Next combos' : 'Lướt sang phải xem thêm combo'}
-              title={language === 'en' ? 'Next combos' : 'Xem thêm combo'}
+              aria-label={language === 'en' ? 'Next bundles' : 'Lướt sang phải xem thêm gói'}
+              title={language === 'en' ? 'Next bundles' : 'Xem thêm gói'}
             >
               <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
             </button>
@@ -450,6 +459,7 @@ export default function ProductCombosSidebar({
   // ──────────────────────────────────────────────────────
   return (
     <aside className="w-full bg-ivory border border-amber-200 rounded-2xl p-3.5 sm:p-4 shadow-xs">
+      <AttentionStyles />
       {/* Tiêu đề Khối Combo */}
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-amber-200">
         <div className="flex items-center gap-1.5">
@@ -458,7 +468,7 @@ export default function ProductCombosSidebar({
           </div>
           <div>
             <h3 className="text-base text-forest-950 font-heading leading-none">
-              {language === 'en' ? 'Value Combos' : 'Combo tiết kiệm'}
+              {language === 'en' ? 'Value Bundles' : 'Gói tiết kiệm'}
             </h3>
             <p className="text-2xs text-text-muted mt-0.5">
               {language === 'en' ? 'Multi-bottle bundle savings' : 'Gói nhiều chai giá ưu đãi'}
@@ -481,7 +491,7 @@ export default function ProductCombosSidebar({
           href="/#combo"
           className="text-xs text-emerald-800 hover:text-emerald-950 inline-flex items-center gap-1 hover:underline"
         >
-          <span>{language === 'en' ? 'View all combo offers' : 'Xem tất cả ưu đãi Combo'}</span>
+          <span>{language === 'en' ? 'View all bundle offers' : 'Xem tất cả ưu đãi Gói'}</span>
           <ArrowRight className="w-3 h-3" />
         </Link>
       </div>

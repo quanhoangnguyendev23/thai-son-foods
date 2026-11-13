@@ -90,10 +90,10 @@ async function getRangeStats(storeScope: string | null, from: string | null, to:
           WHEN oi.product_id LIKE 'combo-6-%' THEN 'combo-6'
           ELSE oi.product_id END, 'combo-khac') AS combo_key,
         COALESCE(c.name, CASE
-          WHEN oi.product_id LIKE 'combo-4-chai-%' THEN 'Combo 4 chai tự chọn'
-          WHEN oi.product_id LIKE 'combo-van-phong-%' THEN 'Combo văn phòng tự chọn'
-          WHEN oi.product_id LIKE 'combo-5-%' THEN 'Combo siêu hời'
-          WHEN oi.product_id LIKE 'combo-6-%' THEN 'Combo bậc thang'
+          WHEN oi.product_id LIKE 'combo-4-chai-%' THEN 'Gói 4 chai tự chọn'
+          WHEN oi.product_id LIKE 'combo-van-phong-%' THEN 'Gói văn phòng tự chọn'
+          WHEN oi.product_id LIKE 'combo-5-%' THEN 'Gói siêu hời'
+          WHEN oi.product_id LIKE 'combo-6-%' THEN 'Gói bậc thang'
           ELSE oi.name END) AS combo_name,
         COALESCE(c.image, oi.thumbnail) AS thumb
       FROM order_items oi

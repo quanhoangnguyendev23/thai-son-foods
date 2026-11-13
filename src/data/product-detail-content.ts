@@ -101,10 +101,10 @@ const PRODUCT_DETAIL_CONTENT: Record<string, ProductDetailContent> = {
         contentEn: 'Closed pasteurization process with strict food safety control.',
       },
       {
-        labelVi: '98% dịch trích bắp tươi',
-        contentVi: 'Thành phần chính là dịch trích từ bắp tươi, bắp ngọt và bắp nếp.',
-        labelEn: '98% fresh corn extract',
-        contentEn: 'Made mainly from fresh sweet and glutinous corn extract.',
+        labelVi: 'Thành phần tự nhiên',
+        contentVi: 'Thành phần chính là sữa bắp từ bắp tươi, bắp ngọt và bắp nếp.',
+        labelEn: 'Natural ingredients',
+        contentEn: 'Made mainly from corn milk from fresh, sweet and glutinous corn.',
       },
       {
         labelVi: '31 kcal / 100ml',
@@ -157,6 +157,40 @@ const SLUG_TO_ID: Record<string, string> = {
   'tao-do-hat-chia-thai-son': 'tao-do-hat-chia',
   'sam-la-han-hoa-cuc-thai-son': 'sam-la-han-hoa-cuc',
 };
+
+/** Các trường chữ admin chỉnh được (cột products.detail_content) */
+export const DETAIL_TEXT_FIELDS = [
+  'ingredients',
+  'usage',
+  'storage',
+  'expiry',
+  'manufacturer',
+  'origin',
+  'certification',
+  'packagingMaterial',
+  'labelImage',
+] as const;
+
+/**
+ * Gộp nội dung admin nhập (CSDL) lên nội dung trong code: trường có giá trị trong CSDL được dùng, trường trống giữ
+ * nội dung code (rồi tới DEFAULT_PRODUCT_DETAIL ở nơi hiển thị). Điểm nổi bật / dinh dưỡng thay nguyên khối khi có dữ liệu.
+ */
+export function mergeProductDetailContent(
+  base: ProductDetailContent,
+  override: ProductDetailContent | null | undefined
+): ProductDetailContent {
+  if (!override) return base;
+  const out: ProductDetailContent = { ...base };
+  for (const key of DETAIL_TEXT_FIELDS) {
+    const v = override[key];
+    if (typeof v === 'string' && v.trim()) out[key] = v;
+  }
+  if (Array.isArray(override.highlights) && override.highlights.length > 0) out.highlights = override.highlights;
+  if (override.nutrition && Array.isArray(override.nutrition.rows) && override.nutrition.rows.length > 0) {
+    out.nutrition = override.nutrition;
+  }
+  return out;
+}
 
 export function getProductDetailContent(product: Pick<Product, 'id' | 'slug'>): ProductDetailContent {
   return (

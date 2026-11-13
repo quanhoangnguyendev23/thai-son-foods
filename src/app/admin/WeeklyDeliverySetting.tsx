@@ -103,7 +103,7 @@ export default function WeeklyDeliverySetting({ canManage }: { canManage: boolea
           Câu hiển thị và số mặc định
         </h2>
         <p className="text-xs text-ink-700 mt-0.5">
-          Dùng chung cho mọi sản phẩm và combo. Số mặc định dùng cho món chưa nhập số riêng. Viết {'{so}'} ở chỗ cần hiện số chai.
+          Dùng chung cho mọi sản phẩm và gói. Số mặc định dùng cho món chưa nhập số riêng. Viết {'{so}'} ở chỗ cần hiện số chai.
         </p>
         {saved?.updatedAt && (
           <p className="text-xs text-ink-700 mt-0.5">

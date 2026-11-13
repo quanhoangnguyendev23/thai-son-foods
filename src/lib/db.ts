@@ -470,6 +470,8 @@ async function runInitDatabase(dryRunClient?: PoolClient) {
       ALTER TABLE products ADD COLUMN IF NOT EXISTS sold_offset INTEGER NOT NULL DEFAULT 0;
       -- Năng lượng trên 100ml (kcal), admin nhập; trống thì dùng giá trị trong src/data/products.ts
       ALTER TABLE products ADD COLUMN IF NOT EXISTS energy_kcal NUMERIC(6,1);
+      -- Nội dung "Thông tin sản phẩm" do admin nhập (JSON, cấu trúc ProductDetailContent); trống → nội dung trong code
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS detail_content JSONB;
       ALTER TABLE combos ADD COLUMN IF NOT EXISTS sold_offset INTEGER NOT NULL DEFAULT 0;
       ALTER TABLE order_items ADD COLUMN IF NOT EXISTS cost_price INTEGER;
       -- Túi tiết kiệm: giá gốc (niêm yết) của dòng hàng lúc đặt; tiết kiệm = (original_price - price) * quantity

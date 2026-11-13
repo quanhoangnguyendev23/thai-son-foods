@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     // 3. Thẩm định danh sách mặt hàng
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Vui lòng chọn ít nhất một sản phẩm hoặc combo để đăng ký.' },
+        { success: false, error: 'Vui lòng chọn ít nhất một sản phẩm hoặc gói để đăng ký.' },
         { status: 400 }
       );
     }
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `Đơn hàng đăng ký định kỳ phải có giá trị niêm yết tối thiểu từ ${MEMBERSHIP_CONFIG.MIN_SUBSCRIPTION_ORDER_VALUE.toLocaleString('vi-VN')} đ (tối thiểu 1 lốc hoặc 1 combo) để được chiết khấu 15% và miễn phí vận chuyển xe lạnh 100%.`,
+          error: `Đơn hàng đăng ký định kỳ phải có giá trị niêm yết tối thiểu từ ${MEMBERSHIP_CONFIG.MIN_SUBSCRIPTION_ORDER_VALUE.toLocaleString('vi-VN')} đ (tối thiểu 1 lốc hoặc 1 gói) để được chiết khấu 15% và miễn phí vận chuyển xe lạnh 100%.`,
         },
         { status: 400 }
       );

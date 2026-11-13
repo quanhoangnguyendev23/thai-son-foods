@@ -212,7 +212,7 @@ async function getLiveCombos(): Promise<Combo[]> {
           salePrice: Number(row.sale_price) || 0,
           totalItems: Number(row.total_items) || 10,
           discount: Number(row.discount) || 0,
-          image: row.thumbnail || '/images/combos/combo-1.jpg',
+          image: row.image || row.thumbnail || '/images/combos/combo-1.jpg',
           description: row.description || '',
           products: [],
           isActive: true,
@@ -220,7 +220,7 @@ async function getLiveCombos(): Promise<Combo[]> {
 
         const activeImages = Array.isArray(row.images) && row.images.length > 0 ? row.images : [];
         const primaryFromImages = activeImages.find((img: any) => img.isPrimary)?.url || activeImages[0]?.url;
-        const finalImage = row.thumbnail || primaryFromImages || base.image;
+        const finalImage = row.image || row.thumbnail || primaryFromImages || base.image;
 
         return {
           ...base,
@@ -229,6 +229,7 @@ async function getLiveCombos(): Promise<Combo[]> {
           salePrice: row.sale_price !== null && row.sale_price !== undefined ? Number(row.sale_price) : base.salePrice,
           totalItems: row.total_items !== null && row.total_items !== undefined ? Number(row.total_items) : base.totalItems,
           discount: row.discount !== null && row.discount !== undefined ? Number(row.discount) : base.discount,
+          isFeatured: Boolean(row.is_featured),
           isBestSeller: Boolean(row.is_best_seller),
           createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined,
           image: finalImage,

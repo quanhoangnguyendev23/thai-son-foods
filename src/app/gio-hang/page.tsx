@@ -26,6 +26,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { products } from '@/data/products';
 import { combos } from '@/data/combos';
 import { ENABLE_COMBOS } from '@/config/features';
+import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
 import { getShortProductName } from '@/lib/product-detail';
 import { useCartInventory } from '@/hooks/useCartInventory';
 import { INVENTORY_CONFIG } from '@/config/inventory';
@@ -386,7 +387,7 @@ export default function CartPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-rose-50 text-rose-900 border border-rose-200/80 shadow-2xs">
-                <span>{language === 'en' ? 'SPECIAL COMBOS (12 PACKS)' : 'KHU Ụ HÀNG KHUYẾN MÃI CUỐI QUẦY • MUA NHIỀU GIẢM SÂU (12 COMBO)'}</span>
+                <span>{language === 'en' ? 'SPECIAL BUNDLES (12 PACKS)' : 'KHU Ụ HÀNG KHUYẾN MÃI CUỐI QUẦY • MUA NHIỀU GIẢM SÂU (12 GÓI)'}</span>
               </span>
             </div>
             <h2 id="checkout-combos-heading" className="text-xl sm:text-2xl text-gray-900 font-heading tracking-tight leading-snug">
@@ -399,13 +400,13 @@ export default function CartPage() {
           {/* Điều hướng cuộn ngang combo */}
           <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
             <span className="text-2xs font-medium text-gray-400 mr-1 hidden sm:inline">
-              {language === 'en' ? 'Scroll 12 combos' : 'Trượt xem 12 combo'}
+              {language === 'en' ? 'Scroll 12 bundles' : 'Trượt xem 12 gói'}
             </span>
             <button
               type="button"
               onClick={() => scrollShelf(comboScrollRef, 'left')}
               className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-gray-600 hover:text-emerald-700 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer"
-              aria-label="Cuộn combo sang trái"
+              aria-label="Cuộn gói sang trái"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -413,7 +414,7 @@ export default function CartPage() {
               type="button"
               onClick={() => scrollShelf(comboScrollRef, 'right')}
               className="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-gray-600 hover:text-emerald-700 flex items-center justify-center transition-all shadow-xs active:scale-95 cursor-pointer"
-              aria-label="Cuộn combo sang phải"
+              aria-label="Cuộn gói sang phải"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -452,10 +453,16 @@ export default function CartPage() {
 
                     {/* Badges góc trên */}
                     <div className="absolute top-1 right-1 flex items-center gap-1 z-10">
-                      {discountLabel(combo) && (
-                        <span className="px-1.5 py-0.5 text-2xs rounded bg-rose-600 text-white shadow-xs">
-                          {discountLabel(combo)}
-                        </span>
+                      {discountLabel(combo, language === 'en' ? 'en' : 'vi') && (
+                        <>
+                          <AttentionStyles />
+                          <span
+                            className={`relative px-1.5 py-0.5 text-2xs rounded bg-rose-600 text-white shadow-xs ${attentionShine(`cart|${combo.id}`).className}`}
+                            style={attentionShine(`cart|${combo.id}`).style}
+                          >
+                            {discountLabel(combo, language === 'en' ? 'en' : 'vi')}
+                          </span>
+                        </>
                       )}
                       <span className="px-1.5 py-0.5 text-2xs rounded bg-gray-900/85 text-white backdrop-blur-xs">
                         {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
@@ -525,8 +532,8 @@ export default function CartPage() {
                               ? '+1 pack'
                               : '+1 gói nữa'
                             : language === 'en'
-                            ? '+ Grab Combo'
-                            : '+ Rinh Combo'}
+                            ? '+ Grab Bundle'
+                            : '+ Rinh Gói'}
                         </span>
                       </>
                     )}
@@ -556,7 +563,7 @@ export default function CartPage() {
             <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-sm mx-auto">
               {language === 'en'
                 ? 'Select any of our fresh refreshing bottles or family bundles below to get started!'
-                : 'Hãy tiện tay chọn ngay những chai đồ uống thanh mát hoặc combo tiết kiệm bên dưới nhé!'}
+                : 'Hãy tiện tay chọn ngay những chai đồ uống thanh mát hoặc gói tiết kiệm bên dưới nhé!'}
             </p>
             <Link
               href="/#san-pham"
@@ -1048,8 +1055,8 @@ export default function CartPage() {
                 <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-800 flex items-center gap-1.5">
                   <span>
                     {language === 'en'
-                      ? 'Combo included — Order eligible!'
-                      : 'Đơn có Combo — Đủ điều kiện đặt hàng!'}
+                      ? 'Bundle included — Order eligible!'
+                      : 'Đơn có Gói — Đủ điều kiện đặt hàng!'}
                   </span>
                 </div>
               ) : null}
@@ -1141,7 +1148,7 @@ export default function CartPage() {
                   <span className="text-xs text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-200/60">
                     {activeImpulseTab === 'products'
                       ? (language === 'en' ? '12 fresh packs' : '12 lốc mát lạnh')
-                      : (language === 'en' ? '12 family bundles' : '12 combo tiết kiệm')}
+                      : (language === 'en' ? '12 family bundles' : '12 gói tiết kiệm')}
                   </span>
                 </div>
 
@@ -1151,7 +1158,7 @@ export default function CartPage() {
                 <p className="text-2xs text-emerald-700/90 leading-normal mt-0.5">
                   {language === 'en'
                     ? (ENABLE_COMBOS ? '1-click to add chilled drinks & discount bundles!' : '1-click to add chilled drinks!')
-                    : (ENABLE_COMBOS ? '1 chạm vào giỏ, nhận ngay đồ uống thanh mát & combo hời!' : '1 chạm vào giỏ, nhận ngay đồ uống thanh mát!')}
+                    : (ENABLE_COMBOS ? '1 chạm vào giỏ, nhận ngay đồ uống thanh mát & gói hời!' : '1 chạm vào giỏ, nhận ngay đồ uống thanh mát!')}
                 </p>
 
                 {/* Tab Switcher 2 ngăn: Chai nước (12) vs Combo (12) — ẩn khi tắt combo, chỉ còn danh sách chai */}
@@ -1178,7 +1185,7 @@ export default function CartPage() {
                         : 'text-emerald-800/80 hover:text-emerald-900 hover:bg-white/60'
                     }`}
                   >
-                    <span>{language === 'en' ? '12 Combos' : '12 Combo hời'}</span>
+                    <span>{language === 'en' ? '12 Bundles' : '12 Gói hời'}</span>
                   </button>
                 </div>
                 )}
@@ -1344,10 +1351,16 @@ export default function CartPage() {
                               {comboTitle}
                             </Link>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              {discountLabel(combo) && (
-                                <span className="px-1 py-px text-2xs rounded bg-rose-600 text-white leading-tight">
-                                  {discountLabel(combo)}
-                                </span>
+                              {discountLabel(combo, language === 'en' ? 'en' : 'vi') && (
+                                <>
+                                  <AttentionStyles />
+                                  <span
+                                    className={`relative px-1 py-px text-2xs rounded bg-rose-600 text-white leading-tight ${attentionShine(`cart2|${combo.id}`).className}`}
+                                    style={attentionShine(`cart2|${combo.id}`).style}
+                                  >
+                                    {discountLabel(combo, language === 'en' ? 'en' : 'vi')}
+                                  </span>
+                                </>
                               )}
                               <span className="text-2xs text-gray-500 font-medium">
                                 {combo.totalItems} {language === 'en' ? 'bottles' : 'chai'}
@@ -1377,7 +1390,7 @@ export default function CartPage() {
                                 ? 'bg-emerald-600 text-white ring-1 ring-emerald-300'
                                 : 'bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-emerald-900/10'
                             }`}
-                            title={language === 'en' ? 'Grab combo' : 'Rinh combo'}
+                            title={language === 'en' ? 'Grab bundle' : 'Rinh gói'}
                           >
                             {isJustAdded ? (
                               <>

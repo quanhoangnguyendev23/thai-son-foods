@@ -41,7 +41,7 @@ const cut = (s: string, max = 30) => (s.length > max ? `${s.slice(0, max - 1).tr
 /** Mã ngắn như admin: sku bỏ hậu tố "-01" → id bỏ "prod-" → tên cắt gọn. Combo: tên bỏ chữ "Combo", cắt gọn. */
 export function shortItemCode(it: ZaloOrderNotice['items'][number]): string {
   const name = String(it.name || '').trim();
-  if (it.isCombo) return cut(name.replace(/^combo\s+/i, '') || name || 'Combo');
+  if (it.isCombo) return cut(name.replace(/^combo\s+/i, '') || name || 'Gói');
   const sku = String(it.sku || '').trim();
   if (sku) return sku.replace(/-\d+$/, '');
   const id = String(it.productId || '').trim();

@@ -288,13 +288,20 @@ function SignInColumn() {
 
 function ComboQuadCard({ combos }: { combos: Combo[] }) {
   const { language } = useLanguage();
-  const items = combos.slice(0, 4);
+  const items = [...combos]
+    .sort(
+      (a, b) =>
+        Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured)) ||
+        Number(Boolean(b.isBestSeller)) - Number(Boolean(a.isBestSeller)) ||
+        (b.createdAt ? Date.parse(b.createdAt) : 0) - (a.createdAt ? Date.parse(a.createdAt) : 0)
+    )
+    .slice(0, 4);
   if (items.length === 0) return null;
 
   return (
     <CardShell
-      title={language === 'en' ? 'Value combos' : 'Combo tiết kiệm'}
-      footer={<MoreLink href="/#combo">{language === 'en' ? 'See all combos' : 'Xem tất cả combo'}</MoreLink>}
+      title={language === 'en' ? 'Value bundles' : 'Gói tiết kiệm'}
+      footer={<MoreLink href="/#combo">{language === 'en' ? 'See all bundles' : 'Xem tất cả gói'}</MoreLink>}
     >
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         {items.map((c) => {

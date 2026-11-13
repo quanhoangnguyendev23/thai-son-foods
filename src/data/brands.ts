@@ -13,6 +13,8 @@ export interface Brand {
   tagline: string;
   /** id sản phẩm (trong src/data/products.ts) thuộc thương hiệu */
   productIds: string[];
+  /** Website riêng của thương hiệu (theo menu trang thaisonfoods.vn); không có thì ẩn nút */
+  website?: string;
 }
 
 export const brands: Brand[] = [
@@ -23,6 +25,7 @@ export const brands: Brand[] = [
     coverImage: '/images/products/gallery/sl-2.jpg',
     tagline: 'Bình sữa hạt 568ml: Hạt Sen và Gạo Lứt',
     productIds: ['sua-hat-sen-lotus', 'sua-gao-lut-ohsawa'],
+    website: 'https://yoomilk.vn/',
   },
   {
     slug: 'ciao',
@@ -31,6 +34,7 @@ export const brands: Brand[] = [
     coverImage: '/images/products/gallery/tsa-2.jpg',
     tagline: 'Trà sữa trân châu uống liền: Truyền thống và Matcha',
     productIds: ['tra-sua-ciao', 'matcha-tra-sua-ciao'],
+    website: 'https://trasuaciao.vn/',
   },
   {
     slug: 'go',

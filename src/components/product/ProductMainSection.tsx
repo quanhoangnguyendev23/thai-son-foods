@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, ReactNode } from 'react';
 import Link from 'next/link';
+import { MAIN_SITE } from '@/config/homepage';
+import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
 import Image from 'next/image';
 import { Product } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -12,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { Star, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranchStore } from '@/store/branch';
-import { DEFAULT_PRODUCT_DETAIL, getProductDetailContent, STORE_SALES_INFO } from '@/data/product-detail-content';
+import { DEFAULT_PRODUCT_DETAIL, getProductDetailContent, mergeProductDetailContent, STORE_SALES_INFO } from '@/data/product-detail-content';
 import {
   sortVariants,
   getVariantLabel,
@@ -175,8 +177,8 @@ export default function ProductMainSection({
     if (vName.includes('15 chai')) return 'Carton of 15 bottles';
     if (vName.includes('6 chai') || vName.includes('Lốc 6')) return 'Pack of 6 bottles';
     if (vName.includes('24 chai') || vName.includes('Thùng 24')) return 'Carton of 24 bottles';
-    if (vName.includes('Combo 4')) return 'Combo of 4 bottles';
-    if (vName.includes('Combo 10')) return 'Combo of 10 bottles';
+    if (vName.includes('Combo 4')) return 'Bundle of 4 bottles';
+    if (vName.includes('Combo 10')) return 'Bundle of 10 bottles';
     return vName;
   };
 
@@ -186,7 +188,8 @@ export default function ProductMainSection({
   const currentUnit = currentVariant ? getVariantName(currentVariant.name) : (isEn ? (product.unitEn || 'bottle') : product.unit);
   const displayName = (isEn && product.nameEn) ? product.nameEn : product.name;
   const bottleVolume = getBottleVolume(product, currentVariant);
-  const detailContent = getProductDetailContent(product);
+  // Nội dung admin nhập (CSDL) ưu tiên, trống thì dùng nội dung trong code
+  const detailContent = mergeProductDetailContent(getProductDetailContent(product), product.detailContent);
   const highlights = detailContent.highlights || DEFAULT_PRODUCT_DETAIL.highlights;
   const originalPrice = currentVariant ? getVariantOriginalPrice(product, currentVariant) : null;
 
@@ -369,12 +372,13 @@ export default function ProductMainSection({
 
         {/* ── VÙNG 2: THÔNG TIN MUA HÀNG CHÍNH ── */}
         <div className="min-w-0 md:col-start-2 md:row-start-1 xl:col-start-2 space-y-3">
-          <Link
-            href="/"
+          {/* Trang "Chúng tôi" của web mặt tiền công ty */}
+          <a
+            href={MAIN_SITE.ABOUT_URL}
             className="inline-block text-sm text-forest-700 hover:text-copper-600 hover:underline"
           >
             {isEn ? 'Visit the Thái Sơn Foods store' : 'Ghé thăm cửa hàng Thái Sơn Foods'}
-          </Link>
+          </a>
 
           <h1 className="text-xl sm:text-2xl xl:text-2xl font-medium text-ink-950 leading-snug break-words">
             {displayName}
@@ -419,9 +423,16 @@ export default function ProductMainSection({
           {(isVegan || product.isBestSeller || product.isNew) && (
             <div className="flex flex-wrap gap-1.5">
               {product.isBestSeller && (
-                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">
-                  {isEn ? 'Best seller' : 'Bán chạy'}
-                </span>
+                <>
+                  <AttentionStyles />
+                  {/* 13/11: vệt sáng lướt qua nhãn (hiệu ứng chung), đồng bộ trang chi tiết gói */}
+                  <span
+                    className={`relative text-xs px-2 py-0.5 rounded bg-sale text-white ${attentionShine(`best|${product.id}`).className}`}
+                    style={attentionShine(`best|${product.id}`).style}
+                  >
+                    {isEn ? 'Best seller' : 'Bán chạy'}
+                  </span>
+                </>
               )}
               {product.isNew && (
                 <span className="text-xs px-2 py-0.5 rounded bg-sky-600 text-white">

@@ -63,6 +63,8 @@ import { downloadXlsx } from '@/lib/xlsx';
 import SheetInventoryPanel from './SheetInventoryPanel';
 import WeeklyDeliveryPanel from './WeeklyDeliveryPanel';
 import DailyDealsSwitch from './DailyDealsSwitch';
+import ProductDetailContentEditor from './ProductDetailContentEditor';
+import { getProductDetailContent, type ProductDetailContent } from '@/data/product-detail-content';
 import { ImageSizeHint, ImageDimensionBadge, bannerSpecKey, checkImageFilesAgainstSpec } from './ImageSizeGuide';
 import { RevenueCard, TopProductsCard, TopCombosCard, formatRangeLabel, isTrendStale, type RangePreset, type FixedPreset } from './DashboardCharts';
 
@@ -190,6 +192,8 @@ interface Product {
   is_active: boolean;
   variants?: ProductVariant[];
   images?: { id?: string; url: string; alt?: string; sortOrder?: number; imageType?: string; isActive?: boolean }[];
+  /** Thông tin chi tiết hiển thị ở trang sản phẩm (thành phần, dinh dưỡng, cách dùng...) */
+  detail_content?: ProductDetailContent | null;
   created_at?: string;
 }
 
@@ -719,7 +723,7 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/sync', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        showToast(data.message || 'Đã đồng bộ toàn bộ sản phẩm và combo vào DB thành công!');
+        showToast(data.message || 'Đã đồng bộ toàn bộ sản phẩm và gói vào DB thành công!');
         fetchData();
       } else {
         showToast(data.error || 'Lỗi khi đồng bộ dữ liệu', 'error');
@@ -1320,7 +1324,7 @@ export default function AdminPage() {
         const newImgs = uploadedUrls.map((url, idx) => ({
           id: `new_${Date.now()}_${idx}`,
           url,
-          alt: editingCombo?.name || 'Combo Thái Sơn',
+          alt: editingCombo?.name || 'Gói Thái Sơn',
           sortOrder: comboImages.length + idx + 1,
           is_active: true,
           imageType: 'gallery',
@@ -1329,7 +1333,7 @@ export default function AdminPage() {
         if (!editingCombo?.image && uploadedUrls.length > 0) {
           setEditingCombo((prev: any) => ({ ...prev, image: uploadedUrls[0] }));
         }
-        showToast(`Đã tải lên ${uploadedUrls.length} ảnh combo thành công!`);
+        showToast(`Đã tải lên ${uploadedUrls.length} ảnh gói thành công!`);
       } else if (type === 'banners') {
         if (uploadedUrls.length > 0) {
           setEditingBanner((prev: any) => ({ ...prev, image: uploadedUrls[0] }));
@@ -1370,7 +1374,7 @@ export default function AdminPage() {
       const newImg = {
         id: `url_${Date.now()}`,
         url,
-        alt: editingCombo?.name || 'Combo',
+        alt: editingCombo?.name || 'Gói',
         sortOrder: comboImages.length + 1,
         is_active: true,
         imageType: 'gallery',
@@ -2032,7 +2036,10 @@ export default function AdminPage() {
   };
 
   const handleOpenEditProduct = (prod: Product) => {
-    setEditingProduct({ ...prod });
+    // Thông tin chi tiết: chưa lưu trong CSDL thì điền sẵn nội dung riêng đang có trong code (không điền câu mặc định chung)
+    const codeDetail: ProductDetailContent = { ...getProductDetailContent({ id: prod.id, slug: prod.slug }) };
+    delete codeDetail.shortName; // tên ngắn không sửa ở đây
+    setEditingProduct({ ...prod, detail_content: prod.detail_content || codeDetail });
     setProductFormVariants(
       prod.variants && prod.variants.length > 0
         ? prod.variants.map((v) => {
@@ -2545,11 +2552,11 @@ export default function AdminPage() {
     if (!row) return true;
     const { original, bottles, sale } = calcMatrixRow(row);
     if (bottles === 0) {
-      showToast(`Combo "${c.name.slice(0, 30)}" cần ít nhất 1 chai`, 'error');
+      showToast(`Gói "${c.name.slice(0, 30)}" cần ít nhất 1 chai`, 'error');
       return false;
     }
     if (sale < 1) {
-      showToast(`Combo "${c.name.slice(0, 30)}": số tiền NTD phải nhỏ hơn giá gốc`, 'error');
+      showToast(`Gói "${c.name.slice(0, 30)}": số tiền NTD phải nhỏ hơn giá gốc`, 'error');
       return false;
     }
     // Giữ lại món không khớp sản phẩm nào trong bảng (nếu có) để không làm mất dữ liệu
@@ -2567,12 +2574,12 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!data.success) {
-        showToast(data.error || 'Không thể lưu combo', 'error');
+        showToast(data.error || 'Không thể lưu gói', 'error');
         return false;
       }
       discardMatrixRow(c.id);
       if (!silent) {
-        showToast(`Đã lưu giá combo "${c.name.slice(0, 30)}"`);
+        showToast(`Đã lưu giá gói "${c.name.slice(0, 30)}"`);
         fetchData();
       }
       return true;
@@ -2590,14 +2597,14 @@ export default function AdminPage() {
     for (const c of dirty) {
       if (await saveMatrixRow(c, true)) ok++;
     }
-    if (ok > 0) showToast(`Đã lưu ${ok}/${dirty.length} combo`);
+    if (ok > 0) showToast(`Đã lưu ${ok}/${dirty.length} gói`);
     fetchData();
   };
 
   const handleSaveCombo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCombo?.name || editingCombo?.sale_price === undefined) {
-      showToast('Vui lòng nhập tên combo và giá bán', 'error');
+      showToast('Vui lòng nhập tên gói và giá bán', 'error');
       return;
     }
 
@@ -2607,12 +2614,27 @@ export default function AdminPage() {
       const url = '/api/admin/combos';
       const method = isUpdating ? 'PUT' : 'POST';
 
-      const resolvedImage = editingCombo?.image || (comboImages[0]?.url || '');
+      const pendingUrl = newImageUrl.trim();
+      const finalComboImages =
+        pendingUrl && !comboImages.some((img) => img.url === pendingUrl)
+          ? [
+              ...comboImages,
+              {
+                id: `url_${Date.now()}`,
+                url: pendingUrl,
+                alt: editingCombo?.name || 'Gói',
+                sortOrder: comboImages.length + 1,
+                is_active: true,
+                imageType: 'gallery',
+              },
+            ]
+          : comboImages;
+      const resolvedImage = editingCombo?.image || finalComboImages[0]?.url || '';
 
       const payload = {
         ...editingCombo,
         image: resolvedImage,
-        images: comboImages,
+        images: finalComboImages,
       };
 
       const res = await fetch(url, {
@@ -2622,11 +2644,11 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(isUpdating ? 'Đã cập nhật combo thành công!' : 'Đã tạo combo mới thành công!');
+        showToast(isUpdating ? 'Đã cập nhật gói thành công!' : 'Đã tạo gói mới thành công!');
         setIsComboModalOpen(false);
         fetchData();
       } else {
-        showToast(data.error || 'Không thể lưu combo', 'error');
+        showToast(data.error || 'Không thể lưu gói', 'error');
       }
     } catch (err: any) {
       showToast('Lỗi: ' + err.message, 'error');
@@ -2644,7 +2666,7 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(`Đã ${!c.is_active ? 'bật bán' : 'tạm dừng'} combo "${c.name.slice(0, 30)}..."`);
+        showToast(`Đã ${!c.is_active ? 'bật bán' : 'tạm dừng'} gói "${c.name.slice(0, 30)}..."`);
         fetchData();
       }
     } catch (err: any) {
@@ -2653,15 +2675,15 @@ export default function AdminPage() {
   };
 
   const handleDeleteCombo = async (id: string, name: string) => {
-    if (!(await showConfirm(`Bạn có chắc chắn muốn xóa combo "${name}" khỏi cơ sở dữ liệu?`, { tone: 'danger', title: 'Xóa combo?', okText: 'Xóa' }))) return;
+    if (!(await showConfirm(`Bạn có chắc chắn muốn xóa gói "${name}" khỏi cơ sở dữ liệu?`, { tone: 'danger', title: 'Xóa gói?', okText: 'Xóa' }))) return;
     try {
       const res = await fetch(`/api/admin/combos?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        showToast(`Đã xóa combo "${name.slice(0, 30)}..."`);
+        showToast(`Đã xóa gói "${name.slice(0, 30)}..."`);
         fetchData();
       } else {
-        showToast(data.error || 'Không thể xóa combo', 'error');
+        showToast(data.error || 'Không thể xóa gói', 'error');
       }
     } catch (err: any) {
       showToast('Lỗi: ' + err.message, 'error');
@@ -2866,7 +2888,7 @@ export default function AdminPage() {
             <button
               onClick={handleSyncStore}
               disabled={syncLoading}
-              title="Đồng bộ toàn bộ sản phẩm và combo từ website vào cơ sở dữ liệu PostgreSQL WebTSF"
+              title="Đồng bộ toàn bộ sản phẩm và gói từ website vào cơ sở dữ liệu PostgreSQL WebTSF"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-emerald-600/20 text-emerald-700 border border-emerald-500/40 hover:bg-emerald-100 transition-all cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-emerald-700 ${syncLoading ? 'animate-spin' : ''}`} />
@@ -3012,7 +3034,7 @@ export default function AdminPage() {
                 >
                   <div className="flex items-center gap-3">
                     <Boxes className="w-4 h-4" />
-                    <span>Gói Combo</span>
+                    <span>Gói</span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-ink-100 text-ink-800 border border-ink-300">
                     {combos.length}
@@ -3810,7 +3832,7 @@ export default function AdminPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h1 className="text-2xl text-ink-950 tracking-tight flex items-center gap-2.5">
-                    <span>Quản Lý Gói Combo Tiết Kiệm</span>
+                    <span>Quản Lý Gói Tiết Kiệm</span>
                     <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-ink-100 text-amber-700 border border-ink-300">
                       {filteredCombos.length} / {combos.length} gói
                     </span>
@@ -3838,7 +3860,7 @@ export default function AdminPage() {
                       className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-900/15 transition-all cursor-pointer"
                     >
                       <Plus className="w-4 h-4" />
-                      <span>Thêm Combo Mới</span>
+                      <span>Thêm Gói Mới</span>
                     </button>
                   )}
                 </div>
@@ -3861,7 +3883,7 @@ export default function AdminPage() {
                   <Search className="w-4 h-4 text-ink-700 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Tìm tên combo, chi tiết chai..."
+                    placeholder="Tìm tên gói, chi tiết chai..."
                     value={comboSearch}
                     onChange={(e) => setComboSearch(e.target.value)}
                     className="w-full bg-ink-50 border border-ink-200 rounded-xl pl-9 pr-4 py-2 text-xs text-ink-950 placeholder-ink-500 focus:outline-none focus:border-amber-500 transition-colors"
@@ -3944,7 +3966,7 @@ export default function AdminPage() {
                       <table className="text-xs text-ink-800 border-collapse">
                         <thead className="bg-ink-50 text-ink-700">
                           <tr className="border-b border-ink-200">
-                            <th rowSpan={3} className={`${stickyCell} bg-ink-50 py-2 px-3 text-left min-w-56`}>Combo</th>
+                            <th rowSpan={3} className={`${stickyCell} bg-ink-50 py-2 px-3 text-left min-w-56`}>Gói</th>
                             {groups.map((g) => (
                               <th key={g.name} colSpan={g.count} className="py-2 px-2 text-center text-amber-700 border-l border-ink-200">
                                 {g.name}
@@ -4046,7 +4068,7 @@ export default function AdminPage() {
                           {filteredCombos.length === 0 && (
                             <tr>
                               <td colSpan={matrixProducts.length + 7} className="py-8 text-center text-ink-600">
-                                Không tìm thấy gói combo nào
+                                Không tìm thấy gói nào
                               </td>
                             </tr>
                           )}
@@ -4064,7 +4086,7 @@ export default function AdminPage() {
                   <table className="w-full text-left text-xs text-ink-800">
                     <thead className="bg-ink-50 text-ink-700 uppercase text-2xs tracking-wider border-b border-ink-200">
                       <tr>
-                        <th className="py-3 px-4">Gói Combo & Ảnh</th>
+                        <th className="py-3 px-4">Gói & Ảnh</th>
                         <th className="py-3 px-4">Quy Cách & Chi Tiết</th>
                         <th className="py-3 px-4 text-right">Giá Gốc</th>
                         <th className="py-3 px-4 text-right">Giá Bán</th>
@@ -4180,7 +4202,7 @@ export default function AdminPage() {
                                 {hasPermission(currentUser, 'combos.manage') && (
                                   <button
                                     onClick={() => handleOpenEditCombo(c)}
-                                    title="Chỉnh sửa combo"
+                                    title="Chỉnh sửa gói"
                                     className="p-1.5 rounded-lg bg-ink-100 hover:bg-ink-200 text-ink-800 hover:text-amber-700 transition-colors cursor-pointer"
                                   >
                                     <Edit className="w-3.5 h-3.5" />
@@ -4189,7 +4211,7 @@ export default function AdminPage() {
                                 {hasPermission(currentUser, 'combos.manage') && (
                                   <button
                                     onClick={() => handleDeleteCombo(c.id, c.name)}
-                                    title="Xóa combo"
+                                    title="Xóa gói"
                                     className="p-1.5 rounded-lg bg-ink-100 hover:bg-rose-50 text-ink-700 hover:text-rose-600 transition-colors cursor-pointer"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -4204,7 +4226,7 @@ export default function AdminPage() {
                       {filteredCombos.length === 0 && (
                         <tr>
                           <td colSpan={7} className="py-8 text-center text-ink-600">
-                            Không tìm thấy gói combo nào khớp với điều kiện lọc.
+                            Không tìm thấy gói nào khớp với điều kiện lọc.
                           </td>
                         </tr>
                       )}
@@ -5245,7 +5267,7 @@ export default function AdminPage() {
                     <div>
                       <h3 className="text-lg text-ink-950">Đồng Bộ Dữ Liệu Store Website Vào CSDL WebTSF</h3>
                       <p className="text-xs text-ink-700 mt-0.5">
-                        Lưu trữ toàn bộ 12 sản phẩm chuẩn (tên, giá mới, dung tích chai 330ml/568ml, đạt chuẩn HACCP, phân loại, biến thể) và 12 gói combo ưu đãi lên PostgreSQL
+                        Lưu trữ toàn bộ 12 sản phẩm chuẩn (tên, giá mới, dung tích chai 330ml/568ml, đạt chuẩn HACCP, phân loại, biến thể) và 12 gói ưu đãi lên PostgreSQL
                       </p>
                     </div>
                   </div>
@@ -5271,8 +5293,8 @@ export default function AdminPage() {
 
                   <div className="p-3 rounded-xl bg-ink-50 border border-ink-200 flex items-center justify-between">
                     <div>
-                      <p className="text-2xs text-ink-700">Gói Combo trên Store</p>
-                      <p className="text-base text-amber-700 mt-0.5">{combos.length} gói combo</p>
+                      <p className="text-2xs text-ink-700">Gói trên Store</p>
+                      <p className="text-base text-amber-700 mt-0.5">{combos.length} gói</p>
                     </div>
                     <span className="text-xs text-emerald-700">100% Khớp CSDL</span>
                   </div>
@@ -5317,13 +5339,13 @@ export default function AdminPage() {
                       </tr>
                       <tr>
                         <td className="py-3 px-4 font-mono text-amber-700 text-emph">combos</td>
-                        <td className="py-3 px-4">Gói combo sản phẩm ưu đãi & tiết kiệm</td>
+                        <td className="py-3 px-4">Gói sản phẩm ưu đãi & tiết kiệm</td>
                         <td className="py-3 px-4 font-mono text-emph">{combos.length} dòng</td>
                         <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
                       <tr>
                         <td className="py-3 px-4 font-mono text-amber-700 text-emph">combo_items</td>
-                        <td className="py-3 px-4">Chi tiết các chai đồ uống trong từng gói combo</td>
+                        <td className="py-3 px-4">Chi tiết các chai đồ uống trong từng gói</td>
                         <td className="py-3 px-4 font-mono text-emph">Tự động liên kết</td>
                         <td className="py-3 px-4 text-emerald-700 text-emph">Đã đồng bộ</td>
                       </tr>
@@ -6659,10 +6681,10 @@ export default function AdminPage() {
                       <option value="MEMBER_UPDATE">Sửa thành viên</option>
                       <option value="MEMBER_DELETE">Xóa thành viên</option>
                     </optgroup>
-                    <optgroup label="Combo">
-                      <option value="COMBO_CREATE">Tạo combo</option>
-                      <option value="COMBO_UPDATE">Sửa combo</option>
-                      <option value="COMBO_DELETE">Xóa combo</option>
+                    <optgroup label="Gói">
+                      <option value="COMBO_CREATE">Tạo gói</option>
+                      <option value="COMBO_UPDATE">Sửa gói</option>
+                      <option value="COMBO_DELETE">Xóa gói</option>
                     </optgroup>
                   </select>
 
@@ -7218,6 +7240,13 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Thông tin chi tiết: thành phần, dinh dưỡng, cách dùng... (cột products.detail_content) */}
+              <ProductDetailContentEditor
+                value={editingProduct.detail_content}
+                onChange={(next) => setEditingProduct({ ...editingProduct, detail_content: next })}
+                onNotify={(msg, type) => showToast(msg, type)}
+              />
+
               {/* Checkboxes */}
               <div className="p-3.5 rounded-xl bg-ink-50 border border-ink-200 space-y-2">
                 <p className="text-sm text-ink-800">Thuộc tính hiển thị</p>
@@ -7448,7 +7477,7 @@ export default function AdminPage() {
               <div>
                 <h2 className="text-lg text-ink-950 flex items-center gap-2">
                   <Boxes className="w-5 h-5 text-amber-700" />
-                  <span>{editingCombo.id ? 'Chỉnh Sửa Gói Combo' : 'Thêm Gói Combo Mới'}</span>
+                  <span>{editingCombo.id ? 'Chỉnh Sửa Gói' : 'Thêm Gói Mới'}</span>
                 </h2>
                 <p className="text-xs text-ink-700">Lưu dữ liệu trực tiếp vào CSDL PostgreSQL WebTSF</p>
               </div>
@@ -7466,14 +7495,14 @@ export default function AdminPage() {
                 {/* Tên combo */}
                 <div className="sm:col-span-2">
                   <label className="block text-sm text-ink-800 mb-1">
-                    Tên Gói Combo *
+                    Tên Gói *
                   </label>
                   <input
                     type="text"
                     required
                     value={editingCombo.name || ''}
                     onChange={(e) => setEditingCombo({ ...editingCombo, name: e.target.value })}
-                    placeholder="VD: Combo 10 Chai Sữa Hạt Sen"
+                    placeholder="VD: Gói 10 Chai Sữa Hạt Sen"
                     className="w-full bg-ink-50 border border-ink-300 rounded-xl px-3.5 py-2 text-xs text-ink-950 focus:outline-none focus:border-amber-500"
                   />
                 </div>
@@ -7543,7 +7572,7 @@ export default function AdminPage() {
                       </div>
 
                       {comboItems.length === 0 && (
-                        <p className="text-xs text-ink-700">Combo chưa có sản phẩm. Bấm “Thêm sản phẩm” để bắt đầu tính giá.</p>
+                        <p className="text-xs text-ink-700">Gói chưa có sản phẩm. Bấm “Thêm sản phẩm” để bắt đầu tính giá.</p>
                       )}
 
                       {comboItems.map((it, idx) => {
@@ -7700,7 +7729,7 @@ export default function AdminPage() {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-sm text-amber-800">
-                        Giá Vốn Combo (VNĐ)
+                        Giá Vốn Gói (VNĐ)
                       </label>
                       {!hasPermission(currentUser, 'cost_price.edit') && (
                         <span className="text-2xs text-ink-700 font-medium">Chỉ xem</span>
@@ -7746,13 +7775,13 @@ export default function AdminPage() {
                     <div>
                       <h4 className="text-sm text-ink-950 flex items-center gap-2">
                         <ImageIcon className="w-4 h-4 text-amber-700" />
-                        <span>Quản Lý Hình Ảnh Gói Combo</span>
+                        <span>Quản Lý Hình Ảnh Gói</span>
                         <span className="text-2xs font-mono px-2 py-0.5 rounded-full bg-ink-100 text-amber-700 border border-ink-300">
                           {comboImages.length} ảnh
                         </span>
                       </h4>
                       <p className="text-2xs text-ink-700 mt-0.5">
-                        Tải ảnh combo từ máy hoặc dán URL. Admin có thể kéo/chọn ảnh đại diện chính, sắp xếp thứ tự và sửa Alt text.
+                        Tải ảnh gói từ máy hoặc dán URL. Admin có thể kéo/chọn ảnh đại diện chính, sắp xếp thứ tự và sửa Alt text.
                       </p>
                     </div>
 
@@ -7796,7 +7825,7 @@ export default function AdminPage() {
                   {/* Danh sách ảnh trong Gallery Combo */}
                   {comboImages.length === 0 ? (
                     <div className="p-6 text-center border-2 border-dashed border-ink-200 rounded-xl text-ink-600 text-xs">
-                      Chưa có hình ảnh nào cho combo. Bấm &quot;Tải ảnh từ máy&quot; để thêm ảnh cho combo này.
+                      Chưa có hình ảnh nào cho gói. Bấm &quot;Tải ảnh từ máy&quot; để thêm ảnh cho gói này.
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -7815,7 +7844,7 @@ export default function AdminPage() {
                               {img.url ? (
                                 <Image
                                   src={img.url}
-                                  alt={img.alt || 'Ảnh combo'}
+                                  alt={img.alt || 'Ảnh gói'}
                                   fill
                                   className="object-contain p-1"
                                   unoptimized
@@ -7846,7 +7875,7 @@ export default function AdminPage() {
                                   prev.map((item, i) => (i === idx ? { ...item, alt: val } : item))
                                 );
                               }}
-                              placeholder="Mô tả ảnh combo..."
+                              placeholder="Mô tả ảnh gói..."
                               className="w-full bg-ink-50 border border-ink-200 rounded-lg px-2 py-1 text-2xs text-ink-950 placeholder:text-ink-500 focus:outline-none focus:border-amber-500"
                             />
 
@@ -7857,7 +7886,7 @@ export default function AdminPage() {
                                     type="button"
                                     onClick={() => setEditingCombo({ ...editingCombo, image: img.url })}
                                     className="px-2 py-1 rounded text-2xs bg-ink-100 hover:bg-amber-600 hover:text-white text-ink-800 transition-all flex items-center gap-1 cursor-pointer"
-                                    title="Chọn làm ảnh combo chính"
+                                    title="Chọn làm ảnh gói chính"
                                   >
                                     <Star className="w-3 h-3 text-amber-700" />
                                     <span>Đặt làm ảnh chính</span>
@@ -7990,7 +8019,7 @@ export default function AdminPage() {
                   className="px-5 py-2 rounded-xl text-sm bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-900/15 transition-all cursor-pointer flex items-center gap-2"
                 >
                   {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  <span>{editingCombo.id ? 'Cập Nhật Combo' : 'Tạo Combo Mới'}</span>
+                  <span>{editingCombo.id ? 'Cập Nhật Gói' : 'Tạo Gói Mới'}</span>
                 </button>
               </div>
             </form>
@@ -9072,7 +9101,7 @@ export default function AdminPage() {
                   className="w-full bg-ink-50 border border-ink-300 rounded-xl px-3.5 py-2 text-xs text-ink-950 focus:outline-none focus:border-leaf-500 cursor-pointer"
                 >
                   <option value="SUPER_ADMIN">Quản lý cấp cao (Super Admin - Toàn quyền hệ thống)</option>
-                  <option value="MARKETING">Marketing (Quản lý sản phẩm, combo, danh mục, banner)</option>
+                  <option value="MARKETING">Marketing (Quản lý sản phẩm, gói, danh mục, banner)</option>
                   <option value="STORE_STAFF">Nhân viên Cửa hàng (Quản lý tồn kho &amp; đơn hàng theo cửa hàng)</option>
                 </select>
               </div>

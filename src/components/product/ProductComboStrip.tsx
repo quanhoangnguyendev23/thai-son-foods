@@ -6,22 +6,54 @@ import { Combo, Product } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
 import { getShortProductName } from '@/lib/product-detail';
 import { canonicalProductId } from '@/lib/inventory';
+import { ComboStripRotator, LimitedDealTag } from '@/components/product/ComboCarousel';
+import { AttentionPrice } from '@/components/ui/AttentionEffects';
+
+type StripRating = { averageRating: number; totalReviews: number } | null;
+
+/** Một gói trong vòng xoay của dải (đánh giá + số đã bán thật, lấy sẵn ở máy chủ) */
+export interface ComboStripItem {
+  combo: Combo & { isBestSeller?: boolean };
+  rating?: StripRating;
+  sold?: number;
+}
 
 interface ProductComboStripProps {
   combo: Combo & { isBestSeller?: boolean };
   /** Danh mục sản phẩm web, để đổi mã sản phẩm trong combo thành tên ngắn */
   catalog: Product[];
   /** Đánh giá thật của combo (đã duyệt); 0 đánh giá thì ẩn */
-  rating?: { averageRating: number; totalReviews: number } | null;
+  rating?: StripRating;
   /** Tổng số combo đã bán thật; 0 thì ẩn */
   sold?: number;
+  /** Các gói khác để dải tự đổi ngẫu nhiên mỗi 10 giây trên desktop (13/11). Trống → chỉ hiện `combo` như cũ */
+  pool?: ComboStripItem[];
 }
 
 /**
- * Dải giới thiệu combo phía trên breadcrumb trang chi tiết sản phẩm (kiểu dải "Sponsored" của Amazon).
+ * Dải giới thiệu combo phía trên breadcrumb trang chi tiết sản phẩm / gói (kiểu dải "Sponsored" của Amazon).
  * Chỉ hiển thị dữ liệu thật: tên, ảnh, giá, giá gốc, số chai, thành phần combo, đánh giá và số đã bán.
+ * 13/11: desktop tự đổi gói ngẫu nhiên mỗi 10 giây (gói đầu = `combo` do trang chọn). Giá bán nổi bật bằng hiệu ứng
+ * "lắc nhẹ + nháy màu" (AttentionPrice dùng chung), thay cho viền phát sáng đỏ đã bỏ.
+ * Thẻ của mọi gói dựng sẵn ở máy chủ; ComboStripRotator (client) chỉ chọn thẻ nào hiện.
  */
-export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: ProductComboStripProps) {
+export default function ProductComboStrip({ combo, catalog, rating, sold = 0, pool = [] }: ProductComboStripProps) {
+  const items: ComboStripItem[] = [{ combo, rating, sold }, ...pool.filter((it) => it.combo.id !== combo.id)];
+  return (
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3">
+      {/* Giá dùng hiệu ứng chung AttentionPrice (lắc nhẹ + nháy màu, xem components/ui/AttentionEffects.tsx).
+          Gói mới hiện ra (vòng xoay) thì giá lắc ngay từ đầu chu kỳ. */}
+      <ComboStripRotator>
+        {items.map((it) => (
+          <StripCard key={it.combo.id} combo={it.combo} catalog={catalog} rating={it.rating} sold={it.sold ?? 0} />
+        ))}
+      </ComboStripRotator>
+      <p className="mt-0.5 text-right text-2xs text-gray-500">Gói gợi ý</p>
+    </div>
+  );
+}
+
+function StripCard({ combo, catalog, rating, sold = 0 }: { combo: ComboStripItem['combo']; catalog: Product[]; rating?: StripRating; sold?: number }) {
   const saving = Math.max(0, (combo.originalPrice || 0) - (combo.salePrice || 0));
   const contents = (combo.products || [])
     .map((item) => {
@@ -34,10 +66,9 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
   const hasRating = Boolean(rating && rating.totalReviews > 0);
 
   return (
-    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3">
       <Link
         href={`/combo/${combo.slug}`}
-        title={`Xem combo: ${combo.name}`}
+        title={`Xem gói: ${combo.name}`}
         className="group block rounded-md border border-gray-200 bg-white px-3 py-2 sm:px-4 hover:border-gray-300 hover:shadow-sm transition-shadow"
       >
         <div className="flex items-center justify-center gap-3 sm:gap-5">
@@ -50,6 +81,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
               {combo.name}
             </p>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-gray-600">
+              <LimitedDealTag comboId={combo.id} />
               {hasRating && rating && (
                 <span className="inline-flex items-center gap-1">
                   <span className="text-ink-950">{rating.averageRating.toFixed(1)}</span>
@@ -76,7 +108,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
             </div>
             {/* Giá trên điện thoại nằm dưới tên */}
             <div className="mt-1 flex items-baseline gap-1.5 sm:hidden">
-              <span className="text-sm font-semibold text-ink-950">{formatPrice(combo.salePrice)}đ</span>
+              <AttentionPrice className="text-sm font-semibold text-ink-950">{formatPrice(combo.salePrice)}đ</AttentionPrice>
               {saving > 0 && <span className="text-2xs text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>}
               {discountLabel(combo) && <span className="text-2xs text-copper-600">{discountLabel(combo)}</span>}
             </div>
@@ -84,7 +116,7 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
 
           <div className="hidden sm:block shrink-0 text-right">
             <div className="flex items-baseline justify-end gap-2">
-              <span className="text-lg font-semibold text-ink-950">{formatPrice(combo.salePrice)}đ</span>
+              <AttentionPrice className="text-lg font-semibold text-ink-950">{formatPrice(combo.salePrice)}đ</AttentionPrice>
               {saving > 0 && <span className="text-xs text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>}
             </div>
             {saving > 0 && (
@@ -95,7 +127,5 @@ export default function ProductComboStrip({ combo, catalog, rating, sold = 0 }: 
           </div>
         </div>
       </Link>
-      <p className="mt-0.5 text-right text-2xs text-gray-500">Combo gợi ý</p>
-    </div>
   );
 }

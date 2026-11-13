@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Info } from 'lucide-react';
-import { products } from '@/data/products';
+import { useLiveCatalog } from '@/hooks/useLiveCatalog';
 import { Product } from '@/types';
 import { getPackLabel, useRandomSponsoredProduct } from '@/lib/sponsored-products';
 
@@ -49,8 +49,10 @@ export default function ProductSponsoredMiniCard({
 }: ProductSponsoredMiniCardProps) {
   const randomProduct = useRandomSponsoredProduct(currentProductId, 0, randomize);
 
+  // Danh mục sống (CSDL): sản phẩm mới, tạm ẩn theo admin
+  const catalog = useLiveCatalog();
   // Chọn sản phẩm gợi ý khác với sản phẩm hiện tại
-  const candidates = products.filter(
+  const candidates = catalog.filter(
     (p) => p.id !== currentProductId && p.slug !== currentProductId && p.isActive
   );
 
@@ -59,7 +61,7 @@ export default function ProductSponsoredMiniCard({
     candidates.find((p) => p.id === 'sua-bap-nep') ||
     candidates.find((p) => p.id === 'sua-gao-lut-mekong') ||
     candidates[0] ||
-    products[0];
+    catalog[0];
   const recommendedProduct: Product = randomProduct || fixedProduct;
   // Chế độ ngẫu nhiên: ẩn (giữ chỗ) cho tới khi chọn xong phía trình duyệt, tránh nháy sản phẩm
   const waitingRandom = randomize && !randomProduct;

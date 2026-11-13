@@ -60,7 +60,7 @@ export function buildOrderHtml(o: TelegramOrderNotice): string {
     const code = shortItemCode(it);
     const price = Number(it.price);
     const lineTotal = Number.isFinite(price) && price > 0 ? `  =  <b>${vnd(price * qty)}</b>` : '';
-    const spec = it.isCombo ? 'Combo' : it.unit ? esc(it.unit) : '';
+    const spec = it.isCombo ? 'Gói' : it.unit ? esc(it.unit) : '';
     return `${i + 1}. <b>${esc(code)}</b>${spec ? ` · ${spec}` : ''} × ${qty}${lineTotal}`;
   });
   if (items.length > MAX_ITEMS) itemLines.push(`… và ${items.length - MAX_ITEMS} dòng khác`);

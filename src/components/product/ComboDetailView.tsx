@@ -1,16 +1,17 @@
 'use client';
 
-import { discountPercentSuffix } from '@/lib/discount-label';
 import DiscountTag from '@/components/product/DiscountTag';
+import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { MAIN_SITE } from '@/config/homepage';
 import { useRouter } from 'next/navigation';
 import { Combo, Product, ProductImage } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
-import { ChevronRight, Clock, Star } from 'lucide-react';
+import { ChevronRight, Star } from 'lucide-react';
 import { msUntilNextVnMidnight, useTodayDealIds } from '@/lib/daily-deals';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranchStore } from '@/store/branch';
@@ -38,7 +39,7 @@ interface ComboDetailViewProps {
 }
 
 /**
- * Nhãn "Deal trong ngày" + đồng hồ HH:MM:SS ngay trên giá (không ghi chữ giải thích cơ chế) — chỉ hiện khi combo thuộc bộ deal hôm nay
+ * Nhãn "Ưu đãi có hạn" + đồng hồ HH:MM:SS ngay dưới tên combo (không ghi chữ giải thích cơ chế) — chỉ hiện khi combo thuộc bộ deal hôm nay
  * (cùng thuật toán/nguồn với dải Deal trong ngày ở trang chủ). Đồng hồ thật tới 0h giờ VN, chỉ chạy sau mount.
  * Qua 0h: combo không còn trong bộ deal mới → nhãn tự ẩn; vẫn còn → đếm lại. Giá combo không đổi nên không ghi "Kết thúc".
  */
@@ -65,9 +66,12 @@ function DailyDealBadge({ comboId, isEn }: { comboId: string; isEn: boolean }) {
     .join(':');
 
   return (
-    <p className="inline-flex items-center gap-1.5 mb-2 px-2.5 py-1 rounded-md bg-brand-crimson text-white text-sm">
-      <span>{isEn ? "Today's deal" : 'Deal trong ngày'}</span>
-      <Clock className="w-4 h-4 shrink-0" aria-hidden />
+    <p
+      className={`relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-brand-crimson text-white text-sm ${attentionShine(`deal|${comboId}`).className}`}
+      style={attentionShine(`deal|${comboId}`).style}
+    >
+      <AttentionStyles />
+      <span>{isEn ? 'Limited-time deal' : 'Ưu đãi có hạn'}</span>
       <span className="tabular-nums" aria-label={isEn ? "Time left for today's deal" : 'Thời gian còn lại của deal trong ngày'}>
         {hhmmss}
       </span>
@@ -146,7 +150,6 @@ export default function ComboDetailView({
     };
   }, [combo.id, quantity, selectedBranch?.code]);
 
-  const savingsAmount = combo.originalPrice - combo.salePrice;
   const avgBottlePrice = Math.round(combo.salePrice / combo.totalItems);
 
   // Trang combo tự chọn (/combo) đã gỡ: mọi combo bán theo giá cố định trong bảng combos, mua trực tiếp tại đây
@@ -198,7 +201,7 @@ export default function ComboDetailView({
           id: cImg.id || `combo-img-${idx}`,
           url: cImg.url,
           alt: cImg.alt || comboTitle,
-          label: cImg.isPrimary ? (language === 'en' ? 'Combo Set' : 'Trọn bộ Combo') : undefined,
+          label: cImg.isPrimary ? (language === 'en' ? 'Bundle Set' : 'Trọn bộ') : undefined,
         });
       });
     } else if (combo.image) {
@@ -206,7 +209,7 @@ export default function ComboDetailView({
         id: `combo-main-${combo.id}`,
         url: combo.image,
         alt: comboTitle,
-        label: language === 'en' ? 'Combo Set' : 'Trọn bộ Combo',
+        label: language === 'en' ? 'Bundle Set' : 'Trọn bộ',
       });
     }
 
@@ -263,7 +266,7 @@ export default function ComboDetailView({
     const nutritionInfoImage = {
       id: `combo-nutrition-info-${combo.id}`,
       url: '/images/combos/bang-thong-tin-thanh-phan-combo.png',
-      alt: language === 'en' ? 'Combo Ingredients & Nutrition Facts' : 'Bảng thông tin thành phần combo',
+      alt: language === 'en' ? 'Bundle Ingredients & Nutrition Facts' : 'Bảng thông tin thành phần gói',
       label: language === 'en' ? 'Nutrition Facts' : 'Thông tin thành phần',
     };
 
@@ -342,7 +345,7 @@ export default function ComboDetailView({
     { label: isEn ? 'Brand' : 'Thương hiệu', value: STORE_SALES_INFO.seller },
     { label: isEn ? 'Pack' : 'Quy cách', value: `${combo.totalItems} ${isEn ? 'bottles / carton' : 'chai / thùng'}` },
     {
-      label: isEn ? 'Combo type' : 'Loại combo',
+      label: isEn ? 'Bundle type' : 'Loại gói',
       value: isCustomizable
         ? (isEn ? 'Customizable flavors' : 'Tự chọn vị')
         : (isEn ? 'Pre-packed' : 'Đóng gói sẵn'),
@@ -364,7 +367,7 @@ export default function ComboDetailView({
             <li className="shrink-0" aria-hidden><ChevronRight className="w-3 h-3 text-gray-400" /></li>
             <li className="shrink-0">
               <Link href="/#combo" className="hover:text-copper-600 hover:underline">
-                {isEn ? 'Value Combos' : 'Combo tiết kiệm'}
+                {isEn ? 'Value Bundles' : 'Gói tiết kiệm'}
               </Link>
             </li>
             <li className="shrink-0" aria-hidden><ChevronRight className="w-3 h-3 text-gray-400" /></li>
@@ -393,16 +396,19 @@ export default function ComboDetailView({
 
           {/* ── VÙNG 2: THÔNG TIN CHÍNH ── */}
           <div className="min-w-0 md:col-start-2 md:row-start-1 xl:col-start-2 space-y-3">
-            <Link
-              href="/#ve-chung-toi"
+            {/* Trang "Chúng tôi" của web mặt tiền công ty (trước: /#ve-chung-toi — mục không tồn tại) */}
+            <a
+              href={MAIN_SITE.ABOUT_URL}
               className="inline-block text-sm text-forest-700 hover:text-copper-600 hover:underline"
             >
               {isEn ? 'Visit the Thái Sơn Foods store' : 'Ghé thăm cửa hàng Thái Sơn Foods'}
-            </Link>
+            </a>
 
             <h1 className="text-xl sm:text-2xl xl:text-2xl font-medium text-ink-950 leading-snug break-words">
               {comboTitle}
             </h1>
+            {/* Ưu đãi có hạn + đồng hồ: ngay dưới tên combo (chỉ khi combo thuộc bộ Deal trong ngày) */}
+            <DailyDealBadge comboId={combo.id} isEn={isEn} />
 
             {/* Đánh giá thật từ hệ thống + mã combo */}
             <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-sm">
@@ -442,21 +448,24 @@ export default function ComboDetailView({
             {/* Nhãn thuộc tính */}
             <div className="flex flex-wrap gap-1.5">
               {combo.isBestSeller && (
-                <span className="text-xs px-2 py-0.5 rounded bg-sale text-white">{isEn ? 'Best seller' : 'Bán chạy'}</span>
+                // 13/11: vệt sáng lướt qua nhãn (hiệu ứng chung), đồng bộ trang chi tiết sản phẩm
+                <span
+                  className={`relative text-xs px-2 py-0.5 rounded bg-sale text-white ${attentionShine(`best|${combo.id}`).className}`}
+                  style={attentionShine(`best|${combo.id}`).style}
+                >
+                  {isEn ? 'Best seller' : 'Bán chạy'}
+                </span>
               )}
               <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                 {isCustomizable
-                  ? (isEn ? 'Customizable Combo' : 'Combo tự chọn vị')
-                  : (isEn ? 'Pre-packed Combo' : 'Combo đóng gói sẵn')}
+                  ? (isEn ? 'Customizable Bundle' : 'Gói tự chọn vị')
+                  : (isEn ? 'Pre-packed Bundle' : 'Bộ đóng gói sẵn')}
               </span>
-              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
-                {combo.totalItems} {isEn ? 'bottles' : 'chai'}
-              </span>
+              {/* Bỏ chip "x chai": trùng dòng "Gói gồm (x chai)" ngay bên dưới */}
             </div>
 
             {/* Giá */}
             <div className="border-t border-gray-200 pt-3">
-              <DailyDealBadge comboId={combo.id} isEn={isEn} />
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-2xl leading-none text-ink-950">{formatPrice(combo.salePrice)}đ</span>
                 <DiscountTag source={combo} size="md" className="self-center" />
@@ -468,15 +477,11 @@ export default function ComboDetailView({
                 <p className="text-xs text-gray-500 mt-1">
                   {isEn ? 'List price: ' : 'Giá gốc: '}
                   <span className="line-through">{formatPrice(combo.originalPrice)}đ</span>
-                  <span className="ml-2 text-sale">
-                    {isEn
-                      ? `Save ${formatPrice(savingsAmount)}đ${discountPercentSuffix(combo)}`
-                      : `Tiết kiệm ${formatPrice(savingsAmount)}đ${discountPercentSuffix(combo)}`}
-                  </span>
+                  {/* Bỏ dòng "Tiết kiệm Xđ (-x%)": trùng nhãn "Tiết kiệm x%" ngay trên (giống trang sản phẩm) */}
                 </p>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                {isEn ? 'Sold by combo, not by single bottle.' : 'Giá bán theo combo, không bán lẻ từng chai.'}
+                {isEn ? 'Sold by bundle, not by single bottle.' : 'Giá bán theo gói, không bán lẻ từng chai.'}
               </p>
             </div>
 
@@ -486,7 +491,7 @@ export default function ComboDetailView({
             {productsDetail.length > 0 && (
               <div className="pt-1">
                 <p className="text-sm text-ink-950 mb-2">
-                  {isEn ? 'Items in this combo ' : 'Combo gồm '}
+                  {isEn ? 'Items in this bundle ' : 'Gói gồm '}
                   <strong className="text-emph">
                     ({combo.totalItems} {isEn ? 'bottles' : 'chai'})
                   </strong>
@@ -569,8 +574,8 @@ export default function ComboDetailView({
                 <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/70 text-sm text-emerald-900">
                   <p className="mb-1 text-emph">
                     {isEn
-                      ? 'This combo supports flexible flavor customization!'
-                      : 'Combo này hỗ trợ tự chọn vị linh hoạt theo sở thích!'}
+                      ? 'This bundle supports flexible flavor customization!'
+                      : 'Gói này hỗ trợ tự chọn vị linh hoạt theo sở thích!'}
                   </p>
                   <p className="text-xs text-emerald-800">
                     {isEn
@@ -582,7 +587,7 @@ export default function ComboDetailView({
                   href={customizeLink}
                   className="w-full h-11 rounded-full text-base inline-flex items-center justify-center gap-2 transition-colors bg-corn hover:bg-corn-dark text-ink-950 border border-corn-dark/60"
                 >
-                  <span>{isEn ? 'Customize flavors' : 'Tự chọn vị cho Combo'}</span>
+                  <span>{isEn ? 'Customize flavors' : 'Tự chọn vị cho Gói'}</span>
                   <ChevronRight className="w-4 h-4" aria-hidden />
                 </Link>
                 <div className="border-t border-gray-100 pt-3 text-xs text-gray-700 space-y-2">
@@ -616,14 +621,14 @@ export default function ComboDetailView({
                 onChangeBranch={openBranchModal}
                 onAddToCart={(e) => handleAddToCart(e)}
                 onBuyNow={handleBuyNow}
-                addedMessage={isAdded ? (isEn ? 'Added to cart!' : 'Đã thêm combo vào giỏ hàng.') : null}
+                addedMessage={isAdded ? (isEn ? 'Added to cart!' : 'Đã thêm gói vào giỏ hàng.') : null}
                 storageText={DEFAULT_PRODUCT_DETAIL.storage}
                 expiryText={DEFAULT_PRODUCT_DETAIL.expiry}
                 certification={DEFAULT_PRODUCT_DETAIL.certification}
                 language={language}
                 itemId={combo.id}
                 itemType="combo"
-                priceNote={`Combo ${combo.totalItems} ${isEn ? 'bottles' : 'chai'} · ${formatPrice(combo.salePrice / Math.max(1, combo.totalItems))}đ/${isEn ? 'bottle' : 'chai'}`}
+                priceNote={`Gói ${combo.totalItems} ${isEn ? 'bottles' : 'chai'} · ${formatPrice(combo.salePrice / Math.max(1, combo.totalItems))}đ/${isEn ? 'bottle' : 'chai'}`}
               />
             )}
             <div className="hidden xl:block mt-4">

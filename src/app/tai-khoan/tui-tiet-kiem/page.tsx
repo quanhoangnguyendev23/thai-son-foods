@@ -74,12 +74,12 @@ export default function SavingsBagPage() {
 
   const steps = en
     ? [
-        ['Pick a discounted combo', 'Combos are priced below their list price.'],
+        ['Pick a discounted bundle', 'Bundles are priced below their list price.'],
         ['Order while signed in', 'Savings are linked to your account.'],
         ['Watch your bag grow', 'Each order adds what you saved, automatically.'],
       ]
     : [
-        ['Chọn combo đang giảm', 'Combo có giá bán thấp hơn giá gốc.'],
+        ['Chọn bộ đang giảm', 'Gói có giá bán thấp hơn giá gốc.'],
         ['Đặt hàng khi đã đăng nhập', 'Tiền tiết kiệm được ghi vào tài khoản của bạn.'],
         ['Túi tự đầy lên', 'Mỗi đơn tự cộng số tiền bạn đã tiết kiệm.'],
       ];
@@ -164,7 +164,7 @@ export default function SavingsBagPage() {
                   {en ? 'No discounted items in your cart yet.' : 'Giỏ hàng chưa có món đang giảm giá.'}
                 </p>
                 <a href="#combo-tiet-kiem" className="mt-auto pt-5 text-sm text-green-primary hover:underline">
-                  {en ? 'See combos that save you money' : 'Xem combo giúp bạn tiết kiệm'}
+                  {en ? 'See bundles that save you money' : 'Xem gói giúp bạn tiết kiệm'}
                 </a>
               </>
             )}
@@ -189,9 +189,9 @@ export default function SavingsBagPage() {
         {deals.length > 0 && (
           <section id="combo-tiet-kiem" className="mt-10 scroll-mt-28">
             <div className="flex items-end justify-between gap-4">
-              <h2 className="text-xl text-text-dark font-heading">{en ? 'Combos that save you money' : 'Combo giúp bạn tiết kiệm'}</h2>
+              <h2 className="text-xl text-text-dark font-heading">{en ? 'Bundles that save you money' : 'Gói giúp bạn tiết kiệm'}</h2>
               <Link href="/#combo" className="text-sm text-green-primary hover:underline shrink-0">
-                {en ? 'All combos' : 'Tất cả combo'}
+                {en ? 'All bundles' : 'Tất cả gói'}
               </Link>
             </div>
             <ul className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-3">

@@ -243,8 +243,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     if (vName.includes('15 chai')) return 'Carton of 15 bottles';
     if (vName.includes('6 chai') || vName.includes('Lốc 6')) return 'Pack of 6 bottles';
     if (vName.includes('24 chai') || vName.includes('Thùng 24')) return 'Carton of 24 bottles';
-    if (vName.includes('Combo 4')) return 'Combo of 4 bottles';
-    if (vName.includes('Combo 10')) return 'Combo of 10 bottles';
+    if (vName.includes('Combo 4')) return 'Bundle of 4 bottles';
+    if (vName.includes('Combo 10')) return 'Bundle of 10 bottles';
     return vName;
   };
 

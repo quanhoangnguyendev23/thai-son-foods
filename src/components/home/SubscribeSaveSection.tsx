@@ -196,10 +196,10 @@ export const SUBSCRIBE_PRODUCTS: SubscribeItem[] = [
 export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   {
     id: 'sub-combo-01',
-    nameVi: 'Combo Khám Phá Đa Vị (10 chai)',
-    nameEn: 'Diverse Discovery Combo (10 bottles)',
-    unitVi: 'Combo 10 chai',
-    unitEn: 'Combo of 10',
+    nameVi: 'Gói Khám Phá Đa Vị (10 chai)',
+    nameEn: 'Diverse Discovery Bundle (10 bottles)',
+    unitVi: 'Gói 10 chai',
+    unitEn: 'Bundle of 10',
     retailPrice: 180000,
     discountRate: 15,
     rating: 5.0,
@@ -209,8 +209,8 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-02',
-    nameVi: 'Combo Siêu Hời Gia Đình (17 chai)',
-    nameEn: 'Smart Family Stockup Combo (17 bottles)',
+    nameVi: 'Gói Siêu Hời Gia Đình (17 chai)',
+    nameEn: 'Smart Family Stockup Bundle (17 bottles)',
     unitVi: 'Thùng 17 chai',
     unitEn: 'Box of 17',
     retailPrice: 306000,
@@ -222,8 +222,8 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-03',
-    nameVi: 'Combo Tiết Kiệm Bậc Thang (20 chai)',
-    nameEn: 'Tier Pricing Savings Combo (20 bottles)',
+    nameVi: 'Gói Tiết Kiệm Bậc Thang (20 chai)',
+    nameEn: 'Tier Pricing Savings Bundle (20 bottles)',
     unitVi: 'Thùng 20 chai',
     unitEn: 'Carton of 20',
     retailPrice: 360000,
@@ -235,10 +235,10 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-04',
-    nameVi: 'Combo Dáng Xinh Sức Khỏe (10 chai)',
-    nameEn: 'Slim & Golden Health Combo (10 bottles)',
-    unitVi: 'Combo 10 chai',
-    unitEn: 'Combo of 10',
+    nameVi: 'Gói Dáng Xinh Sức Khỏe (10 chai)',
+    nameEn: 'Slim & Golden Health Bundle (10 bottles)',
+    unitVi: 'Gói 10 chai',
+    unitEn: 'Bundle of 10',
     retailPrice: 180000,
     discountRate: 15,
     rating: 4.9,
@@ -248,10 +248,10 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-05',
-    nameVi: 'Combo Bữa Sáng Năng Lượng Hạt (10 chai)',
-    nameEn: 'Energy Nut Breakfast Combo (10 bottles)',
-    unitVi: 'Combo 10 chai',
-    unitEn: 'Combo of 10',
+    nameVi: 'Gói Bữa Sáng Năng Lượng Hạt (10 chai)',
+    nameEn: 'Energy Nut Breakfast Bundle (10 bottles)',
+    unitVi: 'Gói 10 chai',
+    unitEn: 'Bundle of 10',
     retailPrice: 180000,
     discountRate: 15,
     rating: 5.0,
@@ -261,10 +261,10 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-06',
-    nameVi: 'Combo Giải Nhiệt Mát Lành (10 chai)',
-    nameEn: 'Instant Refreshment Combo (10 bottles)',
-    unitVi: 'Combo 10 chai',
-    unitEn: 'Combo of 10',
+    nameVi: 'Gói Giải Nhiệt Mát Lành (10 chai)',
+    nameEn: 'Instant Refreshment Bundle (10 bottles)',
+    unitVi: 'Gói 10 chai',
+    unitEn: 'Bundle of 10',
     retailPrice: 180000,
     discountRate: 15,
     rating: 4.9,
@@ -274,8 +274,8 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-07',
-    nameVi: 'Combo Trọn Vị Gia Đình (12 chai)',
-    nameEn: 'Family Full Flavor Combo (12 bottles)',
+    nameVi: 'Gói Trọn Vị Gia Đình (12 chai)',
+    nameEn: 'Family Full Flavor Bundle (12 bottles)',
     unitVi: 'Thùng 12 chai',
     unitEn: 'Box of 12',
     retailPrice: 216000,
@@ -287,10 +287,10 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-08',
-    nameVi: 'Combo Thả Ga Giảm Căng Thẳng (10 chai)',
-    nameEn: 'Worry-Free Enjoyment Combo (10 bottles)',
-    unitVi: 'Combo 10 chai',
-    unitEn: 'Combo of 10',
+    nameVi: 'Gói Thả Ga Giảm Căng Thẳng (10 chai)',
+    nameEn: 'Worry-Free Enjoyment Bundle (10 bottles)',
+    unitVi: 'Gói 10 chai',
+    unitEn: 'Bundle of 10',
     retailPrice: 208000,
     discountRate: 15,
     rating: 4.8,
@@ -300,8 +300,8 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-09',
-    nameVi: 'Combo Văn Phòng Tỉnh Táo (12 chai)',
-    nameEn: 'Alert Office Energy Combo (12 bottles)',
+    nameVi: 'Gói Văn Phòng Tỉnh Táo (12 chai)',
+    nameEn: 'Alert Office Energy Bundle (12 bottles)',
     unitVi: 'Thùng 12 chai',
     unitEn: 'Carton of 12',
     retailPrice: 224000,
@@ -313,10 +313,10 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-10',
-    nameVi: 'Combo Quốc Dân Bán Chạy (10 chai)',
-    nameEn: 'National Best-Seller Combo (10 bottles)',
-    unitVi: 'Combo 10 chai',
-    unitEn: 'Combo of 10',
+    nameVi: 'Gói Quốc Dân Bán Chạy (10 chai)',
+    nameEn: 'National Best-Seller Bundle (10 bottles)',
+    unitVi: 'Gói 10 chai',
+    unitEn: 'Bundle of 10',
     retailPrice: 180000,
     discountRate: 15,
     rating: 5.0,
@@ -326,10 +326,10 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-11',
-    nameVi: 'Combo Giải Nhiệt Xu Hướng (10 chai)',
-    nameEn: 'Modern Trendy Cooling Combo (10 bottles)',
-    unitVi: 'Combo 10 chai',
-    unitEn: 'Combo of 10',
+    nameVi: 'Gói Giải Nhiệt Xu Hướng (10 chai)',
+    nameEn: 'Modern Trendy Cooling Bundle (10 bottles)',
+    unitVi: 'Gói 10 chai',
+    unitEn: 'Bundle of 10',
     retailPrice: 184000,
     discountRate: 15,
     rating: 4.9,
@@ -339,8 +339,8 @@ export const SUBSCRIBE_COMBOS: SubscribeItem[] = [
   },
   {
     id: 'sub-combo-12',
-    nameVi: 'Combo Trải Nghiệm Toàn Diện (12 chai)',
-    nameEn: 'Comprehensive Experience Combo (12 bottles)',
+    nameVi: 'Gói Trải Nghiệm Toàn Diện (12 chai)',
+    nameEn: 'Comprehensive Experience Bundle (12 bottles)',
     unitVi: 'Thùng 12 chai',
     unitEn: 'Box of 12',
     retailPrice: 216000,
@@ -552,14 +552,14 @@ export default function SubscribeSaveSection({
   const displayTitle = title
     ? title.replace(/8 Sản Phẩm( & Combo)?/gi, '12 Sản Phẩm & 12 Combo')
     : language === 'en'
-    ? 'Subscribe & Save — 12 Products & 12 Value Combos'
-    : 'Đăng Ký Giao Định Kỳ — 12 Sản Phẩm & 12 Combo Tiết Kiệm';
+    ? 'Subscribe & Save — 12 Products & 12 Value Bundles'
+    : 'Đăng Ký Giao Định Kỳ — 12 Sản Phẩm & 12 Gói Tiết Kiệm';
 
   const displaySubtitle = subtitle
     ? subtitle.replace(/8 sản phẩm( & combo)?/gi, '12 sản phẩm & 12 combo')
     : language === 'en'
     ? 'Never run out of wholesome fresh beverages. Automatic scheduled delivery to your door. Free shipping on every order, cancel or skip anytime.'
-    : 'Thức uống tươi ngon nấu mới mỗi ngày với 12 sản phẩm & 12 combo tuyển chọn. Miễn phí vận chuyển 100%, linh hoạt đổi vị và tạm dừng bất kỳ lúc nào.';
+    : 'Thức uống tươi ngon nấu mới mỗi ngày với 12 sản phẩm & 12 gói tuyển chọn. Miễn phí vận chuyển 100%, linh hoạt đổi vị và tạm dừng bất kỳ lúc nào.';
 
   const renderCard = (item: SubscribeItem) => {
     const subPrice = Math.round(item.retailPrice * (1 - item.discountRate / 100));
@@ -706,7 +706,7 @@ export default function SubscribeSaveSection({
           <div className="flex items-center gap-2 mb-2 pt-2.5 border-t border-amber-100/60">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <h3 className="text-sm sm:text-base uppercase tracking-wider text-gray-800 font-heading">
-              {language === 'en' ? '12 Family & Office Value Combos' : '12 Combo Tiết Kiệm Gia Đình & Văn Phòng'}
+              {language === 'en' ? '12 Family & Office Value Bundles' : '12 Gói Tiết Kiệm Gia Đình & Văn Phòng'}
             </h3>
             <span className="text-2xs sm:text-2xs text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full">
               {language === 'en' ? 'Freeship 100%' : 'Freeship 100%'}

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Phone, Mail, MapPin, Truck } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { HAS_LEGAL_LINKS, LegalCompanyBlock, LegalPolicyLinks } from '@/components/layout/FooterLegal';
+import { MAIN_SITE } from '@/config/homepage';
 
 function FacebookIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
@@ -141,6 +142,23 @@ export default function Footer() {
                   </ul>
                 </>
               )}
+
+              {/* Về trang mặt tiền công ty (shop gắn vào nút "CỬA HÀNG" của thaisonfoods.vn) */}
+              <h3
+                className="text-lg uppercase tracking-wider text-amber-300 font-sans mb-4"
+                style={{ color: 'var(--color-brand-amber)' }}
+              >
+                {language === 'en' ? 'About Thai Son Foods' : 'Về Thái Sơn Foods'}
+              </h3>
+              <ul className="space-y-1 text-base sm:text-base text-white/90 mb-6">
+                {MAIN_SITE.LINKS.map((l) => (
+                  <li key={l.href}>
+                    <a href={l.href} className="hover:text-amber-500 transition-colors font-medium hover:underline py-2 -my-1 inline-block">
+                      {language === 'en' ? l.labelEn : l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
 
               {/* Social */}
               <h3

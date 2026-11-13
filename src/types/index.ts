@@ -30,6 +30,8 @@ export interface Product {
   imageFit?: 'cover' | 'contain';
   variants?: ProductVariant[];
   featureBanners?: ProductFeatureBanner;
+  /** Nội dung "Thông tin sản phẩm" admin nhập (cột products.detail_content); trống → nội dung trong code */
+  detailContent?: import('@/data/product-detail-content').ProductDetailContent | null;
 }
 
 export interface ProductFeatureBanner {
@@ -89,6 +91,8 @@ export interface Combo {
   totalItems: number;
   discount: number;
   isActive: boolean;
+  /** Gói nổi bật do admin bật (combos.is_featured) */
+  isFeatured?: boolean;
   /** Nhãn "Bán chạy" do admin bật (combos.is_best_seller) */
   isBestSeller?: boolean;
   /** Thời điểm tạo combo (combos.created_at, ISO) — để xếp "Mới nhất" và gắn nhãn "Mới" trên trang chủ */

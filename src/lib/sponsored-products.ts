@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { products } from '@/data/products';
 import { Product, ProductVariant } from '@/types';
+import { useLiveCatalog } from '@/hooks/useLiveCatalog';
 
 /**
  * Chọn NGẪU NHIÊN sản phẩm cho các khối "Được tài trợ" trên trang chi tiết sản phẩm.
@@ -11,6 +11,7 @@ import { Product, ProductVariant } from '@/types';
  * - Chỉ chạy phía trình duyệt (sau khi mount) để HTML server và client khớp nhau.
  */
 let rotationKey: string | null = null;
+let rotationSource: Product[] | null = null;
 let rotation: Product[] = [];
 
 function shuffle<T>(list: T[]): T[] {
@@ -22,11 +23,13 @@ function shuffle<T>(list: T[]): T[] {
   return a;
 }
 
-function getRotation(currentProductId: string): Product[] {
-  if (rotationKey !== currentProductId) {
+function getRotation(currentProductId: string, catalog: Product[]): Product[] {
+  // Xáo lại khi đổi sản phẩm đang xem hoặc khi danh mục sống (CSDL) vừa tải xong
+  if (rotationKey !== currentProductId || rotationSource !== catalog) {
     rotationKey = currentProductId;
+    rotationSource = catalog;
     rotation = shuffle(
-      products.filter((p) => p.isActive && p.id !== currentProductId && p.slug !== currentProductId)
+      catalog.filter((p) => p.isActive && p.id !== currentProductId && p.slug !== currentProductId)
     );
   }
   return rotation;
@@ -35,13 +38,14 @@ function getRotation(currentProductId: string): Product[] {
 /** Trả về sản phẩm ngẫu nhiên cho `slot`; null khi chưa mount hoặc khi tắt (`enabled = false`). */
 export function useRandomSponsoredProduct(currentProductId: string | undefined, slot: number, enabled: boolean): Product | null {
   const [picked, setPicked] = useState<Product | null>(null);
+  const catalog = useLiveCatalog();
 
   useEffect(() => {
     if (!enabled || !currentProductId) return;
-    const list = getRotation(currentProductId);
+    const list = getRotation(currentProductId, catalog);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- chọn ngẫu nhiên chỉ được làm phía client
     setPicked(list.length ? list[slot % list.length] : null);
-  }, [currentProductId, slot, enabled]);
+  }, [currentProductId, slot, enabled, catalog]);
 
   return picked;
 }

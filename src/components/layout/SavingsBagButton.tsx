@@ -211,8 +211,8 @@ export default function SavingsBagButton({ isEn, navBtn }: { isEn: boolean; navB
                 <p className="text-base mt-0.5 pr-6">{label}</p>
                 <p className="text-sm text-text-body mt-1.5">
                   {isEn
-                    ? 'See how much you save versus list price. Every discounted combo you order is added up here.'
-                    : 'Xem bạn tiết kiệm được bao nhiêu so với giá gốc. Mỗi combo giảm giá bạn đặt đều được cộng dồn vào đây.'}
+                    ? 'See how much you save versus list price. Every discounted bundle you order is added up here.'
+                    : 'Xem bạn tiết kiệm được bao nhiêu so với giá gốc. Mỗi gói giảm giá bạn đặt đều được cộng dồn vào đây.'}
                 </p>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -329,7 +329,7 @@ export default function SavingsBagButton({ isEn, navBtn }: { isEn: boolean; navB
               </Link>
             ) : (
               <p className="text-text-body">
-                {isEn ? 'Discounted combos fill your bag.' : 'Combo giảm giá sẽ làm đầy túi của bạn.'}
+                {isEn ? 'Discounted bundles fill your bag.' : 'Gói giảm giá sẽ làm đầy túi của bạn.'}
               </p>
             )}
           </div>
@@ -356,7 +356,7 @@ export default function SavingsBagButton({ isEn, navBtn }: { isEn: boolean; navB
                 onClick={() => setOpen(false)}
                 className="h-10 px-4 rounded-full border border-border text-sm flex items-center hover:bg-ivory"
               >
-                {isEn ? 'Combos' : 'Xem combo'}
+                {isEn ? 'Bundles' : 'Xem gói'}
               </Link>
             )}
           </div>

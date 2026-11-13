@@ -261,7 +261,7 @@ export default function SubscriptionsManagementPage() {
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl text-gray-800 font-heading">Chưa Có Hợp Đồng Giao Định Kỳ</h3>
             <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">
-              Bạn chưa đăng ký sản phẩm định kỳ nào. Hãy khám phá 12 sản phẩm sữa hạt nấu mới & 12 combo tiết kiệm giảm 15% giao tận nhà mỗi tuần!
+              Bạn chưa đăng ký sản phẩm định kỳ nào. Hãy khám phá 12 sản phẩm sữa hạt nấu mới & 12 gói tiết kiệm giảm 15% giao tận nhà mỗi tuần!
             </p>
             <Link
               href="/#subscribe-save"

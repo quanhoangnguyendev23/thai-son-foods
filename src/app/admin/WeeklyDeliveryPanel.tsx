@@ -31,7 +31,7 @@ export default function WeeklyDeliveryPanel({
   canManage: boolean;
   canManageDefault: boolean;
 }) {
-  const label = itemType === 'product' ? 'sản phẩm' : 'combo';
+  const label = itemType === 'product' ? 'sản phẩm' : 'gói';
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState<Record<string, number> | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});

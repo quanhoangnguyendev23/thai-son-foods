@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Product } from '@/types';
-import { products as catalog } from '@/data/products';
+import { useLiveCatalog } from '@/hooks/useLiveCatalog';
 import { useLanguage } from '@/context/LanguageContext';
 import ProductCarousel from '@/components/product/ProductCarousel';
 
@@ -33,6 +33,8 @@ export default function RecentlyViewedProducts({
 }) {
   const { language } = useLanguage();
   const [items, setItems] = useState<Product[]>([]);
+  // Danh mục sống (CSDL): sản phẩm admin mới thêm cũng hiện trong "Đã xem gần đây"
+  const catalog = useLiveCatalog();
 
   useEffect(() => {
     const previous = readSlugs().filter((s) => s !== currentSlug);
@@ -47,7 +49,7 @@ export default function RecentlyViewedProducts({
     } catch {
       // Trình duyệt chặn lưu trữ — bỏ qua, tính năng chỉ mang tính tiện ích
     }
-  }, [currentSlug, readOnly]);
+  }, [currentSlug, readOnly, catalog]);
 
   if (items.length === 0) return null;
 

@@ -1,4 +1,7 @@
 import { query, initDatabase } from '@/lib/db';
+import { buildLiveCatalog, type ProductCatalogRow } from '@/lib/product-detail';
+import { products as staticProducts } from '@/data/products';
+import type { Product } from '@/types';
 
 /**
  * Thống kê THẬT cho trang chi tiết sản phẩm / combo (không dùng số liệu mẫu).
@@ -58,6 +61,32 @@ function buildAliasResolver(catalog: CatalogItem[], dbRows: { id: string; slug: 
     const hit = aliases.find((a) => orderProductId === a.alias || orderProductId.startsWith(`${a.alias}-`));
     return hit ? hit.productId : null;
   };
+}
+
+/**
+ * Danh mục sản phẩm cho các khối gợi ý (trang chi tiết SP / combo / thương hiệu): bảng products là nguồn chính
+ * (gồm sản phẩm admin mới thêm, nhãn, tạm ẩn), src/data/products.ts bổ sung — xem buildLiveCatalog.
+ * Lỗi CSDL → danh mục tĩnh (không làm hỏng trang).
+ */
+export async function getLiveCatalog(): Promise<Product[]> {
+  try {
+    await initDatabase();
+    const res = await query(
+      `SELECT p.id, p.slug, p.sku, p.name, p.price, p.unit, p.thumbnail, p.category_id, p.short_description, p.description,
+              p.is_featured, p.is_best_seller, p.is_new, p.is_active, p.volume, p.energy_kcal,
+              COALESCE((SELECT json_agg(json_build_object('id', pv.id, 'name', pv.name, 'quantity', pv.quantity, 'price', pv.price, 'unit', pv.unit)
+                                 ORDER BY pv.quantity ASC)
+                          FROM product_variants pv WHERE pv.product_id = p.id), '[]') AS variants,
+              COALESCE((SELECT json_agg(json_build_object('url', pi.url, 'isThumbnail', (pi.image_type = 'thumbnail')) ORDER BY pi.sort_order ASC)
+                          FROM product_images pi WHERE pi.product_id = p.id AND pi.is_active = true), '[]') AS images
+         FROM products p
+        ORDER BY p.created_at ASC`
+    );
+    return buildLiveCatalog(staticProducts, res.rows as ProductCatalogRow[]);
+  } catch (err) {
+    console.error('Không thể lấy danh mục sản phẩm từ CSDL:', err);
+    return staticProducts;
+  }
 }
 
 /**

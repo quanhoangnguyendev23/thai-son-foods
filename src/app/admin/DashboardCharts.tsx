@@ -729,7 +729,7 @@ function TopSellersCard({
           key: p.id || `${p.name}-${i}`,
           label,
           name,
-          unit: kind === 'product' ? (p.unit || 'chai').replace(/^1\s+/, '') : 'combo',
+          unit: kind === 'product' ? (p.unit || 'chai').replace(/^1\s+/, '') : 'gói',
           placed: num(p.placed_earned ?? p.total_earned),
           done: num(p.total_earned),
           placedQty: num(p.placed_sold ?? p.total_sold),
@@ -746,7 +746,7 @@ function TopSellersCard({
   const totalDone = all.reduce((s, r) => s + r.done, 0);
   const totalPlaced = all.reduce((s, r) => s + r.placed, 0);
   const leader = data[0];
-  const kindLabel = kind === 'product' ? 'sản phẩm' : 'combo';
+  const kindLabel = kind === 'product' ? 'sản phẩm' : 'gói';
   const showSkeleton = loading && items.length === 0;
   const showError = error && items.length === 0;
   const isEmpty = !showSkeleton && data.length === 0;
@@ -758,7 +758,7 @@ function TopSellersCard({
         <div className="grid gap-1">
           <CardTitle className="flex items-center gap-2">
             {kind === 'product' ? <Sparkles className="h-4 w-4 text-amber-800" aria-hidden /> : <Gift className="h-4 w-4 text-amber-800" aria-hidden />}
-            <span>{kind === 'product' ? 'Sản Phẩm Bán Chạy' : 'Combo Bán Chạy'}</span>
+            <span>{kind === 'product' ? 'Sản Phẩm Bán Chạy' : 'Gói Bán Chạy'}</span>
             {loading && !showSkeleton && <RefreshCw className="h-3.5 w-3.5 animate-spin text-ink-800" aria-label="Đang cập nhật" />}
           </CardTitle>
           <CardDescription className="tabular-nums">

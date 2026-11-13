@@ -33,6 +33,25 @@ export const HOMEPAGE_CONFIG = {
  *  3. Còn lại → DEFAULT_COPY bên dưới.
  * Tiêu đề nên ≤ 6 từ, dòng phụ 1 dòng (≤ 60 ký tự) để không bị cắt trên điện thoại.
  */
+/**
+ * TRANG MẶT TIỀN CÔNG TY (https://thaisonfoods.vn) — shop được gắn vào nút "CỬA HÀNG" của trang này.
+ * Dùng cho các liên kết quay về: mục đầu thanh menu (HeaderAmazon), cột "Về Thái Sơn Foods" ở footer,
+ * link "Ghé thăm cửa hàng Thái Sơn Foods" ở trang chi tiết SP / combo, nút website ở trang thương hiệu.
+ */
+export const MAIN_SITE = {
+  URL: 'https://thaisonfoods.vn/',
+  NAME: 'Thái Sơn Foods',
+  ABOUT_URL: 'https://thaisonfoods.vn/chung-toi/',
+  LINKS: [
+    { label: 'Trang chủ Thái Sơn Foods', labelEn: 'Thai Son Foods home', href: 'https://thaisonfoods.vn/' },
+    { label: 'Chúng tôi', labelEn: 'About us', href: 'https://thaisonfoods.vn/chung-toi/' },
+    { label: 'Lối sống', labelEn: 'Lifestyle', href: 'https://thaisonfoods.vn/loi-song/' },
+    { label: 'Món ngon quê Việt', labelEn: 'Vietnamese flavours', href: 'https://thaisonfoods.vn/mon-ngon-que-viet/' },
+    { label: 'Trải nghiệm', labelEn: 'Experience', href: 'https://thaisonfoods.vn/trai-nghiem/' },
+    { label: 'Tuyển dụng', labelEn: 'Careers', href: 'https://thaisonfoods.vn/tuyen-dung/' },
+  ],
+} as const;
+
 export const HOMEPAGE_HERO = {
   /** Thời gian tự chuyển slide (ms), tối thiểu 5000. Tự tắt khi người dùng bật "giảm chuyển động". */
   AUTOPLAY_MS: 6000,

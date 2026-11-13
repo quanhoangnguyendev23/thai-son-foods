@@ -26,6 +26,7 @@ import {
   User,
   Package,
   Leaf,
+  ArrowLeft,
 } from 'lucide-react';
 import { useBranchStore } from '@/store/branch';
 import { useCartStore } from '@/store/cart';
@@ -34,10 +35,12 @@ import { useUserAuth } from '@/context/UserAuthContext';
 import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 import { products, categories as catalogCategories } from '@/data/products';
 import { MEMBERSHIP_CONFIG } from '@/config/membership';
+import { MAIN_SITE } from '@/config/homepage';
 import { ENABLE_COMBOS, ENABLE_DAILY_DEALS } from '@/config/features';
 import { useDailyDealsEnabled } from '@/lib/savings';
 import { DELIVER_TO_PLACEHOLDER } from '@/data/homepage-placeholders';
 import CategorySidebar from '@/components/home/CategorySidebar';
+import { AttentionStyles, attentionBeat } from '@/components/ui/AttentionEffects';
 import SavingsBagButton from '@/components/layout/SavingsBagButton';
 import { useComboCatalog } from '@/lib/savings';
 
@@ -95,6 +98,73 @@ export default function HeaderAmazon() {
   const tier1Ref = useRef<HTMLDivElement>(null);
   const tier2Ref = useRef<HTMLDivElement>(null);
   const [tier1Height, setTier1Height] = useState<number | null>(null);
+  // Thanh tác vụ tầng 2 trên điện thoại/tablet (< lg): tự chạy ngang qua hết các mục rồi quay về đầu, lặp lại.
+  // Dừng khi khách chạm/kéo hoặc focus bàn phím (chạy lại sau 3 giây); tắt khi bật "giảm chuyển động" hoặc từ lg trở lên.
+  const navScrollRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = navScrollRef.current;
+    if (!el) return;
+    const mobile = window.matchMedia('(max-width: 1023px)');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const SPEED = 28; // px/giây
+    let raf = 0;
+    let last = 0;
+    let pos = el.scrollLeft;
+    let holdUntil = performance.now() + 1500; // chờ 1,5 giây sau khi tải rồi mới chạy
+    let returning = false;
+
+    const step = (now: number) => {
+      raf = requestAnimationFrame(step);
+      const dt = last ? Math.min(now - last, 100) : 0;
+      last = now;
+      if (!mobile.matches || reduce.matches || now < holdUntil) {
+        pos = el.scrollLeft;
+        return;
+      }
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 2) return;
+      if (returning) {
+        if (el.scrollLeft <= 1) {
+          returning = false;
+          pos = 0;
+          holdUntil = now + 1500;
+        }
+        return;
+      }
+      pos = Math.min(max, pos + (SPEED * dt) / 1000);
+      el.scrollLeft = pos;
+      if (pos >= max - 1) {
+        // Hết thanh: dừng 1,5 giây rồi cuộn mượt về đầu
+        returning = true;
+        holdUntil = now + 1500;
+        window.setTimeout(() => el.scrollTo({ left: 0, behavior: 'smooth' }), 1500);
+      }
+    };
+    const pause = () => {
+      holdUntil = Number.POSITIVE_INFINITY;
+      returning = false;
+    };
+    const resume = () => {
+      pos = el.scrollLeft;
+      holdUntil = performance.now() + 3000;
+    };
+    el.addEventListener('pointerdown', pause);
+    el.addEventListener('touchstart', pause, { passive: true });
+    el.addEventListener('pointerup', resume);
+    el.addEventListener('touchend', resume);
+    el.addEventListener('focusin', pause);
+    el.addEventListener('focusout', resume);
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener('pointerdown', pause);
+      el.removeEventListener('touchstart', pause);
+      el.removeEventListener('pointerup', resume);
+      el.removeEventListener('touchend', resume);
+      el.removeEventListener('focusin', pause);
+      el.removeEventListener('focusout', resume);
+    };
+  }, []);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -621,7 +691,17 @@ export default function HeaderAmazon() {
           onFocusCapture={() => setIsNavHidden(false)}
         >
           <div className="max-w-[1500px] mx-auto px-3 sm:px-4 lg:px-5 flex items-center gap-2 h-11 lg:h-10">
-            <nav className="flex w-full lg:w-auto lg:flex-[0_1_auto] flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
+            <nav ref={navScrollRef} className="flex w-full lg:w-auto lg:flex-[0_1_auto] flex-nowrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0" aria-label="Thanh tác vụ điều hướng">
+              {/* Quay về trang mặt tiền công ty (shop được gắn vào nút "CỬA HÀNG" của thaisonfoods.vn) */}
+              <a
+                href={MAIN_SITE.URL}
+                className={cn(navBtn, 'gap-1 px-2 py-1 text-sm whitespace-nowrap shrink-0 max-lg:min-h-10')}
+                title={isEn ? 'Back to the Thai Son Foods website' : 'Về trang Thái Sơn Foods'}
+              >
+                <ArrowLeft className="w-4 h-4" aria-hidden />
+                {MAIN_SITE.NAME}
+              </a>
+              <span className="w-px h-5 bg-white/25 mx-1 shrink-0" aria-hidden />
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(true)}
@@ -644,7 +724,11 @@ export default function HeaderAmazon() {
                   <Link key={item.id} href={item.href} className={cls}>
                     {item.label}
                     {item.badge && (
-                      <span className="px-1.5 text-2xs text-white bg-red-500 rounded-full animate-pulse">{item.badge}</span>
+                      // 13/11: nhịp đập (hiệu ứng chung) thay animate-pulse cũ — pulse làm chữ mờ, trái quy tắc màu chữ
+                      <>
+                        <AttentionStyles />
+                        <span className={cn('px-1.5 text-2xs text-white bg-red-500 rounded-full', attentionBeat)}>{item.badge}</span>
+                      </>
                     )}
                   </Link>
                 );

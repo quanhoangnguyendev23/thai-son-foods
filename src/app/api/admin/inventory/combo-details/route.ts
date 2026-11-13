@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     if (!canViewAll && !canViewOwn && !canViewTotal) {
       return NextResponse.json(
-        { success: false, error: 'Bạn không có quyền xem chi tiết tồn kho combo.', code: 'FORBIDDEN' },
+        { success: false, error: 'Bạn không có quyền xem chi tiết tồn kho gói.', code: 'FORBIDDEN' },
         { status: 403 }
       );
     }
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const comboId = searchParams.get('comboId') || searchParams.get('slug') || '';
 
     if (!comboId) {
-      return NextResponse.json({ success: false, error: 'Thiếu mã combo (comboId hoặc slug)' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Thiếu mã gói (comboId hoặc slug)' }, { status: 400 });
     }
 
     const details = await getComboStockDetails(storeCode, comboId);
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('[Admin Combo Inventory Details API] Error:', error);
     return NextResponse.json(
-      { success: false, error: publicErrorMessage(error, 'Lỗi lấy chi tiết tồn kho combo') },
+      { success: false, error: publicErrorMessage(error, 'Lỗi lấy chi tiết tồn kho gói') },
       { status: 500 }
     );
   }

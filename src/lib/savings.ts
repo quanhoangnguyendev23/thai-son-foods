@@ -19,7 +19,7 @@ let comboPromise: Promise<Combo[]> | null = null;
 // Công tắc "Deal trong ngày" (admin) đi kèm phản hồi /api/combos → không gọi thêm API
 let dailyDealsEnabled = false;
 
-function loadCombos(): Promise<Combo[]> {
+export function loadCombos(): Promise<Combo[]> {
   if (comboCache) return Promise.resolve(comboCache);
   if (!comboPromise) {
     comboPromise = fetch('/api/combos')

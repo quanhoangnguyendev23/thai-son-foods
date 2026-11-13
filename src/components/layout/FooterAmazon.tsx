@@ -11,6 +11,7 @@ import { categories as catalogCategories } from '@/data/products';
 import { formatPrice } from '@/lib/utils';
 import { useComboCatalog } from '@/lib/savings';
 import { HAS_LEGAL_LINKS, LegalCompanyBlock, LegalPolicyLinks } from '@/components/layout/FooterLegal';
+import { MAIN_SITE } from '@/config/homepage';
 
 /**
  * FOOTER BIẾN THỂ AMAZON — chỉ dùng cho trang chủ mới. Footer.tsx gốc giữ nguyên cho các trang khác.
@@ -114,7 +115,7 @@ export default function FooterAmazon() {
               ))}
               {ENABLE_COMBOS && hasLiveCombos && (
                 <li>
-                  <Link href="/#combo" className={linkCls}>{isEn ? 'Value combos' : 'Combo tiết kiệm'}</Link>
+                  <Link href="/#combo" className={linkCls}>{isEn ? 'Value bundles' : 'Gói tiết kiệm'}</Link>
                 </li>
               )}
             </ul>
@@ -157,6 +158,15 @@ export default function FooterAmazon() {
                 </ul>
               </>
             )}
+            {/* Về trang mặt tiền công ty (shop gắn vào nút "CỬA HÀNG" của thaisonfoods.vn) */}
+            <h3 className={headingCls}>{isEn ? 'About Thai Son Foods' : 'Về Thái Sơn Foods'}</h3>
+            <ul className="mb-5">
+              {MAIN_SITE.LINKS.map((l) => (
+                <li key={l.href}>
+                  <a href={l.href} className={linkCls}>{isEn ? l.labelEn : l.label}</a>
+                </li>
+              ))}
+            </ul>
             <h3 className={headingCls}>{isEn ? 'Follow Us' : 'Kết nối'}</h3>
             <div className="flex items-center gap-3">
               <a href="https://www.facebook.com/suabapnepthaison" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-xl hover:bg-corn hover:text-text-dark transition-colors">

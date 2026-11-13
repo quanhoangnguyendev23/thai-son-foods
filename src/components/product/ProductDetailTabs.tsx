@@ -8,7 +8,7 @@ import { Product } from '@/types';
 import { cn, formatKcal, formatPrice } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCartStore } from '@/store/cart';
-import { DEFAULT_PRODUCT_DETAIL, getProductDetailContent } from '@/data/product-detail-content';
+import { DEFAULT_PRODUCT_DETAIL, getProductDetailContent, mergeProductDetailContent } from '@/data/product-detail-content';
 import { getBottleVolume, getProductImage, getShortProductName, getUnitPrice, getVariantLabel, sortVariants } from '@/lib/product-detail';
 
 interface ProductDetailTabsProps {
@@ -31,7 +31,8 @@ export default function ProductDetailTabs({ product, categoryName, companions = 
   const [active, setActive] = useState<TabKey>('description');
   const [labelOpen, setLabelOpen] = useState(false);
 
-  const content = getProductDetailContent(product);
+  // Nội dung admin nhập (CSDL) ưu tiên; trường trống dùng nội dung trong code, rồi tới câu mặc định
+  const content = mergeProductDetailContent(getProductDetailContent(product), product.detailContent);
   const variants = useMemo(() => sortVariants(product.variants), [product.variants]);
   const description = (isEn && product.descriptionEn) || product.description || product.shortDescription;
   const usage = content.usage || DEFAULT_PRODUCT_DETAIL.usage;

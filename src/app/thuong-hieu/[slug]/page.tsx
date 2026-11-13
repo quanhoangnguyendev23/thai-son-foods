@@ -3,8 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { brands, getBrandBySlug } from '@/data/brands';
-import { products } from '@/data/products';
 import { Product } from '@/types';
+import { getLiveCatalog } from '@/lib/product-stats';
 import ProductCard from '@/components/product/ProductCard';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 
@@ -36,8 +36,10 @@ export default async function BrandPage({ params }: BrandPageProps) {
   const brand = getBrandBySlug(slug);
   if (!brand) notFound();
 
+  // Danh mục sản phẩm: CSDL là nguồn chính (nhãn, tạm ẩn, thông tin admin sửa)
+  const catalog = await getLiveCatalog();
   const brandProducts = brand.productIds
-    .map((id) => products.find((p) => p.id === id && p.isActive !== false))
+    .map((id) => catalog.find((p) => p.id === id && p.isActive !== false))
     .filter((p): p is Product => Boolean(p));
   const otherBrands = brands.filter((b) => b.slug !== brand.slug);
 
@@ -59,6 +61,16 @@ export default async function BrandPage({ params }: BrandPageProps) {
             <h1 className="text-2xl md:text-3xl text-ink-950">Thương hiệu {brand.name}</h1>
             <p className="text-sm md:text-base text-gray-700">{brand.tagline}</p>
             <p className="text-xs text-gray-500">{brandProducts.length} sản phẩm · Sản xuất bởi Thái Sơn Foods</p>
+            {brand.website && (
+              <a
+                href={brand.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-forest-700 hover:border-forest-700 hover:underline"
+              >
+                Website {brand.name} ↗
+              </a>
+            )}
           </div>
           <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[320px] bg-ivory">
             <Image src={brand.coverImage} alt={`Sản phẩm ${brand.name}`} fill sizes="(max-width: 768px) 100vw, 60vw" className="object-cover" priority />
@@ -78,7 +90,7 @@ export default async function BrandPage({ params }: BrandPageProps) {
 
       {/* Các thương hiệu khác */}
       <div className="border-t border-gray-200">
-        <BrandCardsSection brands={otherBrands} products={products} title="Thương hiệu khác của Thái Sơn Foods" />
+        <BrandCardsSection brands={otherBrands} products={catalog} title="Thương hiệu khác của Thái Sơn Foods" />
       </div>
     </div>
   );

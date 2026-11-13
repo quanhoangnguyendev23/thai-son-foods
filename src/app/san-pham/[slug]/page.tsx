@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { products, getProductBySlug, categories, getProductsByCategory } from '@/data/products';
+import { products, getProductBySlug, categories } from '@/data/products';
 import { query } from '@/lib/db';
 import { Product } from '@/types';
 import ProductGallery from '@/components/product/ProductGallery';
@@ -25,8 +25,8 @@ import ProductCarousel from '@/components/product/ProductCarousel';
 import RecentlyViewedProducts from '@/components/product/RecentlyViewedProducts';
 import ProductCompareTable from '@/components/product/ProductCompareTable';
 import { getSiblingProducts, getSimilarProducts, getShortProductName } from '@/lib/product-detail';
-import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold } from '@/lib/product-stats';
-import ProductComboStrip from '@/components/product/ProductComboStrip';
+import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold, getLiveCatalog } from '@/lib/product-stats';
+import ProductComboStrip, { type ComboStripItem } from '@/components/product/ProductComboStrip';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 import { brands } from '@/data/brands';
 import { ReviewProductAd, ReviewComboAd } from '@/components/product/ProductReviewAds';
@@ -125,6 +125,8 @@ async function getLiveProduct(slug: string): Promise<Product | undefined> {
         // Dung tích chai do admin chỉnh (products.volume); trống thì dùng giá trị trong products.ts
         volume: dbProd.volume || (fallback as { volume?: string }).volume,
         energyKcal: dbProd.energy_kcal !== null && dbProd.energy_kcal !== undefined ? Number(dbProd.energy_kcal) : (fallback as { energyKcal?: number }).energyKcal ?? null,
+        // Thông tin chi tiết admin nhập (thành phần, dinh dưỡng, cách dùng...); trống → nội dung trong code
+        detailContent: dbProd.detail_content && typeof dbProd.detail_content === 'object' ? dbProd.detail_content : null,
         thumbnail: finalThumbnail,
         images: activeImages.length > 0
           ? activeImages.map((img: any) => ({
@@ -254,19 +256,26 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     (c) => c.id === cleanCatId || c.id === product.categoryId || c.slug === cleanCatId
   );
 
+  // Danh mục sản phẩm cho mọi khối gợi ý bên dưới: CSDL là nguồn chính (sản phẩm admin mới thêm, nhãn, tạm ẩn)
+  const catalog = await getLiveCatalog();
+  const inCategory = (categoryId: string) => {
+    const cleanId = (categoryId || '').replace(/^cat-/, '');
+    return catalog.filter((p) => p.isActive && (p.categoryId === cleanId || `cat-${p.categoryId}` === categoryId));
+  };
+
   // Nạp danh sách sản phẩm cùng danh mục để hiển thị khu vực gợi ý dưới chân ảnh
-  let categoryProducts = getProductsByCategory(cleanCatId);
+  let categoryProducts = inCategory(cleanCatId);
   if (!categoryProducts || categoryProducts.length === 0) {
-    categoryProducts = getProductsByCategory(product.categoryId);
+    categoryProducts = inCategory(product.categoryId);
   }
   // Đảm bảo luôn có danh sách gợi ý cho người dùng lựa chọn vị
   if (!categoryProducts || categoryProducts.length <= 1) {
-    categoryProducts = products.filter((p) => p.isActive).slice(0, 5);
+    categoryProducts = catalog.filter((p) => p.isActive).slice(0, 5);
   }
 
   // Giao diện mới: sản phẩm cùng danh mục (chọn hương vị) và sản phẩm tương tự (carousel gợi ý)
-  const siblingProducts = getSiblingProducts(product, products);
-  const similarProducts = getSimilarProducts(product, products, 12);
+  const siblingProducts = getSiblingProducts(product, catalog);
+  const similarProducts = getSimilarProducts(product, catalog, 12);
   // "Khách hàng cũng xem": dữ liệu THẬT từ lượt xem cùng phiên (bảng product_views); chưa đủ dữ liệu thì ẩn khối
   let alsoViewedIds: string[] = [];
   try {
@@ -275,11 +284,11 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     console.error('Không thể lấy gợi ý "khách cũng xem":', err);
   }
   const alsoViewedProducts = alsoViewedIds
-    .map((id) => products.find((p) => p.id === id && p.isActive !== false))
+    .map((id) => catalog.find((p) => p.id === id && p.isActive !== false))
     .filter((p): p is Product => Boolean(p) && p!.id !== product.id);
 
   // "Bán chạy nhất" và "Khách mua sản phẩm này cũng mua": dữ liệu THẬT từ đơn hàng; thiếu dữ liệu thì ẩn khối
-  const activeCatalog = products.filter((p) => p.isActive !== false);
+  const activeCatalog = catalog.filter((p) => p.isActive !== false);
   const findActive = (id: string) => activeCatalog.find((p) => p.id === id && p.id !== product.id);
   let bestSellerProducts: Product[] = [];
   let bestSellerRanks: number[] = [];
@@ -305,6 +314,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   let stripCombo: StripCombo | undefined;
   let stripRating: { averageRating: number; totalReviews: number } | null = null;
   let stripSold = 0;
+  // Các gói khác cho dải tự đổi mỗi 10 giây trên desktop (ngẫu nhiên, tối đa 7, không trùng gói ở mục Đánh giá)
+  let stripPool: ComboStripItem[] = [];
   let reviewCombo: StripCombo | undefined;
   let featuredCombos: StripCombo[] = [];
   // 2 hàng combo xen giữa các hàng sản phẩm, không lặp combo giữa 2 hàng (giống trang combo):
@@ -343,6 +354,21 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       ]);
       stripRating = summary ? { averageRating: summary.averageRating, totalReviews: summary.totalReviews } : null;
       stripSold = sold;
+      const poolCombos = otherCombos
+        .filter((c) => c.id !== reviewCombo?.id)
+        .map((c) => ({ c, r: Math.random() }))
+        .sort((a, b) => a.r - b.r)
+        .slice(0, 7)
+        .map((x) => x.c);
+      stripPool = await Promise.all(
+        poolCombos.map(async (c) => {
+          const [s, n] = await Promise.all([
+            getProductReviewSummary(`combo:${c.slug}`).catch(() => null),
+            getTotalSold(c.id, 'combo', c.slug).catch(() => 0),
+          ]);
+          return { combo: c, rating: s ? { averageRating: s.averageRating, totalReviews: s.totalReviews } : null, sold: n };
+        })
+      );
     }
   }
 
@@ -369,8 +395,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   // Dòng tiêu đề nhỏ trên thẻ combo: nêu sản phẩm đang xem nếu combo có sản phẩm này
   const reviewComboHeadline = reviewCombo
     ? reviewCombo.products.some((it) => canonicalProductId(it.productId) === canonicalProductId(product.id))
-      ? `Combo tiết kiệm có ${getShortProductName(product)}`
-      : 'Combo tiết kiệm từ Thái Sơn Foods'
+      ? `Gói tiết kiệm có ${getShortProductName(product)}`
+      : 'Gói tiết kiệm từ Thái Sơn Foods'
     : undefined;
 
   // "Khám phá dòng khác": mỗi danh mục còn lại một hàng
@@ -435,7 +461,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
   // Ô "Mua kèm thường gặp" trong khu Thông tin sản phẩm: ưu tiên món khách thật sự mua cùng,
   // thiếu thì bù bằng sản phẩm tương tự; bỏ 2 món đã nằm trong khối "Gợi ý mua kèm" phía trên để không trùng
-  const bundleIds = new Set(getSimilarProducts(product, products, 2).map((p) => p.id));
+  const bundleIds = new Set(getSimilarProducts(product, catalog, 2).map((p) => p.id));
   const detailCompanions: { product: Product; boughtTogether?: boolean }[] = [];
   for (const [list, together] of [[boughtTogetherProducts, true], [similarProducts, false]] as const) {
     for (const p of list) {
@@ -458,7 +484,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       <div className="w-full lg:px-14">
         {/* Dải combo gợi ý (kiểu dải Sponsored của Amazon) */}
         {stripCombo && (
-          <ProductComboStrip combo={stripCombo} catalog={products} rating={stripRating} sold={stripSold} />
+          <ProductComboStrip combo={stripCombo} catalog={catalog} rating={stripRating} sold={stripSold} pool={stripPool} />
         )}
 
         {/* Breadcrumb theo danh mục thực tế */}
@@ -508,11 +534,11 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {/* Dùng ComboCarousel để cùng kiểu tiêu đề, thẻ và mũi tên với các hàng sản phẩm khác */}
         {combosWithProductRow.length > 0 ? (
           <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title={`Combo có ${getShortProductName(product)}`} subtitle="Mua theo combo, tiết kiệm hơn mua lẻ" combos={combosWithProductRow} />
+            <ComboCarousel plain title={`Gói có ${getShortProductName(product)}`} subtitle="Mua theo gói, tiết kiệm hơn mua lẻ" combos={combosWithProductRow} />
           </div>
         ) : moreCombosRow.length > 0 ? (
           <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" combos={moreCombosRow} />
+            <ComboCarousel plain title="Các gói nổi bật đáng cân nhắc" combos={moreCombosRow} />
           </div>
         ) : null}
 
@@ -536,7 +562,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {/* ── COMBO · NỔI BẬT ĐÁNG CÂN NHẮC: combo chưa có ở hàng combo phía trên ── */}
         {combosWithProductRow.length > 0 && moreCombosRow.length > 0 && (
           <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" combos={moreCombosRow} />
+            <ComboCarousel plain title="Các gói nổi bật đáng cân nhắc" combos={moreCombosRow} />
           </div>
         )}
 
@@ -578,7 +604,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             brands={[...brands].sort(
               (a, b) => Number(b.productIds.includes(product.id)) - Number(a.productIds.includes(product.id))
             )}
-            products={products}
+            products={catalog}
           />
         </div>
 
@@ -629,7 +655,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {MEMBERSHIP_CONFIG.ENABLE_SUBSCRIBE_SAVE && (
           <div className="border-t border-gray-200 bg-white">
             <SubscribeSaveSection
-              title="Đăng Ký Giao Định Kỳ — 8 Sản Phẩm & Combo Tiết Kiệm 15%"
+              title="Đăng Ký Giao Định Kỳ — 8 Sản Phẩm & Gói Tiết Kiệm 15%"
               subtitle="Tự động nhận nước uống tươi ngon mỗi tuần tận nhà. Miễn phí vận chuyển 100%, linh hoạt đổi vị và tạm dừng bất kỳ lúc nào."
             />
           </div>
@@ -704,7 +730,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {ENABLE_COMBOS && (
           <div className="border-t border-gray-200 bg-white">
             <div className="section-container max-sm:px-2.5 py-8 sm:py-10 md:py-12 max-w-7xl mx-auto px-4 sm:px-6">
-              <ProductCombosSidebar layout="horizontal" title="Các combo nổi bật đáng cân nhắc" />
+              <ProductCombosSidebar layout="horizontal" title="Các gói nổi bật đáng cân nhắc" />
             </div>
           </div>
         )}
@@ -732,7 +758,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         {MEMBERSHIP_CONFIG.ENABLE_SUBSCRIBE_SAVE && (
           <div className="border-t border-gray-200 bg-white">
             <SubscribeSaveSection
-              title="Đăng Ký Giao Định Kỳ — 8 Sản Phẩm & Combo Tiết Kiệm 15%"
+              title="Đăng Ký Giao Định Kỳ — 8 Sản Phẩm & Gói Tiết Kiệm 15%"
               subtitle="Tự động nhận nước uống tươi ngon mỗi tuần tận nhà. Miễn phí vận chuyển 100%, linh hoạt đổi vị và tạm dừng bất kỳ lúc nào."
             />
           </div>

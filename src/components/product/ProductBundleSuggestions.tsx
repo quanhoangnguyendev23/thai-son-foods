@@ -5,9 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Check, Plus } from 'lucide-react';
 import { Product, ProductVariant } from '@/types';
-import { products } from '@/data/products';
+import { useLiveCatalog } from '@/hooks/useLiveCatalog';
 import { cn, formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
+import { AttentionStyles, attentionCta } from '@/components/ui/AttentionEffects';
 import { useLanguage } from '@/context/LanguageContext';
 import { getShortProductName, getSimilarProducts, getVariantLabel, sortVariants, getProductImage } from '@/lib/product-detail';
 
@@ -35,15 +36,17 @@ export default function ProductBundleSuggestions({
   const { language } = useLanguage();
   const isEn = language === 'en';
   const addItem = useCartStore((s) => s.addItem);
+  // Danh mục sống (CSDL): sản phẩm admin mới thêm cũng được gợi ý mua kèm
+  const catalog = useLiveCatalog();
 
   const bundleItems: BundleItem[] = useMemo(() => {
     const toItem = (p: Product, isCurrent: boolean): BundleItem => {
       const variant = sortVariants(p.variants)[0];
       return { product: p, variant, price: variant ? variant.price : p.price, isCurrent };
     };
-    const companions = getSimilarProducts(currentProduct, products, 2);
+    const companions = getSimilarProducts(currentProduct, catalog, 2);
     return [toItem(currentProduct, true), ...companions.map((p) => toItem(p, false))];
-  }, [currentProduct]);
+  }, [currentProduct, catalog]);
 
   // Mặc định chọn tất cả; chỉ lưu các món khách bỏ chọn
   const [deselectedIds, setDeselectedIds] = useState<Record<string, boolean>>({});
@@ -89,7 +92,7 @@ export default function ProductBundleSuggestions({
       <p className="text-xs md:text-sm text-gray-600 mb-4">
         {isEn
           ? 'Products from the same category. Prices are regular list prices.'
-          : 'Các sản phẩm cùng dòng thường dùng kèm. Giá tính theo giá niêm yết, không áp dụng ưu đãi combo.'}
+          : 'Các sản phẩm cùng dòng thường dùng kèm. Giá tính theo giá niêm yết, không áp dụng ưu đãi gói.'}
       </p>
 
       <div className="flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
@@ -154,9 +157,11 @@ export default function ProductBundleSuggestions({
 
         {/* Tổng giá & hành động */}
         <div className="lg:w-[260px] shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 pt-4 lg:pt-0 lg:pl-6">
+          <AttentionStyles />
           <div className="text-sm text-gray-700 mb-2.5">
             {isEn ? 'Total for selected items: ' : `Tổng (${selectedCount} sản phẩm): `}
-            <span className="text-xl text-ink-950">{formatPrice(totalPrice)}đ</span>
+            {/* 13/11: tổng mới trượt lên nhẹ mỗi khi chọn/bỏ món (key đổi theo giá trị → chạy lại hiệu ứng) */}
+            <span key={totalPrice} className="tsf-value-pop text-xl text-ink-950">{formatPrice(totalPrice)}đ</span>
           </div>
 
           <button
@@ -169,7 +174,10 @@ export default function ProductBundleSuggestions({
                 ? 'bg-emerald-600 border-emerald-600 text-white cursor-default'
                 : 'bg-corn hover:bg-corn-dark border-corn-dark/60 text-ink-950 cursor-pointer',
               'disabled:cursor-not-allowed',
-              selectedCount === 0 && 'bg-gray-200 border-gray-300 text-gray-500 hover:bg-gray-200'
+              selectedCount === 0 && 'bg-gray-200 border-gray-300 text-gray-500 hover:bg-gray-200',
+              // 13/11: nút bấm được → hiệu ứng nút hành động (nhấc, bóng ấm, vệt sáng); vừa thêm xong → nảy nhẹ xác nhận
+              selectedCount > 0 && successCount === null && attentionCta(true),
+              successCount !== null && 'tsf-success-pop'
             )}
           >
             {successCount !== null ? (

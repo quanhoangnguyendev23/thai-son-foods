@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Info, Check } from 'lucide-react';
 import { Product } from '@/types';
-import { products } from '@/data/products';
+import { useLiveCatalog } from '@/hooks/useLiveCatalog';
 import { formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
 
@@ -52,6 +52,8 @@ export default function FrequentlyBoughtTogether({
   className = '',
 }: FrequentlyBoughtTogetherProps) {
   const addItem = useCartStore((s) => s.addItem);
+  // Danh mục sống (CSDL): sản phẩm admin mới thêm cũng được gợi ý
+  const catalog = useLiveCatalog();
 
   // Xây dựng 3 sản phẩm bundle phù hợp: Sản phẩm hiện tại + 2 sản phẩm gợi ý
   const bundleItems: BundleItem[] = useMemo(() => {
@@ -79,7 +81,7 @@ export default function FrequentlyBoughtTogether({
     };
 
     // 2. Lấy 2 sản phẩm đi kèm phù hợp từ danh mục
-    const candidates = products.filter(
+    const candidates = catalog.filter(
       (p) => p.id !== currentProduct.id && p.isActive
     );
 
@@ -139,7 +141,7 @@ export default function FrequentlyBoughtTogether({
     };
 
     return [item1, item2, item3];
-  }, [currentProduct]);
+  }, [currentProduct, catalog]);
 
   // Trạng thái checkbox chọn mua (mặc định chọn cả 3)
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>(() => {

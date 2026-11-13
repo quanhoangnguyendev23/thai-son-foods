@@ -37,7 +37,9 @@ export default function ProductGallery({
   const [shareUrl, setShareUrl] = useState('');
   // Kính lúp: rê chuột lên ảnh chính (chỉ thiết bị có chuột) để phóng to vùng đang trỏ
   const [canHoverZoom, setCanHoverZoom] = useState(false);
-  const [lens, setLens] = useState<{ x: number; y: number } | null>(null);
+  // 13/11: kiểu Amazon — ảnh chính KHÔNG phóng nữa; khung soi trên ảnh + ô phóng to riêng bên phải ảnh.
+  // x, y: vị trí chuột trong ảnh (px); left/top/width/height: khung ảnh trên màn hình (để đặt ô phóng to).
+  const [lens, setLens] = useState<{ x: number; y: number; left: number; top: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -95,10 +97,22 @@ export default function ProductGallery({
   const handleLensMove = (e: ReactMouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    const x = Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100));
-    const y = Math.min(100, Math.max(0, ((e.clientY - r.top) / r.height) * 100));
-    setLens({ x, y });
+    const x = Math.min(r.width, Math.max(0, e.clientX - r.left));
+    const y = Math.min(r.height, Math.max(0, e.clientY - r.top));
+    setLens({ x, y, left: r.left, top: r.top, width: r.width, height: r.height });
   };
+
+  // Cuộn trang khi đang soi → vị trí ô phóng to cũ không còn đúng → ẩn, rê chuột lại sẽ hiện
+  useEffect(() => {
+    if (!lens) return;
+    const hide = () => setLens(null);
+    window.addEventListener('scroll', hide, { passive: true });
+    window.addEventListener('resize', hide);
+    return () => {
+      window.removeEventListener('scroll', hide);
+      window.removeEventListener('resize', hide);
+    };
+  }, [lens]);
 
   const copyToClipboard = async () => {
     const url = shareUrl || (typeof window !== 'undefined' ? window.location.href : '');
@@ -172,6 +186,28 @@ export default function ProductGallery({
   const currentPrice = currentProduct?.price;
 
   const isVideo = activeImage.url.endsWith('.mp4');
+
+  // Hình học khung soi + ô phóng to (chỉ khi đang rê chuột trên ảnh). Ô đặt sát bên phải ảnh, thẳng mép trên ảnh;
+  // không đủ chỗ (< 240px) thì không hiện ô (khách vẫn bấm ảnh để mở xem lớn).
+  const zoom = (() => {
+    if (!lens || !canHoverZoom || isVideo || typeof window === 'undefined') return null;
+    // 13/11 (lần 2): ô nhỏ lại — khoảng 0,75 bề ngang ảnh (tối đa 400px), tỉ lệ 4:3 như ảnh, sát mép phải ảnh
+    const GAP = 8;
+    const paneLeft = lens.left + lens.width + GAP;
+    const paneW = Math.min(lens.width * 0.75, 400, window.innerWidth - paneLeft - 16);
+    if (paneW < 240) return null;
+    const paneH = paneW * 0.75;
+    const lensW = Math.min(lens.width, paneW / LENS_ZOOM);
+    const lensH = Math.min(lens.height, paneH / LENS_ZOOM);
+    const lx = Math.min(Math.max(0, lens.x - lensW / 2), lens.width - lensW);
+    const ly = Math.min(Math.max(0, lens.y - lensH / 2), lens.height - lensH);
+    return {
+      lensBox: { left: lx, top: ly, width: lensW, height: lensH },
+      pane: { left: paneLeft, top: lens.top, width: paneW, height: paneH },
+      bgSize: `${lens.width * LENS_ZOOM}px ${lens.height * LENS_ZOOM}px`,
+      bgPos: `${-lx * LENS_ZOOM}px ${-ly * LENS_ZOOM}px`,
+    };
+  })();
 
   return (
     <div className="w-full flex flex-col items-start select-none">
@@ -304,13 +340,16 @@ export default function ProductGallery({
                     "object-contain transition-transform duration-200 ease-out",
                     !canHoverZoom && "duration-300"
                   )}
-                  style={
-                    canHoverZoom && lens
-                      ? { transform: `scale(${LENS_ZOOM})`, transformOrigin: `${lens.x}% ${lens.y}%` }
-                      : undefined
-                  }
                   sizes="(max-width: 768px) 100vw, 1200px"
                   priority
+                />
+              )}
+              {/* Khung soi: vùng đang được phóng to ở ô bên phải */}
+              {zoom && (
+                <div
+                  className="pointer-events-none absolute z-10 border border-gray-400 bg-white/40"
+                  style={zoom.lensBox}
+                  aria-hidden
                 />
               )}
             </div>
@@ -505,6 +544,21 @@ export default function ProductGallery({
       )}
 
 
+
+      {/* Ô phóng to kiểu Amazon: nằm ngoài ảnh (bên phải), đè lên cột thông tin khi đang rê chuột trên ảnh */}
+      {zoom && mounted && createPortal(
+        <div
+          className="pointer-events-none fixed z-[60] rounded-xl border border-gray-200 bg-white bg-no-repeat shadow-lg"
+          style={{
+            ...zoom.pane,
+            backgroundImage: `url(${JSON.stringify(activeImage.url)})`,
+            backgroundSize: zoom.bgSize,
+            backgroundPosition: zoom.bgPos,
+          }}
+          aria-hidden
+        />,
+        document.body
+      )}
 
       {/* Full View Lightbox Modal via Portal to document.body (avoids stacking context bugs) */}
       {isZoomOpen && mounted && createPortal(

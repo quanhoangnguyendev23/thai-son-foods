@@ -476,7 +476,7 @@ export async function POST(request: Request) {
           // Doanh nghiệp chưa chốt combo nào → tạm ngưng toàn bộ combo (kể cả combo trong bảng combos)
           if (!ENABLE_COMBOS) {
             return NextResponse.json(
-              { success: false, error: 'Combo đang tạm ngưng, vui lòng chọn sản phẩm lẻ.' },
+              { success: false, error: 'Gói đang tạm ngưng, vui lòng chọn sản phẩm lẻ.' },
               { status: 400 }
             );
           }
@@ -493,7 +493,7 @@ export async function POST(request: Request) {
           } else if (!ENABLE_CUSTOM_COMBOS) {
             // B0: combo tự chọn (không có trong bảng combos) tạm ngưng — không bao giờ nhận giá do trình duyệt gửi
             return NextResponse.json(
-              { success: false, error: 'Combo đang tạm ngưng, vui lòng chọn sản phẩm lẻ.' },
+              { success: false, error: 'Gói đang tạm ngưng, vui lòng chọn sản phẩm lẻ.' },
               { status: 400 }
             );
           }

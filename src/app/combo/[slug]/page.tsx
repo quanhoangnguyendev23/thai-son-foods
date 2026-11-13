@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { ENABLE_COMBOS } from '@/config/features';
 import { combos, getComboBySlug } from '@/data/combos';
-import { products, categories } from '@/data/products';
+import { categories } from '@/data/products';
 import ComboDetailView from '@/components/product/ComboDetailView';
 import ComboCarousel from '@/components/product/ComboCarousel';
 import RecentlyViewedProducts from '@/components/product/RecentlyViewedProducts';
@@ -14,8 +14,8 @@ import { ReviewProductAd, ReviewComboAd } from '@/components/product/ProductRevi
 import { brands } from '@/data/brands';
 import { getShortProductName } from '@/lib/product-detail';
 import { getProductReviewSummary } from '@/lib/reviews/repository';
-import ProductComboStrip from '@/components/product/ProductComboStrip';
-import { getTotalSold, getBestSellerRanking, getBoughtTogetherIds, getAlsoViewedIds } from '@/lib/product-stats';
+import ProductComboStrip, { type ComboStripItem } from '@/components/product/ProductComboStrip';
+import { getTotalSold, getBestSellerRanking, getBoughtTogetherIds, getAlsoViewedIds, getLiveCatalog } from '@/lib/product-stats';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 import { Product } from '@/types';
 
@@ -74,7 +74,7 @@ async function getLiveCombo(slug: string): Promise<Combo | undefined> {
         salePrice: Number(dbCombo.sale_price) || 0,
         totalItems: Number(dbCombo.total_items) || 10,
         discount: Number(dbCombo.discount) || 0,
-        image: dbCombo.thumbnail || '/images/combos/combo-1.jpg',
+        image: dbCombo.image || dbCombo.thumbnail || '/images/combos/combo-1.jpg',
         description: dbCombo.description || '',
         products: [],
         isActive: true,
@@ -82,7 +82,7 @@ async function getLiveCombo(slug: string): Promise<Combo | undefined> {
 
       const activeImages = Array.isArray(dbCombo.images) && dbCombo.images.length > 0 ? dbCombo.images : [];
       const primaryFromImages = activeImages.find((img: any) => img.isPrimary)?.url || activeImages[0]?.url;
-      const finalImage = dbCombo.thumbnail || primaryFromImages || fallback.image;
+      const finalImage = dbCombo.image || dbCombo.thumbnail || primaryFromImages || fallback.image;
 
       return {
         ...fallback,
@@ -170,7 +170,7 @@ export async function generateMetadata({
   const combo = await getLiveCombo(slug);
 
   if (!combo || combo.isActive === false) {
-    return { title: 'Combo không tìm thấy' };
+    return { title: 'Gói không tìm thấy' };
   }
 
   return {
@@ -219,11 +219,14 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
     console.error('Error fetching initial combo stock on server:', err);
   }
 
+  // Danh mục sản phẩm cho mọi khối gợi ý bên dưới: CSDL là nguồn chính (sản phẩm admin mới thêm, nhãn, tạm ẩn)
+  const catalog = await getLiveCatalog();
+
   // Lấy chi tiết từng chai trong combo từ danh sách products chính
   const comboProductsWithDetail = combo.products.map((item) => {
     // Món combo trong CSDL có thể lưu mã kho ("prod-sb-01") thay vì mã danh mục ("sua-bap-nep") → quy đổi về mã chuẩn để khớp
     const itemKey = canonicalProductId(item.productId);
-    const matchedProduct = products.find(
+    const matchedProduct = catalog.find(
       (p) => p.id === item.productId || p.slug === item.productId || canonicalProductId(p.id) === itemKey
     );
     return {
@@ -234,7 +237,7 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
   });
 
   const otherCombos = await getOtherActiveCombos(combo.id);
-  const bannerProduct = comboProductsWithDetail.find((it) => it.product)?.product || products.find((p) => p.isActive !== false);
+  const bannerProduct = comboProductsWithDetail.find((it) => it.product)?.product || catalog.find((p) => p.isActive !== false);
 
   // ── 2 box "Được tài trợ" trong mục Đánh giá (giống trang sản phẩm; chọn cố định, không ngẫu nhiên) ──
   const brandOfItem = (pid: string) => {
@@ -269,9 +272,26 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
       ])
     : [null, 0];
   const stripRating = stripSummary ? { averageRating: stripSummary.averageRating, totalReviews: stripSummary.totalReviews } : null;
+  // Các gói khác cho dải tự đổi mỗi 10 giây trên desktop (ngẫu nhiên, tối đa 7, không trùng gói đang xem / gói ở mục Đánh giá)
+  const stripPool: ComboStripItem[] = stripCombo
+    ? await Promise.all(
+        otherCombos
+          .filter((c) => c.id !== combo.id && c.id !== stripCombo.id && c.id !== reviewCombo?.id && c.salePrice > 0 && c.slug)
+          .map((c) => ({ c, r: Math.random() }))
+          .sort((a, b) => a.r - b.r)
+          .slice(0, 7)
+          .map(async ({ c }) => {
+            const [s, n] = await Promise.all([
+              getProductReviewSummary(`combo:${c.slug}`).catch(() => null),
+              getTotalSold(c.id, 'combo', c.slug).catch(() => 0),
+            ]);
+            return { combo: c, rating: s ? { averageRating: s.averageRating, totalReviews: s.totalReviews } : null, sold: n };
+          })
+      )
+    : [];
 
   // ── CÁC HÀNG GỢI Ý (tương đương trang sản phẩm, theo nghiệp vụ combo; chọn cố định, hàng ít hơn 4 món thì ẩn) ──
-  const activeCatalog = products.filter((p) => p.isActive !== false);
+  const activeCatalog = catalog.filter((p) => p.isActive !== false);
   const isInCombo = (p: Product) => comboKeys.has(canonicalProductId(p.id));
   const notInCombo = (list: Product[]) => list.filter((p) => !isInCombo(p));
   const byIds = (ids: string[]) =>
@@ -340,9 +360,9 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
     .filter((it) => comboKeys.has(canonicalProductId(it.productId)))
     .sort((a, b) => b.quantity - a.quantity)[0];
   const sharedProduct = sharedTop
-    ? products.find((p) => canonicalProductId(p.id) === canonicalProductId(sharedTop.productId))
+    ? catalog.find((p) => canonicalProductId(p.id) === canonicalProductId(sharedTop.productId))
     : undefined;
-  const reviewComboHeadline = sharedProduct ? `Combo khác có ${getShortProductName(sharedProduct)}` : undefined;
+  const reviewComboHeadline = sharedProduct ? `Gói khác có ${getShortProductName(sharedProduct)}` : undefined;
   const reviewAdBrand = reviewAdProduct ? brandOfItem(reviewAdProduct.id) : undefined;
 
   return (
@@ -351,7 +371,7 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
       <div className="w-full lg:px-14">
         {/* Dải combo gợi ý phía trên breadcrumb (giống trang sản phẩm) */}
         {stripCombo && (
-          <ProductComboStrip combo={stripCombo} catalog={products} rating={stripRating} sold={stripSold} />
+          <ProductComboStrip combo={stripCombo} catalog={catalog} rating={stripRating} sold={stripSold} pool={stripPool} />
         )}
 
         {/* Cột nội dung chính */}
@@ -368,7 +388,7 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
         {/* SP · MUA LẺ SẢN PHẨM TRONG COMBO (vị trí "Gợi ý mua kèm" của trang SP) */}
         {comboItemProducts.length > 0 && (
           <div className="border-t border-gray-200 bg-white">
-            <ProductCarousel plain title="Mua lẻ sản phẩm trong combo" subtitle="Các sản phẩm có trong combo, mua riêng từng loại" products={comboItemProducts} mobileGrid wide />
+            <ProductCarousel plain title="Mua lẻ sản phẩm trong gói" subtitle="Các sản phẩm có trong gói, mua riêng từng loại" products={comboItemProducts} mobileGrid wide />
           </div>
         )}
 
@@ -382,11 +402,11 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
         {/* COMBO · CÓ CÙNG SẢN PHẨM (nhiều chai chung trước); không có thì hàng combo khác lên vị trí này */}
         {relatedComboRow.length > 0 ? (
           <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Combo khác có cùng sản phẩm" subtitle="Cùng các món trong combo này, phối thêm vị khác" combos={relatedComboRow} />
+            <ComboCarousel plain title="Gói khác có cùng sản phẩm" subtitle="Cùng các món trong gói này, phối thêm vị khác" combos={relatedComboRow} />
           </div>
         ) : moreComboRow.length > 0 ? (
           <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" subtitle="Gần tầm giá combo này đứng trước" combos={moreComboRow} />
+            <ComboCarousel plain title="Các gói nổi bật đáng cân nhắc" subtitle="Gần tầm giá gói này đứng trước" combos={moreComboRow} />
           </div>
         ) : null}
 
@@ -400,14 +420,14 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
         {/* COMBO · KHÁC ĐÁNG CÂN NHẮC: combo chưa có ở hàng trên, gần tầm giá trước (gộp "Combo cùng tầm giá" + "Combo nổi bật") */}
         {relatedComboRow.length > 0 && moreComboRow.length > 0 && (
           <div className="border-t border-gray-200 bg-white">
-            <ComboCarousel plain title="Các combo nổi bật đáng cân nhắc" subtitle="Gần tầm giá combo này đứng trước" combos={moreComboRow} />
+            <ComboCarousel plain title="Các gói nổi bật đáng cân nhắc" subtitle="Gần tầm giá gói này đứng trước" combos={moreComboRow} />
           </div>
         )}
 
         {/* SP · KHÁCH MUA COMBO NÀY CŨNG MUA (dữ liệu đơn hàng thật) */}
         {boughtTogetherProducts.length >= MIN_ROW && (
           <div className="border-t border-gray-200 bg-white">
-            <ProductCarousel plain title="Khách mua combo này cũng mua" products={boughtTogetherProducts} mobileGrid wide />
+            <ProductCarousel plain title="Khách mua gói này cũng mua" products={boughtTogetherProducts} mobileGrid wide />
           </div>
         )}
 
@@ -415,7 +435,7 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
         {bannerProduct && (
           <div className="border-t border-gray-200 bg-white">
             <div className="max-w-6xl mx-auto px-4 sm:px-6">
-              <ProductSponsoredBanner product={bannerProduct} hideUnverifiedStats randomize />
+              <ProductSponsoredBanner product={bannerProduct} hideUnverifiedStats randomize currentComboId={combo.id} />
             </div>
           </div>
         )}
@@ -428,7 +448,7 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
                 Number(y.productIds.some((id) => comboKeys.has(canonicalProductId(id)))) -
                 Number(x.productIds.some((id) => comboKeys.has(canonicalProductId(id))))
             )}
-            products={products}
+            products={catalog}
           />
         </div>
 
@@ -461,7 +481,7 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
         {/* ── KHÁCH CŨNG XEM (dữ liệu lượt xem thật) ── */}
         {alsoViewedProducts.length >= MIN_ROW && (
           <div className="border-t border-gray-200 bg-white">
-            <ProductCarousel plain title="Khách xem combo này cũng xem" products={alsoViewedProducts} mobileGrid wide />
+            <ProductCarousel plain title="Khách xem gói này cũng xem" products={alsoViewedProducts} mobileGrid wide />
           </div>
         )}
 

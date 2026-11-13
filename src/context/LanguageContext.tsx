@@ -7,7 +7,7 @@ export type Language = 'vi' | 'en';
 export const translations = {
   vi: {
     // Header
-    searchPlaceholder: 'Tìm kiếm theo bắp, sữa hạt sen, combo đồ uống...',
+    searchPlaceholder: 'Tìm kiếm theo bắp, sữa hạt sen, gói đồ uống...',
     searchBtn: 'Tìm kiếm',
     searchHints: 'Gợi ý tìm kiếm:',
     support247: 'Hỗ trợ (07:00–21:30)',
@@ -56,10 +56,10 @@ export const translations = {
     nextProducts: 'Xem thêm sản phẩm',
 
     // Combo Section
-    combosTitle: 'Combo tiết kiệm',
-    viewAllCombos: 'Xem tất cả combo',
-    customizeCombo: 'Tùy chọn vị combo',
-    addComboToCart: 'Thêm combo vào giỏ hàng',
+    combosTitle: 'Gói tiết kiệm',
+    viewAllCombos: 'Xem tất cả gói',
+    customizeCombo: 'Tùy chọn vị gói',
+    addComboToCart: 'Thêm gói vào giỏ hàng',
     viewComboDetails: 'Xem chi tiết',
     bottles: 'chai',
 
@@ -104,7 +104,7 @@ export const translations = {
   },
   en: {
     // Header
-    searchPlaceholder: 'Search by corn milk, lotus milk, drink combos...',
+    searchPlaceholder: 'Search by corn milk, lotus milk, drink bundles...',
     searchBtn: 'Search',
     searchHints: 'Popular searches:',
     support247: 'Support (7:00–21:30)',
@@ -153,10 +153,10 @@ export const translations = {
     nextProducts: 'Next products',
 
     // Combo Section
-    combosTitle: 'Value Combos',
-    viewAllCombos: 'View all combos',
-    customizeCombo: 'Customize Combo',
-    addComboToCart: 'Add combo to cart',
+    combosTitle: 'Value Bundles',
+    viewAllCombos: 'View all bundles',
+    customizeCombo: 'Customize Bundle',
+    addComboToCart: 'Add bundle to cart',
     viewComboDetails: 'View details',
     bottles: 'bottles',
 

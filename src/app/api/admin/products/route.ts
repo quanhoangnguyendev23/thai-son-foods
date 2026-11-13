@@ -6,6 +6,7 @@ import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { syncProductToStaticFile } from '@/lib/products-file-sync';
 import { publicErrorMessage } from '@/lib/apiError';
+import { sanitizeProductDetailContent } from '@/lib/content-validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -207,11 +208,16 @@ export async function POST(request: Request) {
       ? Math.max(0, parseInt(body.cost_price, 10) || 0)
       : 0;
 
+    const createDetail = sanitizeProductDetailContent(body.detail_content);
+    if ('error' in createDetail) {
+      return NextResponse.json({ success: false, error: createDetail.error }, { status: 400 });
+    }
+
     const insertSql = `
       INSERT INTO products (
         id, slug, name, sku, short_description, description, price, unit, thumbnail,
-        category_id, is_featured, is_new, is_best_seller, is_active, cost_price, sold_offset, volume, energy_kcal
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        category_id, is_featured, is_new, is_best_seller, is_active, cost_price, sold_offset, volume, energy_kcal, detail_content
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19::jsonb)
       RETURNING *;
     `;
 
@@ -237,6 +243,8 @@ export async function POST(request: Request) {
       body.energy_kcal !== undefined && body.energy_kcal !== null && body.energy_kcal !== '' && Number.isFinite(Number(body.energy_kcal))
         ? Math.min(9999, Math.max(0, Math.round(Number(body.energy_kcal) * 10) / 10))
         : null,
+      // $19: thông tin chi tiết (thành phần, dinh dưỡng, cách dùng...) đã làm sạch; trống → null
+      createDetail.value ? JSON.stringify(createDetail.value) : null,
     ];
 
     const variantsError = validateVariantsInput(variants);
@@ -419,6 +427,13 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Thông tin chi tiết (thành phần, dinh dưỡng, cách dùng...): chỉ ghi khi request có gửi detail_content; gửi null = xoá
+    const hasDetailContent = body.detail_content !== undefined;
+    const detailCheck = sanitizeProductDetailContent(body.detail_content);
+    if ('error' in detailCheck) {
+      return NextResponse.json({ success: false, error: detailCheck.error }, { status: 400 });
+    }
+
     const updateSql = `
       UPDATE products SET
         name = COALESCE($2, name),
@@ -436,7 +451,8 @@ export async function PUT(request: Request) {
         cost_price = COALESCE($14, cost_price),
         sold_offset = COALESCE($15, sold_offset),
         volume = COALESCE($17, volume),
-        energy_kcal = COALESCE($18, energy_kcal)
+        energy_kcal = COALESCE($18, energy_kcal),
+        detail_content = CASE WHEN $20::boolean THEN $19::jsonb ELSE detail_content END
       WHERE id = $1
       RETURNING *;
     `;
@@ -467,6 +483,9 @@ export async function PUT(request: Request) {
       body.energy_kcal !== undefined && body.energy_kcal !== null && body.energy_kcal !== '' && Number.isFinite(Number(body.energy_kcal))
         ? Math.min(9999, Math.max(0, Math.round(Number(body.energy_kcal) * 10) / 10))
         : null,
+      // $19, $20: thông tin chi tiết đã làm sạch (JSON) và cờ "request có gửi trường này"
+      detailCheck.value ? JSON.stringify(detailCheck.value) : null,
+      hasDetailContent,
     ];
 
     const result = await query(updateSql, values);
@@ -640,7 +659,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: `Sản phẩm đang nằm trong combo: ${combosUsing.rows.map((r: any) => r.name).join(', ')}. Hãy gỡ khỏi combo trước, hoặc chọn "Tạm ẩn" thay vì xóa.`,
+          error: `Sản phẩm đang nằm trong gói: ${combosUsing.rows.map((r: any) => r.name).join(', ')}. Hãy gỡ khỏi gói trước, hoặc chọn "Tạm ẩn" thay vì xóa.`,
           code: 'PRODUCT_IN_USE',
         },
         { status: 409 }

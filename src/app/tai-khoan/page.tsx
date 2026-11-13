@@ -748,8 +748,8 @@ function AccountContent() {
                   </h3>
                   <p className="text-xs text-gray-500 max-w-sm mx-auto mb-6">
                     {language === 'en'
-                      ? 'Explore our natural corn milk, lotus seed milk, and beverage combos!'
-                      : 'Khám phá ngay các dòng sữa bắp nếp, sữa hạt sen và combo đồ uống dinh dưỡng thơm ngon của Thái Sơn Foods!'}
+                      ? 'Explore our natural corn milk, lotus seed milk, and beverage bundles!'
+                      : 'Khám phá ngay các dòng sữa bắp nếp, sữa hạt sen và gói đồ uống dinh dưỡng thơm ngon của Thái Sơn Foods!'}
                   </p>
                   <Link
                     href="/#san-pham"

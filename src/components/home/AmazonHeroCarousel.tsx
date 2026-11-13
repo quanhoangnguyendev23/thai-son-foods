@@ -8,6 +8,7 @@ import { Banner } from '@/types';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { HOMEPAGE_HERO } from '@/config/homepage';
+import { AttentionStyles, attentionCta } from '@/components/ui/AttentionEffects';
 
 interface AmazonHeroCarouselProps {
   banners: Banner[];
@@ -291,17 +292,20 @@ export default function AmazonHeroCarousel({
                     {copy.subtitle}
                   </p>
                 )}
+                <AttentionStyles />
+                {/* 13/11: nút chính của banner — rê chuột nhấc nhẹ + bóng ấm + mũi tên trượt; tự có vệt sáng lướt mỗi 6 giây */}
                 <Link
                   href={copy.href}
                   className={cn(
                     'inline-flex items-center gap-1.5 self-start rounded-full bg-corn hover:bg-corn-dark text-text-dark shadow-xs transition-colors',
+                    attentionCta(true),
                     'min-h-10 sm:min-h-11 px-4 sm:px-5 text-sm sm:text-base',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950',
                     hasText ? 'mt-3 sm:mt-4' : ''
                   )}
                 >
                   {copy.ctaLabel}
-                  <ArrowRight className="w-4 h-4" aria-hidden />
+                  <ArrowRight className="tsf-cta-arrow w-4 h-4" aria-hidden />
                 </Link>
               </div>
             </div>

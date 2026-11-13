@@ -49,14 +49,14 @@ export const IMAGE_SPECS: Record<ImageSpecKey, ImageSpec> = {
     note: 'Ảnh hiển thị trọn khung (không cắt). Đặt chai/sản phẩm ở giữa, chừa lề khoảng 8% mỗi cạnh vì ảnh còn được cắt vuông ở giỏ hàng và tìm kiếm.',
   },
   combo: {
-    label: 'Ảnh combo',
+    label: 'Ảnh gói',
     width: 1200,
     height: 900,
     ratioLabel: '4:3',
     minWidth: 800,
     maxKb: 200,
     frame:
-      'Khung 4:3 ở trang chi tiết combo (dùng chung bộ xem ảnh với trang sản phẩm), thẻ combo trang chủ, deal trong ngày.',
+      'Khung 4:3 ở trang chi tiết gói (dùng chung bộ xem ảnh với trang sản phẩm), thẻ gói trang chủ, deal trong ngày.',
     note: 'Cùng cỡ với ảnh sản phẩm để hai trang chi tiết hiển thị giống nhau. Giữ nhóm chai ở giữa, chừa lề khoảng 8% mỗi cạnh.',
   },
   banner_hero: {

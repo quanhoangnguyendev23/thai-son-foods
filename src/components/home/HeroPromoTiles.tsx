@@ -8,6 +8,7 @@ import { Banner } from '@/types';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import { MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
+import { AttentionStyles, attentionBeat } from '@/components/ui/AttentionEffects';
 
 interface HeroPromoTilesProps {
   /** Banner admin placement = 'promo' (tối đa 2), hoặc ô mẫu HERO_PROMO_PLACEHOLDER_TILES */
@@ -87,9 +88,18 @@ export default function HeroPromoTiles({ tiles, className }: HeroPromoTilesProps
 
             <div className="relative z-[1] w-[58%] flex flex-col justify-center gap-1 px-4 lg:px-5 py-3">
               {tile.tag && (
-                <span className="self-start rounded-full bg-corn px-2 py-0.5 text-xs leading-tight text-text-dark">
-                  {tile.tag}
-                </span>
+                <>
+                  <AttentionStyles />
+                  {/* 13/11: ô dẫn tới Deal trong ngày → nhãn có nhịp đập (hiệu ứng chung); ô khác giữ yên */}
+                  <span
+                    className={cn(
+                      'self-start rounded-full bg-corn px-2 py-0.5 text-xs leading-tight text-text-dark',
+                      tile.link?.includes('deal-trong-ngay') && cn(attentionBeat, 'origin-left')
+                    )}
+                  >
+                    {tile.tag}
+                  </span>
+                </>
               )}
               {title && (
                 <p className="font-heading text-lg sm:text-lg xl:text-xl leading-tight line-clamp-2">

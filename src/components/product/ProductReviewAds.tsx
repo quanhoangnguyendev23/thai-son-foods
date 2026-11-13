@@ -6,6 +6,7 @@ import { Combo, Product } from '@/types';
 import { Brand } from '@/data/brands';
 import { formatPrice, cn } from '@/lib/utils';
 import { getProductImage, getVariantOriginalPrice } from '@/lib/product-detail';
+import { AttentionPrice, AttentionStyles, attentionCta, attentionCtaDelay } from '@/components/ui/AttentionEffects';
 
 /**
  * Hai ô gợi ý đặt trong mục Đánh giá của trang chi tiết (theo kiểu ô "Sponsored" của Amazon):
@@ -63,7 +64,7 @@ export function ReviewProductAd({
 
   return (
     <div>
-      <Link href={href} title={product.name} className={cn(CARD, 'p-3')}>
+      <Link href={href} title={product.name} className={cn(CARD, 'tsf-cta-trigger p-3')}>
         {/* Ảnh theo đúng tỉ lệ của file (ảnh SP 1200x900), hiện trọn ảnh — không cắt nhãn/logo ở góc */}
         <span className="block overflow-hidden rounded-md bg-white">
           <Image
@@ -99,7 +100,8 @@ export function ReviewProductAd({
               {perBottle ? ` · ${formatPrice(perBottle)}đ/chai` : ''}
             </span>
           </span>
-          <span className={CTA}>Mua ngay</span>
+          <AttentionStyles />
+          <span className={cn(CTA, attentionCta(true))} style={attentionCtaDelay(1200)}>Mua ngay</span>
         </span>
       </Link>
       <SponsoredLabel />
@@ -113,7 +115,7 @@ export function ReviewComboAd({ combo, brand, headline }: { combo: Combo; brand?
 
   return (
     <div>
-      <Link href={href} title={combo.name} className={cn(CARD, 'overflow-hidden')}>
+      <Link href={href} title={combo.name} className={cn(CARD, 'tsf-cta-trigger overflow-hidden')}>
         <span className="flex flex-col sm:flex-row sm:items-stretch">
           {/* Logo hãng: chỉ khi cả combo cùng một hãng (không có → bỏ hẳn ô logo) */}
           {brand && (
@@ -140,7 +142,7 @@ export function ReviewComboAd({ combo, brand, headline }: { combo: Combo; brand?
               {combo.name}
             </span>
             <span className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-lg leading-tight text-ink-950">{formatPrice(combo.salePrice)}đ</span>
+              <AttentionPrice className="text-lg leading-tight text-ink-950">{formatPrice(combo.salePrice)}đ</AttentionPrice>
               {saving > 0 && <span className="text-xs text-gray-500 line-through">{formatPrice(combo.originalPrice)}đ</span>}
             </span>
             <span className="flex flex-wrap items-center justify-between gap-2">
@@ -152,7 +154,7 @@ export function ReviewComboAd({ combo, brand, headline }: { combo: Combo; brand?
                   </span>
                 )}
               </span>
-              <span className={CTA}>Xem combo</span>
+              <span className={cn(CTA, attentionCta(true))} style={attentionCtaDelay(4200)}>Xem gói</span>
             </span>
           </span>
         </span>

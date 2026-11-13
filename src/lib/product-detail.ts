@@ -78,3 +78,100 @@ export function getProductImage(product: Pick<Product, 'thumbnail'>): string {
 export function isSameProduct(a: Pick<Product, 'id' | 'slug'>, b: Pick<Product, 'id' | 'slug'>): boolean {
   return a.id === b.id || a.slug === b.slug;
 }
+
+/** Một dòng bảng products (CSDL) kèm quy cách và ảnh — dữ liệu đầu vào của buildLiveCatalog */
+export interface ProductCatalogRow {
+  id: string;
+  slug: string | null;
+  sku: string | null;
+  name: string | null;
+  price: number | string | null;
+  unit: string | null;
+  thumbnail: string | null;
+  category_id: string | null;
+  short_description: string | null;
+  description: string | null;
+  is_featured: boolean | null;
+  is_best_seller: boolean | null;
+  is_new: boolean | null;
+  is_active: boolean | null;
+  volume?: string | null;
+  energy_kcal?: number | string | null;
+  variants?: { id: string; name: string; quantity: number | string; price: number | string; unit: string | null }[] | null;
+  images?: { url: string; isThumbnail?: boolean }[] | null;
+}
+
+/**
+ * Danh mục sản phẩm "sống" cho các khối gợi ý: bảng products (CSDL) là nguồn chính, src/data/products.ts bổ sung
+ * ảnh gallery, tên tiếng Anh, banner... Cùng quy tắc ghép với /api/products:
+ *  - Khớp theo id, slug hoặc sku; sản phẩm khớp giữ mã + slug + thứ tự của danh mục tĩnh (liên kết, thống kê cũ không đổi).
+ *  - Sản phẩm mới chỉ có trong CSDL được thêm vào sau, theo thứ tự trong CSDL.
+ *  - Sản phẩm không còn trong CSDL (đã xoá) bị bỏ; tạm ẩn giữ lại với isActive=false (nơi hiển thị tự lọc).
+ *  - CSDL trống → trả nguyên danh mục tĩnh. Không sửa mảng gốc.
+ */
+export function buildLiveCatalog(staticProducts: Product[], rows: ProductCatalogRow[]): Product[] {
+  if (rows.length === 0) return staticProducts;
+  const toVariants = (row: ProductCatalogRow) =>
+    Array.isArray(row.variants) && row.variants.length > 0
+      ? row.variants
+          .map((v) => ({ id: v.id, name: v.name, quantity: Number(v.quantity) || 1, price: Number(v.price) || 0, unit: v.unit || 'lốc' }))
+          .sort((a, b) => a.quantity - b.quantity)
+      : null;
+  const thumbOf = (row: ProductCatalogRow) => {
+    const imgs = Array.isArray(row.images) ? row.images : [];
+    return row.thumbnail || imgs.find((i) => i.isThumbnail)?.url || imgs[0]?.url || '';
+  };
+  const flag = (v: boolean | null, fallback: boolean) => (v !== null && v !== undefined ? Boolean(v) : fallback);
+  const categoryOf = (row: ProductCatalogRow) => (row.category_id ? row.category_id.replace(/^cat-/, '') : '');
+
+  const used = new Set<ProductCatalogRow>();
+  const merged: Product[] = [];
+  for (const base of staticProducts) {
+    const row = rows.find((r) => !used.has(r) && (r.id === base.id || (r.slug && r.slug === base.slug) || (r.sku && r.sku === base.sku)));
+    if (!row) continue;
+    used.add(row);
+    merged.push({
+      ...base,
+      name: row.name || base.name,
+      sku: row.sku || base.sku,
+      price: Number(row.price) || base.price,
+      unit: row.unit || base.unit,
+      shortDescription: row.short_description || base.shortDescription,
+      description: row.description || base.description,
+      volume: row.volume || base.volume,
+      energyKcal: row.energy_kcal !== null && row.energy_kcal !== undefined ? Number(row.energy_kcal) : base.energyKcal ?? null,
+      thumbnail: thumbOf(row) || base.thumbnail,
+      categoryId: categoryOf(row) || base.categoryId,
+      isFeatured: flag(row.is_featured, base.isFeatured),
+      isNew: flag(row.is_new, base.isNew),
+      isBestSeller: flag(row.is_best_seller, base.isBestSeller),
+      isActive: flag(row.is_active, base.isActive),
+      variants: toVariants(row) || base.variants,
+    });
+  }
+  for (const row of rows) {
+    if (used.has(row) || !row.slug) continue;
+    const thumbnail = thumbOf(row) || MISSING_PRODUCT_IMAGE;
+    merged.push({
+      id: row.id,
+      slug: row.slug,
+      sku: row.sku || row.id,
+      name: row.name || row.slug,
+      price: Number(row.price) || 0,
+      unit: row.unit || 'chai',
+      categoryId: categoryOf(row),
+      thumbnail,
+      images: [{ id: 'img-1', url: thumbnail, alt: row.name || '', sortOrder: 1 }],
+      shortDescription: row.short_description || '',
+      description: row.description || '',
+      volume: row.volume || undefined,
+      energyKcal: row.energy_kcal !== null && row.energy_kcal !== undefined ? Number(row.energy_kcal) : null,
+      isFeatured: Boolean(row.is_featured),
+      isNew: Boolean(row.is_new),
+      isBestSeller: Boolean(row.is_best_seller),
+      isActive: row.is_active !== false,
+      variants: toVariants(row) || [],
+    });
+  }
+  return merged;
+}
