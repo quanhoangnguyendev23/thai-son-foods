@@ -11,6 +11,17 @@ dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
 import { assertSafeDatabase } from '../scripts/db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase();
 
@@ -179,7 +190,7 @@ async function runPhase1Tests() {
     const adminLogin = await fetch(`${BASE_URL}/api/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: BASE_URL },
-      body: JSON.stringify({ identifier: 'admin', password: 'Admin@123' }),
+      body: JSON.stringify({ identifier: 'admin', password: requireSecretEnv('TEST_ADMIN_PASSWORD') }),
     });
     const adminCookie = adminLogin.headers.get('set-cookie')?.split(';')[0] || '';
     assert(adminLogin.status === 200 && adminCookie.length > 0, 'Đăng nhập Super Admin thành công');

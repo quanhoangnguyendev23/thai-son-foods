@@ -42,7 +42,15 @@ const DB_PASSWORD_FROM_ENV = (() => {
   const url = dbArg || process.env.DATABASE_URL;
   try { return url ? decodeURIComponent(new URL(url).password) : ''; } catch { return ''; }
 })();
-const WEAK_PASSWORDS = ['Admin@123', ...(DB_PASSWORD_FROM_ENV ? [DB_PASSWORD_FROM_ENV] : []), 'QaTest@2026!Password', 'Password123!', 'Password123'];
+// F-02: mật khẩu mặc định cũ không còn viết trong Git. Liệt kê chúng trong biến KNOWN_WEAK_PASSWORDS
+// (phân tách bằng dấu phẩy); TEST_ADMIN_PASSWORD, QA_SEED_PASSWORD, STORE_ADMIN_INITIAL_PASSWORD nếu có cũng bị coi là yếu.
+const KNOWN_WEAK_FROM_ENV = [
+  ...String(process.env.KNOWN_WEAK_PASSWORDS || '').split(','),
+  process.env.TEST_ADMIN_PASSWORD,
+  process.env.QA_SEED_PASSWORD,
+  process.env.STORE_ADMIN_INITIAL_PASSWORD,
+].map((s) => String(s || '').trim()).filter(Boolean);
+const WEAK_PASSWORDS = [...KNOWN_WEAK_FROM_ENV, ...(DB_PASSWORD_FROM_ENV ? [DB_PASSWORD_FROM_ENV] : []), 'Password123!', 'Password123'];
 const TEST_EXACT = ['marketing_test4', 'test-mar', 'mar1', 'staff_empty_store'];
 const isTestAccount = (username) => {
   const u = String(username || '').toLowerCase();

@@ -13,6 +13,17 @@ import path from 'node:path';
 
 import { assertSafeDatabase } from '../../scripts/db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase();
 
@@ -45,7 +56,7 @@ globalThis.fetch = (url, opts = {}) => {
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'tsf_super_secret_jwt_key_2026_thai_son_foods'
 );
-const CRON_SECRET = process.env.CRON_SECRET || 'staging_test_cron_secret_1234567890';
+const CRON_SECRET = requireSecretEnv('CRON_SECRET');
 
 const pool = new pg.Pool({ connectionString: DB_URL });
 

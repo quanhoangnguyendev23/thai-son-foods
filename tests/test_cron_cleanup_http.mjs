@@ -14,12 +14,23 @@ import assert from 'node:assert';
 import { assertSafeTestEnvironment } from './helpers/safe_test_env.mjs';
 import { GET } from '../src/app/api/cron/cleanup-reservations/route.ts';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // 1. Kiểm tra môi trường an toàn
 assertSafeTestEnvironment();
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const CRON_URL = `${APP_URL}/api/cron/cleanup-reservations`;
-const VALID_SECRET = process.env.CRON_SECRET || 'staging_test_cron_secret_1234567890';
+const VALID_SECRET = requireSecretEnv('CRON_SECRET');
 
 async function runCronHttpTests() {
   console.log('================================================================');

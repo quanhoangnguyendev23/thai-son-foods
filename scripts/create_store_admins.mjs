@@ -3,6 +3,17 @@ import bcrypt from 'bcryptjs';
 
 import { assertSafeDatabase } from './db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase();
 
@@ -60,7 +71,7 @@ async function seedAdmins() {
   console.log(`Đã khóa các tài khoản test: ${dummyUsernames.join(', ')}`);
 
   const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash('Admin@123', salt);
+  const hash = await bcrypt.hash(requireSecretEnv('STORE_ADMIN_INITIAL_PASSWORD'), salt);
 
   for (const st of ACTIVE_STORE_ADMINS) {
     const id = `admin_store_${st.code.toLowerCase()}`;
@@ -81,7 +92,7 @@ async function seedAdmins() {
       [id, username, email, hash, fullName]
     );
 
-    console.log(`✅ [${username}] ${email} - ${fullName} (Mật khẩu: Admin@123)`);
+    console.log(`✅ [${username}] ${email} - ${fullName} (Mật khẩu: giá trị STORE_ADMIN_INITIAL_PASSWORD)`);
   }
 
   const res = await pool.query(

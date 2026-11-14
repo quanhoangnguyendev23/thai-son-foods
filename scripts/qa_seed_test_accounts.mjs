@@ -3,6 +3,17 @@ import bcrypt from 'bcryptjs';
 
 import { assertSafeDatabase } from './db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase();
 
@@ -22,7 +33,7 @@ const pool = new pg.Pool({ connectionString: DB_URL });
 async function seedTestAccounts() {
   const client = await pool.connect();
   try {
-    const dummyHash = await bcrypt.hash('QaTest@2026!Password', 10);
+    const dummyHash = await bcrypt.hash(requireSecretEnv('QA_SEED_PASSWORD'), 10);
 
     // 1. Admin test accounts
     await client.query(`

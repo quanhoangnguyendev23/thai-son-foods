@@ -9,6 +9,17 @@ dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
 import { assertSafeDatabase } from './db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase();
 
@@ -60,7 +71,7 @@ async function runPhase4Tests() {
     const superLoginRes = await fetch(`${BASE_URL}/api/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: 'admin', password: 'Admin@123' }),
+      body: JSON.stringify({ identifier: 'admin', password: requireSecretEnv('TEST_ADMIN_PASSWORD') }),
     });
     const superCookie = superLoginRes.headers.get('set-cookie')?.split(';')[0] || '';
     await assert(superLoginRes.status === 200 && superCookie.length > 0, 'Đăng nhập Super Admin thành công');
@@ -68,7 +79,7 @@ async function runPhase4Tests() {
     const storeAdminLoginRes = await fetch(`${BASE_URL}/api/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: 'adminCH1', password: 'Admin@123' }),
+      body: JSON.stringify({ identifier: 'adminCH1', password: requireSecretEnv('TEST_ADMIN_PASSWORD') }),
     });
     const storeAdminCookie = storeAdminLoginRes.headers.get('set-cookie')?.split(';')[0] || '';
     await assert(storeAdminLoginRes.status === 200 && storeAdminCookie.length > 0, 'Đăng nhập Store Admin (adminCH1) thành công');

@@ -2,6 +2,17 @@ import { Pool } from 'pg';
 
 import { assertSafeDatabase } from './db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase('WebTSF');
 
@@ -68,7 +79,7 @@ async function testInventoryFlow() {
   const loginRes = await fetch('http://localhost:3000/api/admin/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier: 'adminCH1', password: 'Admin@123' }),
+    body: JSON.stringify({ identifier: 'adminCH1', password: requireSecretEnv('TEST_ADMIN_PASSWORD') }),
   });
   const cookie = loginRes.headers.get('set-cookie') || '';
   console.log('Đã đăng nhập adminCH1, cookie:', cookie ? 'OK' : 'None');

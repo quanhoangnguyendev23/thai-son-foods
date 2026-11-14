@@ -10,6 +10,17 @@ dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
 import { assertSafeDatabase } from './db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase();
 
@@ -23,7 +34,7 @@ async function seedDemoPartners() {
     console.log('🚀 SEEDING DEMO PARTNERS (CTV & ĐẠI LÝ)...');
 
     const salt = await bcrypt.genSalt(10);
-    const pwdHash = await bcrypt.hash('Demo@123', salt);
+    const pwdHash = await bcrypt.hash(requireSecretEnv('DEMO_PARTNER_PASSWORD'), salt);
 
     // 1. Tạo User & Partner Profile cho CTV Demo
     const ctvUserId = 'usr_demo_ctv_01';
@@ -100,11 +111,11 @@ async function seedDemoPartners() {
 
     console.log('✅ ĐÃ SEED THÀNH CÔNG 2 TÀI KHOẢN DEMO:');
     console.log(`1. CỘNG TÁC VIÊN (CTV):`);
-    console.log(`   - SĐT: ${ctvPhone} | Email: ${ctvEmail} | Mật khẩu: Demo@123`);
+    console.log(`   - SĐT: ${ctvPhone} | Email: ${ctvEmail} | Mật khẩu: giá trị DEMO_PARTNER_PASSWORD`);
     console.log(`   - Mã Ref: ${ctvCode} (Link: /?ref=${ctvCode})`);
     console.log(`   - Số dư ví khả dụng: 500.000 VNĐ (sẵn sàng test Payout)`);
     console.log(`2. ĐẠI LÝ SỈ (DEALER):`);
-    console.log(`   - SĐT: ${dlPhone} | Email: ${dlEmail} | Mật khẩu: Demo@123`);
+    console.log(`   - SĐT: ${dlPhone} | Email: ${dlEmail} | Mật khẩu: giá trị DEMO_PARTNER_PASSWORD`);
     console.log(`   - Hạng: Đại lý Đồng (Tier Bronze - Chiết khấu 15%)`);
     console.log(`   - Mã Đại lý: ${dlCode}`);
   } finally {

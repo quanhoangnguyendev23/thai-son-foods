@@ -9,6 +9,17 @@ dotenv.config({ path: resolve(__dirname, '..', '.env') });
 
 import { assertSafeDatabase } from './db-guard.mjs';
 
+// F-02: mật khẩu tài khoản test / secret đọc từ biến môi trường, không viết cứng trong Git
+// (đặt trong .env local, xem docs/golive/F-02-SECRET-PRODUCTION.md)
+function requireSecretEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`Thiếu biến môi trường ${name}. Đặt trong .env local (xem docs/golive/F-02-SECRET-PRODUCTION.md).`);
+    process.exit(1);
+  }
+  return value;
+}
+
 // TEST-GUARD: chỉ chạy trên database staging/test (hoặc ALLOW_PROD_DB=yes) để tránh ghi/xóa nhầm dữ liệu thật.
 assertSafeDatabase();
 
@@ -67,31 +78,31 @@ async function runComprehensiveTests() {
     // -------------------------------------------------------------------------
     console.log('🔑 [BƯỚC 0] Đăng nhập xác thực các vai trò (RBAC Tokens)...');
 
-    // 0.1 Super Admin (admin / Admin@123)
+    // 0.1 Super Admin (admin / <TEST_ADMIN_PASSWORD>)
     const superLoginRes = await fetch(`${BASE_URL}/api/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: BASE_URL },
-      body: JSON.stringify({ identifier: 'admin', password: 'Admin@123' }),
+      body: JSON.stringify({ identifier: 'admin', password: requireSecretEnv('TEST_ADMIN_PASSWORD') }),
     });
     const superCookie = superLoginRes.headers.get('set-cookie')?.split(';')[0] || '';
     const superData = await superLoginRes.json();
-    recordTest('Đăng nhập Super Admin (admin / Admin@123)', superLoginRes.status === 200 && superCookie.length > 0, `User: ${superData.user?.username}, Role: ${superData.user?.role}`);
+    recordTest('Đăng nhập Super Admin (admin / <TEST_ADMIN_PASSWORD>)', superLoginRes.status === 200 && superCookie.length > 0, `User: ${superData.user?.username}, Role: ${superData.user?.role}`);
 
-    // 0.2 Store Staff Chi nhánh AMA (qa_staff_ama / QaTest@2026!Password)
+    // 0.2 Store Staff Chi nhánh AMA (qa_staff_ama / <QA_SEED_PASSWORD>)
     const amaLoginRes = await fetch(`${BASE_URL}/api/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: BASE_URL },
-      body: JSON.stringify({ identifier: 'qa_staff_ama', password: 'QaTest@2026!Password' }),
+      body: JSON.stringify({ identifier: 'qa_staff_ama', password: requireSecretEnv('QA_SEED_PASSWORD') }),
     });
     const amaCookie = amaLoginRes.headers.get('set-cookie')?.split(';')[0] || '';
     const amaData = await amaLoginRes.json();
     recordTest('Đăng nhập Store Staff AMA (qa_staff_ama)', amaLoginRes.status === 200 && amaCookie.length > 0, `Store: ${amaData.user?.storeCode}, Role: ${amaData.user?.role}`);
 
-    // 0.3 Store Staff Chi nhánh D1 (qa_staff_d1 / QaTest@2026!Password)
+    // 0.3 Store Staff Chi nhánh D1 (qa_staff_d1 / <QA_SEED_PASSWORD>)
     const d1LoginRes = await fetch(`${BASE_URL}/api/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: BASE_URL },
-      body: JSON.stringify({ identifier: 'qa_staff_d1', password: 'QaTest@2026!Password' }),
+      body: JSON.stringify({ identifier: 'qa_staff_d1', password: requireSecretEnv('QA_SEED_PASSWORD') }),
     });
     const d1Cookie = d1LoginRes.headers.get('set-cookie')?.split(';')[0] || '';
     const d1Data = await d1LoginRes.json();
@@ -838,7 +849,7 @@ async function runComprehensiveTests() {
     `, [STORE_TEST, TEST_PROD_ID]);
 
     // Gọi API cron cleanup
-    const cronSecret = process.env.CRON_SECRET || 'staging_test_cron_secret_1234567890';
+    const cronSecret = requireSecretEnv('CRON_SECRET');
     const cronRes = await fetch(`${BASE_URL}/api/cron/cleanup-reservations`, {
       headers: { Authorization: `Bearer ${cronSecret}` },
     });
