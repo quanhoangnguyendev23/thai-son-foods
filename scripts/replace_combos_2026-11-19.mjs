@@ -67,7 +67,12 @@ async function main() {
   try {
     console.log(`[COMBOS] DB: ${dbName}${dryRun ? ' (chạy thử, không ghi)' : ''}`);
     const prod = (await client.query(`SELECT id, sku, price FROM products WHERE sku IS NOT NULL;`)).rows;
+    // Mã SKU: staging dùng "SB", DB cloud dùng "SB-01" → nhận cả hai (mã đúng nguyên văn được ưu tiên)
     const bySku = new Map(prod.map((p) => [String(p.sku).toUpperCase(), p]));
+    for (const p of prod) {
+      const base = String(p.sku).toUpperCase().replace(/-\d+$/, '');
+      if (!bySku.has(base)) bySku.set(base, p);
+    }
     const existing = (await client.query(`SELECT id, slug, name FROM combos ORDER BY created_at;`)).rows;
 
     // Kiểm dữ liệu trước khi ghi: đủ sản phẩm, tổng giá web khớp giá sản phẩm hiện tại

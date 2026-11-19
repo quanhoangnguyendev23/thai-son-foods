@@ -45,7 +45,13 @@ async function runReplacement(): Promise<void> {
     await client.query(`ALTER TABLE combos ADD COLUMN IF NOT EXISTS combo_type VARCHAR(20);`);
 
     const prod = (await client.query(`SELECT id, sku, price FROM products WHERE sku IS NOT NULL;`)).rows;
-    const bySku = new Map(prod.map((p: any) => [String(p.sku).toUpperCase(), p]));
+    // Mã SKU: staging dùng "SB", DB cloud dùng "SB-01" → nhận cả hai (mã đúng nguyên văn được ưu tiên)
+    const bySku = new Map<string, any>();
+    for (const p of prod) bySku.set(String(p.sku).toUpperCase(), p);
+    for (const p of prod) {
+      const base = String(p.sku).toUpperCase().replace(/-\d+$/, '');
+      if (!bySku.has(base)) bySku.set(base, p);
+    }
     const problems: string[] = [];
     for (const c of data.combos as Entry[]) {
       let sum = 0;

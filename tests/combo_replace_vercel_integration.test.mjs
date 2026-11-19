@@ -17,13 +17,14 @@ delete process.env.VERCEL;
 const { pool, initDatabase } = await import('@/lib/db');
 const PRICES = { SB: 18000, SHS: 18000, SGL: 18000, SS: 25000, SL: 25000, MD: 18000, TD: 18000, LH: 18000, TSA: 20000, MAC: 20000, TSG: 18000, TXG: 18000 };
 
+// Mã SKU dạng "SB-01" giống DB cloud của Vercel (staging dùng "SB")
 async function seed({ withAllSkus = true } = {}) {
   await pool.query(`TRUNCATE combos, combo_items, combo_images, products CASCADE;`);
   await pool.query(`DELETE FROM site_settings WHERE key IN ('combo_replace_2026_11_19', 'combo_backup_2026_11_19');`).catch(() => undefined);
   for (const [sku, price] of Object.entries(PRICES)) {
     if (!withAllSkus && sku === 'MAC') continue;
     const id = `prod-${sku.toLowerCase()}-01`;
-    await pool.query(`INSERT INTO products (id, slug, name, sku, price, unit, thumbnail, is_active) VALUES ($1, $1, $2, $3, $4, 'chai', '/images/test.jpg', true);`, [id, `SP ${sku}`, sku, price]);
+    await pool.query(`INSERT INTO products (id, slug, name, sku, price, unit, thumbnail, is_active) VALUES ($1, $1, $2, $3, $4, 'chai', '/images/test.jpg', true);`, [id, `SP ${sku}`, `${sku}-01`, price]);
   }
   for (let i = 1; i <= 12; i++) {
     const slug = i === 1 ? 'combo-van-phong' : `combo-${i}`;
