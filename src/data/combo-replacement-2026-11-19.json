@@ -1,0 +1,231 @@
+{
+  "source": "01 - Bang tinh gia Combo - 261115.xlsb / Bảng tính combo",
+  "combos": [
+    {
+      "stt": 1,
+      "slug": "bo-san-pham-sua-hat",
+      "oldSlugs": [],
+      "name": "?",
+      "label": "Bộ sản phẩm Sữa hạt",
+      "type": "DA_DANG",
+      "description": "Combo đa dạng, gồm ít nhất 3 loại thức uống để thưởng thức nhiều hương vị.",
+      "image": "/images/combos/combo-stt-01.jpg",
+      "items": {
+        "SB": 4,
+        "SHS": 2,
+        "SGL": 4
+      },
+      "web": 180000,
+      "ntd": 20000
+    },
+    {
+      "stt": 2,
+      "slug": "bo-3-loai-nuoc-mat-thanh-nhiet",
+      "oldSlugs": [],
+      "name": "?",
+      "label": "Bộ 3 loại nước mát thanh nhiệt",
+      "type": "DA_DANG",
+      "description": "Combo đa dạng, gồm ít nhất 3 loại thức uống để thưởng thức nhiều hương vị.",
+      "image": "/images/combos/combo-stt-02.jpg",
+      "items": {
+        "SS": 3,
+        "SL": 3,
+        "TSA": 2,
+        "MAC": 2
+      },
+      "web": 230000,
+      "ntd": 18500
+    },
+    {
+      "stt": 3,
+      "slug": "thuong-thuc-combo-tra-sua",
+      "oldSlugs": [],
+      "name": "?",
+      "label": "Thưởng thức combo Trà sữa",
+      "type": "DA_DANG",
+      "description": "Combo đa dạng, gồm ít nhất 3 loại thức uống để thưởng thức nhiều hương vị.",
+      "image": "/images/combos/combo-stt-03.jpg",
+      "items": {
+        "LH": 2,
+        "TD": 2,
+        "TSA": 4,
+        "MAC": 4
+      },
+      "web": 232000,
+      "ntd": 23500
+    },
+    {
+      "stt": 6,
+      "slug": "combo-chi-dinh-tao-do",
+      "oldSlugs": [
+        "nhap-chi-dinh-1"
+      ],
+      "name": "?",
+      "label": "Combo chỉ định Táo đỏ hạt chia",
+      "type": "CHI_DINH",
+      "description": "Combo chỉ định: một sản phẩm chủ đạo chiếm khoảng một nửa số chai, kèm các vị khác.",
+      "image": "/images/combos/combo-stt-06.jpg",
+      "items": {
+        "MD": 3,
+        "LH": 3,
+        "TD": 6
+      },
+      "web": 216000,
+      "ntd": 22500
+    },
+    {
+      "stt": 7,
+      "slug": "combo-chi-dinh-nha-dam",
+      "oldSlugs": [
+        "nhap-chi-dinh-2"
+      ],
+      "name": "?",
+      "label": "Combo chỉ định Nha đam",
+      "type": "CHI_DINH",
+      "description": "Combo chỉ định: một sản phẩm chủ đạo chiếm khoảng một nửa số chai, kèm các vị khác.",
+      "image": "/images/combos/combo-stt-07.jpg",
+      "items": {
+        "MD": 5,
+        "TD": 2,
+        "TSG": 2,
+        "TXG": 3
+      },
+      "web": 216000,
+      "ntd": 23500
+    },
+    {
+      "stt": 8,
+      "slug": "combo-chi-dinh-matcha-ciao",
+      "oldSlugs": [
+        "nhap-chi-dinh-3"
+      ],
+      "name": "?",
+      "label": "Combo chỉ định Matcha trà sữa Ciao",
+      "type": "CHI_DINH",
+      "description": "Combo chỉ định: một sản phẩm chủ đạo chiếm khoảng một nửa số chai, kèm các vị khác.",
+      "image": "/images/combos/combo-stt-08.jpg",
+      "items": {
+        "SHS": 2,
+        "SGL": 2,
+        "MAC": 6
+      },
+      "web": 192000,
+      "ntd": 20000
+    },
+    {
+      "stt": 11,
+      "slug": "combo-tang-so-luong-1",
+      "oldSlugs": [
+        "combo-1"
+      ],
+      "name": "?",
+      "label": "Combo tăng số lượng 1",
+      "type": "TANG_SO_LUONG",
+      "description": "Combo tăng số lượng: gói nhỏ gọn, giá tốt khi mua nhiều.",
+      "image": "/images/combos/combo-stt-11.jpg",
+      "items": {
+        "SB": 2,
+        "MD": 2,
+        "LH": 2,
+        "TD": 2
+      },
+      "web": 144000,
+      "ntd": 12400
+    },
+    {
+      "stt": 12,
+      "slug": "combo-tang-so-luong-2",
+      "oldSlugs": [
+        "nhap-tang-so-luong-2"
+      ],
+      "name": "?",
+      "label": "Combo tăng số lượng 2",
+      "type": "TANG_SO_LUONG",
+      "description": "Combo tăng số lượng: gói nhỏ gọn, giá tốt khi mua nhiều.",
+      "image": "/images/combos/combo-stt-12.jpg",
+      "items": {
+        "SS": 2,
+        "SL": 2,
+        "TSA": 2,
+        "MAC": 2
+      },
+      "web": 180000,
+      "ntd": 12000
+    },
+    {
+      "stt": 13,
+      "slug": "combo-tang-so-luong-3",
+      "oldSlugs": [
+        "nhap-tang-so-luong-3"
+      ],
+      "name": "?",
+      "label": "Combo tăng số lượng 3",
+      "type": "TANG_SO_LUONG",
+      "description": "Combo tăng số lượng: gói nhỏ gọn, giá tốt khi mua nhiều.",
+      "image": "/images/combos/combo-stt-13.jpg",
+      "items": {
+        "SB": 2,
+        "SHS": 2,
+        "SL": 2,
+        "TD": 2
+      },
+      "web": 158000,
+      "ntd": 12000
+    },
+    {
+      "stt": 16,
+      "slug": "bo-san-pham-gia-dinh",
+      "oldSlugs": [],
+      "name": "?",
+      "label": "Bộ sản phẩm gia đình",
+      "type": "GIA",
+      "description": "Combo giá tốt cho gia đình, tiết kiệm hơn mua lẻ.",
+      "image": "/images/combos/combo-stt-16.jpg",
+      "items": {
+        "SS": 4,
+        "SL": 4,
+        "TSG": 3,
+        "TXG": 3
+      },
+      "web": 308000,
+      "ntd": 41600
+    },
+    {
+      "stt": 17,
+      "slug": "bo-san-pham-ciao",
+      "oldSlugs": [],
+      "name": "?",
+      "label": "Bộ sản phẩm Ciao",
+      "type": "GIA",
+      "description": "Combo giá tốt cho gia đình, tiết kiệm hơn mua lẻ.",
+      "image": "/images/combos/combo-stt-17.jpg",
+      "items": {
+        "SB": 3,
+        "MD": 3,
+        "TSA": 4,
+        "MAC": 4
+      },
+      "web": 268000,
+      "ntd": 39200
+    },
+    {
+      "stt": 18,
+      "slug": "bo-san-pham-03-dong",
+      "oldSlugs": [],
+      "name": "?",
+      "label": "Bộ sản phẩm 03 dòng",
+      "type": "GIA",
+      "description": "Combo giá tốt cho gia đình, tiết kiệm hơn mua lẻ.",
+      "image": "/images/combos/combo-stt-18.jpg",
+      "items": {
+        "SB": 2,
+        "SHS": 2,
+        "SGL": 2,
+        "MD": 4,
+        "LH": 4
+      },
+      "web": 252000,
+      "ntd": 39200
+    }
+  ]
+}

@@ -3,11 +3,14 @@ import { query } from '@/lib/db';
 import { combos as defaultCombos } from '@/data/combos';
 import { Combo } from '@/types';
 import { isDailyDealsEnabled } from '@/lib/site-settings';
+import { ensureComboReplacement20261119 } from '@/lib/comboReplace20261119';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    // Thay combo một lần trên Vercel (19/11/2026); nơi khác không làm gì
+    await ensureComboReplacement20261119();
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured');
 
