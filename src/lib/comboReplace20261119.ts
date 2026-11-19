@@ -76,7 +76,7 @@ async function runReplacement(): Promise<void> {
     const existing = backup.combos as { id: string; slug: string }[];
     const plan = (data.combos as Entry[]).map((c) => ({
       c,
-      id: existing.find((e) => e.slug === c.slug || c.oldSlugs.includes(e.slug))?.id || null,
+      id: existing.find((e) => e.slug === c.slug || (c.oldSlugs as string[]).includes(e.slug))?.id || null,
     }));
     const keep = new Set(plan.map((x) => x.id).filter(Boolean));
     let deleted = 0;
