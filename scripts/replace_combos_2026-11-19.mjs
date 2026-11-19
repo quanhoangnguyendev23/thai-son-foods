@@ -4,6 +4,7 @@
  * 16–18 (Giá) → 12 combo. Loại Member (STT 21–25) bỏ theo yêu cầu 19/11/2026. Mọi combo khác bị XOÁ
  * (combo_items / combo_images tự xoá theo).
  *
+ * - combos.combo_type = loại (DA_DANG / CHI_DINH / TANG_SO_LUONG / GIA), xem src/lib/comboTypes.ts.
  * - Tên combo tạm để "?" theo yêu cầu 19/11/2026 (label: tên dự kiến, chỉ để đọc, không ghi vào CSDL).
  * - Giá gốc = "Giá Web - NTD" (tổng giá web từng chai); giá bán = giá gốc − cột "NTD" (phần margin nhường người tiêu dùng);
  *   discount = làm tròn (NTD / giá gốc × 100). Đúng cách tính các combo đang có trên staging.
@@ -108,6 +109,8 @@ async function main() {
     console.log(`  → ${backupDir}`);
 
     await client.query('BEGIN;');
+    // Cột loại combo (giống src/lib/db.ts) — DB tắt tự dựng bảng có thể chưa có
+    await client.query(`ALTER TABLE combos ADD COLUMN IF NOT EXISTS combo_type VARCHAR(20);`);
     for (const d of toDelete) await client.query(`DELETE FROM combos WHERE id = $1;`, [d.id]);
     let i = 0;
     for (const x of plan) {
@@ -121,18 +124,18 @@ async function main() {
       if (id) {
         await client.query(
           `UPDATE combos SET slug = $2, name = $3, name_en = NULL, description = $4, description_en = NULL,
-                  original_price = $5, sale_price = $6, total_items = $7, discount = $8, image = $9, is_active = true, updated_at = CURRENT_TIMESTAMP
+                  original_price = $5, sale_price = $6, total_items = $7, discount = $8, image = $9, combo_type = $10, is_active = true, updated_at = CURRENT_TIMESTAMP
             WHERE id = $1;`,
-          [id, c.slug, c.name, desc, c.web, sale, total, discount, image]
+          [id, c.slug, c.name, desc, c.web, sale, total, discount, image, c.type]
         );
         await client.query(`DELETE FROM combo_items WHERE combo_id = $1;`, [id]);
       } else {
         id = `combo_${Date.now()}${i}`;
         // created_at tăng dần theo STT để trang chủ (ORDER BY created_at) hiện đúng thứ tự trong file
         await client.query(
-          `INSERT INTO combos (id, slug, name, description, original_price, sale_price, total_items, discount, image, is_active, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $10, true, CURRENT_TIMESTAMP + ($9 || ' seconds')::interval, CURRENT_TIMESTAMP);`,
-          [id, c.slug, c.name, desc, c.web, sale, total, discount, String(i), image]
+          `INSERT INTO combos (id, slug, name, description, original_price, sale_price, total_items, discount, image, combo_type, is_active, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $10, $11, true, CURRENT_TIMESTAMP + ($9 || ' seconds')::interval, CURRENT_TIMESTAMP);`,
+          [id, c.slug, c.name, desc, c.web, sale, total, discount, String(i), image, c.type]
         );
       }
       for (const [sku, q] of Object.entries(c.items)) {

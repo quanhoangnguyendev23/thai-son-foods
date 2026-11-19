@@ -237,6 +237,49 @@ describe('R24: PUT combo và sản phẩm kiểm tra giá vốn (route thật, p
   });
 });
 
+describe('loại combo (combos.combo_type) qua /api/admin/combos', () => {
+  const typeOf = async (id) => (await pool.query('SELECT combo_type FROM combos WHERE id = $1', [id])).rows[0]?.combo_type ?? null;
+
+  test('tạo có loại, đổi loại, bỏ loại; loại sai: 400 và DB không đổi', async () => {
+    await loginAdmin(pool, { role: 'SUPER_ADMIN' });
+    const c = await call(adminCombos.POST, '/api/admin/combos', {
+      method: 'POST',
+      body: { name: 'Combo loại test', original_price: 100000, sale_price: 90000, total_items: 2, combo_type: 'da_dang', items: [{ product_id: PRODUCT, quantity: 2 }] },
+    });
+    assert.equal(c.status, 200, JSON.stringify(c.json));
+    const id = c.json.data.id;
+    assert.equal(await typeOf(id), 'DA_DANG');
+
+    const put = (combo_type) => call(adminCombos.PUT, '/api/admin/combos', { method: 'PUT', body: { id, combo_type } });
+    assert.equal((await put('GIA')).status, 200);
+    assert.equal(await typeOf(id), 'GIA');
+    assert.equal((await put('KHONG_CO')).status, 400);
+    assert.equal(await typeOf(id), 'GIA');
+    assert.equal((await put('')).status, 200);
+    assert.equal(await typeOf(id), null);
+
+    const bad = await call(adminCombos.POST, '/api/admin/combos', {
+      method: 'POST',
+      body: { name: 'Combo loại sai', sale_price: 1000, combo_type: 'XYZ' },
+    });
+    assert.equal(bad.status, 400);
+  });
+
+  test('GET ?type= lọc đúng loại; ?type=NONE là combo chưa phân loại; loại sai: 400', async () => {
+    await pool.query(
+      `INSERT INTO combos (id, slug, name, original_price, sale_price, total_items, combo_type) VALUES
+         ('combo_ty1', 'combo-ty1', 'A', 100000, 90000, 10, 'CHI_DINH'),
+         ('combo_ty2', 'combo-ty2', 'B', 100000, 90000, 10, NULL);`
+    );
+    await loginAdmin(pool, { role: 'SUPER_ADMIN' });
+    const ids = async (qs) => (await call(adminCombos.GET, `/api/admin/combos?${qs}`)).json.data.map((x) => x.id);
+    assert.deepEqual(await ids('type=CHI_DINH'), ['combo_ty1']);
+    assert.ok((await ids('type=NONE')).includes('combo_ty2'));
+    assert.ok(!(await ids('type=NONE')).includes('combo_ty1'));
+    assert.equal((await call(adminCombos.GET, '/api/admin/combos?type=XYZ')).status, 400);
+  });
+});
+
 describe('R25 và R19: hủy đơn, xác nhận đơn thiếu hàng qua PUT /api/admin/orders', () => {
   async function seedReservedOrder(id, { stock = 5000, reserved = 7, qty = 7, store = STORE_A } = {}) {
     await addOrder(id, { store });

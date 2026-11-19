@@ -473,6 +473,8 @@ async function runInitDatabase(dryRunClient?: PoolClient) {
       -- Nội dung "Thông tin sản phẩm" do admin nhập (JSON, cấu trúc ProductDetailContent); trống → nội dung trong code
       ALTER TABLE products ADD COLUMN IF NOT EXISTS detail_content JSONB;
       ALTER TABLE combos ADD COLUMN IF NOT EXISTS sold_offset INTEGER NOT NULL DEFAULT 0;
+      -- Loại combo (DA_DANG / CHI_DINH / TANG_SO_LUONG / GIA / MEMBER, xem src/lib/comboTypes.ts); NULL = chưa phân loại
+      ALTER TABLE combos ADD COLUMN IF NOT EXISTS combo_type VARCHAR(20);
       ALTER TABLE order_items ADD COLUMN IF NOT EXISTS cost_price INTEGER;
       -- Túi tiết kiệm: giá gốc (niêm yết) của dòng hàng lúc đặt; tiết kiệm = (original_price - price) * quantity
       ALTER TABLE order_items ADD COLUMN IF NOT EXISTS original_price INTEGER;

@@ -59,6 +59,7 @@ import {
 import { hasPermission, Role, Permission } from '@/lib/rbac';
 import { canDeleteOrder, canTransitionOrderStatus } from '@/lib/order-status';
 import { safeFetchJson } from '@/lib/utils';
+import { COMBO_TYPES, COMBO_TYPE_LABEL } from '@/lib/comboTypes';
 import { downloadXlsx } from '@/lib/xlsx';
 import SheetInventoryPanel from './SheetInventoryPanel';
 import WeeklyDeliveryPanel from './WeeklyDeliveryPanel';
@@ -318,6 +319,8 @@ interface Combo {
   is_featured: boolean;
   is_best_seller: boolean;
   is_active: boolean;
+  /** Loại combo (src/lib/comboTypes.ts); null = chưa phân loại */
+  combo_type?: string | null;
   items?: ComboItem[];
   images?: { id?: string; url: string; alt?: string; sortOrder?: number; imageType?: string; isActive?: boolean }[];
   created_at?: string;
@@ -621,6 +624,7 @@ export default function AdminPage() {
 
   const [comboSearch, setComboSearch] = useState('');
   const [comboFilter, setComboFilter] = useState('ALL');
+  const [comboTypeFilter, setComboTypeFilter] = useState('ALL');
 
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
@@ -2737,9 +2741,11 @@ export default function AdminPage() {
         (comboFilter === 'INACTIVE' && !c.is_active) ||
         (comboFilter === 'FEATURED' && c.is_featured) ||
         (comboFilter === 'BEST_SELLER' && c.is_best_seller);
-      return matchSearch && matchFilter;
+      const matchType =
+        comboTypeFilter === 'ALL' || (comboTypeFilter === 'NONE' ? !c.combo_type : c.combo_type === comboTypeFilter);
+      return matchSearch && matchFilter && matchType;
     });
-  }, [combos, comboSearch, comboFilter]);
+  }, [combos, comboSearch, comboFilter, comboTypeFilter]);
 
   // Bộ lọc danh sách tồn kho mặt hàng
   const filteredInventory = useMemo(() => {
@@ -3918,6 +3924,20 @@ export default function AdminPage() {
                     <option value="FEATURED">Nổi bật ⭐ ({combos.filter((c) => c.is_featured).length})</option>
                     <option value="BEST_SELLER">Bán chạy 🔥 ({combos.filter((c) => c.is_best_seller).length})</option>
                   </select>
+                  <select
+                    value={comboTypeFilter}
+                    onChange={(e) => setComboTypeFilter(e.target.value)}
+                    aria-label="Lọc theo loại combo"
+                    className="bg-ink-50 border border-ink-200 rounded-xl px-3 py-2 text-xs text-ink-800 focus:outline-none focus:border-amber-500 cursor-pointer"
+                  >
+                    <option value="ALL">Tất cả loại</option>
+                    {COMBO_TYPES.map((t) => (
+                      <option key={t.key} value={t.key}>
+                        {t.label} ({combos.filter((c) => c.combo_type === t.key).length})
+                      </option>
+                    ))}
+                    <option value="NONE">Chưa phân loại ({combos.filter((c) => !c.combo_type).length})</option>
+                  </select>
                 </div>
               </div>
 
@@ -4004,6 +4024,9 @@ export default function AdminPage() {
                               <tr key={c.id} className={`border-b border-ink-100 ${dirty ? 'bg-amber-50' : ''}`}>
                                 <td className={`${stickyCell} ${dirty ? 'bg-amber-50' : ''} py-1.5 px-3`}>
                                   <div className="text-sm text-ink-950 line-clamp-2" title={c.name}>{c.name}</div>
+                                  {c.combo_type && (
+                                    <span className="text-2xs text-emerald-700">{COMBO_TYPE_LABEL[c.combo_type] || c.combo_type} </span>
+                                  )}
                                   {!c.is_active && <span className="text-2xs text-ink-600">Tạm dừng</span>}
                                   {unmatched > 0 && (
                                     <span className="text-2xs text-rose-600"> · {unmatched} món không khớp sản phẩm</span>
@@ -4134,6 +4157,9 @@ export default function AdminPage() {
                                   </div>
                                   <div className="text-2xs font-mono text-ink-600 mt-0.5">
                                     slug: {c.slug}
+                                  </div>
+                                  <div className="text-2xs text-emerald-700 mt-0.5">
+                                    Loại: {c.combo_type ? COMBO_TYPE_LABEL[c.combo_type] || c.combo_type : 'Chưa phân loại'}
                                   </div>
                                 </div>
                               </div>
@@ -7505,6 +7531,26 @@ export default function AdminPage() {
                     placeholder="VD: Gói 10 Chai Sữa Hạt Sen"
                     className="w-full bg-ink-50 border border-ink-300 rounded-xl px-3.5 py-2 text-xs text-ink-950 focus:outline-none focus:border-amber-500"
                   />
+                </div>
+
+                {/* Loại combo (chỉ để quản lý / lọc, không đổi cách tính giá) */}
+                <div className="sm:col-span-2">
+                  <label htmlFor="combo-type" className="block text-sm text-ink-800 mb-1">
+                    Loại combo
+                  </label>
+                  <select
+                    id="combo-type"
+                    value={editingCombo.combo_type || ''}
+                    onChange={(e) => setEditingCombo({ ...editingCombo, combo_type: e.target.value || null })}
+                    className="w-full bg-ink-50 border border-ink-300 rounded-xl px-3.5 py-2 text-xs text-ink-950 focus:outline-none focus:border-amber-500 cursor-pointer"
+                  >
+                    <option value="">Chưa phân loại</option>
+                    {COMBO_TYPES.map((t) => (
+                      <option key={t.key} value={t.key}>
+                        {t.label} — {t.hint}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Đường dẫn Slug */}

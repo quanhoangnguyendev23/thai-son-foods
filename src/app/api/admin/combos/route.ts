@@ -5,6 +5,7 @@ import { getAdminSession } from '@/lib/auth';
 import { hasPermission } from '@/lib/rbac';
 import { writeAuditLog } from '@/lib/audit';
 import { publicErrorMessage } from '@/lib/apiError';
+import { parseComboType } from '@/lib/comboTypes';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +131,17 @@ export async function GET(request: Request) {
       sql += ` AND c.is_best_seller = true`;
     }
 
+    // Lọc theo loại combo (?type=DA_DANG …, ?type=NONE = chưa phân loại)
+    const typeParam = searchParams.get('type');
+    if (typeParam === 'NONE') {
+      sql += ` AND c.combo_type IS NULL`;
+    } else if (typeParam) {
+      const t = parseComboType(typeParam);
+      if (!t) return NextResponse.json({ success: false, error: 'Loại combo không hợp lệ' }, { status: 400 });
+      params.push(t);
+      sql += ` AND c.combo_type = $${params.length}`;
+    }
+
     sql += ` ORDER BY c.created_at DESC;`;
 
     const res = await query(sql, params);
@@ -188,6 +200,10 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const comboType = parseComboType(body.combo_type);
+    if (comboType === undefined) {
+      return NextResponse.json({ success: false, error: 'Loại combo không hợp lệ' }, { status: 400 });
+    }
 
     const id = `combo_${Date.now()}`;
 
@@ -223,8 +239,8 @@ export async function POST(request: Request) {
     await client.query(
       `INSERT INTO combos (
         id, slug, name, description, original_price, sale_price,
-        total_items, discount, image, is_featured, is_best_seller, is_active, cost_price, sold_offset
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);`,
+        total_items, discount, image, is_featured, is_best_seller, is_active, cost_price, sold_offset, combo_type
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15);`,
       [
         id,
         slug,
@@ -240,6 +256,7 @@ export async function POST(request: Request) {
         Boolean(is_active),
         costPriceVal,
         Math.max(0, parseInt(body.sold_offset, 10) || 0),
+        comboType,
       ]
     );
 
@@ -284,7 +301,7 @@ export async function POST(request: Request) {
       action: 'COMBO_CREATE',
       entityType: 'COMBO',
       entityId: id,
-      afterJson: { id, slug, name, sale_price },
+      afterJson: { id, slug, name, sale_price, combo_type: comboType },
     });
 
     return NextResponse.json({ success: true, data: { id, slug, name } });
@@ -322,6 +339,10 @@ export async function PUT(request: Request) {
 
     if (!id || typeof id !== 'string') {
       return NextResponse.json({ success: false, error: 'Thiếu ID gói' }, { status: 400 });
+    }
+    const putComboType = body.combo_type === undefined ? undefined : parseComboType(body.combo_type);
+    if (body.combo_type !== undefined && putComboType === undefined) {
+      return NextResponse.json({ success: false, error: 'Loại combo không hợp lệ' }, { status: 400 });
     }
 
     const currRes = await query(`SELECT * FROM combos WHERE id = $1;`, [id]);
@@ -443,6 +464,10 @@ export async function PUT(request: Request) {
     if (body.sold_offset !== undefined && body.sold_offset !== null && body.sold_offset !== '') {
       params.push(Math.max(0, parseInt(body.sold_offset, 10) || 0));
       updates.push(`sold_offset = $${params.length}`);
+    }
+    if (body.combo_type !== undefined) {
+      params.push(putComboType);
+      updates.push(`combo_type = $${params.length}`);
     }
 
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
