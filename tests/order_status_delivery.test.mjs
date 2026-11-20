@@ -121,14 +121,33 @@ describe('deliverySlots — getDeliveryOptions', () => {
     assert.ok(o.days[0].slots.filter((s) => !s.available).every((s) => s.reason === 'TOO_LATE'));
   });
 
-  test('mỗi ngày có 10 khung, khung cuối 16:00–16:30', () => {
+  test('mỗi ngày có 9 khung (bỏ giờ nghỉ trưa 11:30–13:00), khung cuối 16:00–16:30', () => {
     const o = getDeliveryOptions(at('2026-11-11T03:00:00Z'), 30);
-    for (const d of o.days) assert.equal(d.slots.length, 10);
+    for (const d of o.days) assert.equal(d.slots.length, 9);
+    assert.deepEqual(
+      o.days[1].slots.map((s) => `${s.startLabel}–${s.endLabel}`),
+      ['07:00–08:00', '08:00–09:00', '09:00–10:00', '10:00–11:00', '11:00–11:30', '13:00–14:00', '14:00–15:00', '15:00–16:00', '16:00–16:30']
+    );
     const last = o.days[1].slots.at(-1);
     assert.equal(last.startLabel, '16:00');
     assert.equal(last.endLabel, '16:30');
     assert.equal(last.end, '2026-11-12T09:30:00.000Z');
     assert.ok(o.days[1].slots.every((s) => s.available));
+  });
+
+  test('nghỉ trưa: đặt 11:00 + 30 phút = 11:30 vẫn giao ngay; 11:01, 12:00, 12:31 + 30 phút thì không; 13:00 giao lại', () => {
+    assert.equal(getDeliveryOptions(at('2026-11-11T04:00:00Z'), 30).canDeliverNow, true);
+    assert.equal(getDeliveryOptions(at('2026-11-11T04:01:00Z'), 30).canDeliverNow, false);
+    assert.equal(getDeliveryOptions(at('2026-11-11T05:00:00Z'), 30).canDeliverNow, false);
+    assert.equal(getDeliveryOptions(at('2026-11-11T05:31:00Z'), 30).canDeliverNow, false);
+    assert.equal(getDeliveryOptions(at('2026-11-11T06:00:00Z'), 30).canDeliverNow, true);
+  });
+
+  test('nghỉ trưa: 12:00 thì khung sớm nhất là 13:00–14:00 hôm nay; khung 12:00 không tồn tại', () => {
+    const o = getDeliveryOptions(at('2026-11-11T05:00:00Z'), 30);
+    assert.equal(o.earliestSlot.startLabel, '13:00');
+    assert.equal(o.earliestSlot.start, '2026-11-11T06:00:00.000Z');
+    assert.equal(findSlot(o, '2026-11-12T05:00:00.000Z'), null);
   });
 
   test('đúng mốc: 16:00 + 30 phút = 16:30 vẫn giao ngay được', () => {

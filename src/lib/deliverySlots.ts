@@ -1,7 +1,8 @@
 /**
- * Khung giờ giao hàng (giờ hành chính 07:00 – 16:30, giờ Việt Nam, giao cả tuần).
+ * Khung giờ giao hàng (giờ hành chính 07:00 – 16:30, nghỉ trưa 11:30 – 13:00, giờ Việt Nam, giao cả tuần).
  *
- * - "Giao ngay": chỉ khi giờ đặt + thời gian giao (chuẩn bị + chạy xe) <= 16:30 cùng ngày.
+ * - "Giao ngay": chỉ khi giờ đặt + thời gian giao (chuẩn bị + chạy xe) <= 16:30 cùng ngày và không rơi vào giờ nghỉ trưa.
+ * - Giờ nghỉ trưa không có khung hẹn: buổi sáng kết thúc bằng khung 11:00–11:30, buổi chiều bắt đầu 13:00.
  * - Hết giờ (hoặc trước 07:00): khách chọn khung hẹn; mặc định khung trống sớm nhất.
  * - Khung còn chọn được khi giờ đặt + thời gian giao <= giờ kết thúc khung. Không giới hạn số đơn mỗi khung.
  *
@@ -12,6 +13,9 @@
 export const DELIVERY_CONFIG = {
   START_MINUTES: 7 * 60, // 07:00
   END_MINUTES: 16 * 60 + 30, // 16:30
+  /** Nghỉ trưa (20/11/2026): không giao, không có khung hẹn */
+  LUNCH_START_MINUTES: 11 * 60 + 30, // 11:30
+  LUNCH_END_MINUTES: 13 * 60, // 13:00
   SLOT_MINUTES: 60,
   /** Cho đặt hẹn hôm nay và thêm bao nhiêu ngày tới */
   BOOK_AHEAD_DAYS: 2,
@@ -82,10 +86,16 @@ function vnDateAt(year: number, month: number, day: number, minutes: number): Da
   return new Date(Date.UTC(year, month - 1, day, 0, minutes) - VN_OFFSET_MS);
 }
 
-/** Danh sách giờ bắt đầu các khung trong ngày (phút) */
-function slotStarts(): number[] {
-  const out: number[] = [];
-  for (let s = DELIVERY_CONFIG.START_MINUTES; s < DELIVERY_CONFIG.END_MINUTES; s += DELIVERY_CONFIG.SLOT_MINUTES) out.push(s);
+/** Các khung trong ngày [bắt đầu, kết thúc) (phút): chia theo SLOT_MINUTES, cắt ở giờ nghỉ trưa và giờ đóng cửa */
+function slotRanges(): [number, number][] {
+  const out: [number, number][] = [];
+  const parts: [number, number][] = [
+    [DELIVERY_CONFIG.START_MINUTES, DELIVERY_CONFIG.LUNCH_START_MINUTES],
+    [DELIVERY_CONFIG.LUNCH_END_MINUTES, DELIVERY_CONFIG.END_MINUTES],
+  ];
+  for (const [from, to] of parts) {
+    for (let s = from; s < to; s += DELIVERY_CONFIG.SLOT_MINUTES) out.push([s, Math.min(s + DELIVERY_CONFIG.SLOT_MINUTES, to)]);
+  }
   return out;
 }
 
@@ -120,7 +130,9 @@ export function getDeliveryOptions(now: Date, etaMinutesInput: unknown): Deliver
   const etaMinutes = clampEtaMinutes(etaMinutesInput);
   const p = vnParts(now);
   const readyAt = p.minutes + etaMinutes;
-  const canDeliverNow = p.minutes >= DELIVERY_CONFIG.START_MINUTES && readyAt <= DELIVERY_CONFIG.END_MINUTES;
+  // Thời gian giao [giờ đặt, giờ tới nơi] chạm giờ nghỉ trưa → không giao ngay
+  const overlapsLunch = p.minutes < DELIVERY_CONFIG.LUNCH_END_MINUTES && readyAt > DELIVERY_CONFIG.LUNCH_START_MINUTES;
+  const canDeliverNow = p.minutes >= DELIVERY_CONFIG.START_MINUTES && readyAt <= DELIVERY_CONFIG.END_MINUTES && !overlapsLunch;
 
   const days: DeliveryDay[] = [];
   for (let i = 0; i <= DELIVERY_CONFIG.BOOK_AHEAD_DAYS; i++) {
@@ -128,8 +140,7 @@ export function getDeliveryOptions(now: Date, etaMinutesInput: unknown): Deliver
     const y = base.getUTCFullYear();
     const m = base.getUTCMonth() + 1;
     const d = base.getUTCDate();
-    const slots: DeliverySlot[] = slotStarts().map((s) => {
-      const e = Math.min(s + DELIVERY_CONFIG.SLOT_MINUTES, DELIVERY_CONFIG.END_MINUTES);
+    const slots: DeliverySlot[] = slotRanges().map(([s, e]) => {
       const start = vnDateAt(y, m, d, s).toISOString();
       const end = vnDateAt(y, m, d, e).toISOString();
       const tooLate = i === 0 && readyAt > e;
