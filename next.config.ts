@@ -132,12 +132,6 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: false,
       },
-      {
-        // Trang combo tự chọn đã gỡ; chi tiết combo /combo/[slug] vẫn giữ
-        source: '/combo',
-        destination: '/',
-        permanent: false,
-      },
     ];
   },
   async rewrites() {

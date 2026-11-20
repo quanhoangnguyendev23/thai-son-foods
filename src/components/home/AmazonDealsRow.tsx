@@ -203,7 +203,7 @@ export default function AmazonDealsRow({ combos, initialDay }: { combos: Combo[]
         </div>
         <DealCountdown onNewDay={setDay} />
         <Link
-          href="/#combo"
+          href="/combo"
           className="ml-auto shrink-0 inline-flex items-center gap-0.5 min-h-[44px] text-sm text-brand-forest underline-offset-4 hover:underline"
         >
           {language === 'en' ? 'See all bundles' : 'Xem tất cả gói'}

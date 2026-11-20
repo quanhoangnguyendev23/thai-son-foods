@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { ShoppingBag, Check, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import { combos } from '@/data/combos';
 import { formatPrice, cn, safeFetchJson } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -19,6 +19,10 @@ import { Combo } from '@/types';
 
 interface ComboShowcaseProps {
   combos?: Combo[];
+  /** Trang /combo: hiện toàn bộ combo, không thu gọn, không nút "Xem tất cả" */
+  showAll?: boolean;
+  /** Trang chủ: link "Xem tất cả" ở góc phải tiêu đề (trỏ tới /combo) */
+  viewAllHref?: string;
 }
 
 type ComboSort = 'newest' | 'best' | 'saving';
@@ -50,7 +54,7 @@ function isNewCombo(c: Combo, now: number): boolean {
   return !Number.isNaN(t) && now - t <= NEW_COMBO_DAYS * 24 * 60 * 60 * 1000;
 }
 
-export default function ComboShowcase({ combos: initialCombos }: ComboShowcaseProps = {}) {
+export default function ComboShowcase({ combos: initialCombos, showAll = false, viewAllHref }: ComboShowcaseProps = {}) {
   const { language } = useLanguage();
   const { flyToCart } = useFlyToCart();
   const router = useRouter();
@@ -147,9 +151,9 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
   if (activeCombos.length === 0) return null;
 
   const total = sortedCombos.length;
-  const visibleCombos = expanded ? sortedCombos : sortedCombos.slice(0, COLLAPSED_COUNT);
+  const visibleCombos = expanded || showAll ? sortedCombos : sortedCombos.slice(0, COLLAPSED_COUNT);
   // Còn combo bị ẩn (desktop > 12, hoặc điện thoại > 6) → hiện nút "Xem tất cả"; ≤ 12 thì nút chỉ cần trên điện thoại
-  const canToggle = total > COLLAPSED_COUNT_MOBILE;
+  const canToggle = !showAll && total > COLLAPSED_COUNT_MOBILE;
   const toggleOnlyMobile = total <= COLLAPSED_COUNT;
 
   const tabs: { key: ComboSort; vi: string; en: string }[] = [
@@ -183,6 +187,16 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
           </p>
         </div>
 
+        <div className="flex flex-col gap-1.5 md:items-end">
+        {viewAllHref && (
+          <Link
+            href={viewAllHref}
+            className="hidden md:inline-flex self-end items-center gap-0.5 text-sm text-brand-forest underline-offset-4 hover:underline"
+          >
+            {language === 'en' ? 'View all bundles' : 'Xem tất cả gói'}
+            <ChevronRight className="w-4 h-4" aria-hidden />
+          </Link>
+        )}
         <div
           role="tablist"
           aria-label={language === 'en' ? 'Sort bundles' : 'Sắp xếp gói'}
@@ -208,6 +222,7 @@ export default function ComboShowcase({ combos: initialCombos }: ComboShowcasePr
               </button>
             );
           })}
+        </div>
         </div>
       </div>
 

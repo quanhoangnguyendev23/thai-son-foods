@@ -176,7 +176,7 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
         {/* 7. COMBO TIẾT KIỆM (#combo) */}
         {ENABLE_COMBOS && combos.length > 0 && (
           <div className="bg-white rounded-2xl border border-border shadow-xs [&_#combo]:py-7 [&_#combo]:scroll-mt-[130px]">
-            <ComboShowcase combos={combos} />
+            <ComboShowcase combos={combos} viewAllHref="/combo" />
           </div>
         )}
 

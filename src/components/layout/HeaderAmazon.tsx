@@ -739,6 +739,12 @@ export default function HeaderAmazon() {
                   {c.label}
                 </Link>
               ))}
+              {/* Mục "Combo" → trang /combo (toàn bộ combo đang bán); không có combo thì ẩn */}
+              {ENABLE_COMBOS && hasLiveCombos && (
+                <Link href="/combo" className={cn(navBtn, 'hidden md:flex px-2 py-1 text-sm whitespace-nowrap shrink-0 max-lg:min-h-10')}>
+                  Combo
+                </Link>
+              )}
             </nav>
 
             {/* Dải tin cậy: menu bên trái luôn hiện đủ, dải này chỉ lấp phần còn trống.

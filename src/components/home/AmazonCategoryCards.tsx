@@ -301,7 +301,7 @@ function ComboQuadCard({ combos }: { combos: Combo[] }) {
   return (
     <CardShell
       title={language === 'en' ? 'Value bundles' : 'Gói tiết kiệm'}
-      footer={<MoreLink href="/#combo">{language === 'en' ? 'See all bundles' : 'Xem tất cả gói'}</MoreLink>}
+      footer={<MoreLink href="/combo">{language === 'en' ? 'See all bundles' : 'Xem tất cả gói'}</MoreLink>}
     >
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         {items.map((c) => {
