@@ -10,6 +10,7 @@ import { cn, formatPrice, safeFetchJson } from '@/lib/utils';
 import { getProductImage, getShortProductName, MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUserAuth } from '@/context/UserAuthContext';
+import MemberComboSidebarCard from '@/components/product/MemberComboSidebarCard';
 import { INVENTORY_CONFIG } from '@/config/inventory';
 import { ENABLE_COMBOS } from '@/config/features';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
@@ -255,6 +256,8 @@ function SignInColumn() {
                 {language === 'en' ? 'Create an account' : 'Tạo tài khoản'}
               </button>
             </p>
+            {/* 1 gói thành viên ngẫu nhiên: lý do để tạo tài khoản (21/11/2026) */}
+            {ENABLE_COMBOS && <MemberComboSidebarCard compact className="mt-2.5" />}
           </>
         )}
       </div>

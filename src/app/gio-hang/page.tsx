@@ -30,7 +30,7 @@ import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffect
 import { getShortProductName } from '@/lib/product-detail';
 import { useCartInventory } from '@/hooks/useCartInventory';
 import { INVENTORY_CONFIG } from '@/config/inventory';
-import MemberComboTeaser from '@/components/product/MemberComboTeaser';
+import MemberComboSidebarCard from '@/components/product/MemberComboSidebarCard';
 
 // Trần giá trị đơn COD — cùng số server dùng để từ chối đơn (/api/orders)
 const COD_MAX_ORDER_VALUE = INVENTORY_CONFIG.COD_VALIDATION.MAX_ORDER_VALUE;
@@ -600,9 +600,6 @@ export default function CartPage() {
           </ol>
         </nav>
 
-        {/* Ưu đãi thành viên: 3 combo Member + nút Đăng ký (chỉ khách chưa đăng nhập, 21/11/2026) */}
-        {ENABLE_COMBOS && <MemberComboTeaser className="mb-5" />}
-
         {/* ─── 2. TIÊU ĐỀ TRANG & TIỆN ÍCH ─── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-2 border-b border-gray-200/60">
           <div className="flex items-center gap-3">
@@ -1139,6 +1136,9 @@ export default function CartPage() {
                   : 'Thanh toán tiền mặt khi nhận hàng (COD)'}
               </p>
             </div>
+
+            {/* 1 gói thành viên ngẫu nhiên (21/11/2026) */}
+            {ENABLE_COMBOS && <MemberComboSidebarCard compact />}
 
             {/* ─── 2. KỆ HÀNG GỢI Ý MUA HÀNG TRƯỚC QUẦY THU NGÂN (3 PHẦN - GỢI Ý MUA HÀNG NGAY TẠI ĐÓ) ─── */}
             <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">

@@ -351,7 +351,9 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     const otherCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug && c.id !== stripCombo?.id);
     const productKey = canonicalProductId(product.id);
     const withProduct = otherCombos.filter((c) => c.products.some((it) => canonicalProductId(it.productId) === productKey));
-    const comboPool = withProduct.length > 0 ? withProduct : otherCombos;
+    // 21/11/2026: ô này "rải" combo Member — ngẫu nhiên 1 gói thành viên; chưa có gói Member thì như cũ
+    const memberPool = otherCombos.filter((c) => isMemberCombo(c));
+    const comboPool = memberPool.length > 0 ? memberPool : withProduct.length > 0 ? withProduct : otherCombos;
     reviewCombo = comboPool[Math.floor(Math.random() * comboPool.length)];
     if (stripCombo) {
       const picked = stripCombo;
@@ -401,7 +403,9 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   })();
   // Dòng tiêu đề nhỏ trên thẻ combo: nêu sản phẩm đang xem nếu combo có sản phẩm này
   const reviewComboHeadline = reviewCombo
-    ? reviewCombo.products.some((it) => canonicalProductId(it.productId) === canonicalProductId(product.id))
+    ? isMemberCombo(reviewCombo)
+      ? 'Gói thành viên · giá riêng khi đăng ký tài khoản'
+      : reviewCombo.products.some((it) => canonicalProductId(it.productId) === canonicalProductId(product.id))
       ? `Gói tiết kiệm có ${getShortProductName(product)}`
       : 'Gói tiết kiệm từ Thái Sơn Foods'
     : undefined;

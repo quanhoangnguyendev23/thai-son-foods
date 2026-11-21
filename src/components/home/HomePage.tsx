@@ -16,7 +16,6 @@ import AmazonProductRow from '@/components/home/AmazonProductRow';
 import AmazonDealsRow from '@/components/home/AmazonDealsRow';
 import AmazonRecentlyViewed from '@/components/home/AmazonRecentlyViewed';
 import ComboShowcase from '@/components/home/ComboShowcase';
-import MemberComboTeaser from '@/components/product/MemberComboTeaser';
 import WarehouseSection from '@/components/home/WarehouseSection';
 import SubscribeSaveSection from '@/components/home/SubscribeSaveSection';
 import { PlaceholderBadge } from '@/components/product/ProductPlaceholderBlocks';
@@ -178,8 +177,6 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
             <ComboShowcase combos={combos} viewAllHref="/combo" />
           </div>
         )}
-        {/* Ưu đãi thành viên: 3 combo Member + nút Đăng ký (chỉ khách chưa đăng nhập, 21/11/2026) */}
-        {ENABLE_COMBOS && <MemberComboTeaser />}
 
         {/* 8. ĐÃ XEM GẦN ĐÂY */}
         <AmazonRecentlyViewed products={products} />

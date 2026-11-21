@@ -270,7 +270,10 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
     .sort((a, b) => b.q - a.q || a.i - b.i)
     .map((x) => x.c);
   const stripCombo = relatedCombos[0];
-  const reviewCombo = relatedCombos[1];
+  // 21/11/2026: ô combo trong mục Đánh giá "rải" combo Member — ngẫu nhiên 1 gói thành viên (khác gói đang xem
+  // và gói ở dải trên); chưa có gói Member thì như cũ (hạng 2 trong combo liên quan)
+  const memberPool = otherCombos.filter((c) => isMemberCombo(c) && c.id !== combo.id && c.id !== stripCombo?.id && c.slug);
+  const reviewCombo = memberPool.length > 0 ? memberPool[Math.floor(Math.random() * memberPool.length)] : relatedCombos[1];
   const [stripSummary, stripSold] = stripCombo
     ? await Promise.all([
         getProductReviewSummary(`combo:${stripCombo.slug}`).catch(() => null),
@@ -371,7 +374,12 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
   const sharedProduct = sharedTop
     ? catalog.find((p) => canonicalProductId(p.id) === canonicalProductId(sharedTop.productId))
     : undefined;
-  const reviewComboHeadline = sharedProduct ? `Gói khác có ${getShortProductName(sharedProduct)}` : undefined;
+  const reviewComboHeadline =
+    reviewCombo && isMemberCombo(reviewCombo)
+      ? 'Gói thành viên · giá riêng khi đăng ký tài khoản'
+      : sharedProduct
+        ? `Gói khác có ${getShortProductName(sharedProduct)}`
+        : undefined;
   const reviewAdBrand = reviewAdProduct ? brandOfItem(reviewAdProduct.id) : undefined;
 
   return (

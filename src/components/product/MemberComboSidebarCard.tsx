@@ -11,10 +11,20 @@ import { loadMemberCombos } from '@/components/product/MemberComboTeaser';
 
 /**
  * Thẻ "Gói thành viên" ở cột phải trang chi tiết sản phẩm & combo, dưới thẻ "Được tài trợ" (21/11/2026).
+ * Bản gọn (compact) cũng cài ở ô Đăng nhập trang chủ và cột tổng tiền giỏ hàng.
  * Mỗi lần mở trang chọn NGẪU NHIÊN 1 combo Member (bỏ combo đang xem). Khách chưa đăng nhập: nút "Đăng ký để mở khoá"
  * (mở hộp Đăng ký); đã đăng nhập: "Xem gói". Chọn sau khi mount để không lệch HTML server / trình duyệt.
  */
-export default function MemberComboSidebarCard({ currentComboId, className }: { currentComboId?: string; className?: string }) {
+export default function MemberComboSidebarCard({
+  currentComboId,
+  className,
+  compact = false,
+}: {
+  currentComboId?: string;
+  className?: string;
+  /** Bản gọn 1 dòng (ảnh nhỏ bên trái) để cài vào ô nhỏ: ô Đăng nhập trang chủ, cột tổng tiền giỏ hàng */
+  compact?: boolean;
+}) {
   const { user, openAuthModal } = useUserAuth();
   const [combo, setCombo] = useState<Combo | null>(null);
 
@@ -31,6 +41,43 @@ export default function MemberComboSidebarCard({ currentComboId, className }: { 
 
   if (!combo) return null;
   const saving = Math.max(0, combo.originalPrice - combo.salePrice);
+  const openRegister = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openAuthModal('register');
+  };
+
+  if (compact) {
+    return (
+      <Link
+        href={`/combo/${combo.slug}`}
+        className={`group flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white p-2 transition-colors hover:border-forest-200 ${className || ''}`}
+      >
+        <div className="relative w-20 shrink-0 aspect-[4/3] overflow-hidden rounded-md bg-ivory">
+          <Image src={combo.image} alt={combo.name} fill sizes="80px" className="object-cover" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="inline-flex items-center gap-1 text-2xs uppercase tracking-tight text-forest-700">
+            <Lock className="w-3 h-3" aria-hidden />
+            Gói thành viên · {combo.totalItems} chai
+          </p>
+          <p className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-base leading-tight text-gray-900">{formatPrice(combo.salePrice)}đ</span>
+            {combo.originalPrice > combo.salePrice && (
+              <span className="text-2xs text-gray-400 line-through">{formatPrice(combo.originalPrice)}đ</span>
+            )}
+          </p>
+          {user ? (
+            <span className="text-xs text-forest-700 group-hover:underline">Xem gói →</span>
+          ) : (
+            <button type="button" onClick={openRegister} className="text-xs text-copper-600 hover:underline cursor-pointer">
+              Đăng ký để mua{saving > 0 ? `, tiết kiệm ${formatPrice(saving)}đ` : ''} →
+            </button>
+          )}
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <div className={className}>
@@ -71,11 +118,7 @@ export default function MemberComboSidebarCard({ currentComboId, className }: { 
           ) : (
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                openAuthModal('register');
-              }}
+              onClick={openRegister}
               className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-brand-emerald px-3 py-1.5 text-sm text-white shadow-xs transition-colors hover:bg-brand-forest cursor-pointer"
             >
               <UserPlus className="w-4 h-4" aria-hidden />
