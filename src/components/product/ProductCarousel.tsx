@@ -6,6 +6,7 @@ import { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import ProductCard from '@/components/product/ProductCard';
+import { useProductRatings } from '@/lib/productRatings';
 
 interface ProductCarouselProps {
   title: string;
@@ -43,6 +44,8 @@ export default function ProductCarousel({
 }: ProductCarouselProps) {
   const { language } = useLanguage();
   const [expanded, setExpanded] = useState(false);
+  // Số sao dưới tên mỗi thẻ (một lần gọi cho cả dải) — chỉ trang chi tiết SP & combo (plain), trang chủ không hiện
+  const ratings = useProductRatings(plain ? products.map((p) => p.id) : []);
   const trackRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -109,7 +112,7 @@ export default function ProductCarousel({
                 <p className="absolute top-0 left-0 text-xs leading-4 font-semibold text-brand-copper">#{ranks[idx]}</p>
               )}
               {/* Bố cục compact + tên giới hạn 2 dòng để các thẻ đồng bộ chiều cao */}
-              <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} plain={plain} />
+              <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} plain={plain} rating={ratings[p.id]} />
             </div>
           ))}
         </div>

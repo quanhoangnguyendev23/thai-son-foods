@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/utils';
 import { useCartStore, findCartLine } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import RatingStars from '@/components/product/RatingStars';
 
 interface ProductCardProps {
   product: Product;
@@ -18,9 +19,11 @@ interface ProductCardProps {
   titleLines?: 2 | 4;
   /** Bố cục compact không khung (không viền/bo/bóng, kiểu Amazon) — dùng ở trang chi tiết sản phẩm & combo */
   plain?: boolean;
+  /** Bố cục compact: số sao dưới tên (undefined = chưa tải / không hiện) */
+  rating?: { average: number; count: number };
 }
 
-export default function ProductCard({ product, layout = 'vertical', isHomepage = false, titleLines = 2, plain = false }: ProductCardProps) {
+export default function ProductCard({ product, layout = 'vertical', isHomepage = false, titleLines = 2, plain = false, rating }: ProductCardProps) {
   const { language } = useLanguage();
   const addItem = useCartStore((s) => s.addItem);
   const { flyToCart } = useFlyToCart();
@@ -251,6 +254,7 @@ export default function ProductCard({ product, layout = 'vertical', isHomepage =
               >
                 {fullName}
               </h3>
+              {rating && <RatingStars average={rating.average} count={rating.count} className="mb-1" />}
             </div>
 
             <div className={`relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2${plain ? '' : ' border-t border-gray-100'}`}>

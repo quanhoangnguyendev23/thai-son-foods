@@ -900,6 +900,46 @@ export async function getProductReviewSummary(productId: string): Promise<Produc
 }
 
 /**
+ * Điểm sao + số đánh giá đã duyệt của NHIỀU sản phẩm trong một truy vấn (thẻ sản phẩm ở các dải cuộn ngang, 21/11/2026).
+ * Khoá kết quả = đúng mã client gửi; mỗi mã được mở rộng qua normalizeProductIdVariants như getProductReviewSummary.
+ * DB lỗi → {} (thẻ không hiện sao, không chặn trang).
+ */
+export async function getProductRatingMap(productIds: string[]): Promise<Record<string, { average: number; count: number }>> {
+  const ids = Array.from(new Set(productIds.map((x) => String(x || '').trim()).filter(Boolean))).slice(0, 60);
+  if (ids.length === 0) return {};
+  const keysById = new Map(ids.map((id) => [id, normalizeProductIdVariants(id)]));
+  const allKeys = Array.from(new Set(Array.from(keysById.values()).flat()));
+  try {
+    await ensureReviewsSchema();
+    const res = await query(
+      `SELECT product_id, count(*)::int AS n, sum(rating)::int AS total
+         FROM product_reviews
+        WHERE product_id = ANY($1) AND status = 'APPROVED'
+        GROUP BY product_id;`,
+      [allKeys]
+    );
+    const byKey = new Map(res.rows.map((r: any) => [String(r.product_id).toLowerCase(), { n: Number(r.n), total: Number(r.total) }]));
+    const out: Record<string, { average: number; count: number }> = {};
+    for (const [id, keys] of keysById) {
+      let n = 0;
+      let total = 0;
+      for (const k of new Set(keys)) {
+        const hit = byKey.get(k);
+        if (hit) {
+          n += hit.n;
+          total += hit.total;
+        }
+      }
+      out[id] = { average: n > 0 ? Number((total / n).toFixed(1)) : 0, count: n };
+    }
+    return out;
+  } catch (err: any) {
+    console.warn('[getProductRatingMap] Không đọc được đánh giá:', err?.message);
+    return {};
+  }
+}
+
+/**
  * Tạo mới đánh giá (Tự động xác thực đơn hàng Đã mua hàng)
  */
 export async function createProductReview(
