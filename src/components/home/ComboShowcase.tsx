@@ -324,13 +324,15 @@ export default function ComboShowcase({ combos: initialCombos, showAll = false, 
                     </Link>
 
                     {/* Hàng giá bán & Nút hành động */}
-                    <div className="px-2 pb-2 sm:px-2.5 sm:pb-2.5 md:px-3 md:pb-3 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center justify-between gap-1">
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-sm sm:text-base text-green-primary">
+                    {/* Lưới 2 cột: dòng 1 = giá bán + nút giỏ; dòng 2 = giá gốc + nhãn tiết kiệm trải hết bề ngang thẻ
+                        (21/11: trước đây nhãn "Tiết kiệm 12.000đ" nằm chung cột với giá nên tràn đè lên nút giỏ trên điện thoại) */}
+                    <div className="px-2 pb-2 sm:px-2.5 sm:pb-2.5 md:px-3 md:pb-3 mt-auto pt-1.5 sm:pt-2 border-t border-gray-100 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1 gap-y-0.5">
+                      <div className="contents">
+                        <span className="col-start-1 row-start-1 text-sm sm:text-base text-green-primary">
                           {formatPrice(combo.salePrice)}đ
                         </span>
                         {/* Giá gốc + nhãn giảm giá nằm dưới giá bán */}
-                        <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
+                        <div className="col-span-2 row-start-2 flex flex-wrap items-center gap-x-1 gap-y-0.5">
                           {combo.originalPrice > combo.salePrice && (
                             <span className="text-2xs lg:text-2xs text-gray-400 line-through">
                               {formatPrice(combo.originalPrice)}đ
@@ -345,7 +347,7 @@ export default function ComboShowcase({ combos: initialCombos, showAll = false, 
                         type="button"
                         onClick={(e) => handleAddToCart(combo, e)}
                         className={cn(
-                          'shrink-0 w-10 h-10 sm:w-8 sm:h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg transition-all active:scale-95 cursor-pointer shadow-xs',
+                          'col-start-2 row-start-1 shrink-0 w-10 h-10 sm:w-8 sm:h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg transition-all active:scale-95 cursor-pointer shadow-xs',
                           isJustAdded
                             ? 'bg-brand-forest text-white'
                             : 'bg-brand-emerald hover:bg-brand-forest text-white'
