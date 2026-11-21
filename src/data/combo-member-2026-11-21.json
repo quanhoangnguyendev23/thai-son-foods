@@ -1,0 +1,41 @@
+{
+  "source": "01 - Bang tinh gia Combo - 261115.xlsb / Bảng tính combo — STT 21–23 (loại Member)",
+  "combos": [
+    {
+      "stt": 21,
+      "slug": "dang-ki-tai-khoan-giam-10",
+      "name": "?",
+      "label": "Đăng kí tài khoản giảm 10%",
+      "type": "MEMBER",
+      "description": "Combo thành viên: dành riêng cho khách đã đăng ký tài khoản Thái Sơn Foods.",
+      "image": "/images/combos/combo-stt-21.jpg",
+      "items": { "SHS": 2, "SGL": 2, "MD": 4, "TD": 4 },
+      "web": 216000,
+      "ntd": 36800
+    },
+    {
+      "stt": 22,
+      "slug": "don-hang-tu-180k-la-freeship",
+      "name": "?",
+      "label": "Đơn hàng từ 180k là freeship",
+      "type": "MEMBER",
+      "description": "Combo thành viên: dành riêng cho khách đã đăng ký tài khoản Thái Sơn Foods.",
+      "image": "/images/combos/combo-stt-22.jpg",
+      "items": { "SHS": 3, "SGL": 3, "MD": 4, "LH": 4 },
+      "web": 252000,
+      "ntd": 44800
+    },
+    {
+      "stt": 23,
+      "slug": "combo-thanh-vien-yoo-matcha",
+      "name": "?",
+      "label": "Combo thành viên Yoo + Matcha",
+      "type": "MEMBER",
+      "description": "Combo thành viên: dành riêng cho khách đã đăng ký tài khoản Thái Sơn Foods.",
+      "image": "/images/combos/combo-stt-23.jpg",
+      "items": { "SS": 4, "SL": 4, "MAC": 4 },
+      "web": 280000,
+      "ntd": 35200
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import { products as defaultProducts } from '@/data/products';
 import { combos as defaultCombos } from '@/data/combos';
 import { isDailyDealsEnabled } from '@/lib/site-settings';
 import { ensureComboReplacement20261119 } from '@/lib/comboReplace20261119';
+import { ensureMemberCombos20261121 } from '@/lib/comboMember20261121';
 
 export const dynamic = 'force-dynamic';
 
@@ -184,6 +185,8 @@ async function getLiveCombos(): Promise<Combo[]> {
   try {
     // Thay combo một lần trên Vercel (19/11/2026); nơi khác không làm gì
     await ensureComboReplacement20261119();
+    // Thêm 3 combo Member một lần trên Vercel (21/11/2026); nơi khác không làm gì
+    await ensureMemberCombos20261121();
     const res = await query(`
       SELECT 
         c.*,
