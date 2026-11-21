@@ -16,7 +16,8 @@ import { isMemberCombo } from '@/lib/comboTypes';
  * Danh sách lấy từ /api/combos, nhớ trong trang để nhiều khối trên cùng trang chỉ gọi một lần.
  */
 let cached: Promise<Combo[]> | null = null;
-function loadMemberCombos(): Promise<Combo[]> {
+/** Dùng chung với MemberComboSidebarCard */
+export function loadMemberCombos(): Promise<Combo[]> {
   if (!cached) {
     cached = safeFetchJson<{ success: boolean; data: Combo[] }>('/api/combos')
       .then((res) => (res?.success && Array.isArray(res.data) ? res.data.filter((c) => isMemberCombo(c)) : []))

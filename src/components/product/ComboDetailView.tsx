@@ -23,6 +23,7 @@ import ProductGallery from '@/components/product/ProductGallery';
 import ProductBuyBox from '@/components/product/ProductBuyBox';
 import ProductSponsoredMiniCard from '@/components/product/ProductSponsoredMiniCard';
 import ProductSidebarSponsoredCard from '@/components/product/ProductSidebarSponsoredCard';
+import MemberComboSidebarCard from '@/components/product/MemberComboSidebarCard';
 import { CouponPlaceholder } from '@/components/product/ProductPlaceholderBlocks';
 import { MonthlySalesInfo } from '@/components/product/ProductRealBlocks';
 
@@ -652,6 +653,8 @@ export default function ComboDetailView({
             )}
             <div className="hidden xl:block mt-4">
               <ProductSidebarSponsoredCard currentProductId={combo.id} hideUnverifiedStats randomize />
+              {/* Gói thành viên ngẫu nhiên dưới thẻ được tài trợ (21/11/2026) */}
+              <MemberComboSidebarCard currentComboId={combo.id} className="mt-4" />
             </div>
           </div>
 
@@ -684,6 +687,7 @@ export default function ComboDetailView({
                 <ProductSponsoredMiniCard currentProductId={combo.id} hideUnverifiedStats randomize />
               </div>
               <ProductSidebarSponsoredCard currentProductId={combo.id} hideUnverifiedStats randomize />
+              <MemberComboSidebarCard currentComboId={combo.id} />
             </div>
           </div>
         </div>
