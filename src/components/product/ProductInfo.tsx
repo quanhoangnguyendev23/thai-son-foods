@@ -428,7 +428,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
               }}
               className="text-forest-700 hover:text-copper-600 hover:underline text-xs sm:text-sm cursor-pointer font-medium"
             >
-              ({reviewSummary.totalReviews}) đánh giá
+              Xem đánh giá
             </a>
           </>
         ) : (

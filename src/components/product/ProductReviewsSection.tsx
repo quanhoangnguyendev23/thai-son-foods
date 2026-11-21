@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Star,
   CheckCircle2,
@@ -291,9 +291,7 @@ export default function ProductReviewsSection({
     }
   };
 
-  // Tính số lượng cho filter pill
-  const count5 = useMemo(() => summary.breakdown.find((b) => b.stars === 5)?.count || 0, [summary]);
-  const count4 = useMemo(() => summary.breakdown.find((b) => b.stars === 4)?.count || 0, [summary]);
+  // 21/11/2026: bỏ số lượng trên nút lọc (không hiện số lượt đánh giá ở bất kỳ đâu)
 
   return (
     <section className={`w-full bg-white py-12 md:py-16 border-t border-gray-200 scroll-mt-[168px] ${className}`} id="danh-gia">
@@ -390,7 +388,7 @@ export default function ProductReviewsSection({
                 </div>
 
                 <p className="text-xs text-gray-500">
-                  Dựa trên {summary.totalReviews} lượt đánh giá từ khách hàng
+                  Dựa trên đánh giá từ khách hàng
                 </p>
               </div>
             )}
@@ -444,7 +442,7 @@ export default function ProductReviewsSection({
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
-                Tất cả ({summary.totalReviews})
+                Tất cả
               </button>
 
               <button
@@ -459,7 +457,7 @@ export default function ProductReviewsSection({
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
-                5 sao ({count5})
+                5 sao
               </button>
 
               <button
@@ -474,7 +472,7 @@ export default function ProductReviewsSection({
                     : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
-                4 sao ({count4})
+                4 sao
               </button>
 
               <button
@@ -490,7 +488,7 @@ export default function ProductReviewsSection({
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>✓ Đã mua hàng ({summary.verifiedReviewsCount})</span>
+                <span>✓ Đã mua hàng</span>
               </button>
             </div>
 
@@ -650,7 +648,7 @@ export default function ProductReviewsSection({
                         onClick={() => setShowAll(true)}
                         className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 font-medium text-sm shadow-xs hover:border-gray-400 transition-all cursor-pointer"
                       >
-                        <span>Xem thêm ({reviews.length - INITIAL_COUNT}) đánh giá khác</span>
+                        <span>Xem thêm đánh giá khác</span>
                         <ChevronDown className="w-4 h-4 text-gray-600" />
                       </button>
                     ) : (

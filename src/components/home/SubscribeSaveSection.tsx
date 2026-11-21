@@ -608,7 +608,6 @@ export default function SubscribeSaveSection({
                 <Star key={i} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
               ))}
             </div>
-            <span className="text-2xs sm:text-2xs text-gray-400">({item.reviewCount})</span>
           </div>
         </div>
 

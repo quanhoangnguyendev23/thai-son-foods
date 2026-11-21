@@ -176,7 +176,6 @@ export default function ProductCompareTable({ current, others, maxColumns = 6 }:
             aria-label={`${r.averageRating.toFixed(1)} / 5 — ${r.totalReviews} ${isEn ? 'ratings' : 'đánh giá'}`}
           >
             <RatingStars value={r.averageRating} />
-            <span className="text-forest-700 group-hover:text-copper-600 group-hover:underline">{r.totalReviews}</span>
           </Link>
         );
       },

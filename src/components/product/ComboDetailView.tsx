@@ -414,7 +414,7 @@ export default function ComboDetailView({
             <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-sm">
               {reviewSummary && reviewSummary.totalReviews > 0 ? (
                 <a href="#danh-gia" onClick={scrollToReviews} className="inline-flex items-center gap-1.5 group">
-                  <span className="text-ink-950 text-emph">{reviewSummary.averageRating.toFixed(1)}</span>
+                  {/* 21/11/2026: không hiện điểm số / số lượt đánh giá cạnh sao */}
                   <span className="flex items-center gap-0.5" aria-hidden>
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
@@ -429,7 +429,7 @@ export default function ComboDetailView({
                     ))}
                   </span>
                   <span className="text-forest-700 group-hover:text-copper-600 group-hover:underline">
-                    {reviewSummary.totalReviews} {isEn ? 'ratings' : 'đánh giá'}
+                    {isEn ? 'See reviews' : 'Xem đánh giá'}
                   </span>
                 </a>
               ) : (

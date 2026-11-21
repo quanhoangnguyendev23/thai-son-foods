@@ -287,9 +287,6 @@ export default function FrequentlyBoughtTogether({
                           />
                         ))}
                       </div>
-                      <span className="text-2xs text-forest-700 font-medium">
-                        {item.reviewCount}
-                      </span>
                     </div>
 
                     {/* Giá tiền & Huy hiệu Prime */}
