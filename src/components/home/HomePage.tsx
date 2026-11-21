@@ -112,10 +112,8 @@ export default function HomePage({ heroBanners, liveProducts, liveCombos, liveCa
     promoBanners.length > 0
       ? promoBanners
       : ENABLE_COMBOS && combos.length > 0
-        ? showDailyDeals
-          ? HERO_PROMO_PLACEHOLDER_TILES
-          // Tắt Deal trong ngày → thay ô "Deal trong ngày" bằng ô "Sản phẩm bán chạy", giữ ô combo
-          : [HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO[0], ...HERO_PROMO_PLACEHOLDER_TILES.filter((t) => t.link !== '/#deal-trong-ngay')]
+        // 21/11/2026: ô đầu là Gói thành viên (không còn phụ thuộc công tắc Deal trong ngày)
+        ? HERO_PROMO_PLACEHOLDER_TILES
         : HERO_PROMO_PLACEHOLDER_TILES_NO_COMBO;
   const categoryGroups = buildCategoryGroups(products, liveCategories);
   const recommended = RECOMMENDED_FOR_YOU_IDS

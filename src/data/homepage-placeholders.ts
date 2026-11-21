@@ -34,19 +34,21 @@ export const HERO_PLACEHOLDER_SLIDES: Banner[] = [
 // `tag` = nhãn nhỏ phía trên tiêu đề; `ctaLabel` = chữ của liên kết. Không ghi giá/% giảm cố định ở đây:
 // % giảm (nếu hiện) được tính từ combo thật.
 export const HERO_PROMO_PLACEHOLDER_TILES: Banner[] = [
+  // 21/11/2026: ô "Deal trong ngày" đổi thành ô Gói thành viên (combo Member) → trang /combo (khách chưa đăng nhập
+  // thấy khối "Ưu đãi chỉ dành cho thành viên" + nút Đăng ký ở đầu trang)
   {
-    id: 'placeholder-promo-deal',
-    tag: 'Deal Sốc',
-    title: 'Deal trong ngày',
-    titleEn: 'Deals of the day',
-    subtitle: 'Bộ đang giảm giá',
-    subtitleEn: 'Bundles on sale',
-    ctaLabel: 'Xem deal',
-    ctaLabelEn: 'See deals',
-    image: '/images/combos/combo-6-chai.jpg',
-    alt: 'Gói 6 chai thức uống Thái Sơn',
-    link: '/#deal-trong-ngay',
-    objectPosition: '60% 55%',
+    id: 'placeholder-promo-member',
+    tag: 'Thành viên',
+    title: 'Gói thành viên',
+    titleEn: 'Member bundles',
+    subtitle: 'Giá riêng khi đăng ký',
+    subtitleEn: 'Member-only prices',
+    ctaLabel: 'Mở khoá ưu đãi',
+    ctaLabelEn: 'Unlock offers',
+    image: '/images/combos/combo-stt-21.jpg',
+    alt: 'Gói thành viên Thái Sơn Foods',
+    link: '/combo',
+    objectPosition: '55% 60%',
   },
   {
     id: 'placeholder-promo-combo',
