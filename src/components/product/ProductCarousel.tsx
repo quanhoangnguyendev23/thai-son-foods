@@ -45,7 +45,9 @@ export default function ProductCarousel({
   const { language } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   // Số sao dưới tên mỗi thẻ (một lần gọi cho cả dải) — chỉ trang chi tiết SP & combo (plain), trang chủ không hiện
-  const ratings = useProductRatings(plain ? products.map((p) => p.id) : []);
+  // Khoá = slug || id, giống khối đánh giá ở trang chi tiết (ProductMainSection/ProductReviewsSection) để số sao khớp nhau
+  const ratingKey = (p: Product) => p.slug || p.id;
+  const ratings = useProductRatings(plain ? products.map(ratingKey) : []);
   const trackRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -112,7 +114,7 @@ export default function ProductCarousel({
                 <p className="absolute top-0 left-0 text-xs leading-4 font-semibold text-brand-copper">#{ranks[idx]}</p>
               )}
               {/* Bố cục compact + tên giới hạn 2 dòng để các thẻ đồng bộ chiều cao */}
-              <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} plain={plain} rating={ratings[p.id]} />
+              <ProductCard product={p} layout="compact" isHomepage titleLines={wide ? 4 : 2} plain={plain} rating={ratings[ratingKey(p)]} />
             </div>
           ))}
         </div>
