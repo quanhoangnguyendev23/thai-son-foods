@@ -22,6 +22,8 @@ import { Product } from '@/types';
 
 import { query } from '@/lib/db';
 import { Combo } from '@/types';
+import { isMemberCombo } from '@/lib/comboTypes';
+import { formatPrice } from '@/lib/utils';
 import { splitComboRows } from '@/lib/recommendation-rows';
 
 export const dynamic = 'force-dynamic';
@@ -349,6 +351,9 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
     .sort((a, b) => priceGap(a.c) - priceGap(b.c) || a.i - b.i)
     .map((x) => x.c);
   const { related: relatedComboRow, others: moreComboRow } = splitComboRows(relatedCombos, otherCombosByPrice);
+  // Dải "Đặc quyền thành viên" (21/11/2026) thay chỗ "Khách mua gói này cũng mua": các combo Member khác gói đang xem
+  const memberComboRow = otherCombos.filter((c) => isMemberCombo(c) && c.salePrice > 0 && c.slug);
+  const memberSaving = Math.max(0, ...memberComboRow.map((c) => c.originalPrice - c.salePrice));
   // Khám phá dòng …: mỗi danh mục một hàng, bỏ sản phẩm đã có trong combo
   const exploreRows = categories
     .map((cat) => ({ category: cat, items: notInCombo(activeCatalog.filter((p) => p.categoryId === cat.id)) }))
@@ -432,12 +437,22 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
           </div>
         )}
 
-        {/* SP · KHÁCH MUA COMBO NÀY CŨNG MUA (dữ liệu đơn hàng thật) */}
-        {boughtTogetherProducts.length >= MIN_ROW && (
+        {/* COMBO · ĐẶC QUYỀN THÀNH VIÊN (21/11/2026, thay chỗ "Khách mua gói này cũng mua");
+            không có combo Member thì giữ hàng "Khách mua gói này cũng mua" (dữ liệu đơn hàng thật) như cũ */}
+        {memberComboRow.length > 0 ? (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel
+              plain
+              title="Đặc quyền thành viên: giá riêng chỉ dành cho bạn"
+              subtitle={`Đăng ký tài khoản miễn phí là mua được ngay — tiết kiệm đến ${formatPrice(memberSaving)}đ mỗi gói`}
+              combos={memberComboRow}
+            />
+          </div>
+        ) : boughtTogetherProducts.length >= MIN_ROW ? (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel plain title="Khách mua gói này cũng mua" products={boughtTogetherProducts} mobileGrid wide />
           </div>
-        )}
+        ) : null}
 
         {/* ── BANNER SHOWCASE THƯƠNG HIỆU (cần sản phẩm gốc để chọn ngẫu nhiên, không thì khối ẩn để lại khoảng trắng) ── */}
         {bannerProduct && (

@@ -36,6 +36,8 @@ import { PersonalizedSignInPrompt, BackToTopBar } from '@/components/product/Pro
 import { combos as staticCombos } from '@/data/combos';
 import { canonicalProductId } from '@/lib/inventory';
 import { Combo } from '@/types';
+import { isMemberCombo } from '@/lib/comboTypes';
+import { formatPrice } from '@/lib/utils';
 import { splitComboRows } from '@/lib/recommendation-rows';
 import { ProductViewTracker } from '@/components/product/ProductRealBlocks';
 import { getProductReviewSummary, getProductReviews } from '@/lib/reviews/repository';
@@ -325,6 +327,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   // hàng 1 = combo có sản phẩm đang xem (nhiều chai sản phẩm này trước); hàng 2 = các combo còn lại (bán chạy, giảm sâu trước)
   let combosWithProductRow: StripCombo[] = [];
   let moreCombosRow: StripCombo[] = [];
+  let memberComboRow: StripCombo[] = [];
   if (ENABLE_COMBOS && useNewLayout) {
     const activeCombos = await getActiveCombos();
     featuredCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug);
@@ -342,6 +345,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       (a, b) => Number(Boolean(b.isBestSeller)) - Number(Boolean(a.isBestSeller)) || (b.discount || 0) - (a.discount || 0)
     );
     ({ related: combosWithProductRow, others: moreCombosRow } = splitComboRows(withCurrent, featuredSorted));
+    // Dải "Đặc quyền thành viên" (21/11/2026) thay chỗ "Khách mua sản phẩm này cũng mua"
+    memberComboRow = featuredCombos.filter((c) => isMemberCombo(c));
     stripCombo = pickComboForProduct(activeCombos, product.id);
     // Combo trong mục Đánh giá: ngẫu nhiên trong các combo có sản phẩm này (khác combo ở dải trên); không có thì ngẫu nhiên
     const otherCombos = activeCombos.filter((c) => c.salePrice > 0 && c.slug && c.id !== stripCombo?.id);
@@ -572,8 +577,18 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           </div>
         )}
 
-        {/* ── KHÁCH MUA SẢN PHẨM NÀY CŨNG MUA (từ các đơn có nhiều món; ẩn khi chưa đủ 3 sản phẩm) ── */}
-        {boughtTogetherProducts.length >= 3 && (
+        {/* ── ĐẶC QUYỀN THÀNH VIÊN (21/11/2026, thay chỗ "Khách mua sản phẩm này cũng mua"): combo Member;
+            không có combo Member thì giữ hàng "Khách mua sản phẩm này cũng mua" (từ các đơn có nhiều món; ẩn khi chưa đủ 3 sản phẩm) ── */}
+        {memberComboRow.length > 0 ? (
+          <div className="border-t border-gray-200 bg-white">
+            <ComboCarousel
+              plain
+              title="Đặc quyền thành viên: giá riêng chỉ dành cho bạn"
+              subtitle={`Đăng ký tài khoản miễn phí là mua được ngay — tiết kiệm đến ${formatPrice(Math.max(0, ...memberComboRow.map((c) => c.originalPrice - c.salePrice)))}đ mỗi gói`}
+              combos={memberComboRow}
+            />
+          </div>
+        ) : boughtTogetherProducts.length >= 3 ? (
           <div className="border-t border-gray-200 bg-white">
             <ProductCarousel
             plain
@@ -583,7 +598,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               wide
             />
           </div>
-        )}
+        ) : null}
 
         {/* ── THÔNG TIN SẢN PHẨM (TAB) ── */}
         <div className="border-t border-gray-200 bg-white scroll-mt-[168px]" id="thong-tin-san-pham">
