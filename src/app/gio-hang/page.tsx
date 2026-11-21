@@ -30,6 +30,7 @@ import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffect
 import { getShortProductName } from '@/lib/product-detail';
 import { useCartInventory } from '@/hooks/useCartInventory';
 import { INVENTORY_CONFIG } from '@/config/inventory';
+import MemberComboTeaser from '@/components/product/MemberComboTeaser';
 
 // Trần giá trị đơn COD — cùng số server dùng để từ chối đơn (/api/orders)
 const COD_MAX_ORDER_VALUE = INVENTORY_CONFIG.COD_VALIDATION.MAX_ORDER_VALUE;
@@ -598,6 +599,9 @@ export default function CartPage() {
             </li>
           </ol>
         </nav>
+
+        {/* Ưu đãi thành viên: 3 combo Member + nút Đăng ký (chỉ khách chưa đăng nhập, 21/11/2026) */}
+        {ENABLE_COMBOS && <MemberComboTeaser className="mb-5" />}
 
         {/* ─── 2. TIÊU ĐỀ TRANG & TIỆN ÍCH ─── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-2 border-b border-gray-200/60">
