@@ -26,8 +26,8 @@ function Stars({ value, total }: { value: number; total: number }) {
           />
         ))}
       </span>
-      <span className="sr-only">{value.toFixed(1)} trên 5 sao,</span>
-      <span>{total}</span>
+      {/* 21/11/2026: bỏ số kế bên sao, chỉ còn hàng sao */}
+      <span className="sr-only">{value.toFixed(1)} trên 5 sao, {total} đánh giá</span>
     </span>
   );
 }

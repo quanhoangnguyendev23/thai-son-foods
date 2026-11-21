@@ -2,7 +2,7 @@ import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * Hàng sao dưới tên sản phẩm trên thẻ (21/11/2026). Chưa có đánh giá: 5 sao xám. Không hiện số lượt đánh giá "(n)" (21/11/2026).
+ * Hàng sao dưới tên sản phẩm trên thẻ (21/11/2026). Chưa có đánh giá: 5 sao xám. Không hiện số lượt "(n)" và điểm số kế bên sao (21/11/2026) — chỉ còn hàng sao; điểm vẫn đọc được qua sr-only.
  * Điểm làm tròn tới nửa sao; sao nửa vẽ bằng lớp phủ cắt 50%.
  */
 export default function RatingStars({ average, count, className }: { average: number; count: number; className?: string }) {
@@ -25,7 +25,6 @@ export default function RatingStars({ average, count, className }: { average: nu
           );
         })}
       </span>
-      {count > 0 && <span className="text-text-dark">{average.toFixed(1)}</span>}
       <span className="sr-only">{count > 0 ? `${average.toFixed(1)} trên 5 sao, ${count} đánh giá` : 'Chưa có đánh giá'}</span>
     </span>
   );

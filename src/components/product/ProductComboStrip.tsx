@@ -84,7 +84,7 @@ function StripCard({ combo, catalog, rating, sold = 0 }: { combo: ComboStripItem
               <LimitedDealTag comboId={combo.id} />
               {hasRating && rating && (
                 <span className="inline-flex items-center gap-1">
-                  <span className="text-ink-950">{rating.averageRating.toFixed(1)}</span>
+                  {/* 21/11/2026: bỏ điểm số và số lượt kế bên sao, chỉ còn hàng sao */}
                   <span className="flex items-center gap-px" aria-hidden>
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
@@ -96,7 +96,7 @@ function StripCard({ combo, catalog, rating, sold = 0 }: { combo: ComboStripItem
                       />
                     ))}
                   </span>
-                  <span>{rating.totalReviews}</span>
+                  <span className="sr-only">{rating.averageRating.toFixed(1)} trên 5 sao, {rating.totalReviews} đánh giá</span>
                 </span>
               )}
               {combo.isBestSeller && (
