@@ -569,7 +569,7 @@ export default function ProductMainSection({
           <div className="hidden xl:block mt-4">
             <ProductSidebarSponsoredCard currentProductId={product.id} hideUnverifiedStats randomize />
             {/* Gói thành viên ngẫu nhiên dưới thẻ được tài trợ (21/11/2026) */}
-            <MemberComboSidebarCard className="mt-4" />
+            <MemberComboSidebarCard compact className="mt-4" />
           </div>
         </div>
 
@@ -605,7 +605,7 @@ export default function ProductMainSection({
               <ProductSponsoredMiniCard currentProductId={product.id} hideUnverifiedStats randomize />
             </div>
             <ProductSidebarSponsoredCard currentProductId={product.id} hideUnverifiedStats randomize />
-            <MemberComboSidebarCard />
+            <MemberComboSidebarCard compact />
           </div>
         </div>
       </div>

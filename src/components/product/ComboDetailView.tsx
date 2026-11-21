@@ -654,7 +654,7 @@ export default function ComboDetailView({
             <div className="hidden xl:block mt-4">
               <ProductSidebarSponsoredCard currentProductId={combo.id} hideUnverifiedStats randomize />
               {/* Gói thành viên ngẫu nhiên dưới thẻ được tài trợ (21/11/2026) */}
-              <MemberComboSidebarCard currentComboId={combo.id} className="mt-4" />
+              <MemberComboSidebarCard compact currentComboId={combo.id} className="mt-4" />
             </div>
           </div>
 
@@ -687,7 +687,7 @@ export default function ComboDetailView({
                 <ProductSponsoredMiniCard currentProductId={combo.id} hideUnverifiedStats randomize />
               </div>
               <ProductSidebarSponsoredCard currentProductId={combo.id} hideUnverifiedStats randomize />
-              <MemberComboSidebarCard currentComboId={combo.id} />
+              <MemberComboSidebarCard compact currentComboId={combo.id} />
             </div>
           </div>
         </div>
