@@ -11,7 +11,8 @@ import { Combo, Product, ProductImage } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
-import { ChevronRight, Star } from 'lucide-react';
+import { ChevronRight, Lock, Star } from 'lucide-react';
+import { useMemberComboGate } from '@/lib/memberComboGate';
 import { msUntilNextVnMidnight, useTodayDealIds } from '@/lib/daily-deals';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBranchStore } from '@/store/branch';
@@ -91,6 +92,8 @@ export default function ComboDetailView({
   const addItem = useCartStore((s) => s.addItem);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  // Combo Member: khách chưa đăng nhập vẫn xem được nhưng bấm mua thì mở Đăng ký (21/11/2026)
+  const { locked: memberLocked, guard: guardMemberCombo } = useMemberComboGate();
   const [reviewSummary, setReviewSummary] = useState<{ averageRating: number; totalReviews: number } | null>(null);
   // Thanh mua hàng cố định (mobile/tablet): chỉ hiện khi khối nút mua đã cuộn khỏi màn hình
   const buyButtonsRef = useRef<HTMLDivElement>(null);
@@ -285,6 +288,7 @@ export default function ComboDetailView({
   }, [combo.image, combo.id, comboTitle, productsDetail, language]);
 
   const handleAddToCart = (e?: React.MouseEvent) => {
+    if (guardMemberCombo(combo)) return;
     if (e) {
       const mainImg = document.querySelector('[data-product-main-image]') as HTMLElement | null;
       flyToCart({
@@ -310,6 +314,7 @@ export default function ComboDetailView({
   };
 
   const handleBuyNow = () => {
+    if (guardMemberCombo(combo)) return;
     addItem(
       {
         productId: combo.id,
@@ -444,6 +449,20 @@ export default function ComboDetailView({
             </div>
 
             <MonthlySalesInfo itemId={combo.id} itemType="combo" slug={combo.slug} />
+
+            {/* Combo Member + khách chưa đăng nhập: báo khoá, mời đăng ký (21/11/2026) */}
+            {memberLocked(combo) && (
+              <div className="flex items-start gap-2 rounded-lg border border-forest-200 bg-forest-50 px-3 py-2 text-sm text-forest-700">
+                <Lock className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
+                <p>
+                  {isEn ? 'Members-only bundle. ' : 'Gói dành riêng cho thành viên. '}
+                  <button type="button" onClick={() => guardMemberCombo(combo)} className="underline hover:text-copper-600 cursor-pointer">
+                    {isEn ? 'Sign up for an account' : 'Đăng ký tài khoản'}
+                  </button>
+                  {isEn ? ' to buy it.' : ' để mua gói này.'}
+                </p>
+              </div>
+            )}
 
             {/* Nhãn thuộc tính */}
             <div className="flex flex-wrap gap-1.5">

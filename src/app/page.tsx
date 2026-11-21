@@ -234,6 +234,8 @@ async function getLiveCombos(): Promise<Combo[]> {
           discount: row.discount !== null && row.discount !== undefined ? Number(row.discount) : base.discount,
           isFeatured: Boolean(row.is_featured),
           isBestSeller: Boolean(row.is_best_seller),
+          // Loại combo (MEMBER = chỉ thành viên đăng nhập mới mua được, 21/11/2026)
+          comboType: row.combo_type || undefined,
           createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined,
           image: finalImage,
           images: activeImages.map((img: any) => ({

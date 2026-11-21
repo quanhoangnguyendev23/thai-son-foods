@@ -79,6 +79,8 @@ export async function GET(request: Request) {
         discount: row.discount !== null ? Number(row.discount) : base.discount,
         isActive: Boolean(row.is_active),
         isBestSeller: Boolean(row.is_best_seller),
+        // Loại combo (MEMBER = chỉ thành viên đăng nhập mới mua được, 21/11/2026)
+        comboType: row.combo_type || undefined,
         createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined,
         products: (Array.isArray(row.items) && row.items.length > 0)
           ? row.items.map((it: any) => ({

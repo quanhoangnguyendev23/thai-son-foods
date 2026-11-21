@@ -4,7 +4,7 @@ import DiscountTag from '@/components/product/DiscountTag';
 import { Children, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lock, ShoppingBag } from 'lucide-react';
 import { Combo } from '@/types';
 import { cn, formatPrice } from '@/lib/utils';
 import { useCartStore } from '@/store/cart';
@@ -13,6 +13,7 @@ import { useTodayDealIds } from '@/lib/daily-deals';
 import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
 import RatingStars from '@/components/product/RatingStars';
 import { useProductRatings, type ProductRating } from '@/lib/productRatings';
+import { useMemberComboGate } from '@/lib/memberComboGate';
 
 /** Combo phải chọn vị trên trang combo trước khi mua (giống ProductCombosSidebar) */
 const CUSTOMIZABLE_COMBO_IDS = new Set(['combo-4-chai', 'combo-van-phong', 'combo-uu-dai', 'combo-5-old', 'combo-sieu-hoi', 'combo-6-old']);
@@ -101,10 +102,14 @@ function ComboCard({ combo, plain = false, rating }: { combo: Combo; plain?: boo
   const [added, setAdded] = useState(false);
   const isCustomizable = CUSTOMIZABLE_COMBO_IDS.has(combo.id);
   const href = `/combo/${combo.slug}`;
+  // Combo Member: khách chưa đăng nhập thấy khoá, bấm giỏ thì mở Đăng ký (21/11/2026)
+  const { locked, guard } = useMemberComboGate();
+  const isLocked = locked(combo);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (guard(combo)) return;
     const imgEl = cardRef.current?.querySelector('img') as HTMLElement | null;
     flyToCart({ startElement: imgEl || (e.currentTarget as HTMLElement), imageSrc: combo.image });
     useCartStore.getState().addItem({
@@ -139,6 +144,12 @@ function ComboCard({ combo, plain = false, rating }: { combo: Combo; plain?: boo
             loading="lazy"
             className="object-cover transition-transform duration-500"
           />
+          {isLocked && (
+            <span className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 inline-flex items-center gap-1 px-2 py-1 text-xs leading-none bg-brand-forest text-white rounded shadow-xs">
+              <Lock className="w-3 h-3" aria-hidden />
+              Thành viên
+            </span>
+          )}
           {combo.isBestSeller && (
             <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10 flex flex-col items-end gap-0.5">
               <span className="px-2 py-1 text-xs leading-none bg-brand-emerald text-white rounded shadow-xs">Bán chạy</span>
@@ -183,10 +194,10 @@ function ComboCard({ combo, plain = false, rating }: { combo: Combo; plain?: boo
                 type="button"
                 onClick={handleAdd}
                 className="relative shrink-0 w-9 h-9 sm:w-7 sm:h-7 md:w-8 md:h-8 flex items-center justify-center bg-brand-emerald text-white rounded-lg hover:bg-brand-forest transition-colors active:scale-95 cursor-pointer shadow-xs"
-                aria-label={`Thêm ${combo.name} vào giỏ hàng`}
-                title={added ? 'Đã thêm vào giỏ' : 'Thêm gói vào giỏ'}
+                aria-label={isLocked ? `Đăng ký thành viên để mua ${combo.name}` : `Thêm ${combo.name} vào giỏ hàng`}
+                title={isLocked ? 'Gói dành cho thành viên — đăng ký để mua' : added ? 'Đã thêm vào giỏ' : 'Thêm gói vào giỏ'}
               >
-                <ShoppingBag className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                {isLocked ? <Lock className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> : <ShoppingBag className="w-4 h-4 sm:w-3.5 sm:h-3.5" />}
               </button>
             )}
           </div>

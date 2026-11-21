@@ -1,10 +1,10 @@
 /**
  * Thay toàn bộ combo theo file "01 - Bang tinh gia Combo - 261115.xlsb", sheet "Bảng tính combo" (19/11/2026).
  * Mỗi loại combo (cột "Mô tả") lấy 3 combo đầu: STT 1–3 (Đa dạng), 6–8 (Chỉ định), 11–13 (Tăng số lượng),
- * 16–18 (Giá) → 12 combo. Loại Member (STT 21–25) bỏ theo yêu cầu 19/11/2026. Mọi combo khác bị XOÁ
+ * 16–18 (Giá), 21–23 (Member, thêm lại 21/11/2026; chỉ thành viên đăng nhập mới mua được) → 15 combo. Mọi combo khác bị XOÁ
  * (combo_items / combo_images tự xoá theo).
  *
- * - combos.combo_type = loại (DA_DANG / CHI_DINH / TANG_SO_LUONG / GIA), xem src/lib/comboTypes.ts.
+ * - combos.combo_type = loại (DA_DANG / CHI_DINH / TANG_SO_LUONG / GIA / MEMBER), xem src/lib/comboTypes.ts.
  * - Tên combo tạm để "?" theo yêu cầu 19/11/2026 (label: tên dự kiến, chỉ để đọc, không ghi vào CSDL).
  * - Giá gốc = "Giá Web - NTD" (tổng giá web từng chai); giá bán = giá gốc − cột "NTD" (phần margin nhường người tiêu dùng);
  *   discount = làm tròn (NTD / giá gốc × 100). Đúng cách tính các combo đang có trên staging.
@@ -36,6 +36,10 @@ export const COMBOS = [
   { stt: 16, slug: 'bo-san-pham-gia-dinh', oldSlugs: [], name: '?', label: 'Bộ sản phẩm gia đình', type: 'GIA', items: { SS: 4, SL: 4, TSG: 3, TXG: 3 }, web: 308000, ntd: 41600 },
   { stt: 17, slug: 'bo-san-pham-ciao', oldSlugs: [], name: '?', label: 'Bộ sản phẩm Ciao', type: 'GIA', items: { SB: 3, MD: 3, TSA: 4, MAC: 4 }, web: 268000, ntd: 39200 },
   { stt: 18, slug: 'bo-san-pham-03-dong', oldSlugs: [], name: '?', label: 'Bộ sản phẩm 03 dòng', type: 'GIA', items: { SB: 2, SHS: 2, SGL: 2, MD: 4, LH: 4 }, web: 252000, ntd: 39200 },
+  // Member (21/11/2026): 3 combo đầu loại Member, chỉ thành viên đã đăng nhập mới mua được (khách vẫn thấy, có khoá)
+  { stt: 21, slug: 'dang-ki-tai-khoan-giam-10', oldSlugs: [], name: '?', label: 'Đăng kí tài khoản giảm 10%', type: 'MEMBER', items: { SHS: 2, SGL: 2, MD: 4, TD: 4 }, web: 216000, ntd: 36800 },
+  { stt: 22, slug: 'don-hang-tu-180k-la-freeship', oldSlugs: [], name: '?', label: 'Đơn hàng từ 180k là freeship', type: 'MEMBER', items: { SHS: 3, SGL: 3, MD: 4, LH: 4 }, web: 252000, ntd: 44800 },
+  { stt: 23, slug: 'combo-thanh-vien-yoo-matcha', oldSlugs: [], name: '?', label: 'Combo thành viên Yoo + Matcha', type: 'MEMBER', items: { SS: 4, SL: 4, MAC: 4 }, web: 280000, ntd: 35200 },
 ];
 
 /**
@@ -49,6 +53,7 @@ export const TYPE_DESCRIPTION = {
   CHI_DINH: 'Combo chỉ định: một sản phẩm chủ đạo chiếm khoảng một nửa số chai, kèm các vị khác.',
   TANG_SO_LUONG: 'Combo tăng số lượng: gói nhỏ gọn, giá tốt khi mua nhiều.',
   GIA: 'Combo giá tốt cho gia đình, tiết kiệm hơn mua lẻ.',
+  MEMBER: 'Combo thành viên: dành riêng cho khách đã đăng ký tài khoản Thái Sơn Foods.',
 };
 
 const isMain = /replace_combos_2026-11-19\.mjs$/.test(process.argv[1] || '');

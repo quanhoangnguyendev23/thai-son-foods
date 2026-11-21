@@ -1,7 +1,8 @@
 /**
  * Loại combo (cột combos.combo_type), theo cột "Mô tả" của "Bảng tính giá Combo" (sheet "Bảng tính combo", 15/11/2026).
- * Chỉ dùng để quản lý / lọc trong trang admin; không đổi cách tính giá hay hiển thị ở trang bán hàng.
- * Member giữ lại để dùng sau (19/11/2026 đã bỏ các combo Member khỏi web).
+ * Dùng để quản lý / lọc trong trang admin; không đổi cách tính giá.
+ * MEMBER (thêm lại 21/11/2026): khách chưa đăng nhập vẫn thấy nhưng bị khoá, phải đăng ký / đăng nhập mới mua được;
+ * API đặt hàng cũng chặn combo MEMBER khi không có phiên đăng nhập.
  */
 export const COMBO_TYPES = [
   { key: 'DA_DANG', label: 'Đa dạng', hint: 'Tối thiểu 3 loại sản phẩm' },
@@ -14,6 +15,11 @@ export const COMBO_TYPES = [
 export type ComboTypeKey = (typeof COMBO_TYPES)[number]['key'];
 
 export const COMBO_TYPE_LABEL: Record<string, string> = Object.fromEntries(COMBO_TYPES.map((t) => [t.key, t.label]));
+
+/** Combo chỉ dành cho thành viên đã đăng nhập */
+export function isMemberCombo(c: { comboType?: string | null; combo_type?: string | null } | null | undefined): boolean {
+  return String(c?.comboType ?? c?.combo_type ?? '').toUpperCase() === 'MEMBER';
+}
 
 /** Giá trị client gửi → loại hợp lệ, '' / null → null (chưa phân loại), sai → undefined (báo lỗi) */
 export function parseComboType(raw: unknown): ComboTypeKey | null | undefined {

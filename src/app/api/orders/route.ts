@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { NextResponse, after } from 'next/server';
 import { query, initDatabase, pool } from '@/lib/db';
 import { getUserSession } from '@/lib/auth';
+import { isMemberCombo } from '@/lib/comboTypes';
 import { SERVICE_AREA, isHcmProvince, hcmStoreSql } from '@/config/service-area';
 import { sendOrderEmail } from '@/lib/email/service';
 import { notifyNewOrderZalo } from '@/lib/notify/zalo';
@@ -482,9 +483,16 @@ export async function POST(request: Request) {
           }
           const comboRes = await client.query(
             // Combo đã tạm dừng (is_active=false) không bán nữa → rơi xuống nhánh từ chối bên dưới
-            `SELECT name, sale_price, original_price, image FROM combos WHERE (id = $1 OR slug = $1) AND is_active = true LIMIT 1;`,
+            `SELECT name, sale_price, original_price, image, combo_type FROM combos WHERE (id = $1 OR slug = $1) AND is_active = true LIMIT 1;`,
             [pId]
           );
+          // Combo Member (21/11/2026): chỉ khách đã đăng nhập mới đặt được
+          if (comboRes.rows.length > 0 && isMemberCombo(comboRes.rows[0]) && !userId) {
+            return NextResponse.json(
+              { success: false, error: 'Gói dành cho thành viên: vui lòng đăng ký hoặc đăng nhập tài khoản để mua.', code: 'MEMBER_COMBO_LOGIN_REQUIRED' },
+              { status: 401 }
+            );
+          }
           if (comboRes.rows.length > 0) {
             itemPrice = comboRes.rows[0].sale_price;
             itemOriginalPrice = Number(comboRes.rows[0].original_price) || null;

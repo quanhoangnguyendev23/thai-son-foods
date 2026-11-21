@@ -188,6 +188,8 @@ async function getActiveCombos(): Promise<StripCombo[]> {
           discount: Number(row.discount) || 0,
           isActive: true,
           isBestSeller: Boolean(row.is_best_seller),
+          // Loại combo (MEMBER = chỉ thành viên đăng nhập mới mua được, 21/11/2026)
+          comboType: row.combo_type || undefined,
           products: Array.isArray(row.items) && row.items.length > 0
             ? row.items.map((it: any) => ({ productId: String(it.product_id), quantity: Number(it.quantity) || 1 }))
             : base?.products || [],

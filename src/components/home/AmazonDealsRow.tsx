@@ -5,7 +5,8 @@ import { AttentionFlame, AttentionPrice } from '@/components/ui/AttentionEffects
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingBag, Check, ChevronRight, Clock } from 'lucide-react';
+import { ShoppingBag, Check, ChevronRight, Clock, Lock } from 'lucide-react';
+import { useMemberComboGate } from '@/lib/memberComboGate';
 import { Combo } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { MISSING_PRODUCT_IMAGE } from '@/lib/product-detail';
@@ -72,6 +73,9 @@ function DealTile({ combo, index = 0 }: { combo: Combo; index?: number }) {
   const [src, setSrc] = useState(combo.image || MISSING_PRODUCT_IMAGE);
   const [added, setAdded] = useState(false);
   const imgWrapRef = useRef<HTMLAnchorElement>(null);
+  // Combo Member: khách chưa đăng nhập bấm giỏ thì mở Đăng ký (21/11/2026)
+  const { locked, guard } = useMemberComboGate();
+  const isLocked = locked(combo);
   const name = (language === 'en' && combo.nameEn ? combo.nameEn : combo.name).split(',')[0].trim();
   const href = `/combo/${combo.slug}`;
   const saving = Math.max(0, combo.originalPrice - combo.salePrice);
@@ -85,6 +89,7 @@ function DealTile({ combo, index = 0 }: { combo: Combo; index?: number }) {
 
   // Cùng luồng thêm combo vào giỏ như ComboShowcase: ảnh bay vào giỏ + addItem
   const handleAdd = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (guard(combo)) return;
     const imgEl = imgWrapRef.current?.querySelector('img') as HTMLElement | null;
     flyToCart({ startElement: imgEl || e.currentTarget, imageSrc: src });
     useCartStore.getState().addItem({
@@ -155,7 +160,7 @@ function DealTile({ combo, index = 0 }: { combo: Combo; index?: number }) {
               added ? 'bg-brand-emerald' : 'bg-brand-amber hover:bg-brand-copper'
             }`}
           >
-            {added ? <Check className="w-4 h-4" aria-hidden /> : <ShoppingBag className="w-4 h-4" aria-hidden />}
+            {added ? <Check className="w-4 h-4" aria-hidden /> : isLocked ? <Lock className="w-4 h-4" aria-hidden /> : <ShoppingBag className="w-4 h-4" aria-hidden />}
           </button>
         </div>
       </div>

@@ -97,6 +97,8 @@ export interface Combo {
   isBestSeller?: boolean;
   /** Thời điểm tạo combo (combos.created_at, ISO) — để xếp "Mới nhất" và gắn nhãn "Mới" trên trang chủ */
   createdAt?: string;
+  /** Loại combo (combos.combo_type, xem src/lib/comboTypes.ts). MEMBER = chỉ thành viên đã đăng nhập mới mua được */
+  comboType?: string;
 }
 
 export interface ComboItem {

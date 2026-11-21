@@ -6,7 +6,8 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Check, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
+import { ShoppingBag, Check, ChevronDown, ChevronUp, ChevronRight, Lock } from 'lucide-react';
+import { useMemberComboGate } from '@/lib/memberComboGate';
 import { combos } from '@/data/combos';
 import { formatPrice, cn, safeFetchJson } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -59,6 +60,8 @@ export default function ComboShowcase({ combos: initialCombos, showAll = false, 
   const { flyToCart } = useFlyToCart();
   const router = useRouter();
   const [addedId, setAddedId] = useState<string | null>(null);
+  // Combo Member: khách chưa đăng nhập thấy khoá, bấm giỏ thì mở Đăng ký (21/11/2026)
+  const { locked: isMemberLocked, guard: guardMemberCombo } = useMemberComboGate();
   // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Ưu đãi có hạn" (rỗng trước khi mount)
   const dealIds = useTodayDealIds();
   const [comboList, setComboList] = useState<Combo[]>(initialCombos || combos);
@@ -89,6 +92,7 @@ export default function ComboShowcase({ combos: initialCombos, showAll = false, 
   const handleAddToCart = (combo: Combo, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (guardMemberCombo(combo)) return;
 
     // 3 Combo tùy chỉnh bắt buộc phải vào trang chi tiết combo để chọn vị
     const isCustomizable =
@@ -296,6 +300,13 @@ export default function ComboShowcase({ combos: initialCombos, showAll = false, 
                           </div>
                         )}
 
+                        {isMemberLocked(combo) && (
+                          <span className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10 pointer-events-none inline-flex items-center gap-1 px-1.5 py-0.5 text-2xs bg-brand-forest text-white rounded shadow-xs">
+                            <Lock className="w-3 h-3" aria-hidden />
+                            {language === 'en' ? 'Members' : 'Thành viên'}
+                          </span>
+                        )}
+
                         {/* Huy hiệu số lượng chai (Góc dưới phải) */}
                         <div className="absolute bottom-1 sm:bottom-2 right-1 sm:right-2 z-10 pointer-events-none">
                           <span className="px-1.5 py-0.5 text-2xs lg:text-2xs bg-emerald-800/90 backdrop-blur-xs text-white rounded shadow-xs w-fit">
@@ -352,11 +363,13 @@ export default function ComboShowcase({ combos: initialCombos, showAll = false, 
                             ? 'bg-brand-forest text-white'
                             : 'bg-brand-emerald hover:bg-brand-forest text-white'
                         )}
-                        title={language === 'en' ? 'Add bundle to cart' : 'Thêm gói vào giỏ hàng'}
-                        aria-label={language === 'en' ? `Add ${comboName} to cart` : `Thêm ${comboName} vào giỏ hàng`}
+                        title={isMemberLocked(combo) ? (language === 'en' ? 'Members only — sign up to buy' : 'Gói dành cho thành viên — đăng ký để mua') : language === 'en' ? 'Add bundle to cart' : 'Thêm gói vào giỏ hàng'}
+                        aria-label={isMemberLocked(combo) ? (language === 'en' ? `Sign up to buy ${comboName}` : `Đăng ký thành viên để mua ${comboName}`) : language === 'en' ? `Add ${comboName} to cart` : `Thêm ${comboName} vào giỏ hàng`}
                       >
                         {isJustAdded ? (
                           <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        ) : isMemberLocked(combo) ? (
+                          <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         ) : (
                           <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         )}

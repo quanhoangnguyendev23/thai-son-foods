@@ -102,6 +102,8 @@ async function getLiveCombo(slug: string): Promise<Combo | undefined> {
         description: dbCombo.description || fallback.description,
         isActive: dbCombo.is_active !== null && dbCombo.is_active !== undefined ? Boolean(dbCombo.is_active) : fallback.isActive,
         isBestSeller: Boolean(dbCombo.is_best_seller),
+        // Loại combo (MEMBER = chỉ thành viên đăng nhập mới mua được, 21/11/2026)
+        comboType: dbCombo.combo_type || undefined,
         products: (Array.isArray(dbCombo.items) && dbCombo.items.length > 0)
           ? dbCombo.items.map((it: any) => ({
               productId: it.product_id,
@@ -147,6 +149,8 @@ async function getOtherActiveCombos(currentId: string): Promise<Combo[]> {
             discount: Number(row.discount) || 0,
             isActive: true,
             isBestSeller: Boolean(row.is_best_seller),
+            // Loại combo (MEMBER = chỉ thành viên đăng nhập mới mua được, 21/11/2026)
+            comboType: row.combo_type || undefined,
             products: Array.isArray(row.items) && row.items.length > 0
               ? row.items.map((it: any) => ({ productId: String(it.product_id), quantity: Number(it.quantity) || 1 }))
               : base?.products || [],

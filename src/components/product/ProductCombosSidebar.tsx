@@ -12,6 +12,7 @@ import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTodayDealIds } from '@/lib/daily-deals';
 import { ArrowRight, ShoppingBag, Check, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemberComboGate } from '@/lib/memberComboGate';
 
 import SectionTitle from '@/components/ui/SectionTitle';
 
@@ -32,6 +33,7 @@ export default function ProductCombosSidebar({
   const [comboList, setComboList] = useState<Combo[]>([]);
   const [showAllMobile, setShowAllMobile] = useState(false);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const { guard: guardMemberCombo } = useMemberComboGate();
   // Combo thuộc bộ "Deal trong ngày" hôm nay → nhãn "Ưu đãi có hạn" (rỗng trước khi mount)
   const dealIds = useTodayDealIds();
   const maxDiscount = Math.max(...comboList.map((c) => c.discount || 0), 0);
@@ -89,6 +91,8 @@ export default function ProductCombosSidebar({
   };
 
   const handleQuickAdd = (combo: Combo, e?: React.MouseEvent) => {
+    // Combo Member: khách chưa đăng nhập → mở Đăng ký thay vì thêm giỏ (21/11/2026)
+    if (guardMemberCombo(combo)) return;
     const comboName = (language === 'en' && combo.nameEn) ? combo.nameEn : combo.name;
     const comboUnit = `${combo.totalItems} ${language === 'en' ? 'bottles' : 'chai'}`;
 
