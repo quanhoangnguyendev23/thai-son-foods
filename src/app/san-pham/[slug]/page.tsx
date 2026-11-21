@@ -27,7 +27,6 @@ import ProductCompareTable from '@/components/product/ProductCompareTable';
 import { getSiblingProducts, getSimilarProducts, getShortProductName } from '@/lib/product-detail';
 import { getAlsoViewedIds, getBestSellerRanking, getBoughtTogetherIds, getTotalSold, getLiveCatalog } from '@/lib/product-stats';
 import ProductComboStrip, { type ComboStripItem } from '@/components/product/ProductComboStrip';
-import MemberComboTeaser from '@/components/product/MemberComboTeaser';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 import { brands } from '@/data/brands';
 import { ReviewProductAd, ReviewComboAd } from '@/components/product/ProductReviewAds';
@@ -537,9 +536,6 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             />
           </div>
         )}
-
-        {/* Ưu đãi thành viên: 3 combo Member + nút Đăng ký (chỉ khách chưa đăng nhập, 21/11/2026) */}
-        {ENABLE_COMBOS && <MemberComboTeaser className="mx-4 sm:mx-6 my-4" />}
 
         {/* ── COMBO · CÓ SẢN PHẨM NÀY (mua theo combo tiết kiệm hơn); không có thì hàng combo nổi bật lên vị trí này ── */}
         {/* Dùng ComboCarousel để cùng kiểu tiêu đề, thẻ và mũi tên với các hàng sản phẩm khác */}

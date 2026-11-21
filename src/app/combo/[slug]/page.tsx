@@ -15,7 +15,6 @@ import { brands } from '@/data/brands';
 import { getShortProductName } from '@/lib/product-detail';
 import { getProductReviewSummary } from '@/lib/reviews/repository';
 import ProductComboStrip, { type ComboStripItem } from '@/components/product/ProductComboStrip';
-import MemberComboTeaser from '@/components/product/MemberComboTeaser';
 import { getTotalSold, getBestSellerRanking, getBoughtTogetherIds, getAlsoViewedIds, getLiveCatalog } from '@/lib/product-stats';
 import BrandCardsSection from '@/components/product/BrandCardsSection';
 import { Product } from '@/types';
@@ -408,9 +407,6 @@ export default async function ComboDetailPage({ params }: ComboPageProps) {
             <ProductCarousel plain title="Bán chạy nhất tại Thái Sơn Foods" subtitle="Xếp hạng theo số lượng đã bán" products={bestSellerProducts} mobileGrid wide ranks={bestSellerRanks} />
           </div>
         )}
-
-        {/* Ưu đãi thành viên: 3 combo Member + nút Đăng ký (chỉ khách chưa đăng nhập, 21/11/2026) */}
-        <MemberComboTeaser className="mx-4 sm:mx-6 my-4" />
 
         {/* COMBO · CÓ CÙNG SẢN PHẨM (nhiều chai chung trước); không có thì hàng combo khác lên vị trí này */}
         {relatedComboRow.length > 0 ? (
