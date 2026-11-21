@@ -11,6 +11,8 @@ import { useCartStore } from '@/store/cart';
 import { useFlyToCart } from '@/context/FlyToCartContext';
 import { useTodayDealIds } from '@/lib/daily-deals';
 import { AttentionStyles, attentionShine } from '@/components/ui/AttentionEffects';
+import RatingStars from '@/components/product/RatingStars';
+import { useProductRatings, type ProductRating } from '@/lib/productRatings';
 
 /** Combo phải chọn vị trên trang combo trước khi mua (giống ProductCombosSidebar) */
 const CUSTOMIZABLE_COMBO_IDS = new Set(['combo-4-chai', 'combo-van-phong', 'combo-uu-dai', 'combo-5-old', 'combo-sieu-hoi', 'combo-6-old']);
@@ -93,7 +95,7 @@ export function LimitedDealTag({ comboId, className, size = 'sm' }: { comboId: s
   );
 }
 
-function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) {
+function ComboCard({ combo, plain = false, rating }: { combo: Combo; plain?: boolean; rating?: ProductRating }) {
   const cardRef = useRef<HTMLElement>(null);
   const { flyToCart } = useFlyToCart();
   const [added, setAdded] = useState(false);
@@ -149,6 +151,8 @@ function ComboCard({ combo, plain = false }: { combo: Combo; plain?: boolean }) 
           <h3 title={combo.name} className={`text-base text-text-dark mb-1 leading-snug line-clamp-4 group-hover:text-leaf-900 ${plain ? 'group-hover:underline ' : ''}transition-colors`}>
             {combo.name}
           </h3>
+          {/* Hàng sao giống thẻ sản phẩm (21/11/2026) — chỉ trang chi tiết SP & combo */}
+          {rating && <RatingStars average={rating.average} count={rating.count} className="mb-1" />}
           <LimitedDealTag comboId={combo.id} size="md" className="mb-1 self-start" />
 
           <div className={`relative flex items-center justify-between gap-1 mt-auto pt-1.5 sm:pt-2${plain ? '' : ' border-t border-gray-100'}`}>
@@ -211,6 +215,9 @@ export default function ComboCarousel({ title, combos, subtitle, className, plai
   const [canNext, setCanNext] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const mobileInitialCount = 4;
+  // Số sao mỗi gói (một lần gọi cho cả dải) — khoá giống khối đánh giá trang combo: combo:<slug>
+  const ratingKey = (c: Combo) => `combo:${c.slug || c.id}`;
+  const ratings = useProductRatings(plain ? combos.map(ratingKey) : []);
 
   const updateArrows = useCallback(() => {
     const el = trackRef.current;
@@ -258,7 +265,7 @@ export default function ComboCarousel({ title, combos, subtitle, className, plai
                 !expanded && idx >= mobileInitialCount && 'max-sm:hidden'
               )}
             >
-              <ComboCard combo={combo} plain={plain} />
+              <ComboCard combo={combo} plain={plain} rating={ratings[ratingKey(combo)]} />
             </div>
           ))}
         </div>
